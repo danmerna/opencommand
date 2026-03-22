@@ -160,3 +160,25 @@
 - [x] Agent/Blueprint required categories display on marketplace listings
 - [x] Portability badge on marketplace items showing cross-stack compatibility
 - [x] Missing category prompt: guide buyer to connect required tools before activation
+
+## v3.1 — Real OAuth Flows & Context History
+
+### OAuth2 Integration
+- [x] OAuth2 backend: authorization URL generator for HubSpot, Mailchimp, Stripe, Slack
+- [x] OAuth2 callback handler at /api/oauth/integration/callback
+- [x] Token storage in user_connections table (access_token, refresh_token, expires_at)
+- [x] Token refresh logic for expired connections
+- [x] Provider credential secrets management (client IDs/secrets via env)
+- [x] Integration Hub UI: real OAuth redirect buttons replacing simulated connect
+- [x] Connection status polling after OAuth redirect returns
+- [x] Live data preview per connected provider (e.g. HubSpot contact count, Slack workspace name)
+
+### Context History Page
+- [x] Context History page at /context-history
+- [x] Timeline view of all past context objects (newest first)
+- [x] Expandable chain detail: Interpret → Gather → Contextualize steps per entry
+- [x] Confidence score visualization per context object
+- [x] Connected tools used per context object
+- [x] Raw request and enriched output comparison
+- [x] Filter by date range and inferred category
+- [x] Route and navigation entry

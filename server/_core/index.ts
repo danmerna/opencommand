@@ -11,6 +11,7 @@ import { serveStatic, setupVite } from "./vite";
 import { ENV } from "./env";
 import Stripe from "stripe";
 import { handleWebhookEvent } from "../stripe/checkout";
+import { registerIntegrationOAuthRoutes } from "../integrationOAuth";
 
 // Global Socket.IO instance for emitting events from routers
 export let io: SocketIOServer;
@@ -78,6 +79,8 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // Integration Hub OAuth routes
+  registerIntegrationOAuthRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

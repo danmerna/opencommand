@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
@@ -6,15 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   Users, Mail, BarChart3, Kanban, CreditCard, MessageSquare, Inbox, ShoppingCart,
   Plug, Unplug, RefreshCw, Loader2, CheckCircle2, XCircle, AlertTriangle, Zap,
-  ArrowRight, Shield, Layers, Globe,
+  ArrowRight, Shield, Layers, Globe, ExternalLink, Eye,
 } from "lucide-react";
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -35,6 +34,9 @@ const STATUS_COLORS: Record<string, string> = {
   expired: "text-yellow-500",
 };
 
+// Providers that support real OAuth2 via our backend
+const OAUTH2_PROVIDERS = ["hubspot", "mailchimp", "slack", "stripe_connect"];
+
 export default function IntegrationHub() {
   const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
@@ -43,10 +45,14 @@ export default function IntegrationHub() {
   const [selectedProvider, setSelectedProvider] = useState<any>(null);
   const [accountName, setAccountName] = useState("");
   const [apiKey, setApiKey] = useState("");
+  const [previewData, setPreviewData] = useState<Record<number, any>>({});
+  const [previewLoading, setPreviewLoading] = useState<Record<number, boolean>>({});
 
   const categoriesQuery = trpc.hub.categories.useQuery();
   const providersQuery = trpc.hub.providers.useQuery();
   const connectionsQuery = trpc.hub.connections.useQuery(undefined, { enabled: isAuthenticated });
+
+  const utils = trpc.useUtils();
 
   const seedMutation = trpc.hub.seedDefaults.useMutation({
     onSuccess: () => {
@@ -77,6 +83,25 @@ export default function IntegrationHub() {
   const providers = providersQuery.data ?? [];
   const connections = connectionsQuery.data ?? [];
 
+  // Handle OAuth callback return (URL params set by backend redirect)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get("connected");
+    const account = params.get("account");
+    const error = params.get("error");
+
+    if (connected) {
+      toast.success(`✓ ${account ?? connected} connected successfully via OAuth`);
+      connectionsQuery.refetch();
+      // Clean URL
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+    if (error) {
+      toast.error(error);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   const connectedCategoryIds = useMemo(() => {
     return Array.from(new Set(connections.filter(c => c.status === "connected").map(c => c.categoryId)));
   }, [connections]);
@@ -105,9 +130,23 @@ export default function IntegrationHub() {
     );
   }
 
+  // Start real OAuth2 flow — redirect to backend which redirects to provider
+  const handleOAuthConnect = (provider: any) => {
+    const origin = window.location.origin;
+    const userId = user?.id;
+    if (!userId) return;
+    const url = `/api/integration/oauth/start?provider=${encodeURIComponent(provider.slug)}&userId=${userId}&origin=${encodeURIComponent(origin)}`;
+    window.location.href = url;
+  };
+
+  // Open connect dialog for API key providers
   const handleConnect = (provider: any) => {
-    setSelectedProvider(provider);
-    setConnectDialogOpen(true);
+    if (OAUTH2_PROVIDERS.includes(provider.slug)) {
+      handleOAuthConnect(provider);
+    } else {
+      setSelectedProvider(provider);
+      setConnectDialogOpen(true);
+    }
   };
 
   const submitConnection = () => {
@@ -119,6 +158,19 @@ export default function IntegrationHub() {
       accountId: apiKey ? `key-${Date.now()}` : undefined,
       accessToken: apiKey || undefined,
     });
+  };
+
+  const fetchPreview = async (conn: any) => {
+    setPreviewLoading(prev => ({ ...prev, [conn.id]: true }));
+    try {
+      const res = await fetch(`/api/integration/oauth/preview?connectionId=${conn.id}&userId=${user?.id}`);
+      const data = await res.json();
+      setPreviewData(prev => ({ ...prev, [conn.id]: data.preview }));
+    } catch {
+      setPreviewData(prev => ({ ...prev, [conn.id]: { error: "Preview unavailable" } }));
+    } finally {
+      setPreviewLoading(prev => ({ ...prev, [conn.id]: false }));
+    }
   };
 
   return (
@@ -167,6 +219,48 @@ export default function IntegrationHub() {
 
         {/* ─── Overview Tab ─── */}
         <TabsContent value="overview" className="mt-4">
+          {/* OAuth2 Providers Banner */}
+          <Card className="bg-zinc-950 border border-red-900/40 mb-6">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-3 mb-3">
+                <Shield className="w-5 h-5 text-red-500" />
+                <h3 className="font-bold text-white text-sm uppercase tracking-tight">OAuth2-Enabled Providers</h3>
+                <Badge className="bg-red-900/30 text-red-400 border-red-800 text-[10px]">Real OAuth</Badge>
+              </div>
+              <p className="text-zinc-500 text-xs mb-4">These providers use real OAuth2 authorization. Clicking Connect will redirect you to their login page.</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {["hubspot", "mailchimp", "slack", "stripe_connect"].map((slug) => {
+                  const provider = providers.find(p => p.slug === slug);
+                  const conn = connections.find(c => c.providerId === provider?.id && c.status === "connected");
+                  if (!provider) return null;
+                  return (
+                    <div key={slug} className={`p-3 rounded border ${conn ? "border-green-800 bg-green-900/10" : "border-zinc-800 bg-zinc-900/50"} flex flex-col gap-2`}>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-white text-sm">{provider.name}</span>
+                        {conn ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <ExternalLink className="w-3 h-3 text-zinc-600" />}
+                      </div>
+                      <Badge variant="outline" className="border-zinc-700 text-zinc-500 text-[10px] w-fit">OAuth2</Badge>
+                      {conn ? (
+                        <div className="space-y-1">
+                          <p className="text-green-400 text-xs">{conn.accountName}</p>
+                          <Button size="sm" variant="outline" className="border-red-900 text-red-500 text-xs h-6 w-full"
+                            onClick={() => disconnectMutation.mutate({ connectionId: conn.id })}>
+                            <Unplug className="w-3 h-3 mr-1" /> Disconnect
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white text-xs h-7 font-bold uppercase"
+                          onClick={() => handleOAuthConnect(provider)}>
+                          <ExternalLink className="w-3 h-3 mr-1" /> Connect
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {categories.map((cat) => {
               const isConnected = connectedCategoryIds.includes(cat.id);
@@ -225,16 +319,20 @@ export default function IntegrationHub() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {(providersByCategory[selectedCategory] ?? []).map((provider) => {
                     const conn = connections.find(c => c.providerId === provider.id && c.status === "connected");
+                    const isOAuth2 = OAUTH2_PROVIDERS.includes(provider.slug);
                     return (
                       <div key={provider.id} className={`p-4 rounded border ${conn ? "border-green-800 bg-green-900/10" : "border-zinc-800 bg-zinc-900/50"}`}>
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-bold text-white text-sm">{provider.name}</h4>
-                          <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-[10px] uppercase">{provider.authType}</Badge>
+                          <div className="flex items-center gap-1">
+                            {isOAuth2 && <Badge className="bg-blue-900/30 text-blue-400 border-blue-800 text-[10px]">OAuth2</Badge>}
+                            <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-[10px] uppercase">{provider.authType}</Badge>
+                          </div>
                         </div>
                         <p className="text-zinc-500 text-xs mb-3">{provider.description}</p>
                         {conn ? (
                           <div className="flex items-center justify-between">
-                            <span className="text-green-500 text-xs flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Connected</span>
+                            <span className="text-green-500 text-xs flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> {conn.accountName ?? "Connected"}</span>
                             <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-400 text-xs h-7"
                               onClick={(e) => { e.stopPropagation(); disconnectMutation.mutate({ connectionId: conn.id }); }}>
                               <Unplug className="w-3 h-3 mr-1" /> Disconnect
@@ -243,7 +341,8 @@ export default function IntegrationHub() {
                         ) : (
                           <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white text-xs h-7 w-full font-bold uppercase"
                             onClick={(e) => { e.stopPropagation(); handleConnect(provider); }}>
-                            <Plug className="w-3 h-3 mr-1" /> Connect
+                            {isOAuth2 ? <ExternalLink className="w-3 h-3 mr-1" /> : <Plug className="w-3 h-3 mr-1" />}
+                            {isOAuth2 ? "Authorize" : "Connect"}
                           </Button>
                         )}
                       </div>
@@ -273,10 +372,12 @@ export default function IntegrationHub() {
               {connections.map((conn) => {
                 const provider = providers.find(p => p.id === conn.providerId);
                 const category = categories.find(c => c.id === conn.categoryId);
+                const preview = previewData[conn.id];
+                const isLoadingPreview = previewLoading[conn.id];
                 return (
                   <Card key={conn.id} className="bg-zinc-950 border border-zinc-800">
                     <CardContent className="py-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-4">
                           <div className="p-2 rounded bg-zinc-900">
                             {CATEGORY_ICONS[category?.slug ?? ""] ?? <Globe className="w-5 h-5" />}
@@ -285,18 +386,29 @@ export default function IntegrationHub() {
                             <div className="flex items-center gap-2">
                               <h4 className="font-bold text-white text-sm">{provider?.name ?? "Unknown"}</h4>
                               <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-[10px] uppercase">{category?.name}</Badge>
+                              {OAUTH2_PROVIDERS.includes(provider?.slug ?? "") && (
+                                <Badge className="bg-blue-900/30 text-blue-400 border-blue-800 text-[10px]">OAuth2</Badge>
+                              )}
                             </div>
                             <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
                               <span className={`flex items-center gap-1 ${STATUS_COLORS[conn.status]}`}>
                                 {conn.status === "connected" ? <CheckCircle2 className="w-3 h-3" /> : conn.status === "error" ? <AlertTriangle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
                                 {conn.status.toUpperCase()}
                               </span>
-                              {conn.accountName && <span>Account: {conn.accountName}</span>}
+                              {conn.accountName && <span>Account: <strong className="text-zinc-300">{conn.accountName}</strong></span>}
                               {conn.lastSyncAt && <span>Last sync: {new Date(conn.lastSyncAt).toLocaleDateString()}</span>}
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          {conn.status === "connected" && (
+                            <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-400 text-xs h-7"
+                              onClick={() => fetchPreview(conn)}
+                              disabled={isLoadingPreview}>
+                              {isLoadingPreview ? <Loader2 className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3 mr-1" />}
+                              Preview
+                            </Button>
+                          )}
                           <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-400 text-xs h-7"
                             onClick={() => { connectionsQuery.refetch(); toast.success("Synced"); }}>
                             <RefreshCw className="w-3 h-3" />
@@ -307,6 +419,21 @@ export default function IntegrationHub() {
                           </Button>
                         </div>
                       </div>
+                      {/* Live Data Preview */}
+                      {preview && (
+                        <div className="mt-3 p-3 rounded bg-zinc-900 border border-zinc-800">
+                          <p className="text-zinc-500 text-xs uppercase font-bold mb-2 flex items-center gap-1">
+                            <Eye className="w-3 h-3" /> Live Data Preview
+                          </p>
+                          {preview.error ? (
+                            <p className="text-red-400 text-xs">{preview.error}</p>
+                          ) : (
+                            <pre className="text-zinc-300 text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+                              {JSON.stringify(preview, null, 2)}
+                            </pre>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -369,7 +496,6 @@ export default function IntegrationHub() {
             </CardContent>
           </Card>
 
-          {/* How It Works */}
           <Card className="bg-zinc-950 border border-zinc-800">
             <CardHeader>
               <CardTitle className="text-lg font-black uppercase tracking-tight text-white flex items-center gap-2">
@@ -378,34 +504,26 @@ export default function IntegrationHub() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded border border-zinc-800 bg-zinc-900/30 text-center">
-                  <div className="w-10 h-10 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-3">
-                    <span className="text-red-500 font-black text-lg">1</span>
+                {[
+                  { step: "1", title: "Interpret", desc: "LLM analyzes your request and infers which tool categories are relevant" },
+                  { step: "2", title: "Gather", desc: "Pulls live state from your connected tools and recent execution history" },
+                  { step: "3", title: "Contextualize", desc: "Enriches parameters with real data and produces a confidence-scored execution plan" },
+                ].map(({ step, title, desc }) => (
+                  <div key={step} className="p-4 rounded border border-zinc-800 bg-zinc-900/30 text-center">
+                    <div className="w-10 h-10 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-3">
+                      <span className="text-red-500 font-black text-lg">{step}</span>
+                    </div>
+                    <h4 className="font-bold text-white text-sm uppercase mb-2">{title}</h4>
+                    <p className="text-zinc-500 text-xs">{desc}</p>
                   </div>
-                  <h4 className="font-bold text-white text-sm uppercase mb-2">Interpret</h4>
-                  <p className="text-zinc-500 text-xs">LLM analyzes your request and infers which tool categories are relevant</p>
-                </div>
-                <div className="p-4 rounded border border-zinc-800 bg-zinc-900/30 text-center">
-                  <div className="w-10 h-10 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-3">
-                    <span className="text-red-500 font-black text-lg">2</span>
-                  </div>
-                  <h4 className="font-bold text-white text-sm uppercase mb-2">Gather</h4>
-                  <p className="text-zinc-500 text-xs">Pulls live state from your connected tools and recent execution history</p>
-                </div>
-                <div className="p-4 rounded border border-zinc-800 bg-zinc-900/30 text-center">
-                  <div className="w-10 h-10 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-3">
-                    <span className="text-red-500 font-black text-lg">3</span>
-                  </div>
-                  <h4 className="font-bold text-white text-sm uppercase mb-2">Contextualize</h4>
-                  <p className="text-zinc-500 text-xs">Enriches parameters with real data and produces a confidence-scored execution plan</p>
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Connect Dialog */}
+      {/* Connect Dialog (API key providers) */}
       <Dialog open={connectDialogOpen} onOpenChange={setConnectDialogOpen}>
         <DialogContent className="bg-zinc-950 border border-zinc-800 text-white">
           <DialogHeader>
@@ -433,13 +551,6 @@ export default function IntegrationHub() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                 />
-              </div>
-            )}
-            {selectedProvider?.authType === "oauth2" && (
-              <div className="p-3 rounded bg-zinc-900 border border-zinc-800">
-                <p className="text-zinc-400 text-xs">
-                  OAuth2 flow will be simulated. In production, this would redirect to {selectedProvider?.name}'s authorization page.
-                </p>
               </div>
             )}
             <Button

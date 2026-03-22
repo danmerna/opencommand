@@ -9,4 +9,13 @@ export const ENV = {
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  // OAuth provider credentials for Integration Hub
+  hubspotClientId: process.env.HUBSPOT_CLIENT_ID ?? "",
+  hubspotClientSecret: process.env.HUBSPOT_CLIENT_SECRET ?? "",
+  mailchimpClientId: process.env.MAILCHIMP_CLIENT_ID ?? "",
+  mailchimpClientSecret: process.env.MAILCHIMP_CLIENT_SECRET ?? "",
+  slackClientId: process.env.SLACK_CLIENT_ID ?? "",
+  slackClientSecret: process.env.SLACK_CLIENT_SECRET ?? "",
+  stripeOAuthClientId: process.env.STRIPE_OAUTH_CLIENT_ID ?? "",
+  appBaseUrl: process.env.APP_BASE_URL ?? "",
 };

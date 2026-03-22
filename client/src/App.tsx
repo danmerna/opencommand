@@ -17,6 +17,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import IntegrationHub from "./pages/IntegrationHub";
 import CompatibilityChecker from "./pages/CompatibilityChecker";
+import ContextHistory from "./pages/ContextHistory";
 import AppLayout from "./components/AppLayout";
 
 function Router() {
@@ -46,6 +47,9 @@ function Router() {
       </Route>
       <Route path="/compatibility">
         <AppLayout><CompatibilityChecker /></AppLayout>
+      </Route>
+      <Route path="/context-history">
+        <AppLayout><ContextHistory /></AppLayout>
       </Route>
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/creator-program" component={CreatorProgram} />
