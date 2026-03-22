@@ -52,7 +52,54 @@
 - [x] Marketplace seed defaults with demo listings
 
 ## Phase 8: Polish & Delivery
-- [x] Vitest unit tests — 23 tests passing across all routers
+- [x] Vitest unit tests — 59 tests passing across all routers
 - [x] Loading, empty, and error states on all pages
 - [x] Mobile responsiveness
 - [x] Final checkpoint and delivery
+
+## ZHC v2.0 — Layer 1: Agent Organization Management
+- [x] Org Chart Builder with hierarchy (parent-child agent relationships, department grouping)
+- [x] Role-Based Agent Templates with job descriptions
+- [x] Department and Team Grouping with department-level budgets/goals
+- [x] Agent Capability Registry (tools, APIs, domains, languages)
+- [x] Succession and Failover Rules (via agent status management)
+
+## ZHC v2.0 — Layer 2: Heartbeat & Autonomous Execution
+- [x] Heartbeat Scheduler (cron-based agent wake cycles) — in Mission Control Heartbeat tab
+- [x] Event-Driven Agent Triggers (webhooks) — in Governance webhooks tab
+- [x] Delegation Chain Execution (cascading task assignment down org chart)
+- [x] Persistent Agent Memory wired into heartbeat cycle
+- [x] Autonomous Decision Logging with rationale — AI CEO decision log
+
+## ZHC v2.0 — Layer 3: Cost Control & Financial Governance
+- [x] Per-Agent Budget Allocation and Enforcement — Mission Control P&L tab
+- [x] Per-Task Cost Tracking (tokens, API calls, compute)
+- [x] Company-Level P&L Dashboard (revenue vs costs vs net value) — Mission Control P&L tab
+- [x] Budget Alerts and Auto-Scaling Rules (via approval gates)
+
+## ZHC v2.0 — Layer 4: Company Blueprints (Resellable Product)
+- [x] Company Blueprint Builder (wizard to package entire org) — Blueprints page
+- [x] Blueprint Versioning and Changelog
+- [x] Blueprint Performance Certification (PoO-verified)
+- [x] One-Click Blueprint Deployment
+- [x] Blueprint Customization Layer
+- [x] Blueprint Analytics Dashboard (deployment tracking, reviews)
+
+## ZHC v2.0 — Layer 5: Marketplace Evolution
+- [x] Company Blueprint Marketplace (listings with org charts, performance data) — Marketplace Blueprints tab
+- [x] Marketplace Pricing Models (one-time, monthly, revenue share, franchise)
+- [x] Blueprint Reviews with Verified Performance Data
+- [x] Creator-Endorsed Blueprints (Floor + Flow integration)
+- [x] Blueprint Leaderboard (ranked by profitability) — Marketplace Leaderboard tab
+
+## ZHC v2.0 — Layer 6: Governance & Compliance
+- [x] Formal Approval Gates (configurable spend/hire/strategy thresholds) — Governance page
+- [x] Role-Based Access Control for Multi-User Organizations
+- [x] Compliance Reporting and Audit Log — Governance Audit tab
+- [x] Kill Switch and Emergency Protocols — Governance killSwitch procedure
+
+## ZHC v2.0 — Layer 7: Integration & Extensibility
+- [x] BYOA Connector Framework (OpenAI, Claude, Gemini, custom APIs) — Governance Tools tab
+- [x] External Tool Registry (Stripe, Shopify, Mailchimp, etc.) — Governance Tools tab
+- [x] Webhook and API Gateway — Governance Webhooks tab
+- [x] Skills Marketplace (individual SKILLS.md files for sale) — Marketplace Skills tab

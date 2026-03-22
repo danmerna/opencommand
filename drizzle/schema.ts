@@ -26,19 +26,70 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// ─── AI Agents ────────────────────────────────────────────────────────────────
-export const agents = mysqlTable("agents", {
+// ─── Companies (Multi-Company Runtime) ───────────────────────────────────────
+export const companies = mysqlTable("companies", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   name: varchar("name", { length: 128 }).notNull(),
-  type: mysqlEnum("type", ["ceo", "marketing", "research", "sales", "admin", "custom"]).notNull(),
-  status: mysqlEnum("status", ["idle", "active", "paused", "error"]).default("idle").notNull(),
+  mission: text("mission"),
+  industry: varchar("industry", { length: 64 }),
+  status: mysqlEnum("status", ["active", "paused", "archived"]).default("active").notNull(),
+  monthlyBudget: decimal("monthlyBudget", { precision: 12, scale: 2 }).default("0"),
+  totalRevenue: decimal("totalRevenue", { precision: 14, scale: 2 }).default("0"),
+  totalCosts: decimal("totalCosts", { precision: 14, scale: 2 }).default("0"),
+  agentCount: int("agentCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Company = typeof companies.$inferSelect;
+export type InsertCompany = typeof companies.$inferInsert;
+
+// ─── Departments ─────────────────────────────────────────────────────────────
+export const departments = mysqlTable("departments", {
+  id: int("id").autoincrement().primaryKey(),
+  companyId: int("companyId").notNull(),
+  name: varchar("name", { length: 64 }).notNull(),
+  budget: decimal("budget", { precision: 12, scale: 2 }).default("0"),
+  headAgentId: int("headAgentId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Department = typeof departments.$inferSelect;
+export type InsertDepartment = typeof departments.$inferInsert;
+
+// ─── AI Agents (Extended with Org Chart) ─────────────────────────────────────
+export const agents = mysqlTable("agents", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  departmentId: int("departmentId"),
+  parentAgentId: int("parentAgentId"),
+  name: varchar("name", { length: 128 }).notNull(),
+  type: mysqlEnum("type", ["ceo", "cto", "cmo", "cfo", "vp", "manager", "specialist", "marketing", "research", "sales", "admin", "custom"]).notNull(),
+  status: mysqlEnum("status", ["idle", "active", "paused", "error", "terminated"]).default("idle").notNull(),
+  roleTitle: varchar("roleTitle", { length: 128 }),
+  jobDescription: text("jobDescription"),
   description: text("description"),
   capabilities: json("capabilities").$type<string[]>(),
+  tools: json("tools").$type<string[]>(),
+  connectorType: mysqlEnum("connectorType", ["internal", "openai", "anthropic", "gemini", "custom_api", "crewai"]).default("internal").notNull(),
+  connectorConfig: json("connectorConfig").$type<Record<string, unknown>>(),
+  heartbeatCron: varchar("heartbeatCron", { length: 64 }),
+  heartbeatEnabled: boolean("heartbeatEnabled").default(false).notNull(),
+  lastHeartbeat: timestamp("lastHeartbeat"),
+  nextHeartbeat: timestamp("nextHeartbeat"),
+  monthlyBudget: decimal("monthlyBudget", { precision: 10, scale: 2 }).default("0"),
+  budgetUsed: decimal("budgetUsed", { precision: 10, scale: 2 }).default("0"),
+  budgetAlertThreshold: decimal("budgetAlertThreshold", { precision: 5, scale: 2 }).default("75"),
+  failoverAgentId: int("failoverAgentId"),
   resourceUsage: decimal("resourceUsage", { precision: 5, scale: 2 }).default("0"),
   tasksCompleted: int("tasksCompleted").default(0).notNull(),
   totalValueCreated: decimal("totalValueCreated", { precision: 12, scale: 2 }).default("0"),
+  totalCostIncurred: decimal("totalCostIncurred", { precision: 12, scale: 2 }).default("0"),
   isMarketplaceListing: boolean("isMarketplaceListing").default(false).notNull(),
+  orgChartX: int("orgChartX").default(0),
+  orgChartY: int("orgChartY").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -46,10 +97,27 @@ export const agents = mysqlTable("agents", {
 export type Agent = typeof agents.$inferSelect;
 export type InsertAgent = typeof agents.$inferInsert;
 
-// ─── OKRs ─────────────────────────────────────────────────────────────────────
+// ─── Agent Capability Registry ───────────────────────────────────────────────
+export const agentCapabilities = mysqlTable("agent_capabilities", {
+  id: int("id").autoincrement().primaryKey(),
+  agentId: int("agentId").notNull(),
+  category: varchar("category", { length: 64 }).notNull(),
+  capability: varchar("capability", { length: 128 }).notNull(),
+  proficiency: mysqlEnum("proficiency", ["basic", "intermediate", "advanced", "expert"]).default("intermediate").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AgentCapability = typeof agentCapabilities.$inferSelect;
+export type InsertAgentCapability = typeof agentCapabilities.$inferInsert;
+
+// ─── OKRs (Extended with Goal Hierarchy) ─────────────────────────────────────
 export const okrs = mysqlTable("okrs", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  agentId: int("agentId"),
+  parentOkrId: int("parentOkrId"),
+  level: mysqlEnum("level", ["company", "department", "agent", "task"]).default("company").notNull(),
   objective: text("objective").notNull(),
   keyResult: text("keyResult").notNull(),
   targetValue: decimal("targetValue", { precision: 12, scale: 2 }).notNull(),
@@ -64,21 +132,29 @@ export const okrs = mysqlTable("okrs", {
 export type Okr = typeof okrs.$inferSelect;
 export type InsertOkr = typeof okrs.$inferInsert;
 
-// ─── Tasks ────────────────────────────────────────────────────────────────────
+// ─── Tasks (Extended with Tickets/Threading) ─────────────────────────────────
 export const tasks = mysqlTable("tasks", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  companyId: int("companyId"),
   agentId: int("agentId"),
+  parentTaskId: int("parentTaskId"),
+  okrId: int("okrId"),
   title: varchar("title", { length: 256 }).notNull(),
   description: text("description"),
   intentObject: json("intentObject").$type<Record<string, unknown>>(),
-  status: mysqlEnum("status", ["pending", "in_progress", "completed", "failed", "awaiting_human"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "in_progress", "completed", "failed", "awaiting_human", "delegated"]).default("pending").notNull(),
   routingMode: mysqlEnum("routingMode", ["ai", "human", "hybrid"]).default("ai").notNull(),
   priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium").notNull(),
   estimatedHours: decimal("estimatedHours", { precision: 6, scale: 2 }),
   actualHours: decimal("actualHours", { precision: 6, scale: 2 }),
+  tokenCost: decimal("tokenCost", { precision: 10, scale: 4 }).default("0"),
+  apiCallCost: decimal("apiCallCost", { precision: 10, scale: 4 }).default("0"),
+  totalCost: decimal("totalCost", { precision: 10, scale: 4 }).default("0"),
   generatedPrompt: text("generatedPrompt"),
   executionLog: json("executionLog").$type<string[]>(),
+  delegatedFromAgentId: int("delegatedFromAgentId"),
+  delegatedToAgentId: int("delegatedToAgentId"),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -87,17 +163,51 @@ export const tasks = mysqlTable("tasks", {
 export type Task = typeof tasks.$inferSelect;
 export type InsertTask = typeof tasks.$inferInsert;
 
-// ─── Proof of Outcome Receipts ────────────────────────────────────────────────
+// ─── Task Threads (Ticket System) ────────────────────────────────────────────
+export const taskThreads = mysqlTable("task_threads", {
+  id: int("id").autoincrement().primaryKey(),
+  taskId: int("taskId").notNull(),
+  agentId: int("agentId"),
+  userId: int("userId"),
+  role: mysqlEnum("role", ["agent", "human", "system"]).notNull(),
+  content: text("content").notNull(),
+  toolCalls: json("toolCalls").$type<Record<string, unknown>[]>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type TaskThread = typeof taskThreads.$inferSelect;
+export type InsertTaskThread = typeof taskThreads.$inferInsert;
+
+// ─── Heartbeat Log ───────────────────────────────────────────────────────────
+export const heartbeatLog = mysqlTable("heartbeat_log", {
+  id: int("id").autoincrement().primaryKey(),
+  agentId: int("agentId").notNull(),
+  companyId: int("companyId"),
+  status: mysqlEnum("status", ["success", "error", "skipped", "throttled"]).notNull(),
+  tasksChecked: int("tasksChecked").default(0),
+  tasksActedOn: int("tasksActedOn").default(0),
+  tokenCost: decimal("tokenCost", { precision: 10, scale: 4 }).default("0"),
+  duration: int("duration").default(0),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type HeartbeatLogEntry = typeof heartbeatLog.$inferSelect;
+export type InsertHeartbeatLogEntry = typeof heartbeatLog.$inferInsert;
+
+// ─── Proof of Outcome Receipts ───────────────────────────────────────────────
 export const pooReceipts = mysqlTable("poo_receipts", {
   id: int("id").autoincrement().primaryKey(),
   taskId: int("taskId").notNull(),
   userId: int("userId").notNull(),
+  companyId: int("companyId"),
   agentId: int("agentId"),
   receiptNumber: varchar("receiptNumber", { length: 32 }).notNull().unique(),
   taskTitle: varchar("taskTitle", { length: 256 }).notNull(),
   outcome: text("outcome").notNull(),
   laborHoursSaved: decimal("laborHoursSaved", { precision: 8, scale: 2 }).notNull(),
   dollarValueCreated: decimal("dollarValueCreated", { precision: 12, scale: 2 }).notNull(),
+  costIncurred: decimal("costIncurred", { precision: 10, scale: 4 }).default("0"),
   hourlyRateBenchmark: decimal("hourlyRateBenchmark", { precision: 8, scale: 2 }).default("150"),
   verificationStatus: mysqlEnum("verificationStatus", ["pending", "verified", "disputed"]).default("pending").notNull(),
   metadata: json("metadata").$type<Record<string, unknown>>(),
@@ -107,13 +217,14 @@ export const pooReceipts = mysqlTable("poo_receipts", {
 export type PooReceipt = typeof pooReceipts.$inferSelect;
 export type InsertPooReceipt = typeof pooReceipts.$inferInsert;
 
-// ─── Human-in-the-Loop Inbox ──────────────────────────────────────────────────
+// ─── Human-in-the-Loop Inbox ─────────────────────────────────────────────────
 export const inboxItems = mysqlTable("inbox_items", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  companyId: int("companyId"),
   taskId: int("taskId"),
   agentId: int("agentId"),
-  type: mysqlEnum("type", ["decision_required", "budget_approval", "task_review", "alert", "poo_generated"]).notNull(),
+  type: mysqlEnum("type", ["decision_required", "budget_approval", "task_review", "alert", "poo_generated", "hire_approval", "strategy_review", "kill_switch"]).notNull(),
   title: varchar("title", { length: 256 }).notNull(),
   body: text("body").notNull(),
   priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium").notNull(),
@@ -126,16 +237,104 @@ export const inboxItems = mysqlTable("inbox_items", {
 export type InboxItem = typeof inboxItems.$inferSelect;
 export type InsertInboxItem = typeof inboxItems.$inferInsert;
 
-// ─── Marketplace Listings ─────────────────────────────────────────────────────
+// ─── Approval Gates ──────────────────────────────────────────────────────────
+export const approvalGates = mysqlTable("approval_gates", {
+  id: int("id").autoincrement().primaryKey(),
+  companyId: int("companyId").notNull(),
+  gateType: mysqlEnum("gateType", ["spend", "hire", "strategy", "terminate", "custom"]).notNull(),
+  threshold: decimal("threshold", { precision: 12, scale: 2 }),
+  description: text("description"),
+  requiresApproval: boolean("requiresApproval").default(true).notNull(),
+  autoApproveBelow: decimal("autoApproveBelow", { precision: 12, scale: 2 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ApprovalGate = typeof approvalGates.$inferSelect;
+export type InsertApprovalGate = typeof approvalGates.$inferInsert;
+
+// ─── Company Blueprints ──────────────────────────────────────────────────────
+export const blueprints = mysqlTable("blueprints", {
+  id: int("id").autoincrement().primaryKey(),
+  creatorUserId: int("creatorUserId").notNull(),
+  sourceCompanyId: int("sourceCompanyId"),
+  name: varchar("name", { length: 128 }).notNull(),
+  tagline: varchar("tagline", { length: 256 }),
+  description: text("description"),
+  category: varchar("category", { length: 64 }),
+  version: varchar("version", { length: 16 }).default("1.0.0").notNull(),
+  changelog: text("changelog"),
+  orgStructure: json("orgStructure").$type<Record<string, unknown>>(),
+  agentConfigs: json("agentConfigs").$type<Record<string, unknown>[]>(),
+  heartbeatConfigs: json("heartbeatConfigs").$type<Record<string, unknown>[]>(),
+  okrTemplates: json("okrTemplates").$type<Record<string, unknown>[]>(),
+  budgetAllocations: json("budgetAllocations").$type<Record<string, unknown>>(),
+  governancePolicies: json("governancePolicies").$type<Record<string, unknown>>(),
+  toolRequirements: json("toolRequirements").$type<string[]>(),
+  estimatedMonthlyCost: decimal("estimatedMonthlyCost", { precision: 10, scale: 2 }),
+  agentCount: int("agentCount").default(0),
+  pricingModel: mysqlEnum("pricingModel", ["one_time", "monthly", "revenue_share", "franchise"]).default("monthly").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  revenueSharePct: decimal("revenueSharePct", { precision: 5, scale: 2 }),
+  performanceScore: decimal("performanceScore", { precision: 5, scale: 2 }),
+  totalValueGenerated: decimal("totalValueGenerated", { precision: 14, scale: 2 }).default("0"),
+  totalDeployments: int("totalDeployments").default(0),
+  avgRating: decimal("avgRating", { precision: 3, scale: 2 }).default("0"),
+  isCertified: boolean("isCertified").default(false).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  endorsedBy: varchar("endorsedBy", { length: 128 }),
+  endorserHandle: varchar("endorserHandle", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Blueprint = typeof blueprints.$inferSelect;
+export type InsertBlueprint = typeof blueprints.$inferInsert;
+
+// ─── Blueprint Reviews ───────────────────────────────────────────────────────
+export const blueprintReviews = mysqlTable("blueprint_reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  blueprintId: int("blueprintId").notNull(),
+  userId: int("userId").notNull(),
+  rating: int("rating").notNull(),
+  review: text("review"),
+  verifiedValueCreated: decimal("verifiedValueCreated", { precision: 12, scale: 2 }),
+  verifiedCostEfficiency: decimal("verifiedCostEfficiency", { precision: 5, scale: 2 }),
+  isVerified: boolean("isVerified").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BlueprintReview = typeof blueprintReviews.$inferSelect;
+export type InsertBlueprintReview = typeof blueprintReviews.$inferInsert;
+
+// ─── Blueprint Deployments ───────────────────────────────────────────────────
+export const blueprintDeployments = mysqlTable("blueprint_deployments", {
+  id: int("id").autoincrement().primaryKey(),
+  blueprintId: int("blueprintId").notNull(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  status: mysqlEnum("status", ["deploying", "active", "paused", "failed"]).default("deploying").notNull(),
+  totalValueCreated: decimal("totalValueCreated", { precision: 14, scale: 2 }).default("0"),
+  totalCosts: decimal("totalCosts", { precision: 14, scale: 2 }).default("0"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BlueprintDeployment = typeof blueprintDeployments.$inferSelect;
+export type InsertBlueprintDeployment = typeof blueprintDeployments.$inferInsert;
+
+// ─── Marketplace Listings (Extended) ─────────────────────────────────────────
 export const marketplaceListings = mysqlTable("marketplace_listings", {
   id: int("id").autoincrement().primaryKey(),
-  agentId: int("agentId").notNull(),
+  agentId: int("agentId"),
+  blueprintId: int("blueprintId"),
+  listingType: mysqlEnum("listingType", ["agent", "blueprint", "skill"]).default("agent").notNull(),
   tier: mysqlEnum("tier", ["solo_founder", "enterprise", "custom"]).notNull(),
   name: varchar("name", { length: 128 }).notNull(),
   tagline: varchar("tagline", { length: 256 }),
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }),
-  pricingModel: mysqlEnum("pricingModel", ["monthly", "annual", "usage", "value_capture"]).default("monthly").notNull(),
+  pricingModel: mysqlEnum("pricingModel", ["monthly", "annual", "usage", "value_capture", "one_time", "revenue_share", "franchise"]).default("monthly").notNull(),
   features: json("features").$type<string[]>(),
   endorsedBy: varchar("endorsedBy", { length: 128 }),
   endorserHandle: varchar("endorserHandle", { length: 64 }),
@@ -150,7 +349,58 @@ export const marketplaceListings = mysqlTable("marketplace_listings", {
 export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
 export type InsertMarketplaceListing = typeof marketplaceListings.$inferInsert;
 
-// ─── Creator Partnerships ─────────────────────────────────────────────────────
+// ─── Skills (Marketplace) ────────────────────────────────────────────────────
+export const skills = mysqlTable("skills", {
+  id: int("id").autoincrement().primaryKey(),
+  creatorUserId: int("creatorUserId").notNull(),
+  name: varchar("name", { length: 128 }).notNull(),
+  category: varchar("category", { length: 64 }),
+  description: text("description"),
+  skillContent: text("skillContent"),
+  price: decimal("price", { precision: 8, scale: 2 }),
+  totalInstalls: int("totalInstalls").default(0),
+  avgRating: decimal("avgRating", { precision: 3, scale: 2 }).default("0"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Skill = typeof skills.$inferSelect;
+export type InsertSkill = typeof skills.$inferInsert;
+
+// ─── External Tool Registry ──────────────────────────────────────────────────
+export const toolRegistry = mysqlTable("tool_registry", {
+  id: int("id").autoincrement().primaryKey(),
+  companyId: int("companyId"),
+  name: varchar("name", { length: 64 }).notNull(),
+  category: varchar("category", { length: 64 }),
+  description: text("description"),
+  apiEndpoint: varchar("apiEndpoint", { length: 512 }),
+  costPerUse: decimal("costPerUse", { precision: 8, scale: 4 }).default("0"),
+  isActive: boolean("isActive").default(true).notNull(),
+  config: json("config").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ToolRegistryEntry = typeof toolRegistry.$inferSelect;
+export type InsertToolRegistryEntry = typeof toolRegistry.$inferInsert;
+
+// ─── Webhook Endpoints (API Gateway) ─────────────────────────────────────────
+export const webhooks = mysqlTable("webhooks", {
+  id: int("id").autoincrement().primaryKey(),
+  companyId: int("companyId").notNull(),
+  name: varchar("name", { length: 128 }).notNull(),
+  url: varchar("url", { length: 512 }).notNull(),
+  eventType: varchar("eventType", { length: 64 }).notNull(),
+  secret: varchar("secret", { length: 256 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastTriggered: timestamp("lastTriggered"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Webhook = typeof webhooks.$inferSelect;
+export type InsertWebhook = typeof webhooks.$inferInsert;
+
+// ─── Creator Partnerships ────────────────────────────────────────────────────
 export const creatorPartnerships = mysqlTable("creator_partnerships", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId"),
@@ -164,6 +414,7 @@ export const creatorPartnerships = mysqlTable("creator_partnerships", {
   flowPercentage: decimal("flowPercentage", { precision: 5, scale: 2 }).default("0"),
   totalEarned: decimal("totalEarned", { precision: 12, scale: 2 }).default("0"),
   endorsedListingId: int("endorsedListingId"),
+  endorsedBlueprintId: int("endorsedBlueprintId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -171,10 +422,11 @@ export const creatorPartnerships = mysqlTable("creator_partnerships", {
 export type CreatorPartnership = typeof creatorPartnerships.$inferSelect;
 export type InsertCreatorPartnership = typeof creatorPartnerships.$inferInsert;
 
-// ─── Decision Log (Memory Engine) ─────────────────────────────────────────────
+// ─── Decision Log (Memory Engine) ────────────────────────────────────────────
 export const decisionLog = mysqlTable("decision_log", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  companyId: int("companyId"),
   agentId: int("agentId"),
   taskId: int("taskId"),
   decisionType: varchar("decisionType", { length: 64 }).notNull(),
@@ -182,9 +434,27 @@ export const decisionLog = mysqlTable("decision_log", {
   decision: text("decision").notNull(),
   rationale: text("rationale"),
   outcome: text("outcome"),
+  optionsConsidered: json("optionsConsidered").$type<string[]>(),
   wasSuccessful: boolean("wasSuccessful"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type DecisionLogEntry = typeof decisionLog.$inferSelect;
 export type InsertDecisionLogEntry = typeof decisionLog.$inferInsert;
+
+// ─── Audit Log (Compliance) ──────────────────────────────────────────────────
+export const auditLog = mysqlTable("audit_log", {
+  id: int("id").autoincrement().primaryKey(),
+  companyId: int("companyId"),
+  userId: int("userId"),
+  agentId: int("agentId"),
+  action: varchar("action", { length: 128 }).notNull(),
+  entityType: varchar("entityType", { length: 64 }),
+  entityId: int("entityId"),
+  details: text("details"),
+  ipAddress: varchar("ipAddress", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AuditLogEntry = typeof auditLog.$inferSelect;
+export type InsertAuditLogEntry = typeof auditLog.$inferInsert;

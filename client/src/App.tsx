@@ -10,6 +10,8 @@ import IntentEngine from "./pages/IntentEngine";
 import Marketplace from "./pages/Marketplace";
 import CreatorProgram from "./pages/CreatorProgram";
 import AICeo from "./pages/AICeo";
+import Blueprints from "./pages/Blueprints";
+import Governance from "./pages/Governance";
 import AppLayout from "./components/AppLayout";
 
 function Router() {
@@ -24,6 +26,12 @@ function Router() {
       </Route>
       <Route path="/ai-ceo">
         <AppLayout><AICeo /></AppLayout>
+      </Route>
+      <Route path="/blueprints">
+        <AppLayout><Blueprints /></AppLayout>
+      </Route>
+      <Route path="/governance">
+        <AppLayout><Governance /></AppLayout>
       </Route>
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/creator-program" component={CreatorProgram} />
