@@ -2,11 +2,13 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import {
   LayoutDashboard, Cpu, ShoppingBag, Users, Bot, Menu, X, LogOut, ChevronRight,
-  FileStack, Shield
+  FileStack, Shield, BarChart3, Wifi, WifiOff
 } from "lucide-react";
+import { useSocket } from "@/hooks/useSocket";
+import { toast } from "sonner";
 
 const navItems = [
   { href: "/mission-control", label: "Mission Control", icon: LayoutDashboard, desc: "OKRs · Fleet · P&L · Inbox" },
@@ -14,6 +16,7 @@ const navItems = [
   { href: "/ai-ceo", label: "AI CEO", icon: Bot, desc: "ARIA · Strategy" },
   { href: "/blueprints", label: "Blueprints", icon: FileStack, desc: "ZHC · Deploy · Sell" },
   { href: "/governance", label: "Governance", icon: Shield, desc: "Gates · Audit · Tools" },
+  { href: "/blueprint-dashboard", label: "BP Analytics", icon: BarChart3, desc: "Revenue · ROI · Reviews" },
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag, desc: "Agents · Blueprints" },
   { href: "/creator-program", label: "Creators", icon: Users, desc: "Floor + Flow" },
 ];
@@ -24,6 +27,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const inboxQuery = trpc.inbox.list.useQuery(undefined, { enabled: isAuthenticated });
   const unreadCount = inboxQuery.data?.filter(i => i.status === "unread").length ?? 0;
+  const { connected, notifications } = useSocket();
+  const prevNotifCount = useRef(0);
+
+  // Show toast for new WebSocket notifications
+  useEffect(() => {
+    if (notifications.length > prevNotifCount.current && notifications.length > 0) {
+      const latest = notifications[0];
+      toast(latest.title, { description: latest.message, duration: 4000 });
+    }
+    prevNotifCount.current = notifications.length;
+  }, [notifications]);
 
   if (!isAuthenticated) {
     return (
@@ -110,6 +124,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <LogOut size={14} />
             <span className="font-condensed font-bold text-xs uppercase tracking-wide">Sign Out</span>
           </button>
+          <div className="flex items-center gap-2 px-3 py-1 mt-2">
+            {connected ? (
+              <><Wifi size={12} className="text-green-500" /><span className="font-mono text-[0.6rem] text-green-500">LIVE</span></>
+            ) : (
+              <><WifiOff size={12} className="text-zinc-600" /><span className="font-mono text-[0.6rem] text-zinc-600">OFFLINE</span></>
+            )}
+          </div>
         </div>
       </aside>
 

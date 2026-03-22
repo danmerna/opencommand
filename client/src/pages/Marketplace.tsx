@@ -1,6 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   ArrowRight, Star, ShoppingBag, Zap, Check, Users, Package,
   Cpu, Shield, TrendingUp, Award, Wrench, Download, ChevronRight
@@ -16,6 +17,17 @@ export default function Marketplace() {
   const listingsQ = trpc.marketplace.list.useQuery();
   const blueprintsQ = trpc.blueprints.list.useQuery();
   const skillsQ = trpc.skills.list.useQuery();
+  const checkoutMut = trpc.payments.checkout.useMutation({
+    onSuccess: (data) => {
+      if (data.url) {
+        toast("Redirecting to checkout...", { description: "A new tab will open for payment." });
+        window.open(data.url, "_blank");
+      }
+    },
+    onError: (err) => {
+      toast.error("Checkout failed", { description: err.message });
+    },
+  });
 
   const listings = listingsQ.data ?? [];
   const blueprints = blueprintsQ.data ?? [];
@@ -149,11 +161,16 @@ export default function Marketplace() {
                       )}
                     </div>
                     {isAuthenticated ? (
-                      <Link href="/mission-control">
-                        <button className={`w-full flex items-center justify-center gap-2 font-condensed font-bold text-sm py-3 uppercase tracking-widest transition-colors ${isEnterprise ? "bg-accent text-foreground hover:bg-accent/80 glow-red" : "border border-foreground text-foreground hover:bg-foreground hover:text-background"}`}>
-                          DEPLOY NOW <ArrowRight size={14} />
-                        </button>
-                      </Link>
+                      <button
+                        onClick={() => {
+                          const productKey = listing.tier === "enterprise" ? "enterprise_ceo" : "solo_founder_ceo";
+                          checkoutMut.mutate({ productKey, listingId: listing.id, origin: window.location.origin });
+                        }}
+                        disabled={checkoutMut.isPending}
+                        className={`w-full flex items-center justify-center gap-2 font-condensed font-bold text-sm py-3 uppercase tracking-widest transition-colors ${isEnterprise ? "bg-accent text-foreground hover:bg-accent/80 glow-red" : "border border-foreground text-foreground hover:bg-foreground hover:text-background"} disabled:opacity-50`}
+                      >
+                        {checkoutMut.isPending ? "PROCESSING..." : <>DEPLOY NOW <ArrowRight size={14} /></>}
+                      </button>
                     ) : (
                       <a href={getLoginUrl()} className={`w-full flex items-center justify-center gap-2 font-condensed font-bold text-sm py-3 uppercase tracking-widest transition-colors ${isEnterprise ? "bg-accent text-foreground hover:bg-accent/80 glow-red" : "border border-foreground text-foreground hover:bg-foreground hover:text-background"}`}>
                         GET STARTED <ArrowRight size={14} />
@@ -211,11 +228,20 @@ export default function Marketplace() {
                   </div>
                 )}
                 {isAuthenticated ? (
-                  <Link href="/blueprints">
-                    <button className="w-full bg-accent/10 border border-accent text-accent font-condensed font-bold text-xs py-2.5 uppercase tracking-wide hover:bg-accent/20 transition-colors flex items-center justify-center gap-2">
-                      <Package size={12} /> DEPLOY COMPANY
-                    </button>
-                  </Link>
+                  <button
+                    onClick={() => {
+                      if (Number(bp.price ?? 0) > 0) {
+                        checkoutMut.mutate({ productKey: "blueprint_" + bp.id, blueprintId: bp.id, origin: window.location.origin });
+                      } else {
+                        toast("Free blueprint!", { description: "Redirecting to deployment..." });
+                        window.location.href = "/blueprints";
+                      }
+                    }}
+                    disabled={checkoutMut.isPending}
+                    className="w-full bg-accent/10 border border-accent text-accent font-condensed font-bold text-xs py-2.5 uppercase tracking-wide hover:bg-accent/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <Package size={12} /> {Number(bp.price ?? 0) > 0 ? (checkoutMut.isPending ? "PROCESSING..." : "PURCHASE & DEPLOY") : "DEPLOY FREE"}
+                  </button>
                 ) : (
                   <a href={getLoginUrl()} className="w-full bg-accent/10 border border-accent text-accent font-condensed font-bold text-xs py-2.5 uppercase tracking-wide hover:bg-accent/20 transition-colors flex items-center justify-center gap-2">
                     <Package size={12} /> GET STARTED

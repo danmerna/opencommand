@@ -2,11 +2,18 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import { Server as SocketIOServer } from "socket.io";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { ENV } from "./env";
+import Stripe from "stripe";
+import { handleWebhookEvent } from "../stripe/checkout";
+
+// Global Socket.IO instance for emitting events from routers
+export let io: SocketIOServer;
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -30,6 +37,42 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // ─── Socket.IO ────────────────────────────────────────────────────────────
+  io = new SocketIOServer(server, {
+    path: "/api/ws",
+    cors: { origin: "*", methods: ["GET", "POST"] },
+  });
+
+  io.on("connection", (socket) => {
+    console.log(`[WS] Client connected: ${socket.id}`);
+    socket.on("join", (userId: string) => {
+      socket.join(`user:${userId}`);
+      console.log(`[WS] Socket ${socket.id} joined room user:${userId}`);
+    });
+    socket.on("disconnect", () => {
+      console.log(`[WS] Client disconnected: ${socket.id}`);
+    });
+  });
+
+  // ─── Stripe Webhook (raw body BEFORE json parser) ─────────────────────────
+  app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+    const sig = req.headers["stripe-signature"] as string;
+    try {
+      const stripe = new Stripe(ENV.stripeSecretKey, { apiVersion: "2026-02-25.clover" });
+      const event = stripe.webhooks.constructEvent(req.body, sig, ENV.stripeWebhookSecret);
+      if (event.id.startsWith("evt_test_")) {
+        console.log("[Webhook] Test event detected, returning verification response");
+        return res.json({ verified: true });
+      }
+      await handleWebhookEvent(event);
+      res.json({ received: true });
+    } catch (err: any) {
+      console.error(`[Webhook] Error: ${err.message}`);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  });
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

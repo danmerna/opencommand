@@ -29,6 +29,7 @@ import {
   getAuditLogByCompanyId, createAuditLogEntry,
 } from "./db";
 import { nanoid } from "nanoid";
+import { PRODUCTS, type ProductKey } from "./stripe/products";
 
 // ─── Companies Router ────────────────────────────────────────────────────────
 const companiesRouter = router({
@@ -579,6 +580,41 @@ const aiCeoRouter = router({
 });
 
 // ─── App Router ──────────────────────────────────────────────────────────────
+// ─── Stripe Payments Router ──────────────────────────────────────────────────
+const paymentsRouter = router({
+  checkout: protectedProcedure
+    .input(z.object({
+      productKey: z.string().min(1),
+      blueprintId: z.number().optional(),
+      listingId: z.number().optional(),
+      origin: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { createCheckoutSession } = await import("./stripe/checkout");
+      const url = await createCheckoutSession({
+        productKey: input.productKey as ProductKey,
+        userId: ctx.user.id,
+        userEmail: ctx.user.email ?? "",
+        userName: ctx.user.name ?? "",
+        origin: input.origin,
+        blueprintId: input.blueprintId,
+        listingId: input.listingId,
+      });
+      return { url };
+    }),
+  products: publicProcedure.query(() => {
+    return Object.entries(PRODUCTS).map(([key, p]) => ({
+      key,
+      name: p.name,
+      description: p.description,
+      priceAmount: p.priceAmount,
+      currency: p.currency,
+      type: p.type,
+      tier: p.tier,
+    }));
+  }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -603,6 +639,7 @@ export const appRouter = router({
   integrations: integrationsRouter,
   creators: creatorsRouter,
   aiCeo: aiCeoRouter,
+  payments: paymentsRouter,
 });
 
 export type AppRouter = typeof appRouter;

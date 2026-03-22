@@ -12,6 +12,9 @@ import CreatorProgram from "./pages/CreatorProgram";
 import AICeo from "./pages/AICeo";
 import Blueprints from "./pages/Blueprints";
 import Governance from "./pages/Governance";
+import BlueprintDashboard from "./pages/BlueprintDashboard";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
 import AppLayout from "./components/AppLayout";
 
 function Router() {
@@ -30,11 +33,16 @@ function Router() {
       <Route path="/blueprints">
         <AppLayout><Blueprints /></AppLayout>
       </Route>
+      <Route path="/blueprint-dashboard">
+        <AppLayout><BlueprintDashboard /></AppLayout>
+      </Route>
       <Route path="/governance">
         <AppLayout><Governance /></AppLayout>
       </Route>
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/creator-program" component={CreatorProgram} />
+      <Route path="/payment/success" component={PaymentSuccess} />
+      <Route path="/payment/cancel" component={PaymentCancel} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

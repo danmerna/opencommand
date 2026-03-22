@@ -103,3 +103,27 @@
 - [x] External Tool Registry (Stripe, Shopify, Mailchimp, etc.) — Governance Tools tab
 - [x] Webhook and API Gateway — Governance Webhooks tab
 - [x] Skills Marketplace (individual SKILLS.md files for sale) — Marketplace Skills tab
+
+## v2.1 — Stripe Payments
+- [x] Add Stripe feature via webdev_add_feature
+- [x] Create Stripe checkout session for marketplace agent purchases (Solo-Founder / Enterprise)
+- [x] Create Stripe checkout session for blueprint purchases
+- [x] Stripe webhook handler for payment confirmation
+- [x] Update marketplace UI with real purchase/subscribe buttons wired to Stripe
+- [x] Payment success/cancel pages
+
+## v2.1 — Blueprint Performance Dashboard
+- [x] New BlueprintDashboard page for blueprint creators
+- [x] Deployment count over time chart (Recharts)
+- [x] Average user revenue and ROI metrics
+- [x] PoO-verified performance stats
+- [x] Blueprint review summary and ratings
+- [x] Route and navigation entry
+
+## v2.1 — Real-Time WebSocket Notifications
+- [x] Socket.IO server setup in server/_core/index.ts
+- [x] Emit events on: task completion, inbox item creation, agent status change, heartbeat, PoO receipt generation
+- [x] Client-side Socket.IO connection with auto-reconnect
+- [x] Live notification toast system in AppLayout
+- [x] Real-time data invalidation (auto-refresh queries on WebSocket events)
+- [x] Connection status indicator in sidebar
