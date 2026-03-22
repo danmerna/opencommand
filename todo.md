@@ -127,3 +127,36 @@
 - [x] Live notification toast system in AppLayout
 - [x] Real-time data invalidation (auto-refresh queries on WebSocket events)
 - [x] Connection status indicator in sidebar
+
+## v3.0 — Self-Contextualizing Integration Engine
+
+### Database & Schema
+- [x] tool_categories table (8 core categories: CRM, Email Marketing, Analytics, Project Mgmt, Payments, Communication, Personal Email, E-commerce)
+- [x] tool_providers table (specific tools: HubSpot, Salesforce, Mailchimp, etc.)
+- [x] user_connections table (which tools each user has connected, OAuth tokens)
+- [x] abstraction_mappings table (category actions → provider-specific API calls)
+- [x] context_objects table (structured context assembled per request)
+
+### Backend — Integration Hub
+- [x] Integration Hub router: list categories, list providers, connect/disconnect tools
+- [x] Tool Abstraction Layer: abstract category actions mapped to provider-specific API calls
+- [x] Context Routing Engine: request → infer relevant categories → gather data → assemble context object
+- [x] Self-contextualization pipeline: Interpret → Gather → Contextualize (3-step before Socratic questions)
+
+### Frontend — Integration Hub Page
+- [x] Integration Hub page with 8 category cards showing connected/available tools
+- [x] Tool connection flow with simulated OAuth
+- [x] Connected tools dashboard showing status, last sync, data available
+- [x] Category detail view showing abstract actions and mapped providers
+
+### Upgraded Socratic Intent Engine
+- [x] 3-step self-contextualization before asking questions (Interpret → Gather → Contextualize)
+- [x] Context object display panel showing live data pulled from connected tools
+- [x] Before/After comparison showing cold-start vs self-contextualized questions
+- [x] Context-aware clarifying questions that reference actual user data
+
+### Marketplace Portability
+- [x] Compatibility Checker: verify buyer has required tool categories before purchase
+- [x] Agent/Blueprint required categories display on marketplace listings
+- [x] Portability badge on marketplace items showing cross-stack compatibility
+- [x] Missing category prompt: guide buyer to connect required tools before activation

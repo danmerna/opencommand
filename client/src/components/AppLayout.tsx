@@ -5,7 +5,7 @@ import { Link, useLocation } from "wouter";
 import { ReactNode, useState, useEffect, useRef } from "react";
 import {
   LayoutDashboard, Cpu, ShoppingBag, Users, Bot, Menu, X, LogOut, ChevronRight,
-  FileStack, Shield, BarChart3, Wifi, WifiOff
+  FileStack, Shield, BarChart3, Wifi, WifiOff, Plug, CheckSquare
 } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ const navItems = [
   { href: "/blueprints", label: "Blueprints", icon: FileStack, desc: "ZHC · Deploy · Sell" },
   { href: "/governance", label: "Governance", icon: Shield, desc: "Gates · Audit · Tools" },
   { href: "/blueprint-dashboard", label: "BP Analytics", icon: BarChart3, desc: "Revenue · ROI · Reviews" },
+  { href: "/integration-hub", label: "Integration Hub", icon: Plug, desc: "Tools · Abstraction" },
+  { href: "/compatibility", label: "Compatibility", icon: CheckSquare, desc: "Check · Portability" },
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag, desc: "Agents · Blueprints" },
   { href: "/creator-program", label: "Creators", icon: Users, desc: "Floor + Flow" },
 ];

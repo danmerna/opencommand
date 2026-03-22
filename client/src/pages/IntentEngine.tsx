@@ -1,10 +1,15 @@
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { Send, Zap, Play, FileText, Clock, ChevronRight, RotateCcw, Cpu } from "lucide-react";
+import {
+  Send, Zap, Play, FileText, Clock, ChevronRight, RotateCcw, Cpu,
+  Layers, ArrowRight, CheckCircle2, AlertTriangle, Globe, Plug, Loader2,
+  Brain, Eye, Sparkles, Database,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Streamdown } from "streamdown";
 
@@ -16,6 +21,8 @@ type IntentObject = {
   estimatedHours: number;
 };
 
+type ContextPhase = "idle" | "interpreting" | "gathering" | "contextualizing" | "ready";
+
 export default function IntentEngine() {
   const { isAuthenticated } = useAuth();
   const [mode, setMode] = useState<"socratic" | "tasks">("socratic");
@@ -23,20 +30,27 @@ export default function IntentEngine() {
   const [input, setInput] = useState("");
   const [intentObject, setIntentObject] = useState<IntentObject | null>(null);
   const [isThinking, setIsThinking] = useState(false);
+  const [contextPhase, setContextPhase] = useState<ContextPhase>("idle");
+  const [contextData, setContextData] = useState<any>(null);
+  const [contextId, setContextId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Task creation state
   const [taskTitle, setTaskTitle] = useState("");
-  const [taskDesc, setTaskDesc] = useState("");
   const [taskRouting, setTaskRouting] = useState<"ai" | "human" | "hybrid">("ai");
   const [taskPriority, setTaskPriority] = useState<"low" | "medium" | "high" | "critical">("medium");
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
   const utils = trpc.useUtils();
   const tasksQ = trpc.tasks.list.useQuery(undefined, { enabled: isAuthenticated });
-  const agentsQ = trpc.agents.list.useQuery(undefined, { enabled: isAuthenticated });
+  const connectionsQ = trpc.hub.connections.useQuery(undefined, { enabled: isAuthenticated });
+  const categoriesQ = trpc.hub.categories.useQuery();
 
   const socratiqueQ = trpc.aiCeo.socratiqueQuestion.useMutation();
+  const interpretMut = trpc.context.interpret.useMutation();
+  const gatherMut = trpc.context.gather.useMutation();
+  const contextualizeMut = trpc.context.contextualize.useMutation();
+
   const createTask = trpc.tasks.create.useMutation({ onSuccess: () => { utils.tasks.list.invalidate(); toast.success("Task created"); } });
   const generatePrompt = trpc.tasks.generatePrompt.useMutation({ onSuccess: () => { utils.tasks.list.invalidate(); toast.success("Prompt generated"); } });
   const executeTask = trpc.tasks.executeTask.useMutation({
@@ -52,6 +66,15 @@ export default function IntentEngine() {
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
+  const connections = connectionsQ.data ?? [];
+  const categories = categoriesQ.data ?? [];
+  const connectedCount = connections.filter(c => c.status === "connected").length;
+
+  const connectedCategories = useMemo(() => {
+    const connCatIds = new Set(connections.filter(c => c.status === "connected").map(c => c.categoryId));
+    return categories.filter(c => connCatIds.has(c.id));
+  }, [connections, categories]);
+
   const sendMessage = async () => {
     if (!input.trim() || isThinking) return;
     const userMsg: Message = { role: "user", content: input.trim() };
@@ -59,15 +82,43 @@ export default function IntentEngine() {
     setMessages(newMessages);
     setInput("");
     setIsThinking(true);
+
     try {
-      const result = await socratiqueQ.mutateAsync({ userInput: userMsg.content, conversationHistory: messages });
+      // Step 1: INTERPRET — LLM analyzes the request
+      setContextPhase("interpreting");
+      const interpretResult = await interpretMut.mutateAsync({ requestText: userMsg.content });
+      setContextId(interpretResult.contextId);
+
+      // Step 2: GATHER — Pull live state from connected tools
+      setContextPhase("gathering");
+      const gatherResult = await gatherMut.mutateAsync({ contextId: interpretResult.contextId });
+
+      // Step 3: CONTEXTUALIZE — Enrich with real data
+      setContextPhase("contextualizing");
+      const contextResult = await contextualizeMut.mutateAsync({ contextId: interpretResult.contextId });
+      setContextData(contextResult);
+      setContextPhase("ready");
+
+      // Now run the Socratic engine with enriched context
+      const result = await socratiqueQ.mutateAsync({
+        userInput: `[CONTEXT-ENRICHED] ${userMsg.content}\n\n[Connected Tools: ${connectedCategories.map(c => c.name).join(", ") || "None"}]\n[Context Confidence: ${contextResult.confidence}]\n[Inferred Categories: ${(interpretResult as any).inferredCategories?.join(", ") || "general"}]`,
+        conversationHistory: messages,
+      });
       setMessages([...newMessages, { role: "assistant", content: result.response }]);
       if (result.intentObject) {
         setIntentObject(result.intentObject as IntentObject);
-        toast.success("Intent object structured — ready to deploy");
+        toast.success("Intent object structured — context-enriched and ready to deploy");
       }
     } catch (e) {
-      toast.error("ARIA is unavailable. Try again.");
+      // Fallback to basic Socratic without context
+      try {
+        const result = await socratiqueQ.mutateAsync({ userInput: userMsg.content, conversationHistory: messages });
+        setMessages([...newMessages, { role: "assistant", content: result.response }]);
+        if (result.intentObject) setIntentObject(result.intentObject as IntentObject);
+      } catch {
+        toast.error("ARIA is unavailable. Try again.");
+      }
+      setContextPhase("idle");
     } finally {
       setIsThinking(false);
     }
@@ -88,6 +139,14 @@ export default function IntentEngine() {
   const tasks = tasksQ.data ?? [];
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
 
+  const PHASE_LABELS: Record<ContextPhase, { label: string; icon: React.ReactNode; color: string }> = {
+    idle: { label: "AWAITING INPUT", icon: <Brain className="w-3 h-3" />, color: "text-zinc-500" },
+    interpreting: { label: "INTERPRETING INTENT", icon: <Eye className="w-3 h-3 animate-pulse" />, color: "text-yellow-500" },
+    gathering: { label: "GATHERING CONTEXT", icon: <Database className="w-3 h-3 animate-pulse" />, color: "text-blue-400" },
+    contextualizing: { label: "CONTEXTUALIZING", icon: <Sparkles className="w-3 h-3 animate-pulse" />, color: "text-purple-400" },
+    ready: { label: "CONTEXT READY", icon: <CheckCircle2 className="w-3 h-3" />, color: "text-green-500" },
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -95,7 +154,36 @@ export default function IntentEngine() {
         <div className="section-label mb-2">OPENCOMMAND</div>
         <div className="red-line mb-4" />
         <h1 className="text-display text-6xl text-foreground">INTENT ENGINE</h1>
-        <p className="text-muted-foreground text-sm mt-2 font-mono">SOCRATIC QUESTIONING · STRUCTURED INTENT · AUTONOMOUS EXECUTION</p>
+        <p className="text-muted-foreground text-sm mt-2 font-mono">SELF-CONTEXTUALIZING · SOCRATIC QUESTIONING · AUTONOMOUS EXECUTION</p>
+
+        {/* Context Pipeline Status Bar */}
+        <div className="mt-4 flex items-center gap-4 p-3 bg-zinc-950 border border-zinc-800 rounded">
+          <div className="flex items-center gap-6">
+            {(["interpreting", "gathering", "contextualizing"] as const).map((phase, i) => {
+              const isActive = contextPhase === phase;
+              const isDone = (["interpreting", "gathering", "contextualizing"].indexOf(contextPhase) > i) || contextPhase === "ready";
+              return (
+                <div key={phase} className="flex items-center gap-2">
+                  {i > 0 && <ArrowRight className={`w-3 h-3 ${isDone ? "text-green-500" : "text-zinc-700"}`} />}
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold uppercase ${isActive ? "bg-zinc-800 " + PHASE_LABELS[phase].color : isDone ? "text-green-500" : "text-zinc-600"}`}>
+                    {isDone && !isActive ? <CheckCircle2 className="w-3 h-3" /> : PHASE_LABELS[phase].icon}
+                    {phase === "interpreting" ? "INTERPRET" : phase === "gathering" ? "GATHER" : "CONTEXTUALIZE"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="ml-auto flex items-center gap-3">
+            <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-[10px]">
+              <Plug className="w-3 h-3 mr-1" /> {connectedCount} TOOLS
+            </Badge>
+            {contextData?.confidence && (
+              <Badge variant="outline" className={`border-zinc-700 text-[10px] ${contextData.confidence > 0.7 ? "text-green-400" : contextData.confidence > 0.4 ? "text-yellow-400" : "text-red-400"}`}>
+                {(contextData.confidence * 100).toFixed(0)}% CONFIDENCE
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Mode Toggle */}
@@ -127,11 +215,13 @@ export default function IntentEngine() {
                     <span className="font-condensed font-black text-foreground text-xs">AI</span>
                   </div>
                   <div>
-                    <div className="font-condensed font-bold text-sm text-foreground">ARIA — SOCRATIC ENGINE</div>
-                    <div className="section-label">INTENT STRUCTURING MODE</div>
+                    <div className="font-condensed font-bold text-sm text-foreground">ARIA — SELF-CONTEXTUALIZING ENGINE</div>
+                    <div className={`section-label flex items-center gap-1 ${PHASE_LABELS[contextPhase].color}`}>
+                      {PHASE_LABELS[contextPhase].icon} {PHASE_LABELS[contextPhase].label}
+                    </div>
                   </div>
                 </div>
-                <button onClick={() => { setMessages([]); setIntentObject(null); }} className="text-muted-foreground hover:text-foreground transition-colors">
+                <button onClick={() => { setMessages([]); setIntentObject(null); setContextPhase("idle"); setContextData(null); setContextId(null); }} className="text-muted-foreground hover:text-foreground transition-colors">
                   <RotateCcw size={14} />
                 </button>
               </div>
@@ -142,9 +232,9 @@ export default function IntentEngine() {
                   <div className="text-center py-12">
                     <Cpu size={32} className="text-muted-foreground mx-auto mb-4" />
                     <div className="font-condensed font-bold text-lg text-muted-foreground mb-2">DESCRIBE YOUR GOAL</div>
-                    <p className="text-muted-foreground text-sm max-w-sm mx-auto">ARIA will ask clarifying questions to transform your vague idea into a precise, executable intent object.</p>
+                    <p className="text-muted-foreground text-sm max-w-sm mx-auto">ARIA will interpret your intent, gather context from {connectedCount} connected tools, and produce a precision-enriched execution plan.</p>
                     <div className="mt-6 space-y-2">
-                      {["I want to grow my email list", "Help me close more sales", "Automate my content creation"].map(s => (
+                      {["I want to grow my email list by 50% this quarter", "Help me close the 3 stalled deals in my pipeline", "Automate my weekly content calendar across all channels"].map(s => (
                         <button key={s} onClick={() => setInput(s)} className="block w-full text-left px-4 py-2 border border-border text-muted-foreground hover:border-accent hover:text-foreground font-mono text-xs transition-colors">
                           <ChevronRight size={10} className="inline mr-2" />{s}
                         </button>
@@ -167,11 +257,22 @@ export default function IntentEngine() {
                 ))}
                 {isThinking && (
                   <div className="flex justify-start">
-                    <div className="bg-secondary border border-border p-3 flex items-center gap-2">
-                      <div className="flex gap-1">
-                        {[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 bg-accent animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
+                    <div className="bg-secondary border border-border p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex gap-1">
+                          {[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 bg-accent animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
+                        </div>
+                        <span className={`section-label ${PHASE_LABELS[contextPhase].color}`}>{PHASE_LABELS[contextPhase].label}</span>
                       </div>
-                      <span className="section-label">ARIA THINKING...</span>
+                      {contextPhase === "gathering" && connectedCategories.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {connectedCategories.map(c => (
+                            <Badge key={c.id} variant="outline" className="border-zinc-700 text-zinc-400 text-[9px] px-1.5 py-0">
+                              <Globe className="w-2 h-2 mr-0.5" />{c.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -185,7 +286,7 @@ export default function IntentEngine() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                    placeholder="Describe your goal or answer ARIA's question..."
+                    placeholder="Describe your goal — ARIA will self-contextualize from your connected tools..."
                     className="flex-1 bg-input border-border text-foreground font-sans text-sm resize-none"
                     rows={2}
                   />
@@ -197,8 +298,50 @@ export default function IntentEngine() {
             </div>
           </div>
 
-          {/* Intent Object Panel */}
+          {/* Right Panel: Intent Object + Context Data */}
           <div className="space-y-4">
+            {/* Context Object */}
+            {contextData && (
+              <div className="brutal-card p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="section-label flex items-center gap-1">
+                    <Layers className="w-3 h-3 text-red-500" /> CONTEXT OBJECT
+                  </div>
+                  <Badge variant="outline" className={`text-[10px] ${contextData.confidence > 0.7 ? "border-green-800 text-green-400" : "border-yellow-800 text-yellow-400"}`}>
+                    {(contextData.confidence * 100).toFixed(0)}%
+                  </Badge>
+                </div>
+                <div className="red-line-thin" />
+                {contextData.inferredCategories && (
+                  <div>
+                    <div className="section-label mb-1 text-[9px]">INFERRED CATEGORIES</div>
+                    <div className="flex flex-wrap gap-1">
+                      {(contextData.inferredCategories as string[]).map((cat: string) => (
+                        <Badge key={cat} variant="outline" className="border-zinc-700 text-zinc-300 text-[10px] px-1.5 py-0">{cat}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {contextData.gatheredData && (
+                  <div>
+                    <div className="section-label mb-1 text-[9px]">GATHERED DATA SOURCES</div>
+                    <div className="text-xs text-zinc-400 font-mono bg-zinc-950 border border-zinc-800 p-2 rounded max-h-24 overflow-y-auto">
+                      {typeof contextData.gatheredData === "string" ? contextData.gatheredData : JSON.stringify(contextData.gatheredData, null, 2)}
+                    </div>
+                  </div>
+                )}
+                {contextData.enrichedParams && (
+                  <div>
+                    <div className="section-label mb-1 text-[9px]">ENRICHED PARAMETERS</div>
+                    <div className="text-xs text-zinc-400 font-mono bg-zinc-950 border border-zinc-800 p-2 rounded max-h-24 overflow-y-auto">
+                      {typeof contextData.enrichedParams === "string" ? contextData.enrichedParams : JSON.stringify(contextData.enrichedParams, null, 2)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Intent Object */}
             <div className="section-label">STRUCTURED INTENT OBJECT</div>
             {intentObject ? (
               <div className="brutal-border-red p-5 space-y-4">
@@ -222,7 +365,7 @@ export default function IntentEngine() {
                   </div>
                 </div>
                 <div>
-                  <div className="section-label mb-2">SUCCESS CRITERIA</div>
+                  <div className="section-label mb-1">SUCCESS CRITERIA</div>
                   <ul className="space-y-1">
                     {intentObject.successCriteria.map((c, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
@@ -246,7 +389,24 @@ export default function IntentEngine() {
               <div className="brutal-card p-6 text-center">
                 <FileText size={24} className="text-muted-foreground mx-auto mb-3" />
                 <div className="font-condensed font-bold text-sm text-muted-foreground">AWAITING INTENT</div>
-                <p className="text-muted-foreground text-xs mt-2">Complete the Socratic dialogue to generate a structured intent object.</p>
+                <p className="text-muted-foreground text-xs mt-2">Complete the Socratic dialogue to generate a context-enriched intent object.</p>
+              </div>
+            )}
+
+            {/* Connected Tools Summary */}
+            {connectedCategories.length > 0 && (
+              <div className="brutal-card p-4">
+                <div className="section-label mb-2 flex items-center gap-1">
+                  <Plug className="w-3 h-3" /> ACTIVE CONTEXT SOURCES
+                </div>
+                <div className="space-y-1">
+                  {connectedCategories.map(c => (
+                    <div key={c.id} className="flex items-center gap-2 text-xs">
+                      <CheckCircle2 className="w-3 h-3 text-green-500" />
+                      <span className="text-zinc-300 font-mono uppercase">{c.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -359,7 +519,7 @@ export default function IntentEngine() {
                   </div>
                 )}
 
-                {selectedTask.executionLog && Array.isArray(selectedTask.executionLog) && selectedTask.executionLog.length > 0 && (
+                {selectedTask.executionLog && Array.isArray(selectedTask.executionLog) && (selectedTask.executionLog as string[]).length > 0 && (
                   <div>
                     <div className="section-label mb-2">EXECUTION LOG</div>
                     <div className="space-y-1">
@@ -384,7 +544,7 @@ export default function IntentEngine() {
                       className="border-border text-foreground hover:bg-secondary font-condensed font-bold uppercase text-xs gap-2"
                     >
                       <FileText size={13} />
-                      {generatePrompt.isPending && generatePrompt.variables?.taskId === selectedTask.id ? "GENERATING..." : "GENERATE PROMPT"}
+                      {generatePrompt.isPending ? "GENERATING..." : "GENERATE PROMPT"}
                     </Button>
                   )}
                   {(selectedTask.status === "pending" || selectedTask.status === "in_progress") && (
@@ -394,7 +554,7 @@ export default function IntentEngine() {
                       className="bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase text-xs gap-2 glow-red"
                     >
                       <Play size={13} />
-                      {executeTask.isPending && executeTask.variables?.taskId === selectedTask.id ? "EXECUTING..." : "EXECUTE TASK"}
+                      {executeTask.isPending ? "EXECUTING..." : "EXECUTE TASK"}
                     </Button>
                   )}
                   {selectedTask.status === "completed" && (

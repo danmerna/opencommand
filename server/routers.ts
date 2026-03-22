@@ -27,6 +27,13 @@ import {
   getToolsByCompanyId, createToolRegistryEntry, updateToolRegistryEntry, deleteToolRegistryEntry,
   getWebhooksByCompanyId, createWebhook, updateWebhook, deleteWebhook,
   getAuditLogByCompanyId, createAuditLogEntry,
+  getAllToolCategories, getToolCategoryById, getToolCategoryBySlug, seedToolCategories,
+  getAllToolProviders, getProvidersByCategoryId, getToolProviderById, seedToolProviders,
+  getUserConnectionsByUserId, getUserConnectionsByCategory, createUserConnection, updateUserConnection, disconnectUserConnection,
+  getMappingsByCategoryId, getMappingsByProviderId, getMappingForAction, createAbstractionMapping,
+  getContextObjectsByUserId, getContextObjectById, createContextObject, updateContextObject,
+  getRequiredCategoriesByAgentId, getRequiredCategoriesByBlueprintId, getRequiredCategoriesByListingId,
+  createAgentRequiredCategory, checkUserCompatibility,
 } from "./db";
 import { nanoid } from "nanoid";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
@@ -615,6 +622,267 @@ const paymentsRouter = router({
   }),
 });
 
+// ─── Integration Hub Router ─────────────────────────────────────────────────
+const integrationHubRouter = router({
+  categories: publicProcedure.query(async () => {
+    return getAllToolCategories();
+  }),
+  categoryById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    return getToolCategoryById(input.id);
+  }),
+  providers: publicProcedure.query(async () => {
+    return getAllToolProviders();
+  }),
+  providersByCategory: publicProcedure.input(z.object({ categoryId: z.number() })).query(async ({ input }) => {
+    return getProvidersByCategoryId(input.categoryId);
+  }),
+  providerById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    return getToolProviderById(input.id);
+  }),
+  seedDefaults: protectedProcedure.mutation(async () => {
+    const cats = await seedToolCategories();
+    await seedToolProviders(cats.map(c => ({ id: c.id, slug: c.slug })));
+    return { success: true };
+  }),
+  connections: protectedProcedure.query(async ({ ctx }) => {
+    return getUserConnectionsByUserId(ctx.user.id);
+  }),
+  connectionsByCategory: protectedProcedure.input(z.object({ categoryId: z.number() })).query(async ({ ctx, input }) => {
+    return getUserConnectionsByCategory(ctx.user.id, input.categoryId);
+  }),
+  connect: protectedProcedure.input(z.object({
+    providerId: z.number(),
+    categoryId: z.number(),
+    accountName: z.string().optional(),
+    accountId: z.string().optional(),
+    accessToken: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    await createUserConnection({
+      userId: ctx.user.id,
+      providerId: input.providerId,
+      categoryId: input.categoryId,
+      status: "connected",
+      accountName: input.accountName ?? null,
+      accountId: input.accountId ?? null,
+      accessToken: input.accessToken ?? null,
+      lastSyncAt: new Date(),
+    });
+    return { success: true };
+  }),
+  disconnect: protectedProcedure.input(z.object({ connectionId: z.number() })).mutation(async ({ input }) => {
+    await disconnectUserConnection(input.connectionId);
+    return { success: true };
+  }),
+  updateConnection: protectedProcedure.input(z.object({
+    connectionId: z.number(),
+    status: z.enum(["connected", "disconnected", "error", "expired"]).optional(),
+    accountName: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    await updateUserConnection(input.connectionId, {
+      status: input.status as any,
+      accountName: input.accountName,
+    });
+    return { success: true };
+  }),
+  mappings: publicProcedure.input(z.object({ categoryId: z.number() })).query(async ({ input }) => {
+    return getMappingsByCategoryId(input.categoryId);
+  }),
+  mappingsByProvider: publicProcedure.input(z.object({ providerId: z.number() })).query(async ({ input }) => {
+    return getMappingsByProviderId(input.providerId);
+  }),
+  createMapping: protectedProcedure.input(z.object({
+    categoryId: z.number(),
+    providerId: z.number(),
+    abstractAction: z.string(),
+    apiMethod: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
+    apiEndpoint: z.string(),
+    description: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    await createAbstractionMapping(input as any);
+    return { success: true };
+  }),
+  executeAbstractAction: protectedProcedure.input(z.object({
+    categorySlug: z.string(),
+    action: z.string(),
+    params: z.record(z.string(), z.unknown()).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const category = await getToolCategoryBySlug(input.categorySlug);
+    if (!category) throw new Error("Category not found: " + input.categorySlug);
+    const connections = await getUserConnectionsByCategory(ctx.user.id, category.id);
+    if (connections.length === 0) throw new Error("No connected tool for category: " + category.name);
+    const conn = connections[0];
+    const mapping = await getMappingForAction(category.id, conn.providerId, input.action);
+    if (!mapping) {
+      return { success: true, simulated: true, message: `Simulated ${input.action} on ${category.name} — no API mapping configured yet`, data: { action: input.action, category: category.name, params: input.params } };
+    }
+    return { success: true, simulated: true, message: `Would call ${mapping.apiMethod} ${mapping.apiEndpoint}`, mapping: { method: mapping.apiMethod, endpoint: mapping.apiEndpoint } };
+  }),
+});
+
+// ─── Context Engine Router ──────────────────────────────────────────────────
+const contextEngineRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return getContextObjectsByUserId(ctx.user.id);
+  }),
+  getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    return getContextObjectById(input.id);
+  }),
+  interpret: protectedProcedure.input(z.object({
+    requestText: z.string(),
+  })).mutation(async ({ ctx, input }) => {
+    const connections = await getUserConnectionsByUserId(ctx.user.id);
+    const connectedCategories = Array.from(new Set(connections.filter(c => c.status === "connected").map(c => c.categoryId)));
+    const allCategories = await getAllToolCategories();
+    const connectedCatNames = allCategories.filter(c => connectedCategories.includes(c.id)).map(c => c.name);
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: `You are the OpenCommand Self-Contextualizing Engine. The user has these tools connected: ${connectedCatNames.join(", ") || "none"}. Available tool categories: ${allCategories.map(c => c.name).join(", ")}. Analyze the user's request and return a JSON object with: { "domain": string (business domain), "inferredCategories": string[] (relevant category slugs), "insights": string[] (3-5 contextual insights about what data to gather), "contextualizedQuestions": string[] (2-3 smart follow-up questions that reference the user's actual connected tools), "suggestedParameters": object (key parameters extracted from the request) }` },
+        { role: "user", content: input.requestText },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "context_interpretation",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              domain: { type: "string" },
+              inferredCategories: { type: "array", items: { type: "string" } },
+              insights: { type: "array", items: { type: "string" } },
+              contextualizedQuestions: { type: "array", items: { type: "string" } },
+              suggestedParameters: { type: "object", additionalProperties: true },
+            },
+            required: ["domain", "inferredCategories", "insights", "contextualizedQuestions", "suggestedParameters"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+    const parsed = JSON.parse(response.choices[0].message.content as string);
+    const result = await createContextObject({
+      userId: ctx.user.id,
+      requestText: input.requestText,
+      inferredDomain: parsed.domain,
+      inferredCategories: parsed.inferredCategories,
+      inferredInsights: parsed.insights,
+      contextualizedQuestions: parsed.contextualizedQuestions,
+      suggestedParameters: parsed.suggestedParameters,
+      status: "gathering",
+    });
+    return { ...parsed, contextId: Number((result as any)[0]?.insertId ?? 0) };
+  }),
+  gather: protectedProcedure.input(z.object({
+    contextId: z.number(),
+    answers: z.record(z.string(), z.string()).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const ctxObj = await getContextObjectById(input.contextId);
+    if (!ctxObj) throw new Error("Context object not found");
+    const connections = await getUserConnectionsByUserId(ctx.user.id);
+    const categories = await getAllToolCategories();
+    const connectedTools = connections.filter(c => c.status === "connected").map(c => {
+      const cat = categories.find(cat => cat.id === c.categoryId);
+      return { provider: c.accountName, category: cat?.name, categorySlug: cat?.slug };
+    });
+    const liveState: Record<string, unknown> = { connectedTools, userAnswers: input.answers ?? {} };
+    const recentHistory = await getContextObjectsByUserId(ctx.user.id, 5);
+    await updateContextObject(input.contextId, {
+      liveState,
+      recentHistory: recentHistory.map(r => ({ request: r.requestText, domain: r.inferredDomain, date: r.createdAt })) as any,
+      status: "contextualizing",
+    });
+    return { success: true, liveState, historyCount: recentHistory.length };
+  }),
+  contextualize: protectedProcedure.input(z.object({
+    contextId: z.number(),
+  })).mutation(async ({ ctx, input }) => {
+    const ctxObj = await getContextObjectById(input.contextId);
+    if (!ctxObj) throw new Error("Context object not found");
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: `You are the OpenCommand Self-Contextualizing Engine in the final Contextualize phase. Given the full context object below, produce a final enriched context with actionable parameters. Return JSON: { "enrichedParameters": object, "executionPlan": string[], "confidenceScore": number (0-100), "missingData": string[] }` },
+        { role: "user", content: JSON.stringify({
+          request: ctxObj.requestText,
+          domain: ctxObj.inferredDomain,
+          categories: ctxObj.inferredCategories,
+          insights: ctxObj.inferredInsights,
+          liveState: ctxObj.liveState,
+          history: ctxObj.recentHistory,
+          suggestedParams: ctxObj.suggestedParameters,
+        }) },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "contextualized_result",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              enrichedParameters: { type: "object", additionalProperties: true },
+              executionPlan: { type: "array", items: { type: "string" } },
+              confidenceScore: { type: "number" },
+              missingData: { type: "array", items: { type: "string" } },
+            },
+            required: ["enrichedParameters", "executionPlan", "confidenceScore", "missingData"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+    const parsed = JSON.parse(response.choices[0].message.content as string);
+    await updateContextObject(input.contextId, {
+      suggestedParameters: { ...(ctxObj.suggestedParameters as any ?? {}), ...parsed.enrichedParameters },
+      status: "ready",
+    });
+    return { ...parsed, contextId: input.contextId, status: "ready" };
+  }),
+});
+
+// ─── Compatibility Checker Router ───────────────────────────────────────────
+const compatibilityRouter = router({
+  checkForAgent: protectedProcedure.input(z.object({ agentId: z.number() })).query(async ({ ctx, input }) => {
+    const required = await getRequiredCategoriesByAgentId(input.agentId);
+    const requiredIds = required.map(r => r.categoryId);
+    if (requiredIds.length === 0) return { compatible: true, missing: [], connected: [], requiredCategories: [] };
+    const result = await checkUserCompatibility(ctx.user.id, requiredIds);
+    const allCats = await getAllToolCategories();
+    const missingNames = allCats.filter(c => result.missing.includes(c.id));
+    const requiredNames = allCats.filter(c => requiredIds.includes(c.id));
+    return { ...result, missingCategories: missingNames, requiredCategories: requiredNames };
+  }),
+  checkForBlueprint: protectedProcedure.input(z.object({ blueprintId: z.number() })).query(async ({ ctx, input }) => {
+    const required = await getRequiredCategoriesByBlueprintId(input.blueprintId);
+    const requiredIds = required.map(r => r.categoryId);
+    if (requiredIds.length === 0) return { compatible: true, missing: [], connected: [], requiredCategories: [] };
+    const result = await checkUserCompatibility(ctx.user.id, requiredIds);
+    const allCats = await getAllToolCategories();
+    const missingNames = allCats.filter(c => result.missing.includes(c.id));
+    const requiredNames = allCats.filter(c => requiredIds.includes(c.id));
+    return { ...result, missingCategories: missingNames, requiredCategories: requiredNames };
+  }),
+  checkForListing: protectedProcedure.input(z.object({ listingId: z.number() })).query(async ({ ctx, input }) => {
+    const required = await getRequiredCategoriesByListingId(input.listingId);
+    const requiredIds = required.map(r => r.categoryId);
+    if (requiredIds.length === 0) return { compatible: true, missing: [], connected: [], requiredCategories: [] };
+    const result = await checkUserCompatibility(ctx.user.id, requiredIds);
+    const allCats = await getAllToolCategories();
+    const missingNames = allCats.filter(c => result.missing.includes(c.id));
+    const requiredNames = allCats.filter(c => requiredIds.includes(c.id));
+    return { ...result, missingCategories: missingNames, requiredCategories: requiredNames };
+  }),
+  addRequirement: protectedProcedure.input(z.object({
+    agentId: z.number().optional(),
+    blueprintId: z.number().optional(),
+    listingId: z.number().optional(),
+    categoryId: z.number(),
+    isRequired: z.boolean().default(true),
+  })).mutation(async ({ input }) => {
+    await createAgentRequiredCategory(input as any);
+    return { success: true };
+  }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -640,6 +908,9 @@ export const appRouter = router({
   creators: creatorsRouter,
   aiCeo: aiCeoRouter,
   payments: paymentsRouter,
+  hub: integrationHubRouter,
+  context: contextEngineRouter,
+  compatibility: compatibilityRouter,
 });
 
 export type AppRouter = typeof appRouter;

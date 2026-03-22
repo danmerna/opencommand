@@ -15,6 +15,8 @@ import Governance from "./pages/Governance";
 import BlueprintDashboard from "./pages/BlueprintDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
+import IntegrationHub from "./pages/IntegrationHub";
+import CompatibilityChecker from "./pages/CompatibilityChecker";
 import AppLayout from "./components/AppLayout";
 
 function Router() {
@@ -38,6 +40,12 @@ function Router() {
       </Route>
       <Route path="/governance">
         <AppLayout><Governance /></AppLayout>
+      </Route>
+      <Route path="/integration-hub">
+        <AppLayout><IntegrationHub /></AppLayout>
+      </Route>
+      <Route path="/compatibility">
+        <AppLayout><CompatibilityChecker /></AppLayout>
       </Route>
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/creator-program" component={CreatorProgram} />

@@ -435,3 +435,190 @@ export async function createAuditLogEntry(data: InsertAuditLogEntry) {
   const db = await getDb(); if (!db) throw new Error("Database not available");
   return db.insert(auditLog).values(data);
 }
+
+// ─── Tool Categories ────────────────────────────────────────────────────────
+import {
+  toolCategories, InsertToolCategory,
+  toolProviders, InsertToolProvider,
+  userConnections, InsertUserConnection,
+  abstractionMappings, InsertAbstractionMapping,
+  contextObjects, InsertContextObject,
+  agentRequiredCategories, InsertAgentRequiredCategory,
+} from "../drizzle/schema";
+
+export async function getAllToolCategories() {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(toolCategories).orderBy(toolCategories.name);
+}
+export async function getToolCategoryById(id: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(toolCategories).where(eq(toolCategories.id, id)).limit(1);
+  return r[0];
+}
+export async function getToolCategoryBySlug(slug: string) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(toolCategories).where(eq(toolCategories.slug, slug)).limit(1);
+  return r[0];
+}
+export async function createToolCategory(data: InsertToolCategory) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(toolCategories).values(data);
+}
+export async function seedToolCategories() {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(toolCategories);
+  if (existing.length > 0) return existing;
+  const categories: InsertToolCategory[] = [
+    { slug: "crm", name: "CRM", description: "Customer Relationship Management — manage contacts, deals, and pipelines", icon: "Users", abstractActions: JSON.parse('["read_pipeline","get_deals","create_contact","update_deal_stage","search_contacts","get_deal_value"]') as any },
+    { slug: "email_marketing", name: "Email Marketing", description: "Create campaigns, manage subscribers, and track engagement", icon: "Mail", abstractActions: JSON.parse('["get_campaign_stats","create_campaign","add_subscriber","get_open_rates","get_click_rates","list_segments"]') as any },
+    { slug: "analytics", name: "Analytics", description: "Web and product analytics — traffic, conversions, user behavior", icon: "BarChart3", abstractActions: JSON.parse('["get_traffic","get_top_pages","get_conversions","get_referral_sources","get_bounce_rate","get_user_segments"]') as any },
+    { slug: "project_mgmt", name: "Project Management", description: "Task tracking, project planning, and team workload management", icon: "Kanban", abstractActions: JSON.parse('["create_task","get_active_projects","update_status","get_team_workload","list_sprints","get_overdue_tasks"]') as any },
+    { slug: "payments", name: "Payments", description: "Payment processing, subscriptions, and revenue tracking", icon: "CreditCard", abstractActions: JSON.parse('["get_revenue","get_subscriptions","get_churn_rate","get_mrr","get_recent_transactions","get_failed_payments"]') as any },
+    { slug: "communication", name: "Communication", description: "Team messaging, channels, and notifications", icon: "MessageSquare", abstractActions: JSON.parse('["send_message","get_channel_history","create_channel","list_channels","search_messages","get_unread_count"]') as any },
+    { slug: "personal_email", name: "Personal Email", description: "Email inbox management — send, search, and organize", icon: "Inbox", abstractActions: JSON.parse('["send_email","search_inbox","get_recent_threads","get_unread","create_draft","add_label"]') as any },
+    { slug: "ecommerce", name: "E-commerce", description: "Online store management — orders, inventory, and products", icon: "ShoppingCart", abstractActions: JSON.parse('["get_orders","get_inventory","get_top_products","update_listing","get_revenue_by_product","get_abandoned_carts"]') as any },
+  ];
+  await db.insert(toolCategories).values(categories);
+  return db.select().from(toolCategories);
+}
+
+// ─── Tool Providers ─────────────────────────────────────────────────────────
+export async function getProvidersByCategoryId(categoryId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(toolProviders).where(eq(toolProviders.categoryId, categoryId));
+}
+export async function getAllToolProviders() {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(toolProviders).orderBy(toolProviders.name);
+}
+export async function getToolProviderById(id: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(toolProviders).where(eq(toolProviders.id, id)).limit(1);
+  return r[0];
+}
+export async function createToolProvider(data: InsertToolProvider) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(toolProviders).values(data);
+}
+export async function seedToolProviders(categories: { id: number; slug: string }[]) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(toolProviders);
+  if (existing.length > 0) return existing;
+  const catMap = Object.fromEntries(categories.map(c => [c.slug, c.id]));
+  const providers: InsertToolProvider[] = [
+    { categoryId: catMap["crm"], slug: "hubspot", name: "HubSpot", description: "All-in-one CRM platform", authType: "oauth2", baseApiUrl: "https://api.hubapi.com" },
+    { categoryId: catMap["crm"], slug: "salesforce", name: "Salesforce", description: "Enterprise CRM leader", authType: "oauth2", baseApiUrl: "https://login.salesforce.com" },
+    { categoryId: catMap["crm"], slug: "pipedrive", name: "Pipedrive", description: "Sales-focused CRM", authType: "oauth2", baseApiUrl: "https://api.pipedrive.com" },
+    { categoryId: catMap["crm"], slug: "close", name: "Close", description: "CRM built for sales teams", authType: "api_key", baseApiUrl: "https://api.close.com" },
+    { categoryId: catMap["email_marketing"], slug: "mailchimp", name: "Mailchimp", description: "Email marketing platform", authType: "oauth2", baseApiUrl: "https://server.api.mailchimp.com" },
+    { categoryId: catMap["email_marketing"], slug: "klaviyo", name: "Klaviyo", description: "E-commerce email marketing", authType: "api_key", baseApiUrl: "https://a.klaviyo.com" },
+    { categoryId: catMap["email_marketing"], slug: "convertkit", name: "ConvertKit", description: "Creator email marketing", authType: "api_key", baseApiUrl: "https://api.convertkit.com" },
+    { categoryId: catMap["analytics"], slug: "google_analytics", name: "Google Analytics", description: "Web analytics by Google", authType: "oauth2", baseApiUrl: "https://analyticsdata.googleapis.com" },
+    { categoryId: catMap["analytics"], slug: "mixpanel", name: "Mixpanel", description: "Product analytics", authType: "api_key", baseApiUrl: "https://mixpanel.com/api" },
+    { categoryId: catMap["analytics"], slug: "amplitude", name: "Amplitude", description: "Digital analytics platform", authType: "api_key", baseApiUrl: "https://amplitude.com/api" },
+    { categoryId: catMap["project_mgmt"], slug: "notion", name: "Notion", description: "All-in-one workspace", authType: "oauth2", baseApiUrl: "https://api.notion.com" },
+    { categoryId: catMap["project_mgmt"], slug: "asana", name: "Asana", description: "Work management platform", authType: "oauth2", baseApiUrl: "https://app.asana.com/api" },
+    { categoryId: catMap["project_mgmt"], slug: "linear", name: "Linear", description: "Issue tracking for teams", authType: "oauth2", baseApiUrl: "https://api.linear.app" },
+    { categoryId: catMap["payments"], slug: "stripe", name: "Stripe", description: "Payment infrastructure", authType: "api_key", baseApiUrl: "https://api.stripe.com" },
+    { categoryId: catMap["payments"], slug: "square", name: "Square", description: "Commerce platform", authType: "oauth2", baseApiUrl: "https://connect.squareup.com" },
+    { categoryId: catMap["communication"], slug: "slack", name: "Slack", description: "Team messaging platform", authType: "oauth2", baseApiUrl: "https://slack.com/api" },
+    { categoryId: catMap["communication"], slug: "discord", name: "Discord", description: "Community platform", authType: "oauth2", baseApiUrl: "https://discord.com/api" },
+    { categoryId: catMap["personal_email"], slug: "gmail", name: "Gmail", description: "Google email service", authType: "oauth2", baseApiUrl: "https://gmail.googleapis.com" },
+    { categoryId: catMap["personal_email"], slug: "outlook", name: "Outlook", description: "Microsoft email service", authType: "oauth2", baseApiUrl: "https://graph.microsoft.com" },
+    { categoryId: catMap["ecommerce"], slug: "shopify", name: "Shopify", description: "E-commerce platform", authType: "oauth2", baseApiUrl: "https://admin.shopify.com" },
+    { categoryId: catMap["ecommerce"], slug: "woocommerce", name: "WooCommerce", description: "WordPress e-commerce", authType: "api_key", baseApiUrl: "https://woocommerce.com/wp-json" },
+  ];
+  await db.insert(toolProviders).values(providers);
+  return db.select().from(toolProviders);
+}
+
+// ─── User Connections ───────────────────────────────────────────────────────
+export async function getUserConnectionsByUserId(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(userConnections).where(eq(userConnections.userId, userId)).orderBy(desc(userConnections.createdAt));
+}
+export async function getUserConnectionsByCategory(userId: number, categoryId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(userConnections).where(and(eq(userConnections.userId, userId), eq(userConnections.categoryId, categoryId), eq(userConnections.status, "connected")));
+}
+export async function createUserConnection(data: InsertUserConnection) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(userConnections).values(data);
+}
+export async function updateUserConnection(id: number, data: Partial<InsertUserConnection>) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(userConnections).set({ ...data, updatedAt: new Date() }).where(eq(userConnections.id, id));
+}
+export async function disconnectUserConnection(id: number) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(userConnections).set({ status: "disconnected", updatedAt: new Date() }).where(eq(userConnections.id, id));
+}
+
+// ─── Abstraction Mappings ───────────────────────────────────────────────────
+export async function getMappingsByCategoryId(categoryId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(abstractionMappings).where(eq(abstractionMappings.categoryId, categoryId));
+}
+export async function getMappingsByProviderId(providerId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(abstractionMappings).where(eq(abstractionMappings.providerId, providerId));
+}
+export async function getMappingForAction(categoryId: number, providerId: number, action: string) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(abstractionMappings).where(and(
+    eq(abstractionMappings.categoryId, categoryId),
+    eq(abstractionMappings.providerId, providerId),
+    eq(abstractionMappings.abstractAction, action),
+    eq(abstractionMappings.isActive, true),
+  )).limit(1);
+  return r[0];
+}
+export async function createAbstractionMapping(data: InsertAbstractionMapping) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(abstractionMappings).values(data);
+}
+
+// ─── Context Objects ────────────────────────────────────────────────────────
+export async function getContextObjectsByUserId(userId: number, limit = 20) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(contextObjects).where(eq(contextObjects.userId, userId)).orderBy(desc(contextObjects.createdAt)).limit(limit);
+}
+export async function getContextObjectById(id: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(contextObjects).where(eq(contextObjects.id, id)).limit(1);
+  return r[0];
+}
+export async function createContextObject(data: InsertContextObject) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  const result = await db.insert(contextObjects).values(data);
+  return result;
+}
+export async function updateContextObject(id: number, data: Partial<InsertContextObject>) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(contextObjects).set({ ...data, updatedAt: new Date() }).where(eq(contextObjects.id, id));
+}
+
+// ─── Agent Required Categories (Portability) ────────────────────────────────
+export async function getRequiredCategoriesByAgentId(agentId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(agentRequiredCategories).where(eq(agentRequiredCategories.agentId, agentId));
+}
+export async function getRequiredCategoriesByBlueprintId(blueprintId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(agentRequiredCategories).where(eq(agentRequiredCategories.blueprintId, blueprintId));
+}
+export async function getRequiredCategoriesByListingId(listingId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(agentRequiredCategories).where(eq(agentRequiredCategories.listingId, listingId));
+}
+export async function createAgentRequiredCategory(data: InsertAgentRequiredCategory) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(agentRequiredCategories).values(data);
+}
+export async function checkUserCompatibility(userId: number, requiredCategoryIds: number[]) {
+  const db = await getDb(); if (!db) return { compatible: false, missing: requiredCategoryIds, connected: [] as number[] };
+  const connections = await db.select().from(userConnections).where(and(eq(userConnections.userId, userId), eq(userConnections.status, "connected")));
+  const connectedCategoryIds = Array.from(new Set(connections.map(c => c.categoryId)));
+  const missing = requiredCategoryIds.filter(id => !connectedCategoryIds.includes(id));
+  return { compatible: missing.length === 0, missing, connected: connectedCategoryIds };
+}

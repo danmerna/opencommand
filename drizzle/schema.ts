@@ -458,3 +458,110 @@ export const auditLog = mysqlTable("audit_log", {
 
 export type AuditLogEntry = typeof auditLog.$inferSelect;
 export type InsertAuditLogEntry = typeof auditLog.$inferInsert;
+
+// ─── Tool Categories (Integration Abstraction Layer) ────────────────────────
+export const toolCategories = mysqlTable("tool_categories", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 64 }).notNull().unique(),
+  name: varchar("name", { length: 128 }).notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 64 }),
+  abstractActions: json("abstractActions").$type<string[]>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ToolCategory = typeof toolCategories.$inferSelect;
+export type InsertToolCategory = typeof toolCategories.$inferInsert;
+
+// ─── Tool Providers (Specific SaaS Tools) ───────────────────────────────────
+export const toolProviders = mysqlTable("tool_providers", {
+  id: int("id").autoincrement().primaryKey(),
+  categoryId: int("categoryId").notNull(),
+  slug: varchar("slug", { length: 64 }).notNull().unique(),
+  name: varchar("name", { length: 128 }).notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 64 }),
+  authType: mysqlEnum("authType", ["oauth2", "api_key", "webhook", "none"]).default("oauth2").notNull(),
+  oauthScopes: json("oauthScopes").$type<string[]>(),
+  baseApiUrl: varchar("baseApiUrl", { length: 512 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ToolProvider = typeof toolProviders.$inferSelect;
+export type InsertToolProvider = typeof toolProviders.$inferInsert;
+
+// ─── User Connections (Connected Tools per User) ────────────────────────────
+export const userConnections = mysqlTable("user_connections", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  providerId: int("providerId").notNull(),
+  categoryId: int("categoryId").notNull(),
+  status: mysqlEnum("status", ["connected", "disconnected", "error", "expired"]).default("connected").notNull(),
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
+  tokenExpiresAt: timestamp("tokenExpiresAt"),
+  accountName: varchar("accountName", { length: 128 }),
+  accountId: varchar("accountId", { length: 128 }),
+  lastSyncAt: timestamp("lastSyncAt"),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserConnection = typeof userConnections.$inferSelect;
+export type InsertUserConnection = typeof userConnections.$inferInsert;
+
+// ─── Abstraction Mappings (Category Actions → Provider API Calls) ───────────
+export const abstractionMappings = mysqlTable("abstraction_mappings", {
+  id: int("id").autoincrement().primaryKey(),
+  categoryId: int("categoryId").notNull(),
+  providerId: int("providerId").notNull(),
+  abstractAction: varchar("abstractAction", { length: 128 }).notNull(),
+  apiMethod: mysqlEnum("apiMethod", ["GET", "POST", "PUT", "PATCH", "DELETE"]).notNull(),
+  apiEndpoint: varchar("apiEndpoint", { length: 512 }).notNull(),
+  requestTemplate: json("requestTemplate").$type<Record<string, unknown>>(),
+  responseMapping: json("responseMapping").$type<Record<string, unknown>>(),
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AbstractionMapping = typeof abstractionMappings.$inferSelect;
+export type InsertAbstractionMapping = typeof abstractionMappings.$inferInsert;
+
+// ─── Context Objects (Assembled Context per Request) ────────────────────────
+export const contextObjects = mysqlTable("context_objects", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  taskId: int("taskId"),
+  requestText: text("requestText").notNull(),
+  inferredDomain: varchar("inferredDomain", { length: 64 }),
+  inferredCategories: json("inferredCategories").$type<string[]>(),
+  userProfile: json("userProfile").$type<Record<string, unknown>>(),
+  liveState: json("liveState").$type<Record<string, unknown>>(),
+  recentHistory: json("recentHistory").$type<Record<string, unknown>>(),
+  inferredInsights: json("inferredInsights").$type<string[]>(),
+  suggestedParameters: json("suggestedParameters").$type<Record<string, unknown>>(),
+  contextualizedQuestions: json("contextualizedQuestions").$type<string[]>(),
+  status: mysqlEnum("status", ["interpreting", "gathering", "contextualizing", "ready", "expired"]).default("interpreting").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ContextObject = typeof contextObjects.$inferSelect;
+export type InsertContextObject = typeof contextObjects.$inferInsert;
+
+// ─── Agent Required Categories (for Marketplace Portability) ────────────────
+export const agentRequiredCategories = mysqlTable("agent_required_categories", {
+  id: int("id").autoincrement().primaryKey(),
+  agentId: int("agentId"),
+  blueprintId: int("blueprintId"),
+  listingId: int("listingId"),
+  categoryId: int("categoryId").notNull(),
+  isRequired: boolean("isRequired").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AgentRequiredCategory = typeof agentRequiredCategories.$inferSelect;
+export type InsertAgentRequiredCategory = typeof agentRequiredCategories.$inferInsert;
