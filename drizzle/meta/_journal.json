@@ -1,5 +1,27 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1774215491273,
+      "tag": "0000_eager_stellaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1774215728955,
+      "tag": "0001_equal_pete_wisdom",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1774215769091,
+      "tag": "0002_damp_genesis",
+      "breakpoints": true
+    }
+  ]
 }
