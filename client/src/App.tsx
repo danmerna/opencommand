@@ -21,6 +21,8 @@ import ContextHistory from "./pages/ContextHistory";
 import PaymentHistory from "./pages/PaymentHistory";
 import ReceiptViewer from "./pages/ReceiptViewer";
 import AppLayout from "./components/AppLayout";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 
 function Router() {
   return (
@@ -57,6 +59,12 @@ function Router() {
       <Route path="/creator-program" component={CreatorProgram} />
       <Route path="/payments">
         <AppLayout><PaymentHistory /></AppLayout>
+      </Route>
+      <Route path="/projects">
+        <AppLayout><Projects /></AppLayout>
+      </Route>
+      <Route path="/projects/:id">
+        <AppLayout><ProjectDetail /></AppLayout>
       </Route>
       <Route path="/receipt/:receiptNumber" component={ReceiptViewer} />
       <Route path="/payment/success" component={PaymentSuccess} />

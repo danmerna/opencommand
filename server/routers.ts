@@ -34,6 +34,9 @@ import {
   getContextObjectsByUserId, getContextObjectById, createContextObject, updateContextObject,
   getRequiredCategoriesByAgentId, getRequiredCategoriesByBlueprintId, getRequiredCategoriesByListingId,
   createAgentRequiredCategory, checkUserCompatibility,
+  getProjectsByUserId, getProjectsByCompanyId, getProjectById, createProject, updateProject, deleteProject,
+  getProjectFiles, createProjectFile, deleteProjectFile,
+  getProjectChats, createProjectChat,
 } from "./db";
 import { nanoid } from "nanoid";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
@@ -936,6 +939,82 @@ const compatibilityRouter = router({
   }),
 });
 
+// ─── Projects Router ────────────────────────────────────────────────────────
+const projectsRouter = router({
+  list: protectedProcedure.query(({ ctx }) => getProjectsByUserId(ctx.user.id)),
+  listByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(({ input }) => getProjectsByCompanyId(input.companyId)),
+  get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    const p = await getProjectById(input.id);
+    if (!p) throw new Error("Project not found");
+    return p;
+  }),
+
+  create: protectedProcedure
+    .input(z.object({ name: z.string().min(1), goal: z.string().optional(), color: z.string().optional(), companyId: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await createProject({ userId: ctx.user.id, name: input.name, goal: input.goal, color: input.color ?? "#6366f1", companyId: input.companyId });
+      return { success: true, id: (result as any).insertId as number };
+    }),
+
+  update: protectedProcedure
+    .input(z.object({ id: z.number(), name: z.string().optional(), goal: z.string().optional(), color: z.string().optional(), status: z.enum(["active", "paused", "completed", "archived"]).optional(), plan: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      await updateProject(id, data as any);
+      return { success: true };
+    }),
+
+  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    await deleteProject(input.id);
+    return { success: true };
+  }),
+
+  // Files
+  files: protectedProcedure.input(z.object({ projectId: z.number() })).query(({ input }) => getProjectFiles(input.projectId)),
+  addFile: protectedProcedure
+    .input(z.object({ projectId: z.number(), name: z.string(), url: z.string(), fileKey: z.string(), mimeType: z.string().optional(), size: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      await createProjectFile({ projectId: input.projectId, userId: ctx.user.id, name: input.name, url: input.url, fileKey: input.fileKey, mimeType: input.mimeType, size: input.size ?? 0 });
+      return { success: true };
+    }),
+  deleteFile: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    await deleteProjectFile(input.id);
+    return { success: true };
+  }),
+
+  // Chat
+  chats: protectedProcedure.input(z.object({ projectId: z.number() })).query(({ input }) => getProjectChats(input.projectId)),
+  sendChat: protectedProcedure
+    .input(z.object({ projectId: z.number(), content: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      // Save user message
+      await createProjectChat({ projectId: input.projectId, userId: ctx.user.id, role: "user", content: input.content });
+      // Get project context
+      const project = await getProjectById(input.projectId);
+      const history = await getProjectChats(input.projectId, 20);
+      // Build LLM messages
+      const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+        { role: "system", content: `You are an AI assistant helping with the project: "${project?.name ?? "Unknown"}". Goal: ${project?.goal ?? "Not specified"}. You help plan tasks, answer questions, and coordinate work for this project.` },
+        ...history.slice(-19).map(m => ({ role: m.role as "user" | "assistant" | "system", content: m.content })),
+      ];
+      const response = await invokeLLM({ messages });
+      const reply = (response.choices[0]?.message?.content ?? "I'm here to help with your project.") as string;
+      await createProjectChat({ projectId: input.projectId, userId: ctx.user.id, role: "assistant", content: reply });
+      emitToUser(ctx.user.id, "inbox_item", `Project Chat: ${project?.name}`, reply.slice(0, 120), { projectId: input.projectId });
+      return { reply };
+    }),
+
+  // Assign task to project
+  assignTask: protectedProcedure
+    .input(z.object({ projectId: z.number(), taskId: z.number() }))
+    .mutation(async ({ input }) => {
+      await updateProject(input.projectId, {});
+      // Tag the task with a note via thread
+      await createTaskThread({ taskId: input.taskId, role: "system", content: `Task assigned to project #${input.projectId}` });
+      return { success: true };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -964,6 +1043,7 @@ export const appRouter = router({
   hub: integrationHubRouter,
   context: contextEngineRouter,
   compatibility: compatibilityRouter,
+  projects: projectsRouter,
 });
 
 export type AppRouter = typeof appRouter;

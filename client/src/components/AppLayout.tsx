@@ -2,38 +2,82 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
-import { ReactNode, useState, useEffect, useRef } from "react";
+import { ReactNode, useState, useEffect, useRef, createContext, useContext } from "react";
 import {
   LayoutDashboard, Cpu, ShoppingBag, Users, Bot, Menu, X, LogOut,
-  FileStack, Shield, BarChart3, Wifi, WifiOff, Plug, CheckSquare, History, CreditCard
+  FileStack, Shield, BarChart3, Wifi, WifiOff, Plug, CheckSquare, History,
+  CreditCard, FolderOpen, Plus, Building2, ChevronRight,
 } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { toast } from "sonner";
 
-const navItems = [
+// ─── Company Context ──────────────────────────────────────────────────────────
+interface CompanyContextValue {
+  activeCompanyId: number | null;
+  setActiveCompanyId: (id: number | null) => void;
+}
+const CompanyContext = createContext<CompanyContextValue>({ activeCompanyId: null, setActiveCompanyId: () => {} });
+export function useActiveCompany() { return useContext(CompanyContext); }
+
+// ─── Nav items (company-scoped) ───────────────────────────────────────────────
+const coreNavItems = [
   { href: "/mission-control", label: "Mission Control", icon: LayoutDashboard },
-  { href: "/intent-engine", label: "Intent Engine", icon: Cpu },
-  { href: "/ai-ceo", label: "AI CEO", icon: Bot },
-  { href: "/blueprints", label: "Blueprints", icon: FileStack },
-  { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
-  { href: "/creator-program", label: "Creators", icon: Users },
-  { href: "/governance", label: "Governance", icon: Shield },
-  { href: "/integration-hub", label: "Integrations", icon: Plug },
-  { href: "/blueprint-dashboard", label: "Analytics", icon: BarChart3 },
-  { href: "/compatibility", label: "Compatibility", icon: CheckSquare },
-  { href: "/context-history", label: "Context History", icon: History },
-  { href: "/payments", label: "Payments", icon: CreditCard },
+  { href: "/intent-engine",   label: "Intent Engine",   icon: Cpu },
+  { href: "/ai-ceo",          label: "AI CEO",           icon: Bot },
+  { href: "/blueprints",      label: "Blueprints",       icon: FileStack },
+  { href: "/marketplace",     label: "Marketplace",      icon: ShoppingBag },
+  { href: "/creator-program", label: "Creators",         icon: Users },
+  { href: "/governance",      label: "Governance",       icon: Shield },
+  { href: "/integration-hub", label: "Integrations",     icon: Plug },
+  { href: "/blueprint-dashboard", label: "Analytics",   icon: BarChart3 },
+  { href: "/compatibility",   label: "Compatibility",    icon: CheckSquare },
+  { href: "/context-history", label: "Context History",  icon: History },
+  { href: "/payments",        label: "Payments",         icon: CreditCard },
 ];
+
+// ─── Colour palette for company avatars ──────────────────────────────────────
+const COMPANY_COLORS = [
+  "bg-indigo-600", "bg-violet-600", "bg-emerald-600", "bg-amber-600",
+  "bg-rose-600",   "bg-cyan-600",   "bg-fuchsia-600", "bg-teal-600",
+];
+
+function companyColor(index: number) { return COMPANY_COLORS[index % COMPANY_COLORS.length]; }
+function companyInitials(name: string) {
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeCompanyId, setActiveCompanyId] = useState<number | null>(null);
+
+  const companiesQuery = trpc.companies.list.useQuery(undefined, { enabled: isAuthenticated });
+  const companies = companiesQuery.data ?? [];
+
   const inboxQuery = trpc.inbox.list.useQuery(undefined, { enabled: isAuthenticated });
   const unreadCount = inboxQuery.data?.filter(i => i.status === "unread").length ?? 0;
+
+  // Projects for the active company (or all user projects if no company selected)
+  const projectsQuery = trpc.projects.list.useQuery(undefined, { enabled: isAuthenticated });
+  const allProjects = projectsQuery.data ?? [];
+  const visibleProjects = activeCompanyId
+    ? allProjects.filter(p => p.companyId === activeCompanyId)
+    : allProjects;
+
   const { connected, notifications } = useSocket();
   const prevNotifCount = useRef(0);
 
+  // Auto-select first company on load
+  useEffect(() => {
+    if (companies.length > 0 && activeCompanyId === null) {
+      setActiveCompanyId(companies[0].id);
+    }
+  }, [companies, activeCompanyId]);
+
+  // Toast on new socket notification
   useEffect(() => {
     if (notifications.length > prevNotifCount.current && notifications.length > 0) {
       const latest = notifications[0];
@@ -49,106 +93,197 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="accent-line mb-10" />
           <h1 className="text-display text-4xl text-foreground mb-3">OpenCommand</h1>
           <p className="text-muted-foreground text-sm mb-10 text-body">Authentication required to access the platform.</p>
-          <a
-            href={getLoginUrl()}
-            className="btn-primary text-sm"
-          >
-            Sign In
-          </a>
+          <a href={getLoginUrl()} className="btn-primary text-sm">Sign In</a>
           <div className="accent-line mt-10" />
         </div>
       </div>
     );
   }
 
+  const activeCompany = companies.find(c => c.id === activeCompanyId);
+
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-56 bg-[oklch(0.03_0_0)] border-r border-border flex flex-col transform transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
-        {/* Logo */}
-        <div className="px-5 py-6">
+    <CompanyContext.Provider value={{ activeCompanyId, setActiveCompanyId }}>
+      <div className="min-h-screen bg-background flex">
+
+        {/* ── Far-left company-switcher rail ─────────────────────────────── */}
+        <aside className={`fixed inset-y-0 left-0 z-50 w-14 bg-[oklch(0.02_0_0)] border-r border-border flex flex-col items-center py-3 gap-1 transform transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
+          {/* App logo mark */}
           <Link href="/">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center">
-                <span className="font-semibold text-black text-xs">OC</span>
-              </div>
-              <span className="font-semibold text-foreground text-sm tracking-tight">OpenCommand</span>
+            <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center mb-3 shrink-0">
+              <span className="font-bold text-black text-[11px]">OC</span>
             </div>
           </Link>
-        </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 space-y-0.5">
-          {navItems.map(item => {
-            const isActive = location === item.href || location.startsWith(item.href + "/");
-            return (
-              <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}>
-                <div className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-all ${
-                  isActive
-                    ? "bg-white/[0.07] text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                }`}>
-                  <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} />
-                  <span className="font-medium">{item.label}</span>
-                  {item.label === "Mission Control" && unreadCount > 0 && (
-                    <span className="ml-auto badge-accent text-[10px] px-1.5 py-0">{unreadCount}</span>
+          {/* Company avatars */}
+          <div className="flex-1 flex flex-col items-center gap-1.5 overflow-y-auto w-full px-2 scrollbar-none">
+            {companies.map((company, idx) => {
+              const isActive = company.id === activeCompanyId;
+              return (
+                <button
+                  key={company.id}
+                  onClick={() => setActiveCompanyId(company.id)}
+                  title={company.name}
+                  className={`relative w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-bold text-white transition-all shrink-0 ${companyColor(idx)} ${isActive ? "ring-2 ring-white/50 scale-105" : "opacity-60 hover:opacity-90"}`}
+                >
+                  {companyInitials(company.name)}
+                  {isActive && (
+                    <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-full" />
                   )}
-                </div>
-              </Link>
-            );
-          })}
-        </nav>
+                </button>
+              );
+            })}
+          </div>
 
-        {/* User */}
-        <div className="px-3 py-4 border-t border-border">
-          <div className="flex items-center gap-2.5 px-3 mb-2">
-            <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center">
-              <span className="text-xs font-medium text-foreground">
-                {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+          {/* Add company button */}
+          <button
+            onClick={() => navigate("/mission-control")}
+            title="Add Company"
+            className="w-9 h-9 rounded-lg border border-dashed border-white/20 flex items-center justify-center text-white/40 hover:text-white/70 hover:border-white/40 transition-all shrink-0 mt-1"
+          >
+            <Plus size={14} />
+          </button>
+        </aside>
+
+        {/* ── Main sidebar ───────────────────────────────────────────────── */}
+        <aside className={`fixed inset-y-0 left-14 z-40 w-52 bg-[oklch(0.03_0_0)] border-r border-border flex flex-col transform transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
+
+          {/* Company header */}
+          <div className="px-4 py-4 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Building2 size={13} className="text-muted-foreground shrink-0" />
+              <span className="text-[12px] font-semibold text-foreground truncate">
+                {activeCompany?.name ?? "OpenCommand"}
               </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-medium text-foreground truncate">{user?.name ?? "User"}</div>
-              <div className="text-[11px] text-muted-foreground truncate">{user?.email ?? ""}</div>
-            </div>
-          </div>
-          <button
-            onClick={() => logout()}
-            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors"
-          >
-            <LogOut size={13} />
-            <span className="text-[12px] font-medium">Sign Out</span>
-          </button>
-          <div className="flex items-center gap-1.5 px-3 py-1 mt-1">
-            {connected ? (
-              <><Wifi size={11} className="text-emerald-500" /><span className="text-mono text-[10px] text-emerald-500">LIVE</span></>
-            ) : (
-              <><WifiOff size={11} className="text-zinc-600" /><span className="text-mono text-[10px] text-zinc-600">OFFLINE</span></>
+            {activeCompany?.mission && (
+              <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{activeCompany.mission}</p>
             )}
           </div>
+
+          {/* Nav */}
+          <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto scrollbar-none">
+
+            {/* Core nav */}
+            {coreNavItems.map(item => {
+              const isActive = location === item.href || location.startsWith(item.href + "/");
+              return (
+                <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}>
+                  <div className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] transition-all ${
+                    isActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                  }`}>
+                    <item.icon size={13} strokeWidth={isActive ? 2 : 1.5} />
+                    <span className="font-medium">{item.label}</span>
+                    {item.label === "Mission Control" && unreadCount > 0 && (
+                      <span className="ml-auto badge-accent text-[10px] px-1.5 py-0">{unreadCount}</span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+
+            {/* Projects section */}
+            <div className="pt-3 pb-1">
+              <div className="flex items-center justify-between px-3 mb-1">
+                <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Projects</span>
+                <Link href="/projects">
+                  <button
+                    title="New project"
+                    className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Plus size={11} />
+                  </button>
+                </Link>
+              </div>
+
+              {visibleProjects.length === 0 ? (
+                <Link href="/projects">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer">
+                    <FolderOpen size={11} />
+                    <span>No projects yet</span>
+                  </div>
+                </Link>
+              ) : (
+                visibleProjects.slice(0, 8).map(project => {
+                  const isActive = location === `/projects/${project.id}` || location.startsWith(`/projects/${project.id}/`);
+                  return (
+                    <Link key={project.id} href={`/projects/${project.id}`} onClick={() => setMobileOpen(false)}>
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all ${
+                        isActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                      }`}>
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: project.color ?? "#6366f1" }}
+                        />
+                        <span className="truncate font-medium">{project.name}</span>
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+
+              {visibleProjects.length > 8 && (
+                <Link href="/projects">
+                  <div className="flex items-center gap-1.5 px-3 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                    <ChevronRight size={10} />
+                    <span>{visibleProjects.length - 8} more</span>
+                  </div>
+                </Link>
+              )}
+            </div>
+          </nav>
+
+          {/* User footer */}
+          <div className="px-2 py-3 border-t border-border">
+            <div className="flex items-center gap-2 px-3 mb-2">
+              <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                <span className="text-[10px] font-medium text-foreground">
+                  {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[12px] font-medium text-foreground truncate">{user?.name ?? "User"}</div>
+                <div className="text-[10px] text-muted-foreground truncate">{user?.email ?? ""}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => logout()}
+              className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors"
+            >
+              <LogOut size={12} />
+              <span className="text-[11px] font-medium">Sign Out</span>
+            </button>
+            <div className="flex items-center gap-1.5 px-3 py-1 mt-0.5">
+              {connected ? (
+                <><Wifi size={10} className="text-emerald-500" /><span className="text-mono text-[10px] text-emerald-500">LIVE</span></>
+              ) : (
+                <><WifiOff size={10} className="text-zinc-600" /><span className="text-mono text-[10px] text-zinc-600">OFFLINE</span></>
+              )}
+            </div>
+          </div>
+        </aside>
+
+        {/* Mobile overlay */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-30 bg-black/80 lg:hidden" onClick={() => setMobileOpen(false)} />
+        )}
+
+        {/* Main content — offset by rail (56px) + sidebar (208px) = 264px */}
+        <div className="flex-1 lg:ml-[264px] flex flex-col min-h-screen">
+          {/* Mobile header */}
+          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-[oklch(0.03_0_0)]">
+            <button onClick={() => setMobileOpen(true)} className="text-foreground p-1">
+              <Menu size={18} />
+            </button>
+            <span className="font-semibold text-sm tracking-tight">OpenCommand</span>
+            <div className="w-6" />
+          </div>
+
+          <main className="flex-1 overflow-auto">
+            {children}
+          </main>
         </div>
-      </aside>
-
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-black/80 lg:hidden" onClick={() => setMobileOpen(false)} />
-      )}
-
-      {/* Main content */}
-      <div className="flex-1 lg:ml-56 flex flex-col min-h-screen">
-        {/* Mobile header */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-[oklch(0.03_0_0)]">
-          <button onClick={() => setMobileOpen(true)} className="text-foreground p-1">
-            <Menu size={18} />
-          </button>
-          <span className="font-semibold text-sm tracking-tight">OpenCommand</span>
-          <div className="w-6" />
-        </div>
-
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
       </div>
-    </div>
+    </CompanyContext.Provider>
   );
 }

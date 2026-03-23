@@ -228,3 +228,33 @@
 - [x] Emit `okr_updated` on OKR progress updates
 - [x] Verify client-side listeners handle all new event types (okr_updated, kill_switch added)
 - [x] Run vitest to confirm no regressions (108 tests passing)
+
+## v3.5 — Login Page Cleanup
+
+- [x] Locate Meta branding on the login page (it's the Manus OAuth portal)
+- [x] Provided VITE_APP_TITLE and VITE_APP_LOGO instructions to override Meta branding
+
+## v3.5 — Company Switcher Rail + Projects
+
+- [x] Add `projects` table (id, userId, companyId, name, goal, color, status, createdAt)
+- [x] Add `project_files` table (id, projectId, name, url, fileKey, mimeType, size, createdAt)
+- [x] Add `project_chats` table (id, projectId, userId, role, content, createdAt)
+- [x] Generate migration SQL and apply via webdev_execute_sql
+- [x] Add DB helpers: getProjectsByUserId, getProjectById, createProject, updateProject, deleteProject
+- [x] Add DB helpers: getProjectFiles, createProjectFile, deleteProjectFile
+- [x] Add DB helpers: getProjectChats, createProjectChat
+- [x] Add tRPC projects router (list, get, create, update, delete, files, chat, assignTask)
+- [x] Rebuild AppLayout: add far-left company-switcher icon rail (inspired by Paperclip layout)
+- [x] Company switcher rail: avatar/icon per company, active highlight, + button to create company
+- [x] Sidebar now contextual to selected company (agents, OKRs, tasks scoped to that company)
+- [x] Add Projects section to sidebar (list projects for selected company, + to create)
+- [x] Build /projects page — grid of project cards with color, goal, task count, status
+- [x] Build /projects/:id page — tabs: Overview, Files, Chat, Plan, Tasks
+- [x] Project Overview tab: goal, status, quick stats, action buttons
+- [x] Project Files tab: upload files, list with download/delete
+- [x] Project Chat tab: threaded chat with LLM context
+- [x] Project Plan tab: markdown plan editor with save
+- [x] Project Tasks tab: assign existing tasks scoped to project
+- [x] Wire Socket.IO emit on project chat messages (inbox_item type)
+- [x] Write vitest tests for projects router (14 tests passing)
+- [x] 122 total tests passing, 0 TypeScript errors

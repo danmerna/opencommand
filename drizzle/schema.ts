@@ -565,3 +565,46 @@ export const agentRequiredCategories = mysqlTable("agent_required_categories", {
 
 export type AgentRequiredCategory = typeof agentRequiredCategories.$inferSelect;
 export type InsertAgentRequiredCategory = typeof agentRequiredCategories.$inferInsert;
+
+// ─── Projects (Focused Goal Workspaces) ──────────────────────────────────────
+export const projects = mysqlTable("projects", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  name: varchar("name", { length: 128 }).notNull(),
+  goal: text("goal"),
+  color: varchar("color", { length: 32 }).default("#6366f1").notNull(),
+  status: mysqlEnum("status", ["active", "paused", "completed", "archived"]).default("active").notNull(),
+  plan: text("plan"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = typeof projects.$inferInsert;
+
+// ─── Project Files ────────────────────────────────────────────────────────────
+export const projectFiles = mysqlTable("project_files", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  url: text("url").notNull(),
+  fileKey: varchar("fileKey", { length: 512 }).notNull(),
+  mimeType: varchar("mimeType", { length: 128 }),
+  size: int("size").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ProjectFile = typeof projectFiles.$inferSelect;
+export type InsertProjectFile = typeof projectFiles.$inferInsert;
+
+// ─── Project Chats ────────────────────────────────────────────────────────────
+export const projectChats = mysqlTable("project_chats", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", ["user", "assistant", "system"]).default("user").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ProjectChat = typeof projectChats.$inferSelect;
+export type InsertProjectChat = typeof projectChats.$inferInsert;

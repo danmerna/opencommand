@@ -23,6 +23,9 @@ import {
   toolRegistry, InsertToolRegistryEntry,
   webhooks, InsertWebhook,
   auditLog, InsertAuditLogEntry,
+  projects, InsertProject,
+  projectFiles, InsertProjectFile,
+  projectChats, InsertProjectChat,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -627,4 +630,55 @@ export async function checkUserCompatibility(userId: number, requiredCategoryIds
   const connectedCategoryIds = Array.from(new Set(connections.map(c => c.categoryId)));
   const missing = requiredCategoryIds.filter(id => !connectedCategoryIds.includes(id));
   return { compatible: missing.length === 0, missing, connected: connectedCategoryIds };
+}
+
+// ─── Projects ─────────────────────────────────────────────────────────────────
+export async function getProjectsByUserId(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(projects).where(eq(projects.userId, userId)).orderBy(desc(projects.createdAt));
+}
+export async function getProjectsByCompanyId(companyId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(projects).where(eq(projects.companyId, companyId)).orderBy(desc(projects.createdAt));
+}
+export async function getProjectById(id: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
+  return r[0];
+}
+export async function createProject(data: InsertProject) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(projects).values(data);
+}
+export async function updateProject(id: number, data: Partial<InsertProject>) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(projects).set({ ...data, updatedAt: new Date() }).where(eq(projects.id, id));
+}
+export async function deleteProject(id: number) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.delete(projects).where(eq(projects.id, id));
+}
+
+// ─── Project Files ────────────────────────────────────────────────────────────
+export async function getProjectFiles(projectId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(projectFiles).where(eq(projectFiles.projectId, projectId)).orderBy(desc(projectFiles.createdAt));
+}
+export async function createProjectFile(data: InsertProjectFile) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(projectFiles).values(data);
+}
+export async function deleteProjectFile(id: number) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.delete(projectFiles).where(eq(projectFiles.id, id));
+}
+
+// ─── Project Chats ────────────────────────────────────────────────────────────
+export async function getProjectChats(projectId: number, limit = 100) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(projectChats).where(eq(projectChats.projectId, projectId)).orderBy(projectChats.createdAt).limit(limit);
+}
+export async function createProjectChat(data: InsertProjectChat) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(projectChats).values(data);
 }
