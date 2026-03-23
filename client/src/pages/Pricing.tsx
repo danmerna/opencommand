@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Check, Zap, Bot, Loader2, ArrowRight } from "lucide-react";
+import { Check, Zap, Bot, Loader2, ArrowRight, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 
@@ -49,6 +50,7 @@ const PLANS = [
 
 export default function Pricing() {
   const { isAuthenticated, user } = useAuth();
+  const subscription = useSubscription();
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
 
   const checkoutMutation = trpc.payments.checkout.useMutation({
@@ -139,15 +141,25 @@ export default function Pricing() {
                 ))}
               </ul>
 
+              {/* Current plan badge */}
+              {isAuthenticated && subscription.tier === plan.key.toLowerCase() && (
+                <div className="flex items-center gap-1.5 text-xs text-emerald-400 mb-3">
+                  <BadgeCheck size={13} />
+                  <span>Your current plan</span>
+                </div>
+              )}
+
               {/* CTA */}
               <Button
                 onClick={() => handleCheckout(plan.key)}
-                disabled={isLoading}
+                disabled={isLoading || (isAuthenticated && subscription.tier === plan.key.toLowerCase())}
                 variant={plan.highlighted ? "default" : "outline"}
                 className="w-full gap-2"
               >
                 {isLoading ? (
                   <><Loader2 size={14} className="animate-spin" /> Processing...</>
+                ) : isAuthenticated && subscription.tier === plan.key.toLowerCase() ? (
+                  <><BadgeCheck size={14} /> Active Plan</>
                 ) : (
                   <>{plan.cta} <ArrowRight size={14} /></>
                 )}

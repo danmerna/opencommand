@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
-import { ArrowRight, Target, BarChart3, Bot, Cpu, Shield, FileStack } from "lucide-react";
+import { ArrowRight, Target, BarChart3, Bot, Cpu, Shield, FileStack, Check, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 
@@ -261,6 +261,65 @@ export default function Home() {
             detail="Immutable audit trail. Full accountability. Zero ambiguity."
             delay={300}
           />
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <div className="accent-line" />
+      <section className="px-8 py-24 max-w-5xl mx-auto">
+        <div className="text-center mb-14">
+          <p className="text-label mb-3">Simple pricing</p>
+          <h2 className="text-heading text-3xl text-foreground">Start executing today.</h2>
+          <p className="text-muted-foreground text-body mt-3 max-w-md mx-auto">No seat fees. No enterprise contracts. Just autonomous execution at the speed of intent.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          {/* Starter */}
+          <div className="border border-border rounded-xl p-7 bg-white/[0.02] flex flex-col gap-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Zap size={14} className="text-muted-foreground" />
+                <span className="text-label text-xs">Starter</span>
+              </div>
+              <div className="flex items-end gap-1 mb-3">
+                <span className="text-4xl font-light text-foreground">$1</span>
+                <span className="text-muted-foreground text-sm mb-1">/ month</span>
+              </div>
+              <p className="text-muted-foreground text-xs">For individual operators getting started with autonomous AI execution.</p>
+            </div>
+            <ul className="space-y-2 flex-1">
+              {["1 active agent", "Basic context engineering", "Intent-to-outcome workflows", "Standard execution speed", "Community support"].map(f => (
+                <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Check size={11} className="text-emerald-400 shrink-0" />{f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/pricing" className="btn-outline text-center text-sm py-2.5">Get Started</Link>
+          </div>
+          {/* Pro */}
+          <div className="border border-foreground/20 rounded-xl p-7 bg-foreground/[0.03] flex flex-col gap-5 relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <span className="bg-foreground text-background text-[10px] font-medium px-3 py-1 rounded-full tracking-wide">Most Popular</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Bot size={14} className="text-foreground" />
+                <span className="text-label text-xs">Pro</span>
+              </div>
+              <div className="flex items-end gap-1 mb-3">
+                <span className="text-4xl font-light text-foreground">$5</span>
+                <span className="text-muted-foreground text-sm mb-1">/ month</span>
+              </div>
+              <p className="text-muted-foreground text-xs">For high-performance operators who need full orchestration power.</p>
+            </div>
+            <ul className="space-y-2 flex-1">
+              {["Unlimited active agents", "Advanced context engineering", "Multi-step workflow orchestration", "Priority execution speed", "Proof of Outcome receipts", "Priority support"].map(f => (
+                <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Check size={11} className="text-emerald-400 shrink-0" />{f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/pricing" className="btn-primary text-center text-sm py-2.5">Go Pro <ArrowRight size={13} className="inline ml-1" /></Link>
+          </div>
         </div>
       </section>
 

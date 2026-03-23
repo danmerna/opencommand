@@ -16,3 +16,6 @@
 - [x] Configure Stripe products and pricing — Starter $1/mo and Pro $5/mo added to products.ts
 - [x] Build payment UI — /pricing page with plan cards, checkout buttons, trust section
 - [x] Wire up Stripe webhooks for subscription lifecycle events (existing webhook handler)
+- [x] Add current plan badge on Pricing page using subscription tier detection
+- [x] Gate Pro-only features with upgrade prompts (unlimited agents, advanced orchestration)
+- [x] Add pricing section to public landing page (Home.tsx)

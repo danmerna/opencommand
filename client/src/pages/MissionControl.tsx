@@ -3,6 +3,8 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useSubscription } from "@/hooks/useSubscription";
+import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -121,6 +123,7 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
 
 export default function MissionControl() {
   const { isAuthenticated } = useAuth();
+  const subscription = useSubscription();
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<Tab>("okrs");
   const [showAddOkr, setShowAddOkr] = useState(false);
@@ -333,7 +336,16 @@ export default function MissionControl() {
         <div className="animate-fade-in">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-heading text-lg">Agent Fleet — {agents.length} units</h2>
-            <Button onClick={() => setShowAddAgent(true)} size="sm" className="btn-primary text-xs gap-1.5 h-8">
+            <Button
+              onClick={() => {
+                if (subscription.isFree || (subscription.isStarter && agents.length >= 1)) {
+                  toast.error(subscription.isFree ? "Sign up for a plan to deploy agents." : "Starter plan is limited to 1 agent. Upgrade to Pro for unlimited agents.", { action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
+                  return;
+                }
+                setShowAddAgent(true);
+              }}
+              size="sm" className="btn-primary text-xs gap-1.5 h-8"
+            >
               <Plus size={13} /> Deploy Agent
             </Button>
           </div>

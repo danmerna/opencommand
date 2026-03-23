@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +16,7 @@ const CONFIDENCE_COLOR = (score: number) => score >= 0.8 ? "text-emerald-400" : 
 
 export default function ContextHistory() {
   const { isAuthenticated } = useAuth();
+  const subscription = useSubscription();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -40,6 +43,22 @@ export default function ContextHistory() {
         <h1 className="text-2xl font-light text-foreground">Context History</h1>
         <p className="text-muted-foreground text-sm">View your full Interpret → Gather → Contextualize chain history.</p>
         <a href={getLoginUrl()}><Button>Sign In</Button></a>
+      </div>
+    );
+  }
+
+  if (!subscription.isPro && !subscription.isLoading) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="mb-8">
+          <p className="text-xs text-muted-foreground tracking-widest uppercase mb-2">IntelligenceOS</p>
+          <h1 className="text-4xl font-light text-foreground tracking-tight">Context History</h1>
+          <p className="text-muted-foreground text-sm mt-2">Full context engineering chain — Interpret → Gather → Contextualize.</p>
+        </div>
+        <UpgradePrompt
+          feature="Advanced Context Engineering"
+          description="Full context history, multi-step workflow chains, and persistent context across projects are available on the Pro plan."
+        />
       </div>
     );
   }
