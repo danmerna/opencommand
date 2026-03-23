@@ -35,8 +35,8 @@ export default function Home() {
         <div className="max-w-3xl">
           <p className="text-label mb-6">The Intent-to-Outcome Engine</p>
           <h1 className="text-display text-6xl lg:text-[5.5rem] text-foreground leading-none mb-8">
-            Your AI CEO.<br />
-            <span className="text-muted-foreground">Runs the company.</span>
+            Deploy your<br />
+            <span className="text-muted-foreground">zero-human company.</span>
           </h1>
           <p className="text-muted-foreground text-lg text-body max-w-xl mb-12">
             Orchestrate autonomous task execution, generate verified Proof of Outcome receipts, and deploy entire zero-human companies from a single command center.

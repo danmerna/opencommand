@@ -318,3 +318,6 @@
 ## v3.8 — Home Page CTA Updates
 - [x] Swap "Deploy Your AI CEO" button text to "Deploy Your Zero-Human Company"
 - [x] Replace "View Blueprints" button with "See How It Works" (links to /intent-engine)
+
+## v3.9 — Hero Headline Update
+- [x] Rewrite hero headline to match zero-human company framing ("Deploy your / zero-human company.")
