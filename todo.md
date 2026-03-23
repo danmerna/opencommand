@@ -335,3 +335,6 @@
 - [x] Create Creators.tsx coming-soon page with waitlist CTA and 4 benefit cards
 - [x] Register /creators route in App.tsx
 - [x] Add hero load animation (staggered fade-in-up on label, h1, subheading, and CTA buttons)
+
+## v3.13 — Agents Sidebar Section
+- [x] Add Agents section to sidebar above Projects, formatted identically to Projects section (status dot, name, type label, + button, empty state, 8-item cap with overflow link)
