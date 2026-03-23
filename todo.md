@@ -329,3 +329,9 @@
 ## v3.11 — Animations + CTA Revert
 - [x] Animate How It Works steps with scroll-triggered fade-in-up stagger (IntersectionObserver, 150ms delay per step)
 - [x] Revert bottom CTA headline back to "Hire your AI CEO today." with original supporting copy
+
+## v3.12 — Nav + Hero Animation
+- [x] Add Creators nav link to top nav (links to /creators)
+- [x] Create Creators.tsx coming-soon page with waitlist CTA and 4 benefit cards
+- [x] Register /creators route in App.tsx
+- [x] Add hero load animation (staggered fade-in-up on label, h1, subheading, and CTA buttons)

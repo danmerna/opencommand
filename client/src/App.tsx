@@ -25,6 +25,7 @@ import AppLayout from "./components/AppLayout";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import AgentOnboarding from "./pages/AgentOnboarding";
+import Creators from "./pages/Creators";
 
 function Router() {
   return (
@@ -53,6 +54,7 @@ function Router() {
       <Route path="/context-history">
         <AppLayout><ContextHistory /></AppLayout>
       </Route>
+      <Route path="/creators" component={Creators} />
       {/* Marketplace & Creator Program hidden — will be re-added later */}
       <Route path="/payments">
         <AppLayout><PaymentHistory /></AppLayout>

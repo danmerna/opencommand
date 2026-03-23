@@ -45,7 +45,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Scroll reveal styles injected once */}
       <style>{`
         .reveal-step {
           opacity: 0;
@@ -55,6 +54,29 @@ export default function Home() {
         .reveal-step.reveal-visible {
           opacity: 1;
           transform: translateY(0);
+        }
+        .hero-label {
+          opacity: 0;
+          transform: translateY(12px);
+          animation: heroFadeUp 0.5s ease 0.1s forwards;
+        }
+        .hero-h1 {
+          opacity: 0;
+          transform: translateY(16px);
+          animation: heroFadeUp 0.6s ease 0.25s forwards;
+        }
+        .hero-sub {
+          opacity: 0;
+          transform: translateY(16px);
+          animation: heroFadeUp 0.6s ease 0.45s forwards;
+        }
+        .hero-cta {
+          opacity: 0;
+          transform: translateY(12px);
+          animation: heroFadeUp 0.5s ease 0.65s forwards;
+        }
+        @keyframes heroFadeUp {
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
 
@@ -68,6 +90,7 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-8">
           <Link href="/blueprints" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">Blueprints</Link>
+          <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">Creators</Link>
           {isAuthenticated ? (
             <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2">
               Mission Control
@@ -83,15 +106,15 @@ export default function Home() {
       {/* Hero */}
       <section className="px-8 pt-28 pb-24 max-w-7xl mx-auto">
         <div className="max-w-3xl">
-          <p className="text-label mb-6">The Intent-to-Outcome Engine</p>
-          <h1 className="text-display text-6xl lg:text-[5.5rem] text-foreground leading-none mb-8">
+          <p className="hero-label text-label mb-6">The Intent-to-Outcome Engine</p>
+          <h1 className="hero-h1 text-display text-6xl lg:text-[5.5rem] text-foreground leading-none mb-8">
             Deploy your<br />
             <span className="text-muted-foreground">zero-human company.</span>
           </h1>
-          <p className="text-muted-foreground text-lg text-body max-w-xl mb-12">
+          <p className="hero-sub text-muted-foreground text-lg text-body max-w-xl mb-12">
             Orchestrate autonomous task execution, generate verified Proof of Outcome receipts, and deploy entire zero-human companies from a single command center.
           </p>
-          <div className="flex items-center gap-4">
+          <div className="hero-cta flex items-center gap-4">
             {isAuthenticated ? (
               <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-7 py-3">
                 Enter Mission Control <ArrowRight size={16} />
