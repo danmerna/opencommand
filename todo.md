@@ -361,3 +361,9 @@
 - [x] Apply consistent footer (IntelligenceOS, bigger logo/text) to Creators page
 - [x] Add Open Graph tags (og:title, og:description, og:image) to index.html
 - [x] Add Twitter Card meta tags to index.html
+
+## v3.20 — Favicon, Mobile Nav, Sitemap
+
+- [x] Add favicon.ico using the OC logo
+- [x] Add mobile hamburger menu to landing page nav (Blueprints + Creators links)
+- [x] Add sitemap.xml with public routes

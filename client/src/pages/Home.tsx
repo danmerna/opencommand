@@ -2,7 +2,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
 import { ArrowRight, Target, BarChart3, Bot, Cpu, Shield, FileStack } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
 
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -42,6 +43,7 @@ function HowItWorksStep({ step, title, desc, detail, delay }: { step: string; ti
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -81,23 +83,71 @@ export default function Home() {
       `}</style>
 
       {/* Top nav */}
-      <nav className="px-8 py-5 flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-2.5">
-          <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/2mC5vAT6JzxCS9FMA7E83Y/opencommand-logo_f5f7a99c.png" alt="OpenCommand" className="w-8 h-8 rounded-lg object-cover" />
-          <span className="font-semibold text-foreground text-sm tracking-tight">OpenCommand</span>
+      <nav className="px-6 md:px-8 py-5 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/2mC5vAT6JzxCS9FMA7E83Y/opencommand-logo_f5f7a99c.png" alt="OpenCommand" className="w-8 h-8 rounded-lg object-cover" />
+            <span className="font-semibold text-foreground text-sm tracking-tight">OpenCommand</span>
+          </div>
+
+          {/* Desktop nav links */}
+          <div className="hidden md:flex items-center gap-8">
+            <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">Creators</Link>
+            {isAuthenticated ? (
+              <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2">
+                Mission Control
+              </Link>
+            ) : (
+              <a href={getLoginUrl()} className="btn-primary text-[13px] px-5 py-2">
+                Sign In
+              </a>
+            )}
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
-        <div className="flex items-center gap-8">
-          <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">Creators</Link>
-          {isAuthenticated ? (
-            <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2">
-              Mission Control
+
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-4 pb-4 border-t border-border pt-4 flex flex-col gap-4">
+            <Link
+              href="/blueprints"
+              className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Blueprints
             </Link>
-          ) : (
-            <a href={getLoginUrl()} className="btn-primary text-[13px] px-5 py-2">
-              Sign In
-            </a>
-          )}
-        </div>
+            <Link
+              href="/creators"
+              className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Creators
+            </Link>
+            <div className="pt-2">
+              {isAuthenticated ? (
+                <Link
+                  href="/mission-control"
+                  className="btn-primary text-[13px] px-5 py-2 inline-block"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Mission Control
+                </Link>
+              ) : (
+                <a href={getLoginUrl()} className="btn-primary text-[13px] px-5 py-2 inline-block">
+                  Sign In
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero */}
