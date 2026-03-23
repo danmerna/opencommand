@@ -163,7 +163,7 @@ export default function Home() {
             <span className="text-muted-foreground">zero-human workforce.</span>
           </h1>
           <p className="hero-sub text-muted-foreground text-lg text-body max-w-xl mb-12">
-            The bottleneck in modern work is no longer generating ideas or finding information — it is execution. For high-performance operators, the friction between intent and outcome is the only thing standing in the way of scale. Personal Intelligence Engine is built to eliminate that friction. It is not just another AI assistant that waits for your prompt; it is a personal orchestration system designed to execute complex workflows autonomously.
+            The bottleneck in modern work is no longer generating ideas or finding information — it is execution. For high-performance operators, the friction between intent and outcome is the only thing standing in the way of scale. OpenCommand is built to eliminate that friction. It is not just another AI assistant that waits for your prompt; it is a personal orchestration system designed to execute complex workflows autonomously.
           </p>
           <div className="hero-cta flex items-center gap-4">
             {isAuthenticated ? (
