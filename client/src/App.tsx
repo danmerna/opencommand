@@ -7,16 +7,17 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import MissionControl from "./pages/MissionControl";
 import IntentEngine from "./pages/IntentEngine";
-import Marketplace from "./pages/Marketplace";
-import CreatorProgram from "./pages/CreatorProgram";
+// Marketplace hidden — will be re-added later
+// import Marketplace from "./pages/Marketplace";
+// import CreatorProgram from "./pages/CreatorProgram";
 import AICeo from "./pages/AICeo";
 import Blueprints from "./pages/Blueprints";
 import Governance from "./pages/Governance";
-import BlueprintDashboard from "./pages/BlueprintDashboard";
+// import BlueprintDashboard from "./pages/BlueprintDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import IntegrationHub from "./pages/IntegrationHub";
-import CompatibilityChecker from "./pages/CompatibilityChecker";
+// import CompatibilityChecker from "./pages/CompatibilityChecker";
 import ContextHistory from "./pages/ContextHistory";
 import PaymentHistory from "./pages/PaymentHistory";
 import ReceiptViewer from "./pages/ReceiptViewer";
@@ -40,23 +41,18 @@ function Router() {
       <Route path="/blueprints">
         <AppLayout><Blueprints /></AppLayout>
       </Route>
-      <Route path="/blueprint-dashboard">
-        <AppLayout><BlueprintDashboard /></AppLayout>
-      </Route>
+      {/* Blueprint Dashboard hidden — will be re-added later */}
       <Route path="/governance">
         <AppLayout><Governance /></AppLayout>
       </Route>
       <Route path="/integration-hub">
         <AppLayout><IntegrationHub /></AppLayout>
       </Route>
-      <Route path="/compatibility">
-        <AppLayout><CompatibilityChecker /></AppLayout>
-      </Route>
+      {/* Compatibility hidden — will be re-added later */}
       <Route path="/context-history">
         <AppLayout><ContextHistory /></AppLayout>
       </Route>
-      <Route path="/marketplace" component={Marketplace} />
-      <Route path="/creator-program" component={CreatorProgram} />
+      {/* Marketplace & Creator Program hidden — will be re-added later */}
       <Route path="/payments">
         <AppLayout><PaymentHistory /></AppLayout>
       </Route>

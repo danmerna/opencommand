@@ -5,7 +5,7 @@
  *
  * Usage:
  *   emitToUser(userId, "task_completed", "Task Done", "Receipt POO-123 generated")
- *   emitBroadcast("heartbeat", "Heartbeat", "Agent ARIA ticked")
+ *   emitBroadcast("heartbeat", "Heartbeat", "Agent Arch ticked")
  */
 
 import { io } from "./_core/index";

@@ -150,7 +150,7 @@ export default function Marketplace() {
                       ) : (
                         <div>
                           <span className="text-xl font-light text-foreground">5% value capture</span>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">Pay only when ARIA creates value</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">Pay only when Arch creates value</div>
                         </div>
                       )}
                       {listing.totalPurchases > 0 && (

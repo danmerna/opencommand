@@ -180,7 +180,7 @@ const agentsRouter = router({
     const comps = await getCompaniesByUserId(ctx.user.id);
     const companyId = comps[0]?.id ?? null;
     const defaults = [
-      { name: "ARIA — AI CEO", type: "ceo" as const, roleTitle: "Chief Executive Officer", description: "Executive Core orchestrating all operations, OKR tracking, and strategic decision-making.", capabilities: ["strategy", "orchestration", "okr-tracking", "decision-making"], tools: ["llm", "calendar", "analytics"] },
+      { name: "Arch — AI CEO", type: "ceo" as const, roleTitle: "Chief Executive Officer", description: "Executive Core orchestrating all operations, OKR tracking, and strategic decision-making.", capabilities: ["strategy", "orchestration", "okr-tracking", "decision-making"], tools: ["llm", "calendar", "analytics"] },
       { name: "NOVA — CMO", type: "cmo" as const, roleTitle: "Chief Marketing Officer", description: "Autonomous marketing agent handling content, campaigns, and lead generation.", capabilities: ["content-creation", "seo", "email-campaigns", "social-media"], tools: ["mailchimp", "analytics", "social-scheduler"] },
       { name: "SAGE — CTO", type: "cto" as const, roleTitle: "Chief Technology Officer", description: "Deep research and competitive intelligence agent.", capabilities: ["market-research", "competitor-analysis", "data-synthesis", "code-review"], tools: ["github", "jira", "datadog"] },
       { name: "APEX — VP Sales", type: "vp" as const, roleTitle: "VP of Sales", description: "Autonomous outreach, pipeline management, and deal closing agent.", capabilities: ["lead-scoring", "outreach", "crm-sync", "follow-up"], tools: ["stripe", "hubspot", "calendly"] },
@@ -482,13 +482,13 @@ const marketplaceRouter = router({
   seedDefaults: protectedProcedure.mutation(async ({ ctx }) => {
     const existing = await getMarketplaceListings();
     if (existing.length > 0) return { success: true, message: "Listings already exist" };
-    await createAgent({ userId: ctx.user.id, name: "ARIA — AI CEO (Marketplace)", type: "ceo", status: "idle", description: "Flagship AI CEO agent", isMarketplaceListing: true } as any);
+    await createAgent({ userId: ctx.user.id, name: "Arch — AI CEO (Marketplace)", type: "ceo", status: "idle", description: "Flagship AI CEO agent", isMarketplaceListing: true } as any);
     const agentsData = await getAgentsByUserId(ctx.user.id);
     const ceoAgent = agentsData.find(a => a.type === "ceo" && a.isMarketplaceListing);
     const agentId = ceoAgent?.id ?? 1;
     const listings = [
-      { agentId, listingType: "agent" as const, tier: "solo_founder" as const, name: "ARIA Solo-Founder CEO", tagline: "Your first autonomous executive hire.", description: "ARIA orchestrates up to 3 subordinate agents, tracks your OKRs in real-time, and generates Proof of Outcome receipts for every task completed.", price: "199.00", pricingModel: "monthly" as const, features: JSON.stringify(["OKR Dashboard", "3 Subordinate Agents", "PoO Receipt Generation", "Human-in-the-Loop Inbox", "Socratic Intent Engine"]), endorsedBy: "Alex Chen", endorserHandle: "@alexbuilds", endorserNiche: "Indie Hacking", totalPurchases: 247, avgRating: "4.80" },
-      { agentId, listingType: "agent" as const, tier: "enterprise" as const, name: "ARIA Enterprise CEO", tagline: "Full Agentic Operating Model for scaling teams.", description: "Unlimited subordinate agent orchestration, custom API integrations, advanced PoO analytics with ROI tracking, and a 5% value capture model.", price: null, pricingModel: "value_capture" as const, features: JSON.stringify(["Unlimited Agents", "Custom API Integrations", "Advanced PoO Analytics", "5% Value Capture Model", "White-label Mission Control"]), endorsedBy: "Sarah Martinez", endorserHandle: "@sarahscales", endorserNiche: "Agency Growth", totalPurchases: 43, avgRating: "4.95" },
+      { agentId, listingType: "agent" as const, tier: "solo_founder" as const, name: "Arch Solo-Founder CEO", tagline: "Your first autonomous executive hire.", description: "Arch orchestrates up to 3 subordinate agents, tracks your OKRs in real-time, and generates Proof of Outcome receipts for every task completed.", price: "199.00", pricingModel: "monthly" as const, features: JSON.stringify(["OKR Dashboard", "3 Subordinate Agents", "PoO Receipt Generation", "Human-in-the-Loop Inbox", "Socratic Intent Engine"]), endorsedBy: "Alex Chen", endorserHandle: "@alexbuilds", endorserNiche: "Indie Hacking", totalPurchases: 247, avgRating: "4.80" },
+      { agentId, listingType: "agent" as const, tier: "enterprise" as const, name: "Arch Enterprise CEO", tagline: "Full Agentic Operating Model for scaling teams.", description: "Unlimited subordinate agent orchestration, custom API integrations, advanced PoO analytics with ROI tracking, and a 5% value capture model.", price: null, pricingModel: "value_capture" as const, features: JSON.stringify(["Unlimited Agents", "Custom API Integrations", "Advanced PoO Analytics", "5% Value Capture Model", "White-label Mission Control"]), endorsedBy: "Sarah Martinez", endorserHandle: "@sarahscales", endorserNiche: "Agency Growth", totalPurchases: 43, avgRating: "4.95" },
     ];
     for (const listing of listings) { await createMarketplaceListing(listing as any); }
     return { success: true };
@@ -607,7 +607,7 @@ const aiCeoRouter = router({
       const agentSummary = JSON.stringify(agentData.map(a => ({ name: a.name, type: a.type, status: a.status, roleTitle: a.roleTitle })));
       const response = await invokeLLM({
         messages: [
-          { role: "system" as const, content: "You are ARIA, the OpenCommand AI CEO. Analyze the user's goal in context of their current OKRs and agent fleet, then produce a strategic action plan. Be specific, actionable, and assign tasks to appropriate agents. Respond in 3-5 sentences followed by a numbered action list." },
+          { role: "system" as const, content: "You are Arch, the OpenCommand AI CEO. Analyze the user's goal in context of their current OKRs and agent fleet, then produce a strategic action plan. Be specific, actionable, and assign tasks to appropriate agents. Respond in 3-5 sentences followed by a numbered action list." },
           { role: "user" as const, content: `Goal: ${input.goal}\n\nCurrent OKRs: ${okrSummary}\n\nAgent Fleet: ${agentSummary}` },
         ],
       });

@@ -109,7 +109,7 @@ export default function IntentEngine() {
         setMessages([...newMessages, { role: "assistant", content: result.response }]);
         if (result.intentObject) setIntentObject(result.intentObject as IntentObject);
       } catch {
-        toast.error("ARIA is unavailable. Try again.");
+        toast.error("Arch is unavailable. Try again.");
       }
       setContextPhase("idle");
     } finally {
@@ -206,7 +206,7 @@ export default function IntentEngine() {
                     <span className="text-xs font-semibold text-foreground">AI</span>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-foreground">ARIA — Self-Contextualizing Engine</div>
+                    <div className="text-sm font-medium text-foreground">Arch — Self-Contextualizing Engine</div>
                     <div className={`text-[10px] flex items-center gap-1 ${PHASE_LABELS[contextPhase].color}`}>
                       {PHASE_LABELS[contextPhase].icon} {PHASE_LABELS[contextPhase].label}
                     </div>
@@ -222,7 +222,7 @@ export default function IntentEngine() {
                   <div className="text-center py-12">
                     <Cpu size={28} className="text-muted-foreground mx-auto mb-4 opacity-50" />
                     <div className="text-base font-medium text-muted-foreground mb-2">Describe your goal</div>
-                    <p className="text-muted-foreground text-sm max-w-sm mx-auto">ARIA will interpret your intent, gather context from {connectedCount} connected tools, and produce a precision-enriched execution plan.</p>
+                    <p className="text-muted-foreground text-sm max-w-sm mx-auto">Arch will interpret your intent, gather context from {connectedCount} connected tools, and produce a precision-enriched execution plan.</p>
                     <div className="mt-6 space-y-2 max-w-md mx-auto">
                       {["I want to grow my email list by 50% this quarter", "Help me close the 3 stalled deals in my pipeline", "Automate my weekly content calendar across all channels"].map(s => (
                         <button key={s} onClick={() => setInput(s)} className="block w-full text-left px-4 py-2.5 rounded-lg border border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground text-xs transition-all">
@@ -273,7 +273,7 @@ export default function IntentEngine() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                    placeholder="Describe your goal — ARIA will self-contextualize..."
+                    placeholder="Describe your goal — Arch will self-contextualize..."
                     className="flex-1 bg-zinc-900 border-border text-foreground text-sm resize-none rounded-lg"
                     rows={2}
                   />

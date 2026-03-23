@@ -14,7 +14,7 @@ export default function AICeo() {
   const { isAuthenticated } = useAuth();
   const [tab, setTab] = useState<Tab>("chat");
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "**ARIA online.** I am your AI Chief Executive Officer. I have full visibility into your OKRs, agent fleet, and execution history.\n\nI can help you:\n- **Strategize** — analyze your goals and build action plans\n- **Orchestrate** — delegate tasks to the right agents\n- **Decide** — provide executive-level recommendations\n\nWhat would you like to command today?" }
+    { role: "assistant", content: "**Arch online.** I am your AI Chief Executive Officer. I have full visibility into your OKRs, agent fleet, and execution history.\n\nI can help you:\n- **Strategize** — analyze your goals and build action plans\n- **Orchestrate** — delegate tasks to the right agents\n- **Decide** — provide executive-level recommendations\n\nWhat would you like to command today?" }
   ]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
@@ -52,7 +52,7 @@ export default function AICeo() {
       });
       setMessages([...newMessages, { role: "assistant", content: result.response }]);
     } catch {
-      toast.error("ARIA is unavailable. Try again.");
+      toast.error("Arch is unavailable. Try again.");
     } finally {
       setIsThinking(false);
     }
@@ -64,7 +64,7 @@ export default function AICeo() {
   const activeAgents = agents.filter(a => a.status === "active").length;
 
   const tabs = [
-    { id: "chat" as Tab, label: "ARIA Chat", icon: Brain },
+    { id: "chat" as Tab, label: "Arch Chat", icon: Brain },
     { id: "strategy" as Tab, label: "Strategy Engine", icon: Target },
     { id: "log" as Tab, label: "Decision Log", icon: History },
   ];
@@ -74,7 +74,7 @@ export default function AICeo() {
       {/* Header */}
       <div className="mb-8">
         <p className="text-xs text-muted-foreground tracking-widest uppercase mb-1">OpenCommand</p>
-        <h1 className="text-3xl font-light text-foreground tracking-tight">AI CEO — ARIA</h1>
+        <h1 className="text-3xl font-light text-foreground tracking-tight">AI CEO — Arch</h1>
         <p className="text-sm text-muted-foreground mt-1">Executive Core · Orchestration Layer · Memory Engine</p>
       </div>
 
@@ -106,7 +106,7 @@ export default function AICeo() {
         ))}
       </div>
 
-      {/* ARIA Chat */}
+      {/* Arch Chat */}
       {tab === "chat" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 flex flex-col">
@@ -117,13 +117,13 @@ export default function AICeo() {
                     <Brain size={14} className="text-foreground" />
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-foreground">ARIA — AI Chief Executive Officer</div>
+                    <div className="text-sm font-medium text-foreground">Arch — AI Chief Executive Officer</div>
                     <div className="text-[10px] text-emerald-400 flex items-center gap-1">
                       <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" /> Online · Memory active
                     </div>
                   </div>
                 </div>
-                <button onClick={() => setMessages([{ role: "assistant", content: "ARIA reset. Ready for new directives." }])} className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-md hover:bg-zinc-800">
+                <button onClick={() => setMessages([{ role: "assistant", content: "Arch reset. Ready for new directives." }])} className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-md hover:bg-zinc-800">
                   <RotateCcw size={14} />
                 </button>
               </div>
@@ -152,7 +152,7 @@ export default function AICeo() {
                     </div>
                     <div className="bg-card border border-border rounded-lg px-4 py-3 flex items-center gap-2">
                       {[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-foreground/50 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
-                      <span className="text-[10px] text-muted-foreground">ARIA processing...</span>
+                      <span className="text-[10px] text-muted-foreground">Arch processing...</span>
                     </div>
                   </div>
                 )}
@@ -173,7 +173,7 @@ export default function AICeo() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                    placeholder="Command ARIA..."
+                    placeholder="Command Arch..."
                     className="flex-1 bg-zinc-900 border-border text-foreground text-sm resize-none rounded-lg"
                     rows={2}
                   />
@@ -243,12 +243,12 @@ export default function AICeo() {
                 className="w-full gap-2"
               >
                 <Zap size={14} />
-                {strategizeQ.isPending ? "ARIA strategizing..." : "Generate Strategy"}
+                {strategizeQ.isPending ? "Arch strategizing..." : "Generate Strategy"}
               </Button>
             </div>
 
             <div className="mt-4 card-minimal p-4 space-y-2">
-              <div className="text-xs text-muted-foreground font-medium mb-2">Context ARIA will use</div>
+              <div className="text-xs text-muted-foreground font-medium mb-2">Context Arch will use</div>
               {[
                 { label: "OKRs", value: `${okrs.length} objectives` },
                 { label: "Agent Fleet", value: `${agents.length} agents` },
@@ -263,14 +263,14 @@ export default function AICeo() {
           </div>
 
           <div>
-            <div className="text-xs text-muted-foreground font-medium mb-3">ARIA Strategic Analysis</div>
+            <div className="text-xs text-muted-foreground font-medium mb-3">Arch Strategic Analysis</div>
             {strategy ? (
               <div className="card-minimal p-6 border-l-2 border-l-foreground">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center">
                     <Brain size={12} className="text-foreground" />
                   </div>
-                  <span className="text-sm font-medium text-foreground">ARIA — Strategic Recommendation</span>
+                  <span className="text-sm font-medium text-foreground">Arch — Strategic Recommendation</span>
                 </div>
                 <div className="text-sm text-foreground leading-relaxed">
                   <Streamdown>{strategy}</Streamdown>
@@ -285,7 +285,7 @@ export default function AICeo() {
               <div className="card-minimal p-12 text-center">
                 <Brain size={28} className="text-muted-foreground mx-auto mb-4 opacity-50" />
                 <div className="text-base font-medium text-muted-foreground">Awaiting directive</div>
-                <p className="text-muted-foreground text-sm mt-1">Enter a strategic goal and ARIA will analyze your current position and generate an action plan.</p>
+                <p className="text-muted-foreground text-sm mt-1">Enter a strategic goal and Arch will analyze your current position and generate an action plan.</p>
               </div>
             )}
           </div>
@@ -302,7 +302,7 @@ export default function AICeo() {
             <div className="card-minimal p-8 text-center">
               <History size={28} className="text-muted-foreground mx-auto mb-3 opacity-50" />
               <div className="text-base font-medium text-muted-foreground">No decisions logged</div>
-              <p className="text-muted-foreground text-sm mt-1">Execute tasks and generate strategies to build ARIA's decision history.</p>
+              <p className="text-muted-foreground text-sm mt-1">Execute tasks and generate strategies to build Arch's decision history.</p>
             </div>
           ) : (
             <div className="space-y-2">

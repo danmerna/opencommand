@@ -25,12 +25,10 @@ const coreNavItems = [
   { href: "/intent-engine",   label: "Intent Engine",   icon: Cpu },
   { href: "/ai-ceo",          label: "AI CEO",           icon: Bot },
   { href: "/blueprints",      label: "Blueprints",       icon: FileStack },
-  { href: "/marketplace",     label: "Marketplace",      icon: ShoppingBag },
-  { href: "/creator-program", label: "Creators",         icon: Users },
+  // Marketplace & Creators hidden — will be re-added later
   { href: "/governance",      label: "Governance",       icon: Shield },
   { href: "/integration-hub", label: "Integrations",     icon: Plug },
-  { href: "/blueprint-dashboard", label: "Analytics",   icon: BarChart3 },
-  { href: "/compatibility",   label: "Compatibility",    icon: CheckSquare },
+  // Blueprint Dashboard & Compatibility hidden — will be re-added later
   { href: "/context-history", label: "Context History",  icon: History },
   { href: "/payments",        label: "Payments",         icon: CreditCard },
 ];

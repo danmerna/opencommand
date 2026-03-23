@@ -270,3 +270,14 @@
 - [x] Add close button (X) inside the mobile sidebar overlay
 - [x] Make the mobile header sticky (pinned to top when scrolling)
 - [x] Add swipe-to-close gesture on the mobile sidebar
+
+## v3.6 — Hide Marketplace + Rename ARIA to Arch
+
+- [x] Hide Marketplace from sidebar navigation
+- [x] Hide Creator Program from sidebar navigation
+- [x] Hide Blueprint Dashboard (Analytics) from sidebar navigation
+- [x] Hide Compatibility Checker from sidebar navigation
+- [x] Remove marketplace routes from App.tsx (keep files, just hide routes)
+- [x] Remove marketplace links from Home landing page
+- [x] Rename all ARIA references to Arch across the codebase (12 files updated)
+- [x] 122 tests passing, 0 TypeScript errors

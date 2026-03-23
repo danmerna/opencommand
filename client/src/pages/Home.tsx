@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
-import { ArrowRight, Zap, Target, BarChart3, Users, ShoppingBag, Bot, Cpu, Shield, FileStack } from "lucide-react";
+import { ArrowRight, Zap, Target, BarChart3, Users, Bot, Cpu, Shield, FileStack } from "lucide-react";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
@@ -17,8 +17,7 @@ export default function Home() {
           <span className="font-semibold text-foreground text-sm tracking-tight">OpenCommand</span>
         </div>
         <div className="flex items-center gap-8">
-          <Link href="/marketplace" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">Marketplace</Link>
-          <Link href="/creator-program" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">Creators</Link>
+          <Link href="/blueprints" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">Blueprints</Link>
           {isAuthenticated ? (
             <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2">
               Mission Control
@@ -52,8 +51,8 @@ export default function Home() {
                 Deploy Your AI CEO <ArrowRight size={16} />
               </a>
             )}
-            <Link href="/marketplace" className="btn-outline px-7 py-3">
-              View Marketplace
+            <Link href="/blueprints" className="btn-outline px-7 py-3">
+              View Blueprints
             </Link>
           </div>
         </div>
@@ -89,9 +88,9 @@ export default function Home() {
           {[
             { icon: BarChart3, title: "Mission Control", desc: "Real-time OKR tracking, agent fleet monitoring, human-in-the-loop inbox, and PoO ledger.", href: "/mission-control" },
             { icon: Cpu, title: "Intent Engine", desc: "Transforms vague requests into structured intent objects through guided AI questioning.", href: "/intent-engine" },
-            { icon: Bot, title: "AI CEO — ARIA", desc: "Executive Core, Orchestration Layer, and Memory Engine. Compounds intelligence over time.", href: "/ai-ceo" },
+            { icon: Bot, title: "AI CEO — Arch", desc: "Executive Core, Orchestration Layer, and Memory Engine. Compounds intelligence over time.", href: "/ai-ceo" },
             { icon: Target, title: "Proof of Outcome", desc: "Every task generates a verifiable receipt documenting labor saved and dollar value created.", href: "/mission-control" },
-            { icon: ShoppingBag, title: "Agent Marketplace", desc: "Browse and deploy specialized AI agents. Solo-Founder CEO or Enterprise CEO tiers.", href: "/marketplace" },
+            { icon: Shield, title: "Governance", desc: "Approval gates, audit logs, kill switches, and compliance reporting for full operational control.", href: "/governance" },
             { icon: FileStack, title: "Company Blueprints", desc: "Package and sell entire zero-human company setups. One-click deployment for buyers.", href: "/blueprints" },
           ].map((f, i) => (
             <Link key={i} href={f.href}>
@@ -115,7 +114,7 @@ export default function Home() {
         <p className="text-label mb-4">Ready to deploy</p>
         <h2 className="text-heading text-3xl text-foreground mb-5">Hire your AI CEO today.</h2>
         <p className="text-muted-foreground text-body mb-10 max-w-lg mx-auto">
-          Stop managing tasks. Start commanding outcomes. ARIA handles the execution while you focus on the vision.
+          Stop managing tasks. Start commanding outcomes. Arch handles the execution while you focus on the vision.
         </p>
         <div className="flex items-center justify-center gap-4 flex-wrap">
           {isAuthenticated ? (
@@ -127,8 +126,8 @@ export default function Home() {
               Deploy Your AI CEO <ArrowRight size={16} />
             </a>
           )}
-          <Link href="/marketplace" className="btn-outline px-8 py-3">
-            Browse Marketplace
+          <Link href="/blueprints" className="btn-outline px-8 py-3">
+            View Blueprints
           </Link>
         </div>
       </section>

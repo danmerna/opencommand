@@ -253,7 +253,7 @@ describe("agents", () => {
   it("creates an agent successfully", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.agents.create({ name: "ARIA — AI CEO", type: "ceo", description: "Executive Core agent" });
+    const result = await caller.agents.create({ name: "Arch — AI CEO", type: "ceo", description: "Executive Core agent" });
     expect(result.success).toBe(true);
   });
 

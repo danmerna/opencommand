@@ -159,7 +159,7 @@ export default function MissionControl() {
             )}
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-subtle" />
-              <span className="text-label text-[10px]">ARIA Online</span>
+              <span className="text-label text-[10px]">Arch Online</span>
             </div>
           </div>
         </div>

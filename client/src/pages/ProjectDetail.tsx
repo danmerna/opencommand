@@ -358,7 +358,7 @@ export default function ProjectDetail() {
             <Textarea
               value={planText}
               onChange={e => { setPlanText(e.target.value); setPlanDirty(true); }}
-              placeholder={"# Project Plan\n\n## Objectives\n- \n\n## Milestones\n1. \n\n## Agent Assignments\n- ARIA: \n\n## Success Criteria\n- "}
+              placeholder={"# Project Plan\n\n## Objectives\n- \n\n## Milestones\n1. \n\n## Agent Assignments\n- Arch: \n\n## Success Criteria\n- "}
               rows={24}
               className="font-mono text-sm resize-none"
             />
