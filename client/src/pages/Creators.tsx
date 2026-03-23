@@ -140,7 +140,7 @@ export default function Creators() {
       <div className="accent-line" />
       <footer className="px-8 py-8 flex items-center justify-between max-w-7xl mx-auto">
         <span className="text-base text-foreground font-semibold tracking-tight">OpenCommand</span>
-        <div className="text-label">IntelligenceOS · {new Date().getFullYear()}</div>
+        <div className="text-label">Personal Intelligence Engine · {new Date().getFullYear()}</div>
       </footer>
     </div>
   );

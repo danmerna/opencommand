@@ -83,12 +83,12 @@ export default function Pricing() {
     <div className="min-h-full p-6 md:p-10 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-12">
-        <p className="text-xs text-muted-foreground tracking-widest uppercase mb-3">IntelligenceOS</p>
+        <p className="text-xs text-muted-foreground tracking-widest uppercase mb-3">Personal Intelligence Engine</p>
         <h1 className="text-4xl font-light text-foreground tracking-tight mb-3">
           Simple, transparent pricing.
         </h1>
         <p className="text-muted-foreground text-sm max-w-lg">
-          Start free, scale as you grow. Every plan includes access to the IntelligenceOS orchestration layer.
+          Start free, scale as you grow. Every plan includes access to the Personal Intelligence Engine orchestration layer.
         </p>
       </div>
 

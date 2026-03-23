@@ -47,7 +47,7 @@ async function deliverBriefingForFrequency(frequency: string) {
 
         await notifyOwner({
           title: `${freqLabel} Strategy Briefing — ${company.name}`,
-          content: `Your ${frequency} IntelligenceOS briefing is ready.\n\n${summary}\n\nVisit Mission Control → Strategy to review the full plan and accept or revise it.`,
+          content: `Your ${frequency} Personal Intelligence Engine briefing is ready.\n\n${summary}\n\nVisit Mission Control → Strategy to review the full plan and accept or revise it.`,
         });
       } else {
         // No strategy yet — prompt the user to generate one

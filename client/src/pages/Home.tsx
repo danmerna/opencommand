@@ -157,13 +157,13 @@ export default function Home() {
       {/* Hero */}
       <section className="px-8 pt-28 pb-24 max-w-7xl mx-auto">
         <div className="max-w-3xl">
-          <p className="hero-label text-label mb-6">IntelligenceOS</p>
+          <p className="hero-label text-label mb-6">Personal Intelligence Engine</p>
           <h1 className="hero-h1 text-display text-6xl lg:text-[5.5rem] text-foreground leading-none mb-8">
             Deploy your<br />
             <span className="text-muted-foreground">zero-human workforce.</span>
           </h1>
           <p className="hero-sub text-muted-foreground text-lg text-body max-w-xl mb-12">
-            The bottleneck in modern work is no longer generating ideas or finding information — it is execution. For high-performance operators, the friction between intent and outcome is the only thing standing in the way of scale. IntelligenceOS is built to eliminate that friction. It is not just another AI assistant that waits for your prompt; it is a personal orchestration system designed to execute complex workflows autonomously.
+            The bottleneck in modern work is no longer generating ideas or finding information — it is execution. For high-performance operators, the friction between intent and outcome is the only thing standing in the way of scale. Personal Intelligence Engine is built to eliminate that friction. It is not just another AI assistant that waits for your prompt; it is a personal orchestration system designed to execute complex workflows autonomously.
           </p>
           <div className="hero-cta flex items-center gap-4">
             {isAuthenticated ? (
@@ -351,7 +351,7 @@ export default function Home() {
       <div className="accent-line" />
       <footer className="px-8 py-8 flex items-center justify-between max-w-7xl mx-auto">
         <span className="text-base text-foreground font-semibold tracking-tight">OpenCommand</span>
-        <div className="text-label">IntelligenceOS · {new Date().getFullYear()}</div>
+        <div className="text-label">Personal Intelligence Engine · {new Date().getFullYear()}</div>
       </footer>
     </div>
   );

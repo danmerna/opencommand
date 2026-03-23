@@ -51,7 +51,7 @@ export default function ContextHistory() {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
-          <p className="text-xs text-muted-foreground tracking-widest uppercase mb-2">IntelligenceOS</p>
+          <p className="text-xs text-muted-foreground tracking-widest uppercase mb-2">Personal Intelligence Engine</p>
           <h1 className="text-4xl font-light text-foreground tracking-tight">Context History</h1>
           <p className="text-muted-foreground text-sm mt-2">Full context engineering chain — Interpret → Gather → Contextualize.</p>
         </div>

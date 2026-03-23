@@ -32,3 +32,4 @@
 - [x] Show briefing frequency badge + edit control on Mission Control Strategy tab
 - [x] Add scheduled briefing delivery via cron/notification on chosen cadence
 - [x] "Accept Strategy" button auto-populates OKRs from Key Metrics section
+- [x] Replace "IntelligenceOS" with "Personal Intelligence Engine" across all files

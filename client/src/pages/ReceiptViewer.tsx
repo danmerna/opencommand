@@ -169,7 +169,7 @@ export default function ReceiptViewer() {
         {/* Footer */}
         <div className="text-center pt-8 border-t border-border">
           <p className="text-xs text-muted-foreground mb-4">
-            This Proof of Outcome receipt was generated and verified by OpenCommand — IntelligenceOS.
+            This Proof of Outcome receipt was generated and verified by OpenCommand — Personal Intelligence Engine.
           </p>
           <Link href="/">
             <Button variant="outline" size="sm" className="gap-2 text-xs">
