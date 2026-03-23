@@ -240,7 +240,44 @@ describe("Home Page Redesign - Structure Validation", () => {
     });
   });
 
-  // ─── Section 8: Pricing ────────────────────────────────────────────
+  // ─── Section 8: Social Proof ─────────────────────────────────────
+  describe("Social Proof Section", () => {
+    it("has the Early Adopters section header", () => {
+      expect(homeSource).toContain("Early Adopters");
+      expect(homeSource).toContain("What beta users are saying.");
+    });
+
+    it("includes three testimonial cards with names and companies", () => {
+      expect(homeSource).toContain("Marcus Chen");
+      expect(homeSource).toContain("Meridian Growth");
+      expect(homeSource).toContain("Sarah Okonkwo");
+      expect(homeSource).toContain("Luma Commerce");
+      expect(homeSource).toContain("David Reeves");
+      expect(homeSource).toContain("Northline Logistics");
+    });
+
+    it("includes testimonial quotes highlighting key value props", () => {
+      expect(homeSource).toContain("self-contextualization is the real differentiator");
+      expect(homeSource).toContain("fractional CFO");
+      expect(homeSource).toContain("Proof of Outcome receipts");
+    });
+
+    it("includes metric highlights for each testimonial", () => {
+      expect(homeSource).toContain("3x pipeline visibility in first session");
+      expect(homeSource).toContain("Replaced $4K/mo fractional CFO");
+      expect(homeSource).toContain("Full audit trail from day one");
+    });
+
+    it("includes star ratings", () => {
+      expect(homeSource).toContain("text-amber-400 fill-amber-400");
+    });
+
+    it("uses scroll reveal animation for cards", () => {
+      expect(homeSource).toContain("useScrollReveal");
+    });
+  });
+
+  // ─── Section 9: Pricing ────────────────────────────────────────
   describe("Pricing Section - Free During Beta", () => {
     it("has the free during beta header", () => {
       expect(homeSource).toContain("Free during beta. Full access.");

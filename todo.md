@@ -139,3 +139,6 @@
 - [x] Build onboarding reminder emails: send reminder email with direct resume link
 - [x] Build onboarding reminder emails: track reminder state to avoid duplicate sends
 - [x] Write tests for hero illustration and onboarding reminders
+- [x] Add social proof section to homepage with three beta user testimonial cards
+- [x] Place section between Blueprints and Beta Access sections
+- [x] Write tests for the social proof section

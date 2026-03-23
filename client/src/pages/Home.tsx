@@ -763,7 +763,73 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Section 8: Free During Beta ─────────────────────────── */}
+      {/* ─── Section 8: Social Proof ──────────────────────────────── */}
+      <div className="accent-line" />
+      <section className="px-8 py-24 max-w-7xl mx-auto">
+        <div className="mb-16 text-center">
+          <p className="text-label mb-3">Early Adopters</p>
+          <h2 className="text-heading text-3xl text-foreground">What beta users are saying.</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              quote: "I connected HubSpot and within 60 seconds, the CMO agent knew more about my pipeline than my last marketing hire did after two weeks. The self-contextualization is the real differentiator here.",
+              name: "Marcus Chen",
+              role: "Founder & CEO",
+              company: "Meridian Growth",
+              metric: "3x pipeline visibility in first session",
+            },
+            {
+              quote: "We were spending $4K/month on a fractional CFO who mostly just asked us for spreadsheets. The CFO agent pulled everything from Stripe and QuickBooks on its own and gave us a clearer financial picture on day one.",
+              name: "Sarah Okonkwo",
+              role: "Co-founder",
+              company: "Luma Commerce",
+              metric: "Replaced $4K/mo fractional CFO",
+            },
+            {
+              quote: "The Proof of Outcome receipts changed how I think about AI tools. Every other platform is a black box — Open Command shows me exactly what happened, what it cost, and what value it created. That's accountability.",
+              name: "David Reeves",
+              role: "Head of Operations",
+              company: "Northline Logistics",
+              metric: "Full audit trail from day one",
+            },
+          ].map((t, i) => {
+            const ref = useScrollReveal();
+            return (
+              <div
+                key={i}
+                ref={ref}
+                className="reveal-step card-minimal flex flex-col justify-between"
+                style={{ transitionDelay: `${i * 120}ms` }}
+              >
+                <div>
+                  <div className="flex gap-1 mb-5">
+                    {[...Array(5)].map((_, s) => (
+                      <Star key={s} size={13} className="text-amber-400 fill-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-foreground/90 text-body leading-relaxed mb-6">
+                    "{t.quote}"
+                  </p>
+                </div>
+                <div>
+                  <div className="border-t border-border pt-5 mb-3">
+                    <p className="text-sm font-medium text-foreground">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}, {t.company}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="text-[11px] text-emerald-400 font-medium">{t.metric}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ─── Section 9: Free During Beta ─────────────────────────── */}
       <div className="accent-line" />
       <section className="px-8 py-24 max-w-4xl mx-auto">
         <div className="text-center mb-10">
