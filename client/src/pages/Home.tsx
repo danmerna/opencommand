@@ -87,7 +87,6 @@ export default function Home() {
           <span className="font-semibold text-foreground text-sm tracking-tight">OpenCommand</span>
         </div>
         <div className="flex items-center gap-8">
-          <Link href="/blueprints" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">Blueprints</Link>
           <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">Creators</Link>
           {isAuthenticated ? (
             <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2">
