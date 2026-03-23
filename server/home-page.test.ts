@@ -241,35 +241,28 @@ describe("Home Page Redesign - Structure Validation", () => {
   });
 
   // ─── Section 8: Pricing ────────────────────────────────────────────
-  describe("Pricing Section - Three Tiers", () => {
-    it("has the pricing section header with 7-day trial", () => {
-      expect(homeSource).toContain("Try everything free for 7 days.");
+  describe("Pricing Section - Free During Beta", () => {
+    it("has the free during beta header", () => {
+      expect(homeSource).toContain("Free during beta. Full access.");
     });
 
-    it("includes 7-day Free Trial tier", () => {
-      expect(homeSource).toContain("7 days");
-      expect(homeSource).toContain("Free Trial");
-      expect(homeSource).toContain("No credit card required");
-      expect(homeSource).toContain("Full Pro features for 7 days");
-      expect(homeSource).toContain("Start Free Trial");
+    it("includes beta badge", () => {
+      expect(homeSource).toContain("Beta");
     });
 
-    it("includes Pro tier at $29", () => {
-      expect(homeSource).toContain("$29");
-      expect(homeSource).toContain("100 commands / month");
-      expect(homeSource).toContain("Self-contextualizing engine");
-    });
-
-    it("includes Business tier at $99", () => {
-      expect(homeSource).toContain("$99");
+    it("includes full access features", () => {
       expect(homeSource).toContain("Unlimited commands");
-      expect(homeSource).toContain("Featured marketplace selling");
+      expect(homeSource).toContain("Unlimited agents");
+      expect(homeSource).toContain("Self-contextualizing engine");
+      expect(homeSource).toContain("No credit card required");
     });
 
-    it("includes Founding Member pricing callout", () => {
-      expect(homeSource).toContain("Founding Member pricing");
-      expect(homeSource).toContain("$19/mo for Pro");
-      expect(homeSource).toContain("First 500 users");
+    it("includes grandfathering notice", () => {
+      expect(homeSource).toContain("Early users will be grandfathered");
+    });
+
+    it("includes get started CTA", () => {
+      expect(homeSource).toContain("Get Started");
     });
   });
 
@@ -291,8 +284,8 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("Join the Beta");
     });
 
-    it("includes 500 founding member spots text", () => {
-      expect(homeSource).toContain("500 founding member spots");
+    it("includes free during beta text", () => {
+      expect(homeSource).toContain("Free during beta. Full access. No credit card required.");
     });
 
     it("uses waitlist.join mutation", () => {

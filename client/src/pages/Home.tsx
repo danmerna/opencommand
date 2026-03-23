@@ -733,128 +733,51 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Section 8: Pricing ────────────────────────────────────── */}
+      {/* ─── Section 8: Free During Beta ─────────────────────────── */}
       <div className="accent-line" />
-      <section className="px-8 py-24 max-w-6xl mx-auto">
-        <div className="text-center mb-14">
-          <p className="text-label mb-3">Simple pricing</p>
-          <h2 className="text-heading text-3xl text-foreground">Try everything free for 7 days.</h2>
-          <p className="text-muted-foreground text-body mt-3 max-w-md mx-auto">
-            No credit card required. Full access to the self-contextualizing engine for a week. Cancel anytime — you won't be charged a cent.
+      <section className="px-8 py-24 max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <p className="text-label">Pricing</p>
+            <span className="text-[10px] font-medium tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-emerald-400/40 text-emerald-400">Beta</span>
+          </div>
+          <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-5">Free during beta. Full access.</h2>
+          <p className="text-muted-foreground text-body mt-3 max-w-lg mx-auto">
+            Every account gets full access to every feature — unlimited agents, full context engineering, Proof of Outcome receipts, and the complete self-contextualizing engine. No credit card. No tiers. No limits.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {/* 7-Day Free Trial */}
-          <div className="border border-border rounded-xl p-7 bg-white/[0.02] flex flex-col gap-5">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Zap size={14} className="text-muted-foreground" />
-                <span className="text-label text-xs">Free Trial</span>
-              </div>
-              <div className="flex items-end gap-1 mb-3">
-                <span className="text-4xl font-light text-foreground">7 days</span>
-                <span className="text-muted-foreground text-sm mb-1">free</span>
-              </div>
-              <p className="text-muted-foreground text-xs">Full Pro access. No credit card. No commitment.</p>
-            </div>
-            <ul className="space-y-2.5 flex-1">
-              {[
-                "Full Pro features for 7 days",
-                "10 connected tools",
-                "5 agents",
-                "Self-contextualizing engine",
-                "Full PoO receipts",
-                "No credit card required",
-              ].map(f => (
-                <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Check size={11} className="text-emerald-400 shrink-0" />{f}
-                </li>
-              ))}
-            </ul>
-            <button onClick={() => scrollToSection("bottom-cta")} className="btn-outline text-center text-sm py-2.5 w-full">
-              Start Free Trial
-            </button>
-          </div>
-
-          {/* Pro */}
-          <div className="border rounded-xl p-7 flex flex-col gap-5 relative pricing-highlight">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="bg-foreground text-background text-[10px] font-medium px-3 py-1 rounded-full tracking-wide flex items-center gap-1">
-                <Star size={10} /> Most Popular
-              </span>
+        <div className="border border-border rounded-xl p-8 md:p-10 bg-white/[0.02] max-w-2xl mx-auto">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-emerald-400/10 flex items-center justify-center">
+              <Zap size={18} className="text-emerald-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Bot size={14} className="text-foreground" />
-                <span className="text-label text-xs">Pro</span>
-              </div>
-              <div className="flex items-end gap-1 mb-3">
-                <span className="text-4xl font-light text-foreground">$29</span>
-                <span className="text-muted-foreground text-sm mb-1">/ month</span>
-              </div>
-              <p className="text-muted-foreground text-xs">Full self-contextualizing engine for serious operators.</p>
+              <h3 className="text-heading text-lg text-foreground">Full Access</h3>
+              <p className="text-xs text-muted-foreground">Everything included. No restrictions.</p>
             </div>
-            <ul className="space-y-2.5 flex-1">
-              {[
-                "100 commands / month",
-                "10 connected tools",
-                "5 agents",
-                "Self-contextualizing engine",
-                "Full + trace PoO receipts",
-                "3 workspaces",
-                "$10/mo execution credits",
-              ].map(f => (
-                <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Check size={11} className="text-emerald-400 shrink-0" />{f}
-                </li>
-              ))}
-            </ul>
-            <Link href="/pricing" className="btn-primary text-center text-sm py-2.5 w-full">
-              Go Pro <ArrowRight size={13} className="inline ml-1" />
-            </Link>
           </div>
-
-          {/* Business */}
-          <div className="border border-border rounded-xl p-7 bg-white/[0.02] flex flex-col gap-5">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Shield size={14} className="text-muted-foreground" />
-                <span className="text-label text-xs">Business</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+            {[
+              "Unlimited commands",
+              "Unlimited connected tools",
+              "Unlimited agents",
+              "Self-contextualizing engine",
+              "Full PoO receipts",
+              "All workspaces",
+              "Company Blueprints (when live)",
+              "No credit card required",
+            ].map(f => (
+              <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Check size={13} className="text-emerald-400 shrink-0" />{f}
               </div>
-              <div className="flex items-end gap-1 mb-3">
-                <span className="text-4xl font-light text-foreground">$99</span>
-                <span className="text-muted-foreground text-sm mb-1">/ month</span>
-              </div>
-              <p className="text-muted-foreground text-xs">Unlimited everything. Full API access. Marketplace selling.</p>
-            </div>
-            <ul className="space-y-2.5 flex-1">
-              {[
-                "Unlimited commands",
-                "Unlimited connected tools",
-                "Unlimited agents",
-                "Full + custom engine",
-                "Full + API PoO receipts",
-                "Unlimited workspaces",
-                "$50/mo execution credits",
-                "Featured marketplace selling",
-              ].map(f => (
-                <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Check size={11} className="text-emerald-400 shrink-0" />{f}
-                </li>
-              ))}
-            </ul>
-            <Link href="/pricing" className="btn-outline text-center text-sm py-2.5 w-full">
-              Contact Us
-            </Link>
+            ))}
           </div>
-        </div>
-
-        {/* Founding member callout */}
-        <div className="text-center mt-8">
-          <p className="text-xs text-muted-foreground">
-            <span style={{ color: "oklch(0.78 0.06 80)" }}>Founding Member pricing:</span>{" "}
-            $19/mo for Pro, locked in forever. First 500 users.
+          <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary text-center text-sm py-3 w-full">
+            Get Started — It's Free <ArrowRight size={14} className="inline ml-1" />
+          </button>
+          <p className="text-center text-xs text-muted-foreground/60 mt-4">
+            Paid plans will be introduced later. Early users will be grandfathered.
           </p>
         </div>
       </section>
@@ -870,7 +793,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-4">
           <EmailCapture source="homepage-bottom" />
           <p className="text-xs text-muted-foreground">
-            7-day free trial. No credit card. 500 founding member spots.
+            Free during beta. Full access. No credit card required.
           </p>
           {isAuthenticated ? (
             <Link href="/mission-control" className="text-xs text-muted-foreground hover:text-foreground transition-colors">

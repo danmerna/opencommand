@@ -93,3 +93,9 @@
 - [x] Update Pricing page to reflect 7-day free trial model
 - [x] Update products.ts: removed Starter ($1), updated Pro to $29, added Business at $99, added trialDays: 7
 - [x] Update tests to reflect free trial changes
+- [x] Disable all pricing tiers: replace homepage pricing section with "Free during beta" message
+- [x] Disable pricing page: replace with beta access message, remove checkout flows
+- [x] Update subscription hook to grant full features to all signed-up users
+- [x] Remove pricing nav link from homepage if present (kept as route but content is beta-only)
+- [x] Update bottom CTA and any other copy referencing paid tiers
+- [x] Update tests to reflect pricing removal
