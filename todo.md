@@ -82,3 +82,9 @@
 - [x] Redesign homepage: update pricing to Free/$29/$99 three-tier layout
 - [x] Redesign homepage: replace bottom CTA with email capture + Join the Beta
 - [x] Redesign homepage: expand footer to 4-column layout
+- [x] Replace Agent Marketplace section with Blueprints differentiator section (coming soon)
+- [x] Update Core Systems feature card from "Agent Marketplace" to "Company Blueprints" with unique value prop
+- [x] Update nav from "Marketplace" to "Blueprints" throughout
+- [x] Add Blueprints vs. existing AI agent marketplaces comparison content
+- [x] Update footer links to reference Blueprints instead of Marketplace
+- [x] Update tests to reflect marketplace → blueprints changes

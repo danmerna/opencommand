@@ -20,8 +20,8 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("How It Works");
     });
 
-    it("includes Marketplace nav link", () => {
-      expect(homeSource).toContain("Marketplace");
+    it("includes Blueprints nav link", () => {
+      expect(homeSource).toContain("Blueprints");
     });
 
     it("includes Creators nav link", () => {
@@ -144,9 +144,9 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("AI CEO — Arch");
     });
 
-    it("includes Agent Marketplace instead of Company Blueprints", () => {
-      expect(homeSource).toContain("Agent Marketplace");
-      expect(homeSource).toContain("Creators earn 70%");
+    it("includes Company Blueprints feature card", () => {
+      expect(homeSource).toContain("Company Blueprints");
+      expect(homeSource).toContain("full company operating systems");
     });
 
     it("includes Proof of Outcome", () => {
@@ -185,27 +185,58 @@ describe("Home Page Redesign - Structure Validation", () => {
     });
   });
 
-  // ─── Section 7: Agent Marketplace ──────────────────────────────────
-  describe("Agent Marketplace Section", () => {
-    it("has the marketplace section header", () => {
-      expect(homeSource).toContain("Buy proven agents. Or sell your own.");
+  // ─── Section 7: Blueprints Differentiator ─────────────────────────
+  describe("Blueprints Differentiator Section", () => {
+    it("has the Coming Soon badge", () => {
+      expect(homeSource).toContain("Coming Soon");
     });
 
-    it("includes example agent cards", () => {
-      expect(homeSource).toContain("The Pipeline Doctor");
-      expect(homeSource).toContain("The Content Engine");
-      expect(homeSource).toContain("Freelancer Back Office");
+    it("has the headline: Not agents. Entire companies.", () => {
+      expect(homeSource).toContain("Not agents. Entire companies.");
     });
 
-    it("includes agent pricing", () => {
-      expect(homeSource).toContain("$19/mo");
-      expect(homeSource).toContain("$29/mo");
-      expect(homeSource).toContain("$59/mo");
+    it("contrasts single-task agents vs full company operating systems", () => {
+      expect(homeSource).toContain("single-task agents");
+      expect(homeSource).toContain("complete company operating systems");
     });
 
-    it("includes Browse Marketplace and Become a Creator links", () => {
-      expect(homeSource).toContain("Browse Marketplace");
-      expect(homeSource).toContain("Become a Creator");
+    it("has the What others sell vs What Blueprints are comparison", () => {
+      expect(homeSource).toContain("What others sell");
+      expect(homeSource).toContain("What Blueprints are");
+      expect(homeSource).toContain("Single agents, single tasks");
+      expect(homeSource).toContain("Full company operating systems");
+    });
+
+    it("includes the 4 differentiator cards (Scope, Context, Coordination, Accountability)", () => {
+      expect(homeSource).toContain("BlueprintDiffCard");
+      expect(homeSource).toContain('label="Scope"');
+      expect(homeSource).toContain('label="Context"');
+      expect(homeSource).toContain('label="Coordination"');
+      expect(homeSource).toContain('label="Accountability"');
+    });
+
+    it("includes the example Blueprint: The Growth Machine", () => {
+      expect(homeSource).toContain("The Growth Machine");
+      expect(homeSource).toContain("CMO Agent");
+      expect(homeSource).toContain("SDR Agent");
+      expect(homeSource).toContain("Analytics Agent");
+      expect(homeSource).toContain("CFO Agent");
+    });
+
+    it("includes deploy stats for the example blueprint", () => {
+      expect(homeSource).toContain("4 agents");
+      expect(homeSource).toContain("12 pre-configured OKRs");
+      expect(homeSource).toContain("Deploys in");
+    });
+
+    it("has Join the Waitlist CTA instead of Browse Marketplace", () => {
+      expect(homeSource).toContain("Join the Waitlist");
+      expect(homeSource).toContain("Build Blueprints as a Creator");
+      expect(homeSource).not.toContain("Browse Marketplace");
+    });
+
+    it("has the blueprints-section anchor id", () => {
+      expect(homeSource).toContain('id="blueprints-section"');
     });
   });
 
@@ -311,6 +342,17 @@ describe("Home Page Redesign - Structure Validation", () => {
 
     it("no longer has Hire Your AI CEO CTA", () => {
       expect(homeSource).not.toContain("Hire Your AI CEO");
+    });
+
+    it("no longer has marketplace agent cards (Pipeline Doctor, Content Engine, etc.)", () => {
+      expect(homeSource).not.toContain("The Pipeline Doctor");
+      expect(homeSource).not.toContain("The Content Engine");
+      expect(homeSource).not.toContain("Freelancer Back Office");
+      expect(homeSource).not.toContain("@SalesGuru");
+    });
+
+    it("no longer has Buy proven agents headline", () => {
+      expect(homeSource).not.toContain("Buy proven agents. Or sell your own.");
     });
   });
 });

@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
-import { ArrowRight, Target, BarChart3, Bot, Cpu, Shield, ShoppingBag, Check, Zap, Star, Menu, X, RefreshCw } from "lucide-react";
+import { ArrowRight, Target, BarChart3, Bot, Cpu, Shield, Package, Check, Zap, Star, Menu, X, RefreshCw, Layers, Users, Globe, Lock } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 
@@ -239,19 +239,22 @@ function HowItWorksStep({ step, title, desc, detail, delay }: { step: string; ti
   );
 }
 
-/* ─── Marketplace Agent Card ──────────────────────────────────────────── */
-function AgentCard({ name, creator, price, stat }: { name: string; creator: string; price: string; stat: string }) {
+/* ─── Blueprint Differentiator Card ──────────────────────────────────── */
+function BlueprintDiffCard({ icon: Icon, theirs, ours, label }: { icon: typeof Layers; theirs: string; ours: string; label: string }) {
   const ref = useScrollReveal();
   return (
-    <div ref={ref} className="reveal-step card-minimal group flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h4 className="text-heading text-sm text-foreground group-hover:text-accent transition-colors">{name}</h4>
-        <span className="badge-accent text-[10px]">{price}</span>
-      </div>
-      <p className="text-xs text-muted-foreground">{creator}</p>
-      <div className="flex items-center gap-2 mt-auto pt-3 border-t border-border">
-        <Target size={12} className="text-emerald-400" />
-        <span className="text-xs text-muted-foreground">{stat}</span>
+    <div ref={ref} className="reveal-step card-minimal group">
+      <Icon size={18} className="text-muted-foreground mb-4 group-hover:text-accent transition-colors" strokeWidth={1.5} />
+      <p className="text-label text-[10px] mb-3">{label}</p>
+      <div className="space-y-3">
+        <div className="flex items-start gap-2">
+          <X size={12} className="text-red-400/60 mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground/70 line-through decoration-muted-foreground/30">{theirs}</p>
+        </div>
+        <div className="flex items-start gap-2">
+          <Check size={12} className="text-emerald-400 mt-0.5 shrink-0" />
+          <p className="text-xs text-foreground/90">{ours}</p>
+        </div>
       </div>
     </div>
   );
@@ -406,7 +409,7 @@ export default function Home() {
               How It Works
             </button>
             <Link href="/blueprints" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
-              Marketplace
+              Blueprints
             </Link>
             <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
               Creators
@@ -439,7 +442,7 @@ export default function Home() {
               How It Works
             </button>
             <Link href="/blueprints" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
-              Marketplace
+              Blueprints
             </Link>
             <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
               Creators
@@ -568,9 +571,9 @@ export default function Home() {
               href: "/governance",
             },
             {
-              icon: ShoppingBag,
-              title: "Agent Marketplace",
-              desc: "Buy and sell portable AI agents and full business setups. Built on one stack, runs on any stack. Creators earn 70%.",
+              icon: Package,
+              title: "Company Blueprints",
+              desc: "Not single agents — full company operating systems. Org charts, budgets, OKRs, and execution playbooks. Deploy an entire business in one click.",
               href: "/blueprints",
             },
           ].map((f, i) => (
@@ -628,42 +631,104 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Section 7: Marketplace + Creators ─────────────────────── */}
+      {/* ─── Section 7: Blueprints — Not a Marketplace ─────────────── */}
       <div className="accent-line" />
-      <section className="px-8 py-24 max-w-7xl mx-auto">
-        <div className="mb-14">
-          <p className="text-label mb-3">Agent Marketplace</p>
-          <h2 className="text-heading text-3xl text-foreground mb-4">Buy proven agents. Or sell your own.</h2>
-          <p className="text-muted-foreground text-body max-w-xl">
-            Browse AI agents and full business setups built by creators and operators. Every listing is portable — built on one stack, runs on any stack. Creators earn 70% on every sale.
+      <section id="blueprints-section" className="px-8 py-24 max-w-7xl mx-auto">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <p className="text-label">Company Blueprints</p>
+            <span className="text-[10px] font-medium tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-accent/40 text-accent">Coming Soon</span>
+          </div>
+          <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-5">Not agents. Entire companies.</h2>
+          <p className="text-muted-foreground text-body max-w-2xl text-base">
+            Every AI marketplace sells the same thing: single-task agents that do one job in isolation. Open Command sells something fundamentally different — <span className="text-foreground">complete company operating systems</span> you deploy in one click.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-          <AgentCard
-            name="The Pipeline Doctor"
-            creator="@SalesGuru"
-            price="$19/mo"
-            stat="Avg $890 value per audit"
+
+        {/* The core differentiator explanation */}
+        <div className="card-minimal my-12 p-8 md:p-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div>
+              <p className="text-label text-[10px] mb-4">What others sell</p>
+              <h3 className="text-heading text-lg text-muted-foreground/70 mb-3">Single agents, single tasks</h3>
+              <p className="text-sm text-muted-foreground/60 text-body leading-relaxed">
+                A chatbot that writes emails. A bot that posts to social media. An assistant that summarizes meetings. Each works alone, knows nothing about the others, and requires you to be the orchestrator connecting them all.
+              </p>
+            </div>
+            <div>
+              <p className="text-label text-[10px] mb-4">What Blueprints are</p>
+              <h3 className="text-heading text-lg text-foreground mb-3">Full company operating systems</h3>
+              <p className="text-sm text-muted-foreground text-body leading-relaxed">
+                A Blueprint includes the complete agent org chart (CEO, CTO, CMO, CFO), pre-configured OKRs, budget allocations, execution playbooks, and governance rules. Deploy one and you get an entire autonomous operation — not a tool, but a <span className="text-foreground">workforce</span>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 4-card differentiator grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+          <BlueprintDiffCard
+            icon={Layers}
+            label="Scope"
+            theirs="One agent, one task"
+            ours="Full org chart with executive agents working in parallel"
           />
-          <AgentCard
-            name="The Content Engine"
-            creator="@ContentPro"
-            price="$29/mo"
-            stat="Avg 11h labor saved/mo"
+          <BlueprintDiffCard
+            icon={Globe}
+            label="Context"
+            theirs="Starts cold every session"
+            ours="Self-contextualizes from your connected tools on deploy"
           />
-          <AgentCard
-            name="Freelancer Back Office"
-            creator="@AgencyBuilder"
-            price="$59/mo"
-            stat="3 agents, full ops"
+          <BlueprintDiffCard
+            icon={Users}
+            label="Coordination"
+            theirs="You connect the dots between agents"
+            ours="Arch (AI CEO) orchestrates all agents autonomously"
+          />
+          <BlueprintDiffCard
+            icon={Lock}
+            label="Accountability"
+            theirs="No proof it worked"
+            ours="Every task generates a verified Proof of Outcome receipt"
           />
         </div>
+
+        {/* Example blueprint preview */}
+        <div className="border border-border rounded-xl p-8 bg-white/[0.02] mb-10">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <div>
+              <p className="text-label text-[10px] mb-1">Example Blueprint</p>
+              <h4 className="text-heading text-lg text-foreground">The Growth Machine</h4>
+            </div>
+            <span className="text-[10px] font-medium tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-accent/40 text-accent">Preview</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { role: "CMO Agent", tasks: "Lead gen, content strategy, ad spend optimization" },
+              { role: "SDR Agent", tasks: "Outbound sequences, pipeline qualification, follow-ups" },
+              { role: "Analytics Agent", tasks: "Attribution modeling, funnel analysis, weekly reports" },
+              { role: "CFO Agent", tasks: "Budget tracking, ROI calculations, spend approvals" },
+            ].map((agent) => (
+              <div key={agent.role} className="border-l border-border pl-4">
+                <p className="text-xs font-medium text-foreground mb-1">{agent.role}</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">{agent.tasks}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 pt-5 border-t border-border flex items-center gap-6 flex-wrap text-xs text-muted-foreground">
+            <span>4 agents</span>
+            <span>12 pre-configured OKRs</span>
+            <span>Budget: $2,400/mo estimated</span>
+            <span>Deploys in &lt;60 seconds</span>
+          </div>
+        </div>
+
         <div className="flex items-center gap-6 flex-wrap">
-          <Link href="/blueprints" className="btn-outline flex items-center gap-2 px-6 py-2.5 text-sm">
-            Browse Marketplace <ArrowRight size={14} />
-          </Link>
+          <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary flex items-center gap-2 px-6 py-2.5 text-sm">
+            Join the Waitlist <ArrowRight size={14} />
+          </button>
           <Link href="/creators" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Become a Creator <ArrowRight size={14} />
+            Build Blueprints as a Creator <ArrowRight size={14} />
           </Link>
         </div>
       </section>
@@ -835,7 +900,7 @@ export default function Home() {
             <p className="text-label text-xs mb-4">Product</p>
             <div className="flex flex-col gap-2.5">
               <Link href="/intent-engine" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Intent Engine</Link>
-              <Link href="/blueprints" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Marketplace</Link>
+              <Link href="/blueprints" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Blueprints</Link>
               <Link href="/blueprints" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Blueprints</Link>
               <Link href="/pricing" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
             </div>
