@@ -11,7 +11,7 @@ import {
   Bot, CheckCircle2, Loader2, ArrowRight, Sparkles,
   Send, Building2, Users, Brain, ChevronRight, SkipForward,
   Calendar, Clock, CalendarDays, CalendarRange,
-  BarChart3, Plug, Database, Eye, Link2, ExternalLink,
+  BarChart3, Plug, Database, Eye, Link2, ExternalLink, Zap,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
@@ -110,6 +110,7 @@ export default function ProOnboarding() {
   const [agentContext, setAgentContext] = useState<{ contextSummary: string; insights: string[]; connectedProviders: string[]; hasLiveData: boolean } | null>(null);
   const [agentContextLoading, setAgentContextLoading] = useState(false);
   const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
+  const [suggestedIntegrations, setSuggestedIntegrations] = useState<{ slug: string; name: string; reason: string }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuth();
@@ -351,6 +352,9 @@ export default function ProOnboarding() {
       setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
       if (data.isComplete) {
         setIsOnboardingComplete(true);
+        if ((data as any).suggestedIntegrations?.length) {
+          setSuggestedIntegrations((data as any).suggestedIntegrations);
+        }
       }
     } catch (err: any) {
       toast.error("Failed to send response", { description: err.message });
@@ -885,12 +889,56 @@ export default function ProOnboarding() {
             <div className="flex flex-col items-center gap-4 py-6">
               <CheckCircle2 size={28} className="text-emerald-400" />
               <p className="text-sm text-foreground font-medium">{currentExec.name} is fully onboarded.</p>
+
+              {/* Suggested integrations based on detected data gaps */}
+              {suggestedIntegrations.length > 0 && (
+                <div className="w-full max-w-md mt-2">
+                  <div className="flex items-center gap-2 mb-3 justify-center">
+                    <Zap size={14} className="text-amber-400" />
+                    <p className="text-xs font-medium text-amber-400">Data gaps detected — connect these to unlock deeper insights</p>
+                  </div>
+                  <div className="space-y-2">
+                    {suggestedIntegrations.map((integration) => (
+                      <div
+                        key={integration.slug}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-card/50 px-4 py-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground">{integration.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{integration.reason}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0 text-xs gap-1.5 h-8"
+                          onClick={() => {
+                            if (!user?.id) return;
+                            const returnUrl = window.location.href;
+                            window.open(
+                              `/api/integration/oauth/start?provider=${integration.slug}&userId=${user.id}&returnUrl=${encodeURIComponent(returnUrl)}`,
+                              "_blank",
+                              "width=600,height=700"
+                            );
+                            toast.info(`Connecting ${integration.name}...`, { description: "Complete the authorization in the popup window." });
+                          }}
+                        >
+                          <ExternalLink size={12} /> Connect
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground text-center mt-2">
+                    You can also connect these later from the Integration Hub.
+                  </p>
+                </div>
+              )}
+
               <p className="text-xs text-muted-foreground text-center max-w-xs">
                 {completedCount < EXEC_AGENTS.length - 1
                   ? `Moving on to ${EXEC_AGENTS[completedCount + 1]?.name}...`
                   : "All executives onboarded. Ready to generate your strategy."}
               </p>
-              <Button className="gap-2 mt-2" onClick={handleNextAgent}>
+              <Button className="gap-2 mt-2" onClick={() => { setSuggestedIntegrations([]); handleNextAgent(); }}>
                 {completedCount < EXEC_AGENTS.length - 1
                   ? <>Next: {EXEC_AGENTS[completedCount + 1]?.name} <ChevronRight size={14} /></>
                   : <>Generate Strategy <Sparkles size={14} /></>

@@ -64,3 +64,7 @@
 - [x] Register Meta Ads, Google Ads, TikTok Ads, GA4 in contextAssembler, integrationOAuth, env, IntegrationHub
 - [x] Add integration prompt step before each executive interview in ProOnboarding (role-specific tool suggestions)
 - [x] Feed assembled live context into onboarding.start so first question references real business data
+- [x] Add LLM-based data gap detection when onboarding interview completes
+- [x] Return suggested integrations from onboarding.respond when isComplete=true
+- [x] Show targeted integration suggestions on ProOnboarding post-interview completion screen
+- [x] Show integration suggestions on agent detail page for agents with detected gaps

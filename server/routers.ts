@@ -1249,9 +1249,40 @@ const onboardingRouter = router({
 
       if (isComplete) {
         history.push({ role: "assistant", content: `Onboarding complete. ${summary}` });
-        await completeOnboarding(onboarding.id, summary, context);
+
+        // Detect data gaps and suggest integrations based on the conversation
+        let suggestedIntegrations: { slug: string; name: string; reason: string }[] = [];
+        try {
+          const conversationText = history.map(h => `${h.role}: ${h.content}`).join("\n");
+          const connectedTools = await getUserConnectionsByUserId(onboarding.userId);
+          const connectedSlugs = new Set<string>();
+          // Get provider slugs for connected tools
+          const allProviders = await getAllToolProviders();
+          for (const conn of connectedTools.filter(c => c.status === "connected")) {
+            const provider = allProviders.find(p => p.id === conn.providerId);
+            if (provider) connectedSlugs.add(provider.slug);
+          }
+
+          const gapResponse = await invokeLLM({
+            messages: [
+              { role: "system" as const, content: `You are an integration advisor for an AI executive onboarding system. Analyze the conversation between a user and an AI ${onboarding.agentType.toUpperCase()} agent. Identify data gaps — topics discussed where the user mentioned metrics, tools, or data sources they use but don't have connected. Return a JSON array of suggested integrations.\n\nAvailable integrations: hubspot (CRM/pipeline), salesforce (CRM/pipeline), meta_ads (Facebook/Instagram ads), google_ads (Search/display ads), tiktok_ads (TikTok video ads), ga4 (Google Analytics/traffic), mailchimp (Email marketing), slack (Team communication), stripe_connect (Payments).\n\nAlready connected: ${Array.from(connectedSlugs).join(", ") || "none"}\n\nReturn ONLY a JSON array like: [{"slug": "meta_ads", "name": "Meta Ads", "reason": "You mentioned Facebook ad spend but don't have Meta Ads connected"}]. Return [] if no gaps detected. Do NOT suggest already-connected tools.` },
+              { role: "user" as const, content: conversationText },
+            ],
+          });
+          const gapText = (gapResponse.choices[0]?.message?.content ?? "[]") as string;
+          const jsonMatch = gapText.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            suggestedIntegrations = JSON.parse(jsonMatch[0]);
+          }
+        } catch (gapErr) {
+          console.error("[Onboarding] Gap detection failed (non-fatal):", gapErr);
+        }
+
+        // Store suggested integrations in the context
+        const enrichedContext = { ...context, suggestedIntegrations };
+        await completeOnboarding(onboarding.id, summary, enrichedContext);
         await updateOnboarding(onboarding.id, { conversationHistory: history });
-        return { reply: summary, isComplete: true, context };
+        return { reply: summary, isComplete: true, context: enrichedContext, suggestedIntegrations };
       } else {
         history.push({ role: "assistant", content: reply });
         await updateOnboarding(onboarding.id, { conversationHistory: history });
