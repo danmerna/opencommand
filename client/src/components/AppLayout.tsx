@@ -6,7 +6,7 @@ import { ReactNode, useState, useEffect, useRef, useCallback, createContext, use
 import {
   LayoutDashboard, Cpu, ShoppingBag, Users, Bot, Menu, X, LogOut,
   FileStack, Shield, BarChart3, Wifi, WifiOff, Plug, CheckSquare, History,
-  CreditCard, FolderOpen, Plus, Building2, ChevronRight,
+  CreditCard, FolderOpen, Plus, Building2, ChevronRight, MessageSquare, Activity,
 } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { toast } from "sonner";
@@ -31,7 +31,9 @@ const coreNavItems = [
   { href: "/integration-hub", label: "Integrations",     icon: Plug },
   // Blueprint Dashboard & Compatibility hidden — will be re-added later
   { href: "/context-history", label: "Context History",  icon: History },
-  { href: "/payments",        label: "Payments",         icon: CreditCard },
+  { href: "/analytics",       label: "Analytics",        icon: Activity },
+  { href: "/feedback-admin",   label: "Feedback",         icon: MessageSquare },
+  { href: "/payments",         label: "Payments",         icon: CreditCard },
 ];
 
 const pricingNavItem = { href: "/pricing", label: "Pricing", icon: BarChart3 };
@@ -174,8 +176,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
           {/* Add company button */}
           <button
-            onClick={() => { navigate("/mission-control"); closeMobile(); }}
-            title="Add Company"
+            onClick={() => { navigate("/onboarding/pro"); closeMobile(); }}
+            title="Build Executive Team"
             className="w-9 h-9 rounded-lg border border-dashed border-white/20 flex items-center justify-center text-white/40 hover:text-white/70 hover:border-white/40 transition-all shrink-0 mt-1"
           >
             <Plus size={14} />

@@ -14,6 +14,7 @@ import {
   BarChart3, Plug, Database, Eye, Link2, ExternalLink, Zap,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -114,6 +115,7 @@ export default function ProOnboarding() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuth();
+  const { track } = useAnalytics();
   const utils = trpc.useUtils();
 
   // Queries for resume detection
@@ -411,6 +413,7 @@ export default function ProOnboarding() {
   }
 
   function handleLaunch() {
+    track("onboarding", "completed", { companyId, agentCount: createdAgents.length, skippedCount: skippedAgents.size });
     setStep("complete");
     setTimeout(() => navigate("/mission-control"), 1200);
   }
@@ -426,17 +429,56 @@ export default function ProOnboarding() {
   if (step === "welcome") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-8">
-        <div className="max-w-xl w-full text-center">
-          <div className="inline-flex items-center gap-2 border border-border rounded-full px-4 py-1.5 text-xs text-muted-foreground mb-8">
-            <Sparkles size={11} className="text-amber-400" />
-            Pro Plan Activated
+        <div className="max-w-2xl w-full text-center">
+          <div className="inline-flex items-center gap-2 border border-emerald-500/30 rounded-full px-4 py-1.5 text-xs text-emerald-400 mb-8">
+            <Sparkles size={11} />
+            Beta Access — Full Features Unlocked
           </div>
           <h1 className="text-4xl font-light text-foreground tracking-tight mb-4">
-            Welcome to<br /><span className="text-foreground font-normal">Personal Intelligence Engine</span>
+            Build Your<br /><span className="text-foreground font-normal">AI Executive Team</span>
           </h1>
-          <p className="text-muted-foreground text-sm leading-relaxed mb-10 max-w-md mx-auto">
-            You are about to build your executive team. We will create your C-suite agents, onboard each one with your company context, and generate your first combined strategic plan.
+          <p className="text-muted-foreground text-sm leading-relaxed mb-10 max-w-lg mx-auto">
+            OpenCommand's self-contextualizing engine connects to your existing tools, pulls real data, and uses it to personalize each executive agent. No copy-pasting. No manual setup. Your agents start informed.
           </p>
+
+          {/* How Self-Contextualization Works — 3-step visual */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 max-w-xl mx-auto text-left">
+            <div className="border border-border rounded-xl p-4 relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+                  <Plug size={11} className="text-blue-400" />
+                </div>
+                <span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider">Step 1</span>
+              </div>
+              <p className="text-xs font-medium text-foreground mb-1">Connect Your Tools</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">Link HubSpot, Salesforce, Meta Ads, Google Analytics — whatever you use.</p>
+              <ArrowRight size={12} className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40" />
+            </div>
+            <div className="border border-border rounded-xl p-4 relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
+                  <Database size={11} className="text-purple-400" />
+                </div>
+                <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider">Step 2</span>
+              </div>
+              <p className="text-xs font-medium text-foreground mb-1">We Pull Your Context</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">Pipeline data, ad spend, traffic — pulled and analyzed automatically in real time.</p>
+              <ArrowRight size={12} className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40" />
+            </div>
+            <div className="border border-border rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+                  <Brain size={11} className="text-amber-400" />
+                </div>
+                <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">Step 3</span>
+              </div>
+              <p className="text-xs font-medium text-foreground mb-1">Personalized Interviews</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">Each executive asks data-informed questions — not generic templates.</p>
+            </div>
+          </div>
+
+          {/* Executive team preview */}
+          <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest mb-3">Your Executive Team</p>
           <div className="grid grid-cols-2 gap-3 mb-10 max-w-sm mx-auto text-left">
             {EXEC_AGENTS.map(a => (
               <div key={a.type} className="flex items-center gap-2.5 border border-border rounded-lg p-3">
@@ -451,6 +493,7 @@ export default function ProOnboarding() {
           <Button className="h-11 px-8 gap-2" onClick={() => setStep("company-setup")}>
             Begin Setup <ArrowRight size={14} />
           </Button>
+          <p className="text-[11px] text-muted-foreground mt-4">Takes about 10 minutes. You can skip any executive and come back later.</p>
         </div>
       </div>
     );
@@ -674,11 +717,28 @@ export default function ProOnboarding() {
           </div>
 
           <h2 className="text-2xl font-light text-foreground tracking-tight mb-2">
-            Connect tools for {integrationExec.roleTitle}
+            Power {integrationExec.roleTitle}'s Context Engine
           </h2>
-          <p className="text-muted-foreground text-sm mb-6">
-            These integrations will give {integrationExec.name.split("—")[0].trim()} access to live data during the interview, resulting in more specific and actionable strategic questions.
+          <p className="text-muted-foreground text-sm mb-3">
+            Connected tools let us pull real data <span className="text-foreground font-medium">before the interview starts</span>. Instead of asking generic questions, {integrationExec.name.split("\u2014")[0].trim()} will reference your actual numbers.
           </p>
+          <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/5 px-4 py-3 mb-6">
+            <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest mb-2">What we'll pull for this interview</p>
+            <div className="flex flex-wrap gap-2">
+              {agentType === "ceo" && ["Pipeline velocity", "Deal count", "Revenue trends", "Conversion rates", "Traffic sources"].map(d => (
+                <span key={d} className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{d}</span>
+              ))}
+              {agentType === "cto" && ["Product usage", "Customer feedback", "Technical requirements", "Feature requests"].map(d => (
+                <span key={d} className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{d}</span>
+              ))}
+              {agentType === "cmo" && ["Ad spend & ROAS", "Campaign performance", "Audience data", "Traffic funnels", "Email engagement"].map(d => (
+                <span key={d} className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{d}</span>
+              ))}
+              {agentType === "cfo" && ["Revenue pipeline", "Ad spend efficiency", "Deal forecasts", "Cost per acquisition", "Budget allocation"].map(d => (
+                <span key={d} className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{d}</span>
+              ))}
+            </div>
+          </div>
 
           {/* Integration suggestions */}
           <div className="space-y-3 mb-8">

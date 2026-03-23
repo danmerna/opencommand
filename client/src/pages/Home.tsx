@@ -329,6 +329,8 @@ function EmailCapture({ source = "homepage" }: { source?: string }) {
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
+  const companiesQ = trpc.companies.list.useQuery(undefined, { enabled: isAuthenticated });
+  const hasCompany = (companiesQ.data?.length ?? 0) > 0;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const scrollToSection = useCallback((id: string) => {
@@ -416,12 +418,18 @@ export default function Home() {
               Creators
             </Link>
             {isAuthenticated ? (
-              <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2">
-                Mission Control
-              </Link>
+              hasCompany ? (
+                <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2">
+                  Mission Control
+                </Link>
+              ) : (
+                <Link href="/onboarding/pro" className="btn-primary text-[13px] px-5 py-2">
+                  Build Your Team
+                </Link>
+              )
             ) : (
               <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary text-[13px] px-5 py-2">
-                Start Free <ArrowRight size={12} className="inline ml-1" />
+                Start Free
               </button>
             )}
           </div>
@@ -450,12 +458,18 @@ export default function Home() {
             </Link>
             <div className="pt-2">
               {isAuthenticated ? (
-                <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2 inline-block" onClick={() => setMobileMenuOpen(false)}>
-                  Mission Control
-                </Link>
+                hasCompany ? (
+                  <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2 inline-block" onClick={() => setMobileMenuOpen(false)}>
+                    Mission Control
+                  </Link>
+                ) : (
+                  <Link href="/onboarding/pro" className="btn-primary text-[13px] px-5 py-2 inline-block" onClick={() => setMobileMenuOpen(false)}>
+                    Build Your Team
+                  </Link>
+                )
               ) : (
                 <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary text-[13px] px-5 py-2">
-                  Start Free <ArrowRight size={12} className="inline ml-1" />
+                  Start Free
                 </button>
               )}
             </div>
@@ -476,12 +490,18 @@ export default function Home() {
           </p>
           <div className="hero-cta flex items-center gap-4 flex-wrap">
             {isAuthenticated ? (
-              <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-7 py-3">
-                Enter Mission Control <ArrowRight size={16} />
-              </Link>
+              hasCompany ? (
+                <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-7 py-3">
+                  Enter Mission Control <ArrowRight size={16} />
+                </Link>
+              ) : (
+                <Link href="/onboarding/pro" className="btn-primary flex items-center gap-2 px-7 py-3">
+                  Start Executive Onboarding <ArrowRight size={16} />
+                </Link>
+              )
             ) : (
               <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary flex items-center gap-2 px-7 py-3">
-                Start Free <ArrowRight size={16} />
+                Start Free — Build Your Executive Team <ArrowRight size={16} />
               </button>
             )}
             <button onClick={() => scrollToSection("how-it-works")} className="btn-outline px-7 py-3">
@@ -797,9 +817,15 @@ export default function Home() {
             Free during beta. Full access. No credit card required.
           </p>
           {isAuthenticated ? (
-            <Link href="/mission-control" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-              Go to Mission Control <ArrowRight size={10} className="inline ml-0.5" />
-            </Link>
+            hasCompany ? (
+              <Link href="/mission-control" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Go to Mission Control <ArrowRight size={10} className="inline ml-0.5" />
+              </Link>
+            ) : (
+              <Link href="/onboarding/pro" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Start Executive Onboarding <ArrowRight size={10} className="inline ml-0.5" />
+              </Link>
+            )
           ) : (
             <a href={getLoginUrl()} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               Already have an account? Sign in <ArrowRight size={10} className="inline ml-0.5" />

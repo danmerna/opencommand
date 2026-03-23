@@ -110,3 +110,15 @@
 - [x] Build feedback widget: create persistent FeedbackWidget component
 - [x] Build feedback widget: add to Mission Control / AppLayout
 - [x] Write tests for analytics and feedback features
+- [x] Add Analytics nav link in AppLayout sidebar (admin-only or all users)
+- [x] Add Feedback Admin nav link in AppLayout sidebar
+- [x] Build Feedback Admin page: list all feedback, filter by type/status, update status
+- [x] Wire useAnalytics hook into agent creation flow
+- [x] Wire useAnalytics hook into blueprint deployment flow
+- [x] Wire useAnalytics hook into intent engine queries
+- [x] Wire useAnalytics hook into onboarding completion
+- [x] Redesign multi-agent executive onboarding: clearer entry point from Mission Control
+- [x] Redesign onboarding: add self-contextualization step explanation
+- [x] Redesign onboarding: show which tools will be connected and what context will be pulled
+- [x] Redesign onboarding: visual progress indicator for context assembly
+- [x] Write tests for Feedback Admin page and onboarding redesign

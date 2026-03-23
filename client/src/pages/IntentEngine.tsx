@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Streamdown } from "streamdown";
 import { Link } from "wouter";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 type Message = { role: "user" | "assistant"; content: string };
 type IntentObject = {
@@ -62,6 +63,7 @@ export default function IntentEngine() {
   const categoriesQ = trpc.hub.categories.useQuery();
 
   const intentQ = trpc.aiCeo.socratiqueQuestion.useMutation();
+  const { track } = useAnalytics();
   const liveContextualizeMut = trpc.context.liveContextualize.useMutation();
 
   const createTask = trpc.tasks.create.useMutation({ onSuccess: () => { utils.tasks.list.invalidate(); toast.success("Task created"); } });
@@ -124,6 +126,7 @@ export default function IntentEngine() {
       const ctx = await liveContextualizeMut.mutateAsync({ requestText: userMsg.content });
       setLiveContext(ctx as LiveContextData);
       setLivePhase("ready");
+      track("intent_engine", "context_query", { hasLiveData: ctx.hasLiveData, providers: ctx.connectedProviders });
 
       // Feed the contextualized questions directly as the AI's first response
       const contextEnrichedInput = [

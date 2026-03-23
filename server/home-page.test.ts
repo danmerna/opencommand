@@ -326,6 +326,30 @@ describe("Home Page Redesign - Structure Validation", () => {
     });
   });
 
+  // ─── Onboarding CTAs ───────────────────────────────────────────────
+  describe("Onboarding CTAs for Authenticated Users", () => {
+    it("queries companies to determine onboarding state", () => {
+      expect(homeSource).toContain("trpc.companies.list.useQuery");
+      expect(homeSource).toContain("hasCompany");
+    });
+
+    it("shows Build Your Team CTA for authenticated users without company", () => {
+      expect(homeSource).toContain("Build Your Team");
+    });
+
+    it("shows Start Executive Onboarding CTA in hero for users without company", () => {
+      expect(homeSource).toContain("Start Executive Onboarding");
+    });
+
+    it("routes to /onboarding/pro for users without company", () => {
+      expect(homeSource).toContain('/onboarding/pro');
+    });
+
+    it("still shows Mission Control for users with a company", () => {
+      expect(homeSource).toContain("Enter Mission Control");
+    });
+  });
+
   // ─── Removed Elements ─────────────────────────────────────────────
   describe("Removed Elements from Old Design", () => {
     it("no longer has fake metrics strip ($48,240, 321.6 hours, etc.)", () => {

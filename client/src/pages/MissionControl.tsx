@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -126,6 +127,7 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
 export default function MissionControl() {
   const { isAuthenticated } = useAuth();
   const subscription = useSubscription();
+  const { track } = useAnalytics();
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<Tab>("okrs");
   const [showAddOkr, setShowAddOkr] = useState(false);
@@ -234,7 +236,7 @@ export default function MissionControl() {
   // Mutations
   const utils = trpc.useUtils();
   const createOkr = trpc.okrs.create.useMutation({ onSuccess: () => { utils.okrs.list.invalidate(); setShowAddOkr(false); setNewOkr({ objective: "", keyResult: "", targetValue: "", unit: "USD", level: "company" }); toast.success("OKR created"); } });
-  const createAgentMut = trpc.agents.create.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); setShowAddAgent(false); setNewAgent({ name: "", type: "specialist", roleTitle: "", description: "", heartbeatCron: "", monthlyBudget: "" }); toast.success("Agent deployed"); } });
+  const createAgentMut = trpc.agents.create.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); setShowAddAgent(false); track("agent", "created", { type: newAgent.type, name: newAgent.name }); setNewAgent({ name: "", type: "specialist", roleTitle: "", description: "", heartbeatCron: "", monthlyBudget: "" }); toast.success("Agent deployed"); } });
   const deleteAgentMut = trpc.agents.remove.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); toast.success("Agent removed"); } });
   const updateAgentStatus = trpc.agents.updateStatus.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); } });
   const createDeptMut = trpc.departments.create.useMutation({ onSuccess: () => { utils.departments.list.invalidate(); setShowAddDept(false); setNewDept({ name: "", budget: "" }); toast.success("Department created"); } });
@@ -247,8 +249,34 @@ export default function MissionControl() {
 
   return (
     <div className="p-6 lg:p-10 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
+      {/* Empty state — no company yet */}
+      {companies.length === 0 && !companiesQ.isLoading && (
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="max-w-lg w-full text-center">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-6">
+              <Sparkles size={28} className="text-amber-400" />
+            </div>
+            <h1 className="text-3xl font-light text-foreground tracking-tight mb-3">Build Your AI Executive Team</h1>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-4 max-w-md mx-auto">
+              OpenCommand's self-contextualizing engine connects to your existing tools, pulls real data, and uses it to build personalized executive agents that understand your business from day one.
+            </p>
+            <div className="flex items-center justify-center gap-6 text-[11px] text-muted-foreground mb-8">
+              <span className="flex items-center gap-1.5"><Wrench size={11} className="text-blue-400" /> Connect tools</span>
+              <ArrowRight size={10} className="text-muted-foreground/40" />
+              <span className="flex items-center gap-1.5"><Activity size={11} className="text-purple-400" /> Context pulled</span>
+              <ArrowRight size={10} className="text-muted-foreground/40" />
+              <span className="flex items-center gap-1.5"><Bot size={11} className="text-amber-400" /> Personalized team</span>
+            </div>
+            <Button className="h-11 px-8 gap-2" onClick={() => navigate("/onboarding/pro")}>
+              Start Executive Onboarding <ArrowRight size={14} />
+            </Button>
+            <p className="text-[11px] text-muted-foreground mt-3">Takes about 10 minutes. You can skip any executive and come back later.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Header — only show when company exists */}
+      <div className={`mb-8 ${companies.length === 0 && !companiesQ.isLoading ? 'hidden' : ''}`}>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-display text-3xl lg:text-4xl text-foreground">Mission Control</h1>

@@ -31,6 +31,7 @@ import Creators from "./pages/Creators";
 import ProOnboarding from "./pages/ProOnboarding";
 import Briefings from "./pages/Briefings";
 import Analytics from "./pages/Analytics";
+import FeedbackAdmin from "./pages/FeedbackAdmin";
 
 function Router() {
   return (
@@ -79,6 +80,9 @@ function Router() {
       <Route path="/briefings" component={Briefings} />
       <Route path="/analytics">
         <AppLayout><Analytics /></AppLayout>
+      </Route>
+      <Route path="/feedback-admin">
+        <AppLayout><FeedbackAdmin /></AppLayout>
       </Route>
       <Route path="/onboarding/pro" component={ProOnboarding} />
       <Route path="/onboarding/:agentId">

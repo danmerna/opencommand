@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 type Tab = "browse" | "my-blueprints" | "create";
 
@@ -26,6 +27,7 @@ export default function Blueprints() {
     estimatedMonthlyCost: "", estimatedMonthlyRevenue: "", pricingModel: "one_time", price: ""
   });
 
+  const { track } = useAnalytics();
   const utils = trpc.useUtils();
   const blueprintsQ = trpc.blueprints.list.useQuery();
   const myBpQ = trpc.blueprints.myBlueprints.useQuery(undefined, { enabled: isAuthenticated });
@@ -43,6 +45,7 @@ export default function Blueprints() {
   const deployBpMut = trpc.blueprints.deploy.useMutation({
     onSuccess: (data) => {
       setShowDeploy(false);
+      track("blueprint", "deployed", { blueprintId: selectedBp?.id, companyId: data.companyId });
       toast.success(`Company deployed successfully (ID: ${data.companyId})`);
     }
   });
