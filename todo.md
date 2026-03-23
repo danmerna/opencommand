@@ -264,3 +264,9 @@
 - [x] Fix mobile: main content has desktop left margin (264px) applied, cutting off content
 - [x] Ensure both sidebars (rail + nav) are hidden on mobile by default
 - [x] Mobile hamburger menu should toggle both sidebars together
+
+## v3.5.2 — Mobile UX Improvements
+
+- [x] Add close button (X) inside the mobile sidebar overlay
+- [x] Make the mobile header sticky (pinned to top when scrolling)
+- [x] Add swipe-to-close gesture on the mobile sidebar
