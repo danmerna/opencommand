@@ -220,7 +220,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               const isActive = location === item.href || location.startsWith(item.href + "/");
               return (
                 <Link key={item.href} href={item.href} onClick={closeMobile}>
-                  <div className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] transition-all ${
+                  <div
+                    data-tour={item.href === "/intent-engine" ? "intent-engine" : undefined}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] transition-all ${
                     isActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                   }`}>
                     <item.icon size={13} strokeWidth={isActive ? 2 : 1.5} />

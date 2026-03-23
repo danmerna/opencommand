@@ -122,3 +122,14 @@
 - [x] Redesign onboarding: show which tools will be connected and what context will be pulled
 - [x] Redesign onboarding: visual progress indicator for context assembly
 - [x] Write tests for Feedback Admin page and onboarding redesign
+- [x] Build animated context assembly visualization: create ContextAssemblyAnimation component
+- [x] Build animated context assembly visualization: show data flowing from connected tools during interview loading
+- [x] Build animated context assembly visualization: integrate into ProOnboarding interview loading phase
+- [x] Build onboarding resume banner: detect incomplete onboarding state in Mission Control
+- [x] Build onboarding resume banner: show "Continue building your team (X/4 executives complete)" card
+- [x] Build onboarding resume banner: link to /onboarding/pro to resume
+- [x] Build Quick Tour overlay: create QuickTour component with tooltip-style callouts
+- [x] Build Quick Tour overlay: highlight Strategy tab, agent cards, and Intent Engine
+- [x] Build Quick Tour overlay: show only for first-time users after onboarding completion
+- [x] Build Quick Tour overlay: persist tour completion state so it doesn't repeat
+- [x] Write tests for all three new features

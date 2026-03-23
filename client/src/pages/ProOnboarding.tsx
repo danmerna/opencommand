@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { ContextAssemblyAnimation } from "@/components/ContextAssemblyAnimation";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -879,15 +880,14 @@ export default function ProOnboarding() {
 
         {/* Chat area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-4 max-w-2xl mx-auto w-full">
-          {/* Context Card — shows live data assembled from connected tools */}
-          {agentContextLoading && (
-            <div className="rounded-lg border border-blue-800/40 bg-blue-950/20 px-4 py-3 flex items-center gap-3">
-              <Loader2 size={14} className="animate-spin text-blue-400" />
-              <div>
-                <p className="text-[11px] font-semibold text-blue-400 uppercase tracking-wide">Assembling context from your tools...</p>
-                <p className="text-xs text-blue-200/60 mt-0.5">Reading live data to inform the interview</p>
-              </div>
-            </div>
+          {/* Context Assembly Animation — shows data flowing from connected tools */}
+          {agentContextLoading && currentExec && (
+            <ContextAssemblyAnimation
+              connectedProviders={agentContext?.connectedProviders ?? (connectionsQ.data?.filter((c: any) => c.status === "connected").map((c: any) => c.provider) ?? [])}
+              agentName={currentExec.name.split("\u2014")[0].trim()}
+              agentIcon={currentExec.icon}
+              isComplete={false}
+            />
           )}
           {agentContext?.hasLiveData && !agentContextLoading && (
             <div className="rounded-lg border border-emerald-800/40 bg-emerald-950/20 px-4 py-3">

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import type { JSX } from "react";
 import { Streamdown } from "streamdown";
+import { QuickTour } from "@/components/QuickTour";
 import {
   Target, Zap, Plus, Trash2, Check, X, Clock, TrendingUp, DollarSign, FileCheck,
   Inbox, Building2, GitBranch, Heart, Activity, BarChart3, Shield, Power, Wrench,
@@ -43,7 +44,9 @@ const typeColors: Record<string, string> = {
   specialist: "text-orange-400 border-orange-400/30",
 };
 
-// ─── Onboarding Banner Component ──────────────────────────────────────────────
+// ─── Onboarding Resume Banner Component ──────────────────────────────────────
+const EXEC_ICONS: Record<string, string> = { ceo: "👑", cto: "⚡", cmo: "✦", cfo: "◈" };
+
 function OnboardingBanner({ companyId, navigate }: { companyId: number | null; navigate: (to: string) => void }) {
   const onboardingQ = trpc.onboarding.status.useQuery(
     { companyId: companyId ?? undefined },
@@ -59,20 +62,24 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
   const data = onboardingQ.data;
   if (!data || data.total === 0) return null;
 
-  const roleColors: Record<string, string> = {
-    ceo: "text-amber-400 bg-amber-400/10 border-amber-400/20",
-    cto: "text-blue-400 bg-blue-400/10 border-blue-400/20",
-    cmo: "text-pink-400 bg-pink-400/10 border-pink-400/20",
-    cfo: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
-    vp: "text-purple-400 bg-purple-400/10 border-purple-400/20",
+  const roleColors: Record<string, { text: string; bg: string; border: string; ring: string }> = {
+    ceo: { text: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/30", ring: "ring-amber-400/20" },
+    cto: { text: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/30", ring: "ring-blue-400/20" },
+    cmo: { text: "text-pink-400", bg: "bg-pink-400/10", border: "border-pink-400/30", ring: "ring-pink-400/20" },
+    cfo: { text: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/30", ring: "ring-emerald-400/20" },
   };
 
+  const progressPct = Math.round((data.completed / data.total) * 100);
+
+  // All onboarded — show completion state
   if (data.allOnboarded) {
     return (
-      <div className="mb-6 border border-emerald-500/20 rounded-xl p-4 bg-emerald-500/5">
+      <div className="mb-6 border border-emerald-500/20 rounded-xl p-5 bg-emerald-500/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CheckCircle2 size={18} className="text-emerald-400" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <CheckCircle2 size={20} className="text-emerald-400" />
+            </div>
             <div>
               <p className="text-sm font-medium text-emerald-400">All executives onboarded</p>
               <p className="text-xs text-muted-foreground">Baseline context established for {data.total} C-suite agents.</p>
@@ -92,33 +99,78 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
     );
   }
 
+  // Incomplete — show resume banner with progress
   return (
-    <div className="mb-6 border border-amber-500/20 rounded-xl p-4 bg-amber-500/5">
-      <div className="flex items-center gap-3 mb-3">
-        <Bot size={18} className="text-amber-400" />
-        <div>
-          <p className="text-sm font-medium text-amber-400">Executive Onboarding Required</p>
-          <p className="text-xs text-muted-foreground">
-            {data.completed} of {data.total} C-suite agents onboarded. Complete all to unlock Arch's strategy proposal.
-          </p>
-        </div>
+    <div className="mb-6 rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-background to-blue-500/5 overflow-hidden">
+      {/* Progress bar */}
+      <div className="h-1 bg-border/50">
+        <div
+          className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-700"
+          style={{ width: `${progressPct}%` }}
+        />
       </div>
-      <div className="flex flex-wrap gap-2">
-        {data.agents.map((a: any) => (
-          <button
-            key={a.agentId}
-            onClick={() => navigate(`/onboarding/${a.agentId}`)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors hover:opacity-80 ${
-              a.isOnboarded
-                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                : roleColors[a.agentType] ?? "text-foreground bg-zinc-800 border-border"
-            }`}
+
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+              <Bot size={20} className="text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Continue Building Your Executive Team</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {data.completed} of {data.total} executives contextualized — {data.total - data.completed} remaining to unlock Arch's strategy proposal
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="gap-1.5 text-xs shrink-0"
+            onClick={() => navigate("/onboarding/pro")}
           >
-            {a.isOnboarded ? <CheckCircle2 size={12} /> : <ArrowRight size={12} />}
-            {a.agentName}
-            <span className="text-[10px] opacity-60">{a.agentType.toUpperCase()}</span>
-          </button>
-        ))}
+            Resume Onboarding <ArrowRight size={12} />
+          </Button>
+        </div>
+
+        {/* Agent cards grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          {data.agents.map((a: any) => {
+            const colors = roleColors[a.agentType] ?? { text: "text-foreground", bg: "bg-zinc-800", border: "border-border", ring: "ring-border" };
+            const icon = EXEC_ICONS[a.agentType] ?? "🤖";
+            return (
+              <button
+                key={a.agentId}
+                onClick={() => a.isOnboarded ? undefined : navigate(`/onboarding/${a.agentId}`)}
+                className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-left transition-all ${
+                  a.isOnboarded
+                    ? "bg-emerald-500/5 border-emerald-500/20 cursor-default"
+                    : `${colors.bg} ${colors.border} hover:ring-1 ${colors.ring} cursor-pointer`
+                }`}
+              >
+                <span className="text-sm">{icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-medium truncate ${a.isOnboarded ? "text-emerald-400" : colors.text}`}>
+                    {a.agentName}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{a.agentType}</p>
+                </div>
+                {a.isOnboarded ? (
+                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                ) : (
+                  <ArrowRight size={12} className={`${colors.text} shrink-0 opacity-60`} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Context explanation */}
+        <div className="mt-3 flex items-center gap-4 text-[10px] text-muted-foreground/60">
+          <span className="flex items-center gap-1"><CheckCircle2 size={9} className="text-emerald-400" /> Contextualized</span>
+          <span className="flex items-center gap-1"><ArrowRight size={9} /> Awaiting interview</span>
+          <span className="ml-auto">Each interview takes ~2 min</span>
+        </div>
       </div>
     </div>
   );
@@ -344,6 +396,7 @@ export default function MissionControl() {
       <div className="flex overflow-x-auto border-b border-border mb-8 scrollbar-hide">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
+            data-tour={t.id === "strategy" ? "strategy" : t.id === "fleet" ? "fleet" : undefined}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
               tab === t.id
                 ? "border-foreground text-foreground"
@@ -950,6 +1003,11 @@ export default function MissionControl() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Quick Tour for first-time users after onboarding */}
+      {companies.length > 0 && (
+        <QuickTour isFirstTime={companies.length > 0 && !companiesQ.isLoading} />
+      )}
     </div>
   );
 }
