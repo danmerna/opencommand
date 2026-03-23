@@ -142,3 +142,11 @@
 - [x] Add social proof section to homepage with three beta user testimonial cards
 - [x] Place section between Blueprints and Beta Access sections
 - [x] Write tests for the social proof section
+- [x] Rename "The Magic Moment" to "Introducing Self-Contextualization"
+- [x] Rewrite Context Engine Demo to show multi-source onboarding example (3+ data sources)
+- [x] Remove fake social proof / testimonials section entirely
+- [x] Add Meta Ads integration: schema, OAuth flow, data pull infrastructure (already existed)
+- [x] Add Google Ads integration: schema, OAuth flow, data pull infrastructure (already existed)
+- [x] Add TikTok Ads integration: schema, OAuth flow, data pull infrastructure (already existed)
+- [x] Update integration logo bar and onboarding to include ad platforms (already done)
+- [x] Write/update tests for homepage and integration changes

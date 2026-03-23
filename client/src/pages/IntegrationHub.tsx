@@ -149,8 +149,8 @@ export default function IntegrationHub() {
               <span className="text-[10px] text-blue-400 border border-blue-400/30 px-1.5 py-0 rounded">Real OAuth</span>
             </div>
             <p className="text-muted-foreground text-xs mb-4">These providers use real OAuth2 authorization. Clicking Connect redirects to their login page.</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {["hubspot", "mailchimp", "slack", "stripe_connect", "salesforce"].map(slug => {
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {["hubspot", "salesforce", "meta_ads", "google_ads", "tiktok_ads", "ga4", "mailchimp", "slack", "stripe_connect"].map(slug => {
                 const provider = providers.find(p => p.slug === slug);
                 const conn = connections.find(c => c.providerId === provider?.id && c.status === "connected");
                 if (!provider) return null;

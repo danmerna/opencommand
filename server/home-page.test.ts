@@ -61,43 +61,54 @@ describe("Home Page Redesign - Structure Validation", () => {
   });
 
   // ─── Section 3: Context Engine Demo ────────────────────────────────
-  describe("Context Engine Demo", () => {
+  describe("Context Engine Demo - Self-Contextualization", () => {
     it("includes the ContextEngineDemo component", () => {
       expect(homeSource).toContain("ContextEngineDemo");
     });
 
-    it("has The Magic Moment section header", () => {
-      expect(homeSource).toContain("The Magic Moment");
+    it("has Introducing Self-Contextualization section header", () => {
+      expect(homeSource).toContain("Introducing Self-Contextualization");
     });
 
-    it("has the key tagline about starting informed", () => {
-      expect(homeSource).toContain("Other AI tools start cold. Open Command starts informed.");
+    it("no longer has The Magic Moment header", () => {
+      expect(homeSource).not.toContain("The Magic Moment");
     });
 
-    it("includes typewriter text for user input", () => {
-      expect(homeSource).toContain("I want more leads");
+    it("includes typewriter text for CMO onboarding", () => {
+      expect(homeSource).toContain("Onboarding NOVA");
+      expect(homeSource).toContain("CMO Agent");
     });
 
-    it("includes HubSpot connection status lines", () => {
-      expect(homeSource).toContain("Connecting to HubSpot...");
-      expect(homeSource).toContain("Reading pipeline: 47 deals, $847K value");
-      expect(homeSource).toContain("Analyzing closed deals: 80% manufacturing");
-      expect(homeSource).toContain("Context assembled in 3.2s");
+    it("pulls from 3+ data sources: Meta Ads, Google Ads, Google Analytics", () => {
+      expect(homeSource).toContain("Connecting to Meta Ads");
+      expect(homeSource).toContain("Connecting to Google Ads");
+      expect(homeSource).toContain("Connecting to Google Analytics");
     });
 
-    it("includes the context card with HubSpot data", () => {
-      expect(homeSource).toContain("Context from HubSpot");
-      expect(homeSource).toContain("142 contacts");
-      expect(homeSource).toContain("$847K pipeline");
+    it("shows specific data pulled from each source", () => {
+      expect(homeSource).toContain("14 active campaigns");
+      expect(homeSource).toContain("847 keywords");
+      expect(homeSource).toContain("42K sessions");
     });
 
-    it("includes the AI response from Arch", () => {
-      expect(homeSource).toContain("$847K across 47 deals");
-      expect(homeSource).toContain("double down on that segment");
+    it("includes cross-referencing step across sources", () => {
+      expect(homeSource).toContain("Cross-referencing");
+      expect(homeSource).toContain("Context assembled from 3 sources");
     });
 
-    it("has the italic tagline about context", () => {
-      expect(homeSource).toContain("doesn't ask you for context. It goes and gets it.");
+    it("includes context cards from all three sources", () => {
+      expect(homeSource).toContain("Context from Meta Ads");
+      expect(homeSource).toContain("Context from Google Ads");
+      expect(homeSource).toContain("Context from Google Analytics");
+    });
+
+    it("includes the AI response from NOVA — CMO Agent", () => {
+      expect(homeSource).toContain("NOVA — CMO Agent");
+      expect(homeSource).toContain("full ad stack");
+    });
+
+    it("has the tagline about three data sources", () => {
+      expect(homeSource).toContain("Three data sources. One unified context. Zero manual setup.");
     });
   });
 
@@ -107,8 +118,8 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("integrationLogos");
     });
 
-    it("lists key integration tools", () => {
-      const tools = ["HubSpot", "Salesforce", "Stripe", "Gmail", "Slack", "Notion", "Google Analytics", "Mailchimp", "Shopify"];
+    it("lists key integration tools including ad platforms", () => {
+      const tools = ["HubSpot", "Salesforce", "Stripe", "Gmail", "Slack", "Notion", "Google Analytics", "Mailchimp", "Shopify", "Meta Ads", "Google Ads", "TikTok Ads"];
       for (const tool of tools) {
         expect(homeSource).toContain(`"${tool}"`);
       }
@@ -240,40 +251,14 @@ describe("Home Page Redesign - Structure Validation", () => {
     });
   });
 
-  // ─── Section 8: Social Proof ─────────────────────────────────────
-  describe("Social Proof Section", () => {
-    it("has the Early Adopters section header", () => {
-      expect(homeSource).toContain("Early Adopters");
-      expect(homeSource).toContain("What beta users are saying.");
-    });
-
-    it("includes three testimonial cards with names and companies", () => {
-      expect(homeSource).toContain("Marcus Chen");
-      expect(homeSource).toContain("Meridian Growth");
-      expect(homeSource).toContain("Sarah Okonkwo");
-      expect(homeSource).toContain("Luma Commerce");
-      expect(homeSource).toContain("David Reeves");
-      expect(homeSource).toContain("Northline Logistics");
-    });
-
-    it("includes testimonial quotes highlighting key value props", () => {
-      expect(homeSource).toContain("self-contextualization is the real differentiator");
-      expect(homeSource).toContain("fractional CFO");
-      expect(homeSource).toContain("Proof of Outcome receipts");
-    });
-
-    it("includes metric highlights for each testimonial", () => {
-      expect(homeSource).toContain("3x pipeline visibility in first session");
-      expect(homeSource).toContain("Replaced $4K/mo fractional CFO");
-      expect(homeSource).toContain("Full audit trail from day one");
-    });
-
-    it("includes star ratings", () => {
-      expect(homeSource).toContain("text-amber-400 fill-amber-400");
-    });
-
-    it("uses scroll reveal animation for cards", () => {
-      expect(homeSource).toContain("useScrollReveal");
+  // ─── Social Proof Removed ─────────────────────────────────────
+  describe("Social Proof Section - Removed", () => {
+    it("no longer has fake testimonials", () => {
+      expect(homeSource).not.toContain("Marcus Chen");
+      expect(homeSource).not.toContain("Meridian Growth");
+      expect(homeSource).not.toContain("Sarah Okonkwo");
+      expect(homeSource).not.toContain("David Reeves");
+      expect(homeSource).not.toContain("What beta users are saying");
     });
   });
 
