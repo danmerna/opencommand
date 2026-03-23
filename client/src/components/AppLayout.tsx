@@ -252,9 +252,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               ) : (
                 visibleAgents.slice(0, 8).map(agent => {
                   const statusColor = agent.status === "active" ? "#22c55e" : agent.status === "error" ? "#ef4444" : "#6b7280";
+                  const isAgentActive = location === `/agents/${agent.id}`;
                   return (
-                    <Link key={agent.id} href="/mission-control" onClick={closeMobile}>
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all text-muted-foreground hover:text-foreground hover:bg-white/[0.04]">
+                    <Link key={agent.id} href={`/agents/${agent.id}`} onClick={closeMobile}>
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all ${
+                        isAgentActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                      }`}>
                         <span
                           className="w-2 h-2 rounded-full shrink-0"
                           style={{ backgroundColor: statusColor }}

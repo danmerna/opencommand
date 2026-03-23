@@ -25,6 +25,7 @@ import AppLayout from "./components/AppLayout";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import AgentOnboarding from "./pages/AgentOnboarding";
+import AgentDetail from "./pages/AgentDetail";
 import Creators from "./pages/Creators";
 
 function Router() {
@@ -64,6 +65,9 @@ function Router() {
       </Route>
       <Route path="/projects/:id">
         <AppLayout><ProjectDetail /></AppLayout>
+      </Route>
+      <Route path="/agents/:id">
+        <AppLayout><AgentDetail /></AppLayout>
       </Route>
       <Route path="/onboarding/:agentId">
         <AppLayout><AgentOnboarding /></AppLayout>
