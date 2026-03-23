@@ -258,3 +258,9 @@
 - [x] Wire Socket.IO emit on project chat messages (inbox_item type)
 - [x] Write vitest tests for projects router (14 tests passing)
 - [x] 122 total tests passing, 0 TypeScript errors
+
+## v3.5.1 — Mobile Layout Fix
+
+- [x] Fix mobile: main content has desktop left margin (264px) applied, cutting off content
+- [x] Ensure both sidebars (rail + nav) are hidden on mobile by default
+- [x] Mobile hamburger menu should toggle both sidebars together

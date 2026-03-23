@@ -107,7 +107,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen bg-background flex">
 
         {/* ── Far-left company-switcher rail ─────────────────────────────── */}
-        <aside className={`fixed inset-y-0 left-0 z-50 w-14 bg-[oklch(0.02_0_0)] border-r border-border flex flex-col items-center py-3 gap-1 transform transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
+        <aside className={`fixed inset-y-0 left-0 z-50 w-14 bg-[oklch(0.02_0_0)] border-r border-border flex-col items-center py-3 gap-1 transition-transform duration-200 hidden lg:flex lg:translate-x-0 ${mobileOpen ? "!flex translate-x-0" : ""}`}>
           {/* App logo mark */}
           <Link href="/">
             <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center mb-3 shrink-0">
@@ -146,7 +146,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </aside>
 
         {/* ── Main sidebar ───────────────────────────────────────────────── */}
-        <aside className={`fixed inset-y-0 left-14 z-40 w-52 bg-[oklch(0.03_0_0)] border-r border-border flex flex-col transform transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
+        <aside className={`fixed inset-y-0 left-14 z-40 w-52 bg-[oklch(0.03_0_0)] border-r border-border flex-col transition-transform duration-200 hidden lg:flex lg:translate-x-0 ${mobileOpen ? "!flex translate-x-0" : ""}`}>
 
           {/* Company header */}
           <div className="px-4 py-4 border-b border-border">
@@ -268,8 +268,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="fixed inset-0 z-30 bg-black/80 lg:hidden" onClick={() => setMobileOpen(false)} />
         )}
 
-        {/* Main content — offset by rail (56px) + sidebar (208px) = 264px */}
-        <div className="flex-1 lg:ml-[264px] flex flex-col min-h-screen">
+        {/* Main content — no margin on mobile, offset on desktop */}
+        <div className="flex-1 ml-0 lg:ml-[264px] flex flex-col min-h-screen">
           {/* Mobile header */}
           <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-[oklch(0.03_0_0)]">
             <button onClick={() => setMobileOpen(true)} className="text-foreground p-1">
