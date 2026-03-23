@@ -54,14 +54,14 @@ const companiesRouter = router({
   pnl: protectedProcedure.input(z.object({ companyId: z.number() })).query(({ input }) => getCompanyPnL(input.companyId)),
 
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1), mission: z.string().optional(), industry: z.string().optional(), monthlyBudget: z.number().optional() }))
+    .input(z.object({ name: z.string().min(1), mission: z.string().optional(), industry: z.string().optional(), monthlyBudget: z.number().optional(), briefingFrequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).optional() }))
     .mutation(async ({ ctx, input }) => {
-      await createCompany({ userId: ctx.user.id, name: input.name, mission: input.mission, industry: input.industry, monthlyBudget: input.monthlyBudget ? String(input.monthlyBudget) : "0" });
+      await createCompany({ userId: ctx.user.id, name: input.name, mission: input.mission, industry: input.industry, monthlyBudget: input.monthlyBudget ? String(input.monthlyBudget) : "0", briefingFrequency: input.briefingFrequency } as any);
       return { success: true };
     }),
 
   update: protectedProcedure
-    .input(z.object({ id: z.number(), name: z.string().optional(), mission: z.string().optional(), industry: z.string().optional(), status: z.enum(["active", "paused", "archived"]).optional(), monthlyBudget: z.number().optional() }))
+    .input(z.object({ id: z.number(), name: z.string().optional(), mission: z.string().optional(), industry: z.string().optional(), status: z.enum(["active", "paused", "archived"]).optional(), monthlyBudget: z.number().optional(), briefingFrequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).optional() }))
     .mutation(async ({ input }) => {
       const data: Record<string, unknown> = {};
       if (input.name) data.name = input.name;
@@ -69,6 +69,7 @@ const companiesRouter = router({
       if (input.industry !== undefined) data.industry = input.industry;
       if (input.status) data.status = input.status;
       if (input.monthlyBudget !== undefined) data.monthlyBudget = String(input.monthlyBudget);
+      if (input.briefingFrequency !== undefined) data.briefingFrequency = input.briefingFrequency;
       await updateCompany(input.id, data as any);
       return { success: true };
     }),
@@ -1227,23 +1228,35 @@ const onboardingRouter = router({
       const onboardings = await getOnboardingsByCompanyId(input.companyId);
       const completedMap = new Map(onboardings.filter(o => o.status === "completed").map(o => [o.agentId, o]));
 
-      // Gather all executive context
+      // Gather all executive context (include skipped/not-onboarded agents with a note)
       const executiveContext = csuiteAgents.map(a => {
         const ob = completedMap.get(a.id);
+        const wasSkipped = !ob || ob.status !== "completed";
         return {
           role: a.roleTitle ?? a.type,
           name: a.name,
-          summary: ob?.summary ?? "Not yet onboarded",
+          summary: wasSkipped ? "[Interview skipped — no context provided]" : (ob?.summary ?? "Not yet onboarded"),
           context: ob?.context ?? {},
+          skipped: wasSkipped,
         };
       });
 
       const company = await getCompanyById(input.companyId);
       const okrs = await getOkrsByCompanyId(input.companyId);
 
+      const briefingFreq = (company as any)?.briefingFrequency ?? "weekly";
+      const skippedExecs = executiveContext.filter(e => e.skipped).map(e => e.name);
+      const skippedNote = skippedExecs.length > 0
+        ? `Note: The following executives did not complete onboarding interviews and their specific context is unavailable: ${skippedExecs.join(", ")}. Make reasonable assumptions for their domains based on the company context.`
+        : "All executives completed onboarding interviews.";
+
       const response = await invokeLLM({
         messages: [
-          { role: "system" as const, content: `You are Arch, the AI CEO of ${company?.name ?? "this company"} on the OpenCommand platform. You have just completed onboarding interviews with all your C-suite executives. Based on the collective intelligence gathered, produce a comprehensive formal strategy proposal.
+          { role: "system" as const, content: `You are Arch, the AI CEO of ${company?.name ?? "this company"} on the OpenCommand platform. You have completed onboarding interviews with your C-suite executives. Based on the collective intelligence gathered, produce a comprehensive formal strategy proposal.
+
+${skippedNote}
+
+This strategy will be delivered to the operator on a ${briefingFreq} briefing cadence. Tailor the action items and review checkpoints accordingly.
 
 Structure your proposal as:
 # Strategic Plan: ${company?.name ?? "Company"}
@@ -1269,13 +1282,17 @@ Structure your proposal as:
 ## Immediate Action Items
 (First 5 tasks to execute this week)
 
+## Briefing Schedule
+(${briefingFreq.charAt(0).toUpperCase() + briefingFreq.slice(1)} review cadence — what to review at each briefing)
+
 Be specific, data-driven where possible, and reference insights from each executive's onboarding.` },
           { role: "user" as const, content: `Company: ${company?.name ?? "Unknown"}
 Mission: ${company?.mission ?? "N/A"}
 Industry: ${company?.industry ?? "N/A"}
+Briefing Frequency: ${briefingFreq}
 
 Executive Onboarding Context:
-${executiveContext.map(e => `\n### ${e.name} (${e.role})\n${e.summary}\nDetails: ${JSON.stringify(e.context)}`).join("\n")}
+${executiveContext.map(e => `\n### ${e.name} (${e.role})\n${e.summary}${e.skipped ? " [SKIPPED]" : ""}\nDetails: ${JSON.stringify(e.context)}`).join("\n")}
 
 Current OKRs: ${JSON.stringify(okrs.map(o => ({ objective: o.objective, keyResult: o.keyResult, progress: `${o.currentValue}/${o.targetValue} ${o.unit}` })))}
 

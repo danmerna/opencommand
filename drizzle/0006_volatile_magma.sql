@@ -1,0 +1,1 @@
+ALTER TABLE `companies` ADD `briefingFrequency` enum('daily','weekly','monthly','quarterly') DEFAULT 'weekly';

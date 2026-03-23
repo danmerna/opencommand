@@ -43,6 +43,13 @@
       "when": 1774252081301,
       "tag": "0005_material_medusa",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1774258956450,
+      "tag": "0006_volatile_magma",
+      "breakpoints": true
     }
   ]
 }

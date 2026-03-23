@@ -25,3 +25,5 @@
 - [x] Persist Pro onboarding progress to DB with resume logic
 - [x] Add combined strategy view to Mission Control
 - [x] Generate PDF mockup of combined strategy document
+- [x] Add strategy briefing frequency preference step to ProOnboarding (daily/weekly/monthly/quarterly)
+- [x] Allow users to skip CTO or CFO interviews without blocking strategy generation

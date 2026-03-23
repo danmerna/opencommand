@@ -8,15 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Bot, CheckCircle2, Loader2, ArrowRight, Sparkles,
-  Send, Building2, Users, Brain, ChevronRight,
+  Send, Building2, Users, Brain, ChevronRight, SkipForward,
+  Calendar, Clock, CalendarDays, CalendarRange,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 type Message = { role: "user" | "assistant"; content: string };
 
+type BriefingFrequency = "daily" | "weekly" | "monthly" | "quarterly";
+
 type OnboardingStep =
   | "welcome"
   | "company-setup"
+  | "briefing-frequency"
   | "creating-agents"
   | "onboarding-ceo"
   | "onboarding-cto"
@@ -27,10 +31,17 @@ type OnboardingStep =
   | "complete";
 
 const EXEC_AGENTS = [
-  { type: "ceo", name: "Arch — AI CEO", roleTitle: "Chief Executive Officer", description: "Executive Core orchestrating all operations, OKR tracking, and strategic decision-making.", capabilities: ["strategy", "orchestration", "okr-tracking", "decision-making"], tools: ["llm", "calendar", "analytics"], color: "text-amber-400", icon: "👑" },
-  { type: "cto", name: "SAGE — CTO", roleTitle: "Chief Technology Officer", description: "Deep research and competitive intelligence agent.", capabilities: ["market-research", "competitor-analysis", "data-synthesis", "code-review"], tools: ["github", "jira", "datadog"], color: "text-blue-400", icon: "⚡" },
-  { type: "cmo", name: "NOVA — CMO", roleTitle: "Chief Marketing Officer", description: "Autonomous marketing agent handling content, campaigns, and lead generation.", capabilities: ["content-creation", "seo", "email-campaigns", "social-media"], tools: ["mailchimp", "analytics", "social-scheduler"], color: "text-purple-400", icon: "✦" },
-  { type: "cfo", name: "CFO", roleTitle: "Chief Financial Officer", description: "Financial intelligence agent managing budget, runway, and fiscal strategy.", capabilities: ["financial-modeling", "budget-tracking", "revenue-analysis", "risk-assessment"], tools: ["stripe", "quickbooks", "analytics"], color: "text-emerald-400", icon: "◈" },
+  { type: "ceo", name: "Arch — AI CEO", roleTitle: "Chief Executive Officer", description: "Executive Core orchestrating all operations, OKR tracking, and strategic decision-making.", capabilities: ["strategy", "orchestration", "okr-tracking", "decision-making"], tools: ["llm", "calendar", "analytics"], color: "text-amber-400", icon: "👑", skippable: false },
+  { type: "cto", name: "SAGE — CTO", roleTitle: "Chief Technology Officer", description: "Deep research and competitive intelligence agent.", capabilities: ["market-research", "competitor-analysis", "data-synthesis", "code-review"], tools: ["github", "jira", "datadog"], color: "text-blue-400", icon: "⚡", skippable: true },
+  { type: "cmo", name: "NOVA — CMO", roleTitle: "Chief Marketing Officer", description: "Autonomous marketing agent handling content, campaigns, and lead generation.", capabilities: ["content-creation", "seo", "email-campaigns", "social-media"], tools: ["mailchimp", "analytics", "social-scheduler"], color: "text-purple-400", icon: "✦", skippable: false },
+  { type: "cfo", name: "CFO", roleTitle: "Chief Financial Officer", description: "Financial intelligence agent managing budget, runway, and fiscal strategy.", capabilities: ["financial-modeling", "budget-tracking", "revenue-analysis", "risk-assessment"], tools: ["stripe", "quickbooks", "analytics"], color: "text-emerald-400", icon: "◈", skippable: true },
+];
+
+const BRIEFING_OPTIONS: { value: BriefingFrequency; label: string; description: string; icon: React.ReactNode }[] = [
+  { value: "daily", label: "Daily", description: "Morning briefings every day — best for fast-moving operators", icon: <Clock size={16} /> },
+  { value: "weekly", label: "Weekly", description: "Monday strategy reviews — the most popular cadence", icon: <Calendar size={16} /> },
+  { value: "monthly", label: "Monthly", description: "Deep-dive reviews once a month — ideal for steady-state operations", icon: <CalendarDays size={16} /> },
+  { value: "quarterly", label: "Quarterly", description: "High-level strategic reviews — for long-horizon planning", icon: <CalendarRange size={16} /> },
 ];
 
 const ONBOARDING_ORDER: OnboardingStep[] = ["onboarding-ceo", "onboarding-cto", "onboarding-cmo", "onboarding-cfo"];
@@ -48,8 +59,10 @@ export default function ProOnboarding() {
   const [companyMission, setCompanyMission] = useState("");
   const [companyIndustry, setCompanyIndustry] = useState("");
   const [companyId, setCompanyId] = useState<number | null>(null);
+  const [briefingFrequency, setBriefingFrequency] = useState<BriefingFrequency>("weekly");
   const [createdAgents, setCreatedAgents] = useState<{ id: number; type: string }[]>([]);
   const [creatingProgress, setCreatingProgress] = useState<string[]>([]);
+  const [skippedAgents, setSkippedAgents] = useState<Set<string>>(new Set());
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [onboardingId, setOnboardingId] = useState<number | null>(null);
@@ -64,12 +77,14 @@ export default function ProOnboarding() {
   // Queries for resume detection
   const companiesQ = trpc.companies.list.useQuery(undefined, { enabled: true });
   const agentsQ = trpc.agents.list.useQuery(undefined, { enabled: true });
+  const onboardingStatusQ = trpc.onboarding.status.useQuery({ companyId: undefined }, { enabled: true });
 
   // Resume detection: on mount, check if user already has a company + agents and resume from correct step
   useEffect(() => {
     const companies = companiesQ.data;
     const agents = agentsQ.data;
-    if (!companies || !agents || step !== "welcome") return;
+    const onboardingStatus = onboardingStatusQ.data;
+    if (!companies || !agents || !onboardingStatus || step !== "welcome") return;
 
     const existingCompany = companies[0];
     if (!existingCompany) return;
@@ -84,10 +99,13 @@ export default function ProOnboarding() {
     setCompanyName(existingCompany.name ?? "");
     setCompanyMission(existingCompany.mission ?? "");
     setCompanyIndustry(existingCompany.industry ?? "");
+    if ((existingCompany as any).briefingFrequency) {
+      setBriefingFrequency((existingCompany as any).briefingFrequency as BriefingFrequency);
+    }
     const mapped = csuiteAgents.map((a: any) => ({ id: a.id, type: a.type }));
     setCreatedAgents(mapped);
 
-    // Find the first agent not yet onboarded
+    // Find the first agent not yet onboarded using the onboarding status query
     const typeToStep: Record<string, OnboardingStep> = {
       ceo: "onboarding-ceo",
       cto: "onboarding-cto",
@@ -95,9 +113,9 @@ export default function ProOnboarding() {
       cfo: "onboarding-cfo",
     };
     const onboardedTypes = new Set(
-      csuiteAgents
-        .filter((a: any) => a.onboardingStatus === "completed")
-        .map((a: any) => a.type)
+      onboardingStatus.agents
+        .filter((a: any) => a.isOnboarded)
+        .map((a: any) => a.agentType)
     );
     const nextUnboarded = ["ceo", "cto", "cmo", "cfo"].find(t => !onboardedTypes.has(t));
     if (!nextUnboarded) {
@@ -111,10 +129,11 @@ export default function ProOnboarding() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companiesQ.data, agentsQ.data]);
+  }, [companiesQ.data, agentsQ.data, onboardingStatusQ.data]);
 
   // Mutations
   const createCompanyMut = trpc.companies.create.useMutation();
+  const updateCompanyMut = trpc.companies.update.useMutation();
   const createAgentMut = trpc.agents.create.useMutation();
   const startOnboardingMut = trpc.onboarding.start.useMutation();
   const respondMut = trpc.onboarding.respond.useMutation();
@@ -139,10 +158,22 @@ export default function ProOnboarding() {
       const company = companies[0];
       if (!company) throw new Error("Company not created");
       setCompanyId(company.id);
-      setStep("creating-agents");
-      await createAllAgents(company.id);
+      // Move to briefing frequency selection before creating agents
+      setStep("briefing-frequency");
     } catch (err: any) {
       toast.error("Failed to set up company", { description: err.message });
+    }
+  }
+
+  async function handleBriefingFrequencyConfirm() {
+    if (!companyId) return;
+    try {
+      // Save the briefing frequency to the company record
+      await updateCompanyMut.mutateAsync({ id: companyId, briefingFrequency });
+      setStep("creating-agents");
+      await createAllAgents(companyId);
+    } catch (err: any) {
+      toast.error("Failed to save briefing preference", { description: err.message });
     }
   }
 
@@ -151,7 +182,7 @@ export default function ProOnboarding() {
     for (const agent of EXEC_AGENTS) {
       setCreatingProgress(p => [...p, agent.type]);
       try {
-        const result = await createAgentMut.mutateAsync({
+        await createAgentMut.mutateAsync({
           name: agent.name,
           type: agent.type as any,
           roleTitle: agent.roleTitle,
@@ -225,6 +256,25 @@ export default function ProOnboarding() {
       await startAgentOnboarding(nextStep, createdAgents);
     } else {
       // All agents onboarded — generate strategy
+      await handleGenerateStrategy();
+    }
+  }
+
+  async function handleSkipAgent() {
+    const agentType = STEP_TO_TYPE[step];
+    if (!agentType) return;
+
+    // Mark this agent as skipped
+    setSkippedAgents(prev => new Set(Array.from(prev).concat(agentType)));
+    toast.info(`${agentType.toUpperCase()} interview skipped`, {
+      description: "Strategy will be generated using available executive context.",
+    });
+
+    const currentIdx = ONBOARDING_ORDER.indexOf(step);
+    const nextStep = ONBOARDING_ORDER[currentIdx + 1];
+    if (nextStep) {
+      await startAgentOnboarding(nextStep, createdAgents);
+    } else {
       await handleGenerateStrategy();
     }
   }
@@ -331,6 +381,69 @@ export default function ProOnboarding() {
             disabled={createCompanyMut.isPending || !companyName.trim()}
           >
             {createCompanyMut.isPending ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} />}
+            Continue
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── BRIEFING FREQUENCY ───────────────────────────────────────────────────
+  if (step === "briefing-frequency") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-8">
+        <div className="max-w-md w-full">
+          <div className="flex items-center gap-2 mb-8">
+            <Calendar size={16} className="text-muted-foreground" />
+            <span className="text-xs text-muted-foreground uppercase tracking-widest">Strategy Briefings</span>
+          </div>
+          <h2 className="text-2xl font-light text-foreground tracking-tight mb-2">How often do you want strategy briefings?</h2>
+          <p className="text-muted-foreground text-sm mb-8">
+            Your executive team will deliver strategy updates on this cadence. You can change this at any time from your company settings.
+          </p>
+          <div className="space-y-3 mb-8">
+            {BRIEFING_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setBriefingFrequency(opt.value)}
+                className={`w-full flex items-start gap-4 border rounded-xl p-4 text-left transition-all ${
+                  briefingFrequency === opt.value
+                    ? "border-foreground bg-foreground/5"
+                    : "border-border hover:border-foreground/40"
+                }`}
+              >
+                <div className={`mt-0.5 shrink-0 ${briefingFrequency === opt.value ? "text-foreground" : "text-muted-foreground"}`}>
+                  {opt.icon}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-medium ${briefingFrequency === opt.value ? "text-foreground" : "text-foreground/80"}`}>
+                      {opt.label}
+                    </p>
+                    {opt.value === "weekly" && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-400 border-amber-400/30">
+                        Most popular
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{opt.description}</p>
+                </div>
+                <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${
+                  briefingFrequency === opt.value ? "border-foreground" : "border-border"
+                }`}>
+                  {briefingFrequency === opt.value && (
+                    <div className="w-2 h-2 rounded-full bg-foreground" />
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+          <Button
+            className="w-full h-11 gap-2"
+            onClick={handleBriefingFrequencyConfirm}
+            disabled={updateCompanyMut.isPending}
+          >
+            {updateCompanyMut.isPending ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} />}
             Create Executive Team
           </Button>
         </div>
@@ -372,6 +485,8 @@ export default function ProOnboarding() {
   // ── ONBOARDING INTERVIEWS ────────────────────────────────────────────────
   if (ONBOARDING_ORDER.includes(step) && currentExec) {
     const completedCount = ONBOARDING_ORDER.indexOf(step);
+    const isSkippable = currentExec.skippable;
+
     return (
       <div className="min-h-screen bg-background flex flex-col">
         {/* Header */}
@@ -383,18 +498,32 @@ export default function ProOnboarding() {
               <p className="text-xs text-muted-foreground">{currentExec.roleTitle} Onboarding</p>
             </div>
           </div>
-          {/* Progress dots */}
-          <div className="flex items-center gap-1.5">
-            {EXEC_AGENTS.map((a, i) => (
-              <div
-                key={a.type}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  i < completedCount ? "bg-emerald-400" :
-                  i === completedCount ? "bg-foreground scale-125" :
-                  "bg-border"
-                }`}
-              />
-            ))}
+          <div className="flex items-center gap-3">
+            {/* Skip button for CTO and CFO */}
+            {isSkippable && !isOnboardingComplete && messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground h-8"
+                onClick={handleSkipAgent}
+              >
+                <SkipForward size={12} />
+                Skip interview
+              </Button>
+            )}
+            {/* Progress dots */}
+            <div className="flex items-center gap-1.5">
+              {EXEC_AGENTS.map((a, i) => (
+                <div
+                  key={a.type}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    i < completedCount ? "bg-emerald-400" :
+                    i === completedCount ? "bg-foreground scale-125" :
+                    "bg-border"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
@@ -446,27 +575,42 @@ export default function ProOnboarding() {
         {/* Input */}
         {!isOnboardingComplete && (
           <div className="border-t border-border px-6 py-4 shrink-0">
-            <div className="max-w-2xl mx-auto flex gap-3">
-              <Input
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                placeholder={`Reply to ${currentExec.name.split("—")[0].trim()}...`}
-                className="h-11 flex-1"
-                onKeyDown={e => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                disabled={isSending || messages.length === 0}
-              />
-              <Button
-                className="h-11 w-11 p-0 shrink-0"
-                onClick={handleSend}
-                disabled={!input.trim() || isSending || messages.length === 0}
-              >
-                {isSending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-              </Button>
+            <div className="max-w-2xl mx-auto space-y-2">
+              {/* Skip hint for skippable agents */}
+              {isSkippable && messages.length > 0 && (
+                <p className="text-[11px] text-muted-foreground text-center">
+                  This interview is optional — you can{" "}
+                  <button
+                    className="underline underline-offset-2 hover:text-foreground transition-colors"
+                    onClick={handleSkipAgent}
+                  >
+                    skip it
+                  </button>
+                  {" "}and strategy will still be generated.
+                </p>
+              )}
+              <div className="flex gap-3">
+                <Input
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  placeholder={`Reply to ${currentExec.name.split("—")[0].trim()}...`}
+                  className="h-11 flex-1"
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  disabled={isSending || messages.length === 0}
+                />
+                <Button
+                  className="h-11 w-11 p-0 shrink-0"
+                  onClick={handleSend}
+                  disabled={!input.trim() || isSending || messages.length === 0}
+                >
+                  {isSending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -476,16 +620,23 @@ export default function ProOnboarding() {
 
   // ── GENERATING STRATEGY ──────────────────────────────────────────────────
   if (step === "generating-strategy") {
+    const skippedCount = skippedAgents.size;
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-8">
         <div className="max-w-sm w-full text-center">
           <Brain size={28} className="text-foreground mx-auto mb-6 animate-pulse" />
           <h2 className="text-xl font-light text-foreground mb-2">Synthesizing executive intelligence</h2>
-          <p className="text-muted-foreground text-xs mb-8">
-            Arch is combining insights from all {EXEC_AGENTS.length} executives to generate your combined strategic plan...
+          <p className="text-muted-foreground text-xs mb-2">
+            Arch is combining insights from {EXEC_AGENTS.length - skippedCount} of {EXEC_AGENTS.length} executives to generate your combined strategic plan...
           </p>
+          {skippedCount > 0 && (
+            <p className="text-[11px] text-muted-foreground/60 mb-6">
+              {skippedCount} interview{skippedCount > 1 ? "s" : ""} skipped — Arch will make informed assumptions for those domains.
+            </p>
+          )}
+          {skippedCount === 0 && <div className="mb-6" />}
           <div className="space-y-2">
-            {["Gathering executive context", "Identifying strategic priorities", "Aligning OKRs and resources", "Drafting combined strategy"].map((s, i) => (
+            {["Gathering executive context", "Identifying strategic priorities", "Aligning OKRs and resources", "Drafting combined strategy"].map((s) => (
               <div key={s} className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Loader2 size={10} className="animate-spin shrink-0" />
                 {s}
@@ -499,6 +650,7 @@ export default function ProOnboarding() {
 
   // ── STRATEGY REVEAL ──────────────────────────────────────────────────────
   if (step === "strategy-reveal") {
+    const freqLabel = BRIEFING_OPTIONS.find(o => o.value === briefingFrequency)?.label ?? "Weekly";
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="border-b border-border px-6 py-4 flex items-center justify-between shrink-0">
@@ -506,9 +658,15 @@ export default function ProOnboarding() {
             <Sparkles size={14} className="text-amber-400" />
             <span className="text-sm text-foreground">Combined Strategy — {companyName}</span>
           </div>
-          <Badge variant="outline" className="text-emerald-400 border-emerald-400/30 text-[10px]">
-            Generated by IntelligenceOS
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-muted-foreground border-border text-[10px] gap-1">
+              <Calendar size={10} />
+              {freqLabel} briefings
+            </Badge>
+            <Badge variant="outline" className="text-emerald-400 border-emerald-400/30 text-[10px]">
+              Generated by IntelligenceOS
+            </Badge>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-8 max-w-3xl mx-auto w-full">
           {strategy ? (
@@ -521,7 +679,7 @@ export default function ProOnboarding() {
         </div>
         <div className="border-t border-border px-6 py-4 shrink-0">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Your strategy is saved to Mission Control.</p>
+            <p className="text-xs text-muted-foreground">Your strategy is saved to Mission Control. Next briefing: {freqLabel.toLowerCase()}.</p>
             <Button className="gap-2 h-10" onClick={handleLaunch}>
               Launch Mission Control <ArrowRight size={13} />
             </Button>
