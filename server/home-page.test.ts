@@ -242,14 +242,16 @@ describe("Home Page Redesign - Structure Validation", () => {
 
   // ─── Section 8: Pricing ────────────────────────────────────────────
   describe("Pricing Section - Three Tiers", () => {
-    it("has the pricing section header", () => {
-      expect(homeSource).toContain("Start free. Scale when it works.");
+    it("has the pricing section header with 7-day trial", () => {
+      expect(homeSource).toContain("Try everything free for 7 days.");
     });
 
-    it("includes Free tier at $0", () => {
-      expect(homeSource).toContain("$0");
-      expect(homeSource).toContain("10 commands / month");
-      expect(homeSource).toContain("2 connected tools");
+    it("includes 7-day Free Trial tier", () => {
+      expect(homeSource).toContain("7 days");
+      expect(homeSource).toContain("Free Trial");
+      expect(homeSource).toContain("No credit card required");
+      expect(homeSource).toContain("Full Pro features for 7 days");
+      expect(homeSource).toContain("Start Free Trial");
     });
 
     it("includes Pro tier at $29", () => {

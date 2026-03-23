@@ -88,3 +88,8 @@
 - [x] Add Blueprints vs. existing AI agent marketplaces comparison content
 - [x] Update footer links to reference Blueprints instead of Marketplace
 - [x] Update tests to reflect marketplace → blueprints changes
+- [x] Update homepage pricing section: replace Free tier with 7-day free trial, no credit card required
+- [x] Update homepage CTAs and copy to reference 7-day free trial
+- [x] Update Pricing page to reflect 7-day free trial model
+- [x] Update products.ts: removed Starter ($1), updated Pro to $29, added Business at $99, added trialDays: 7
+- [x] Update tests to reflect free trial changes

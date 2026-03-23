@@ -4,47 +4,73 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Check, Zap, Bot, Loader2, ArrowRight, BadgeCheck } from "lucide-react";
+import { Check, Zap, Bot, Shield, Loader2, ArrowRight, BadgeCheck, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 
 const PLANS = [
   {
-    key: "STARTER",
-    name: "Starter",
-    price: "$1",
-    interval: "/ month",
-    tagline: "Start executing.",
-    description: "For individual operators getting started with autonomous AI execution.",
+    key: "TRIAL",
+    name: "Free Trial",
+    price: "7 days",
+    priceUnit: "free",
+    tagline: "Experience the full platform.",
+    description: "Full Pro access for 7 days. No credit card required. No commitment — just sign up and start.",
     features: [
-      "1 active agent",
-      "Basic context engineering",
-      "Intent-to-outcome workflows",
-      "Standard execution speed",
-      "Community support",
+      "Full Pro features for 7 days",
+      "10 connected tools",
+      "5 agents",
+      "Self-contextualizing engine",
+      "Full PoO receipts",
+      "No credit card required",
     ],
-    cta: "Get Started",
+    cta: "Start Free Trial",
     highlighted: false,
     icon: Zap,
+    isCheckout: false,
   },
   {
     key: "PRO",
     name: "Pro",
-    price: "$5",
-    interval: "/ month",
-    tagline: "The ultimate force multiplier.",
-    description: "For high-performance operators who need full orchestration power.",
+    price: "$29",
+    priceUnit: "/ month",
+    tagline: "The full self-contextualizing engine.",
+    description: "For serious operators who need autonomous execution with full context engineering.",
     features: [
-      "Unlimited active agents",
-      "Advanced context engineering",
-      "Multi-step workflow orchestration",
-      "Priority execution speed",
-      "Proof of Outcome receipts",
-      "Priority support",
+      "100 commands / month",
+      "10 connected tools",
+      "5 agents",
+      "Self-contextualizing engine",
+      "Full + trace PoO receipts",
+      "3 workspaces",
+      "$10/mo execution credits",
     ],
     cta: "Go Pro",
     highlighted: true,
     icon: Bot,
+    isCheckout: true,
+  },
+  {
+    key: "BUSINESS",
+    name: "Business",
+    price: "$99",
+    priceUnit: "/ month",
+    tagline: "Unlimited everything. Full API access.",
+    description: "For teams and agencies running multiple workspaces with marketplace selling.",
+    features: [
+      "Unlimited commands",
+      "Unlimited connected tools",
+      "Unlimited agents",
+      "Full + custom engine",
+      "Full + API PoO receipts",
+      "Unlimited workspaces",
+      "$50/mo execution credits",
+      "Featured marketplace selling",
+    ],
+    cta: "Contact Us",
+    highlighted: false,
+    icon: Shield,
+    isCheckout: true,
   },
 ];
 
@@ -70,7 +96,6 @@ export default function Pricing() {
       window.location.href = getLoginUrl();
       return;
     }
-    // Store the tier so PaymentSuccess can route Pro users to onboarding
     sessionStorage.setItem("oc_checkout_tier", productKey.toLowerCase());
     setLoadingKey(productKey);
     checkoutMutation.mutate({
@@ -79,24 +104,34 @@ export default function Pricing() {
     });
   };
 
+  const handleTrialStart = () => {
+    if (!isAuthenticated) {
+      window.location.href = getLoginUrl();
+      return;
+    }
+    toast.success("Welcome! Your 7-day free trial is active.");
+    window.location.href = "/onboarding";
+  };
+
   return (
-    <div className="min-h-full p-6 md:p-10 max-w-5xl mx-auto">
+    <div className="min-h-full p-6 md:p-10 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-12">
         <p className="text-xs text-muted-foreground tracking-widest uppercase mb-3">Personal Intelligence Engine</p>
         <h1 className="text-4xl font-light text-foreground tracking-tight mb-3">
-          Simple, transparent pricing.
+          Try everything free for 7 days.
         </h1>
         <p className="text-muted-foreground text-sm max-w-lg">
-          Start free, scale as you grow. Every plan includes access to the Personal Intelligence Engine orchestration layer.
+          No credit card required. Full access to the self-contextualizing engine for a week. Pick a plan when you're ready.
         </p>
       </div>
 
       {/* Plan Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         {PLANS.map((plan) => {
           const Icon = plan.icon;
           const isLoading = loadingKey === plan.key;
+          const isCurrentPlan = isAuthenticated && subscription.tier === plan.key.toLowerCase();
 
           return (
             <div
@@ -109,8 +144,8 @@ export default function Pricing() {
             >
               {plan.highlighted && (
                 <div className="absolute -top-3 left-8">
-                  <span className="bg-foreground text-background text-[10px] font-semibold tracking-widest uppercase px-3 py-1 rounded-full">
-                    Most Popular
+                  <span className="bg-foreground text-background text-[10px] font-semibold tracking-widest uppercase px-3 py-1 rounded-full flex items-center gap-1">
+                    <Star size={10} /> Most Popular
                   </span>
                 </div>
               )}
@@ -124,7 +159,7 @@ export default function Pricing() {
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-light text-foreground">{plan.price}</span>
-                    <span className="text-sm text-muted-foreground">{plan.interval}</span>
+                    <span className="text-sm text-muted-foreground">{plan.priceUnit}</span>
                   </div>
                 </div>
               </div>
@@ -144,7 +179,7 @@ export default function Pricing() {
               </ul>
 
               {/* Current plan badge */}
-              {isAuthenticated && subscription.tier === plan.key.toLowerCase() && (
+              {isCurrentPlan && (
                 <div className="flex items-center gap-1.5 text-xs text-emerald-400 mb-3">
                   <BadgeCheck size={13} />
                   <span>Your current plan</span>
@@ -153,21 +188,26 @@ export default function Pricing() {
 
               {/* CTA */}
               <Button
-                onClick={() => handleCheckout(plan.key)}
-                disabled={isLoading || (isAuthenticated && subscription.tier === plan.key.toLowerCase())}
+                onClick={() => plan.isCheckout ? handleCheckout(plan.key) : handleTrialStart()}
+                disabled={isLoading || isCurrentPlan}
                 variant={plan.highlighted ? "default" : "outline"}
                 className="w-full gap-2"
               >
                 {isLoading ? (
                   <><Loader2 size={14} className="animate-spin" /> Processing...</>
-                ) : isAuthenticated && subscription.tier === plan.key.toLowerCase() ? (
+                ) : isCurrentPlan ? (
                   <><BadgeCheck size={14} /> Active Plan</>
                 ) : (
                   <>{plan.cta} <ArrowRight size={14} /></>
                 )}
               </Button>
 
-              {!isAuthenticated && (
+              {!isAuthenticated && plan.key === "TRIAL" && (
+                <p className="text-[10px] text-muted-foreground/50 text-center mt-3">
+                  Sign up to start your free trial
+                </p>
+              )}
+              {!isAuthenticated && plan.isCheckout && (
                 <p className="text-[10px] text-muted-foreground/50 text-center mt-3">
                   Sign in required to subscribe
                 </p>
@@ -177,9 +217,21 @@ export default function Pricing() {
         })}
       </div>
 
+      {/* Founding member callout */}
+      <div className="text-center mb-10">
+        <p className="text-xs text-muted-foreground">
+          <span className="text-amber-400/80">Founding Member pricing:</span>{" "}
+          $19/mo for Pro, locked in forever. First 500 users.
+        </p>
+      </div>
+
       {/* FAQ / Trust section */}
       <div className="border-t border-border pt-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+          <div>
+            <p className="text-foreground font-medium mb-1">7-day free trial</p>
+            <p className="text-muted-foreground text-xs leading-relaxed">Full Pro access for a week. No credit card required. Downgrade or cancel anytime.</p>
+          </div>
           <div>
             <p className="text-foreground font-medium mb-1">Cancel anytime</p>
             <p className="text-muted-foreground text-xs leading-relaxed">No lock-in. Cancel your subscription at any time from your account settings.</p>
@@ -187,10 +239,6 @@ export default function Pricing() {
           <div>
             <p className="text-foreground font-medium mb-1">Secure payments</p>
             <p className="text-muted-foreground text-xs leading-relaxed">All payments are processed securely via Stripe. We never store your card details.</p>
-          </div>
-          <div>
-            <p className="text-foreground font-medium mb-1">Test with confidence</p>
-            <p className="text-muted-foreground text-xs leading-relaxed">Use card <span className="font-mono">4242 4242 4242 4242</span> with any future date to test checkout.</p>
           </div>
         </div>
       </div>

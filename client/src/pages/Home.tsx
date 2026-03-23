@@ -738,34 +738,34 @@ export default function Home() {
       <section className="px-8 py-24 max-w-6xl mx-auto">
         <div className="text-center mb-14">
           <p className="text-label mb-3">Simple pricing</p>
-          <h2 className="text-heading text-3xl text-foreground">Start free. Scale when it works.</h2>
+          <h2 className="text-heading text-3xl text-foreground">Try everything free for 7 days.</h2>
           <p className="text-muted-foreground text-body mt-3 max-w-md mx-auto">
-            No seat fees. No enterprise contracts. Free tier lets you experience the self-contextualizing engine before you pay a cent.
+            No credit card required. Full access to the self-contextualizing engine for a week. Cancel anytime — you won't be charged a cent.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {/* Free */}
+          {/* 7-Day Free Trial */}
           <div className="border border-border rounded-xl p-7 bg-white/[0.02] flex flex-col gap-5">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Zap size={14} className="text-muted-foreground" />
-                <span className="text-label text-xs">Free</span>
+                <span className="text-label text-xs">Free Trial</span>
               </div>
               <div className="flex items-end gap-1 mb-3">
-                <span className="text-4xl font-light text-foreground">$0</span>
-                <span className="text-muted-foreground text-sm mb-1">/ month</span>
+                <span className="text-4xl font-light text-foreground">7 days</span>
+                <span className="text-muted-foreground text-sm mb-1">free</span>
               </div>
-              <p className="text-muted-foreground text-xs">Experience the intent engine. No credit card required.</p>
+              <p className="text-muted-foreground text-xs">Full Pro access. No credit card. No commitment.</p>
             </div>
             <ul className="space-y-2.5 flex-1">
               {[
-                "10 commands / month",
-                "2 connected tools",
-                "1 agent",
-                "Basic Socratic engine",
-                "Summary PoO receipts",
-                "1 workspace",
+                "Full Pro features for 7 days",
+                "10 connected tools",
+                "5 agents",
+                "Self-contextualizing engine",
+                "Full PoO receipts",
+                "No credit card required",
               ].map(f => (
                 <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Check size={11} className="text-emerald-400 shrink-0" />{f}
@@ -773,7 +773,7 @@ export default function Home() {
               ))}
             </ul>
             <button onClick={() => scrollToSection("bottom-cta")} className="btn-outline text-center text-sm py-2.5 w-full">
-              Start Free
+              Start Free Trial
             </button>
           </div>
 
@@ -870,7 +870,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-4">
           <EmailCapture source="homepage-bottom" />
           <p className="text-xs text-muted-foreground">
-            500 founding member spots. Free tier. No credit card.
+            7-day free trial. No credit card. 500 founding member spots.
           </p>
           {isAuthenticated ? (
             <Link href="/mission-control" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
