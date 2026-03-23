@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   Send, Zap, Play, FileText, Clock, ChevronRight, RotateCcw, Cpu,
   Layers, ArrowRight, CheckCircle2, Globe, Plug, Brain, Eye, Sparkles, Database,
-  BarChart3, AlertTriangle, Link2,
+  BarChart3, AlertTriangle, Link2, History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -245,6 +245,11 @@ export default function IntentEngine() {
             <m.icon size={14} /> {m.label}
           </button>
         ))}
+        <Link href="/context-history">
+          <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px border-transparent text-muted-foreground hover:text-foreground">
+            <History size={14} /> History
+          </button>
+        </Link>
       </div>
 
       {/* Plan Mode */}

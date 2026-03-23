@@ -20,6 +20,7 @@ import {
 } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { getHubSpotSnapshot, type HubSpotSnapshot } from "./hubspot";
+import { getSalesforceSnapshot, type SalesforceSnapshot } from "./salesforce";
 import type { UserConnection } from "../../drizzle/schema";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -108,6 +109,9 @@ async function fetchLiveData(
       if (conn.providerSlug === "hubspot") {
         const snapshot: HubSpotSnapshot = await getHubSpotSnapshot(conn);
         liveState.hubspot = snapshot;
+      } else if (conn.providerSlug === "salesforce") {
+        const snapshot: SalesforceSnapshot = await getSalesforceSnapshot(conn);
+        liveState.salesforce = snapshot;
       }
       // Future: add mailchimp, stripe_connect, slack, etc.
     } catch (err: unknown) {
@@ -133,6 +137,17 @@ function buildContextSummary(liveState: Record<string, unknown>): string {
     );
     if (velocity.stalledCount > 0) {
       parts.push(`${velocity.stalledCount} stalled deals worth $${Math.round(velocity.totalStalledValue / 1000)}K`);
+    }
+  }
+
+  const sf = liveState.salesforce as SalesforceSnapshot | undefined;
+  if (sf) {
+    const { contacts, pipeline, closedWon30d, velocity } = sf;
+    parts.push(
+      `Salesforce: ${contacts.totalContacts} contacts · ${contacts.totalLeads} leads · ${pipeline.totalOpenOpportunities} open opps · $${Math.round(pipeline.totalPipelineValue / 1000)}K pipeline · ${closedWon30d.length} closed last 30d`
+    );
+    if (velocity.stalledCount > 0) {
+      parts.push(`${velocity.stalledCount} stalled opps worth $${Math.round(velocity.totalStalledValue / 1000)}K`);
     }
   }
 

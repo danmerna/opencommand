@@ -52,3 +52,8 @@
 - [x] Create server/integrations/contextAssembler.ts orchestrator
 - [x] Add context.liveContextualize tRPC procedure to routers.ts
 - [x] Update IntentEngine.tsx with progressive loading, context card, and no-connection fallback banner
+- [x] Create server/integrations/salesforce.ts with token refresh and CRM data fetchers
+- [x] Register Salesforce in contextAssembler.ts fetchLiveData and integrationOAuth.ts
+- [x] Show context card in ProOnboarding CEO interview step with live business data
+- [x] Add History tab to Intent Engine linking to existing /context-history page
+- [x] Server procedure for listing past context objects already exists (context.list)

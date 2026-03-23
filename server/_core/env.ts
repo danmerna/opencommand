@@ -17,5 +17,7 @@ export const ENV = {
   slackClientId: process.env.SLACK_CLIENT_ID ?? "",
   slackClientSecret: process.env.SLACK_CLIENT_SECRET ?? "",
   stripeOAuthClientId: process.env.STRIPE_OAUTH_CLIENT_ID ?? "",
+  salesforceClientId: process.env.SALESFORCE_CLIENT_ID ?? "",
+  salesforceClientSecret: process.env.SALESFORCE_CLIENT_SECRET ?? "",
   appBaseUrl: process.env.APP_BASE_URL ?? "",
 };

@@ -10,6 +10,7 @@ import {
   Bot, CheckCircle2, Loader2, ArrowRight, Sparkles,
   Send, Building2, Users, Brain, ChevronRight, SkipForward,
   Calendar, Clock, CalendarDays, CalendarRange,
+  BarChart3, Plug, Database, Eye,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
@@ -70,6 +71,8 @@ export default function ProOnboarding() {
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [strategy, setStrategy] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [ceoContext, setCeoContext] = useState<{ contextSummary: string; insights: string[]; connectedProviders: string[]; hasLiveData: boolean } | null>(null);
+  const [ceoContextLoading, setCeoContextLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const utils = trpc.useUtils();
@@ -138,6 +141,7 @@ export default function ProOnboarding() {
   const startOnboardingMut = trpc.onboarding.start.useMutation();
   const respondMut = trpc.onboarding.respond.useMutation();
   const generateStrategyMut = trpc.onboarding.generateStrategy.useMutation();
+  const liveContextualizeMut = trpc.context.liveContextualize.useMutation();
 
   // Auto-scroll chat
   useEffect(() => {
@@ -219,6 +223,26 @@ export default function ProOnboarding() {
     setOnboardingId(null);
     setIsOnboardingComplete(false);
     setStep(onboardStep);
+
+    // For CEO interview, fetch live context from connected tools
+    if (agentType === "ceo") {
+      setCeoContext(null);
+      setCeoContextLoading(true);
+      try {
+        const ctx = await liveContextualizeMut.mutateAsync({ requestText: `CEO onboarding for ${companyName || "the company"} in ${companyIndustry || "technology"}` });
+        setCeoContext({
+          contextSummary: ctx.contextSummary,
+          insights: ctx.insights,
+          connectedProviders: ctx.connectedProviders,
+          hasLiveData: ctx.hasLiveData,
+        });
+      } catch {
+        // Non-fatal — CEO interview works without live context
+      } finally {
+        setCeoContextLoading(false);
+      }
+    }
+
     try {
       const data = await startOnboardingMut.mutateAsync({ agentId: agent.id });
       setOnboardingId(data.onboardingId);
@@ -568,6 +592,48 @@ export default function ProOnboarding() {
 
         {/* Chat area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-4 max-w-2xl mx-auto w-full">
+          {/* CEO Context Card — shows live data assembled from connected tools */}
+          {step === "onboarding-ceo" && ceoContextLoading && (
+            <div className="rounded-lg border border-blue-800/40 bg-blue-950/20 px-4 py-3 flex items-center gap-3">
+              <Loader2 size={14} className="animate-spin text-blue-400" />
+              <div>
+                <p className="text-[11px] font-semibold text-blue-400 uppercase tracking-wide">Assembling context from your tools...</p>
+                <p className="text-xs text-blue-200/60 mt-0.5">Reading pipeline data to inform the interview</p>
+              </div>
+            </div>
+          )}
+          {step === "onboarding-ceo" && ceoContext?.hasLiveData && (
+            <div className="rounded-lg border border-emerald-800/40 bg-emerald-950/20 px-4 py-3">
+              <div className="flex items-center gap-2 mb-1.5">
+                <BarChart3 size={14} className="text-emerald-400" />
+                <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wide">Live context assembled</span>
+              </div>
+              <p className="text-xs text-emerald-200/80 leading-relaxed mb-2">{ceoContext.contextSummary}</p>
+              {ceoContext.insights.length > 0 && (
+                <ul className="space-y-1 mb-2">
+                  {ceoContext.insights.slice(0, 3).map((insight, i) => (
+                    <li key={i} className="text-[11px] text-emerald-300/70 flex items-start gap-1.5">
+                      <Eye size={10} className="mt-0.5 shrink-0 text-emerald-500" />
+                      {insight}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {ceoContext.connectedProviders.length > 0 && (
+                <div className="flex gap-1 flex-wrap">
+                  {ceoContext.connectedProviders.map(p => (
+                    <Badge key={p} variant="outline" className="border-emerald-800/50 text-emerald-500 text-[9px] px-1.5 py-0 capitalize">{p}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {step === "onboarding-ceo" && ceoContext && !ceoContext.hasLiveData && !ceoContextLoading && (
+            <div className="rounded-lg border border-yellow-800/40 bg-yellow-950/15 px-4 py-3 flex items-center gap-3">
+              <Plug size={14} className="text-yellow-500 shrink-0" />
+              <p className="text-xs text-yellow-300/80">No connected tools detected. Arch will ask general questions — connect your CRM in the Integration Hub for data-informed onboarding.</p>
+            </div>
+          )}
           {messages.length === 0 && (
             <div className="flex items-center justify-center h-32">
               <Loader2 size={18} className="animate-spin text-muted-foreground" />

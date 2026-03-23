@@ -18,7 +18,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   personal_email: <Inbox size={16} />, ecommerce: <ShoppingCart size={16} />,
 };
 
-const OAUTH2_PROVIDERS = ["hubspot", "mailchimp", "slack", "stripe_connect"];
+const OAUTH2_PROVIDERS = ["hubspot", "mailchimp", "slack", "stripe_connect", "salesforce"];
 
 type Tab = "overview" | "connections" | "abstraction";
 
@@ -150,7 +150,7 @@ export default function IntegrationHub() {
             </div>
             <p className="text-muted-foreground text-xs mb-4">These providers use real OAuth2 authorization. Clicking Connect redirects to their login page.</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {["hubspot", "mailchimp", "slack", "stripe_connect"].map(slug => {
+              {["hubspot", "mailchimp", "slack", "stripe_connect", "salesforce"].map(slug => {
                 const provider = providers.find(p => p.slug === slug);
                 const conn = connections.find(c => c.providerId === provider?.id && c.status === "connected");
                 if (!provider) return null;

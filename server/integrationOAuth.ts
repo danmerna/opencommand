@@ -54,6 +54,15 @@ const OAUTH_PROVIDERS: Record<string, OAuthProviderConfig> = {
     clientId: () => ENV.stripeOAuthClientId,
     clientSecret: () => ENV.stripeSecretKey,
   },
+  salesforce: {
+    slug: "salesforce",
+    name: "Salesforce",
+    authUrl: "https://login.salesforce.com/services/oauth2/authorize",
+    tokenUrl: "https://login.salesforce.com/services/oauth2/token",
+    scopes: ["api", "refresh_token", "offline_access"],
+    clientId: () => ENV.salesforceClientId,
+    clientSecret: () => ENV.salesforceClientSecret,
+  },
 };
 
 // ─── State Store (in-memory, short-lived) ─────────────────────────────────────
@@ -294,6 +303,13 @@ async function fetchAccountName(providerSlug: string, accessToken: string): Prom
     case "stripe_connect": {
       return "Stripe Account";
     }
+    case "salesforce": {
+      const r = await fetch("https://login.salesforce.com/services/oauth2/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const d = await r.json() as { organization_id?: string; name?: string };
+      return d.name ?? `Salesforce Org ${d.organization_id ?? ""}`;
+    }
     default:
       return providerSlug;
   }
@@ -333,6 +349,14 @@ async function fetchLivePreview(providerSlug: string, accessToken: string): Prom
     }
     case "stripe_connect": {
       return { message: "Stripe account connected. Payments are live." };
+    }
+    case "salesforce": {
+      // Note: Salesforce preview needs instance_url from metadata, but for preview we use the standard endpoint
+      const r = await fetch("https://login.salesforce.com/services/oauth2/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const d = await r.json() as { name?: string; email?: string; organization_id?: string };
+      return { user: d.name ?? "Unknown", email: d.email ?? "", orgId: d.organization_id ?? "" };
     }
     default:
       return { status: "connected" };
