@@ -92,7 +92,7 @@ export default function Home() {
       {/* Top nav */}
       <nav className="px-6 md:px-8 py-5 max-w-7xl mx-auto">
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-foreground text-xl tracking-tight">OpenCommand</span>
+          <Link href="/" className="font-semibold text-foreground text-xl tracking-tight hover:opacity-80 transition-opacity">OpenCommand</Link>
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-8">

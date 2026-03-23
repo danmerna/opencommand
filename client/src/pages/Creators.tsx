@@ -10,7 +10,7 @@ export default function Creators() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Top nav */}
       <nav className="px-8 py-5 flex items-center justify-between max-w-7xl mx-auto border-b border-border">
-        <span className="font-semibold text-foreground text-xl tracking-tight">OpenCommand</span>
+        <Link href="/" className="font-semibold text-foreground text-xl tracking-tight hover:opacity-80 transition-opacity">OpenCommand</Link>
         <Link href="/" className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft size={13} /> Back to Home
         </Link>
