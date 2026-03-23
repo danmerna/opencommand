@@ -341,3 +341,6 @@
 
 ## v3.14 — Sidebar Section Order
 - [x] Swap Projects and Agents sections so Projects is above Agents
+
+## v3.15 — OAuth Callback Retry
+- [x] Add retry logic (up to 3 attempts, exponential backoff 200/400/800ms) to OAuth callback DB write to handle ECONNRESET/ETIMEDOUT/ECONNREFUSED
