@@ -29,6 +29,7 @@ import AgentDetail from "./pages/AgentDetail";
 import Pricing from "./pages/Pricing";
 import Creators from "./pages/Creators";
 import ProOnboarding from "./pages/ProOnboarding";
+import Briefings from "./pages/Briefings";
 
 function Router() {
   return (
@@ -74,6 +75,7 @@ function Router() {
       <Route path="/agents/:id">
         <AppLayout><AgentDetail /></AppLayout>
       </Route>
+      <Route path="/briefings" component={Briefings} />
       <Route path="/onboarding/pro" component={ProOnboarding} />
       <Route path="/onboarding/:agentId">
         <AppLayout><AgentOnboarding /></AppLayout>

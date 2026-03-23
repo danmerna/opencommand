@@ -438,6 +438,45 @@ export default function ProOnboarding() {
               </button>
             ))}
           </div>
+          {/* Briefing preview card */}
+          {(() => {
+            const now = new Date();
+            let nextDate: Date;
+            if (briefingFrequency === "daily") {
+              nextDate = new Date(now);
+              nextDate.setDate(nextDate.getDate() + (now.getHours() >= 8 ? 1 : 0));
+              nextDate.setHours(8, 0, 0, 0);
+            } else if (briefingFrequency === "weekly") {
+              // Next Monday
+              const day = now.getDay(); // 0=Sun
+              const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7 || 7;
+              nextDate = new Date(now);
+              nextDate.setDate(nextDate.getDate() + daysUntilMonday);
+              nextDate.setHours(8, 0, 0, 0);
+            } else if (briefingFrequency === "monthly") {
+              // 1st of next month
+              nextDate = new Date(now.getFullYear(), now.getMonth() + 1, 1, 8, 0, 0);
+            } else {
+              // Quarterly: next 1st of Jan/Apr/Jul/Oct
+              const quarterStarts = [0, 3, 6, 9]; // month indices
+              const currentMonth = now.getMonth();
+              const nextQStart = quarterStarts.find(m => m > currentMonth) ?? 0;
+              const nextYear = nextQStart === 0 ? now.getFullYear() + 1 : now.getFullYear();
+              nextDate = new Date(nextYear, nextQStart, 1, 8, 0, 0);
+            }
+            const formatted = nextDate.toLocaleString(undefined, {
+              weekday: "long", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
+            });
+            return (
+              <div className="mb-6 rounded-xl border border-border bg-muted/5 px-4 py-3 flex items-start gap-3">
+                <Clock size={14} className="text-muted-foreground mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Your first briefing will arrive{" "}
+                  <span className="text-foreground font-medium">{formatted}</span>.
+                </p>
+              </div>
+            );
+          })()}
           <Button
             className="w-full h-11 gap-2"
             onClick={handleBriefingFrequencyConfirm}

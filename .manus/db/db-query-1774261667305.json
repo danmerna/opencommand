@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `briefing_logs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`companyId` int,\n\t`companyName` varchar(128),\n\t`frequency` enum('daily','weekly','monthly','quarterly') NOT NULL,\n\t`title` varchar(256) NOT NULL,\n\t`content` text NOT NULL,\n\t`deliveredAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `briefing_logs_id` PRIMARY KEY(`id`)\n);\nALTER TABLE `okrs` ADD `source` enum('manual','strategy') DEFAULT 'manual' NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute CREATE TABLE `briefing_logs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`companyId` int,\n\t`companyName` varchar(128),\n\t`frequency` enum('daily','weekly','monthly','quarterly') NOT NULL,\n\t`title` varchar(256) NOT NULL,\n\t`content` text NOT NULL,\n\t`deliveredAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `briefing_logs_id` PRIMARY KEY(`id`)\n);\nALTER TABLE `okrs` ADD `source` enum('manual','strategy') DEFAULT 'manual' NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 923
+}

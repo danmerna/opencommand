@@ -33,3 +33,9 @@
 - [x] Add scheduled briefing delivery via cron/notification on chosen cadence
 - [x] "Accept Strategy" button auto-populates OKRs from Key Metrics section
 - [x] Replace "IntelligenceOS" with "Personal Intelligence Engine" across all files
+- [x] Add OKR source column (strategy/manual) to schema and migrate DB
+- [x] Tag auto-created OKRs with source "strategy" in acceptStrategy procedure
+- [x] Display "Generated from strategy" badge on OKR cards in Mission Control
+- [x] Build /briefings history log page with timestamped list of past briefings
+- [x] Add briefing_logs DB table and server procedure to store/retrieve briefing history
+- [x] Add briefing preview card in ProOnboarding after frequency selection step

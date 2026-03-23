@@ -29,6 +29,7 @@ import {
   agentOnboardings, InsertAgentOnboarding,
   strategyProposals, InsertStrategyProposal,
   waitlistEntries, InsertWaitlistEntry,
+  briefingLogs, InsertBriefingLog,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -759,4 +760,18 @@ export async function isEmailOnWaitlist(email: string) {
   const db = await getDb(); if (!db) return false;
   const rows = await db.select().from(waitlistEntries).where(eq(waitlistEntries.email, email)).limit(1);
   return rows.length > 0;
+}
+
+// ─── Briefing Logs ────────────────────────────────────────────────────────────────────────────────
+export async function createBriefingLog(data: InsertBriefingLog) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(briefingLogs).values(data);
+}
+export async function getBriefingLogsByUserId(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(briefingLogs).where(eq(briefingLogs.userId, userId)).orderBy(desc(briefingLogs.deliveredAt));
+}
+export async function getBriefingLogsByCompanyId(companyId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(briefingLogs).where(eq(briefingLogs.companyId, companyId)).orderBy(desc(briefingLogs.deliveredAt));
 }

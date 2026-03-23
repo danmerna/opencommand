@@ -126,6 +126,7 @@ export const okrs = mysqlTable("okrs", {
   unit: varchar("unit", { length: 32 }).default("").notNull(),
   dueDate: timestamp("dueDate"),
   status: mysqlEnum("status", ["on_track", "at_risk", "achieved", "missed"]).default("on_track").notNull(),
+  source: mysqlEnum("source", ["manual", "strategy"]).default("manual").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -653,3 +654,18 @@ export const waitlistEntries = mysqlTable("waitlist_entries", {
 });
 export type WaitlistEntry = typeof waitlistEntries.$inferSelect;
 export type InsertWaitlistEntry = typeof waitlistEntries.$inferInsert;
+
+// ─── Briefing Logs (history of delivered strategy briefings) ─────────────────
+export const briefingLogs = mysqlTable("briefing_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  companyName: varchar("companyName", { length: 128 }),
+  frequency: mysqlEnum("frequency", ["daily", "weekly", "monthly", "quarterly"]).notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  content: text("content").notNull(),
+  deliveredAt: timestamp("deliveredAt").defaultNow().notNull(),
+});
+
+export type BriefingLog = typeof briefingLogs.$inferSelect;
+export type InsertBriefingLog = typeof briefingLogs.$inferInsert;

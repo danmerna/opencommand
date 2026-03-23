@@ -42,6 +42,7 @@ import {
   getStrategyProposalsByCompanyId, getStrategyProposalsByUserId, getStrategyProposalById,
   createStrategyProposal, updateStrategyProposalStatus,
   joinWaitlist, getWaitlistCount, isEmailOnWaitlist,
+  createBriefingLog, getBriefingLogsByUserId, getBriefingLogsByCompanyId,
 } from "./db";
 import { nanoid } from "nanoid";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
@@ -1405,7 +1406,8 @@ Please produce the formal strategy proposal.` },
             unit: okr.unit ?? "",
             status: "on_track",
             level: "company",
-          });
+            source: "strategy",
+          } as any);
           okrsCreated++;
         }
       } catch (e) {
@@ -1432,6 +1434,16 @@ const waitlistRouter = router({
       return { success: true, alreadyJoined: false };
     }),
   count: publicProcedure.query(() => getWaitlistCount()),
+});
+
+// ─── Briefings Router ────────────────────────────────────────────────────────────────────────────────
+const briefingsRouter = router({
+  list: protectedProcedure
+    .input(z.object({ companyId: z.number().optional() }))
+    .query(async ({ ctx, input }) => {
+      if (input.companyId) return getBriefingLogsByCompanyId(input.companyId);
+      return getBriefingLogsByUserId(ctx.user.id);
+    }),
 });
 
 export const appRouter = router({
@@ -1465,6 +1477,7 @@ export const appRouter = router({
   projects: projectsRouter,
   onboarding: onboardingRouter,
   waitlist: waitlistRouter,
+  briefings: briefingsRouter,
 });
 
 export type AppRouter = typeof appRouter;

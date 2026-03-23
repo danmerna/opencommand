@@ -1,11 +1,11 @@
 /**
  * Briefing Scheduler
  * Sends strategy briefings to users on their chosen cadence (daily/weekly/monthly/quarterly).
- * Uses node-cron to run checks and the notifyOwner helper to deliver notifications.
+ * Logs every delivered briefing to the briefing_logs table for the /briefings history page.
  */
 import cron from "node-cron";
-import { getDb } from "./db";
-import { companies, strategyProposals } from "../drizzle/schema";
+import { getDb, createBriefingLog } from "./db";
+import { companies, strategyProposals, users } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { notifyOwner } from "./_core/notification";
 
@@ -29,7 +29,7 @@ async function deliverBriefingForFrequency(frequency: string) {
 
   for (const company of matchingCompanies) {
     try {
-      // Get the latest accepted or proposed strategy
+      // Get the latest strategy proposal
       const proposals = await db
         .select()
         .from(strategyProposals)
@@ -40,22 +40,36 @@ async function deliverBriefingForFrequency(frequency: string) {
       const latest = proposals[0];
       const freqLabel = frequency.charAt(0).toUpperCase() + frequency.slice(1);
 
+      let title: string;
+      let content: string;
+
       if (latest) {
         const summary = latest.executiveSummary
           ? latest.executiveSummary.slice(0, 300) + (latest.executiveSummary.length > 300 ? "..." : "")
           : "Your executive team has a strategy ready for review.";
 
-        await notifyOwner({
-          title: `${freqLabel} Strategy Briefing — ${company.name}`,
-          content: `Your ${frequency} Personal Intelligence Engine briefing is ready.\n\n${summary}\n\nVisit Mission Control → Strategy to review the full plan and accept or revise it.`,
-        });
+        title = `${freqLabel} Strategy Briefing — ${company.name}`;
+        content = `Your ${frequency} OpenCommand briefing is ready.\n\n${summary}\n\nVisit Mission Control → Strategy to review the full plan and accept or revise it.`;
       } else {
-        // No strategy yet — prompt the user to generate one
-        await notifyOwner({
-          title: `${freqLabel} Briefing Reminder — ${company.name}`,
-          content: `Your ${frequency} strategy briefing is due, but no strategy has been generated yet for ${company.name}. Visit Mission Control → Strategy to generate your first combined strategic plan.`,
-        });
+        title = `${freqLabel} Briefing Reminder — ${company.name}`;
+        content = `Your ${frequency} strategy briefing is due, but no strategy has been generated yet for ${company.name}. Visit Mission Control → Strategy to generate your first combined strategic plan.`;
       }
+
+      // Send notification
+      await notifyOwner({ title, content });
+
+      // Log to DB for briefing history
+      await createBriefingLog({
+        userId: company.userId,
+        companyId: company.id,
+        companyName: company.name,
+        frequency: frequency as any,
+        title,
+        content,
+        deliveredAt: new Date(),
+      });
+
+      console.log(`[BriefingScheduler] Delivered ${frequency} briefing for company ${company.id} (${company.name})`);
     } catch (err) {
       console.error(`[BriefingScheduler] Failed to deliver briefing for company ${company.id}:`, err);
     }

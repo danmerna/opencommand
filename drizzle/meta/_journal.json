@@ -50,6 +50,13 @@
       "when": 1774258956450,
       "tag": "0006_volatile_magma",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1774261655089,
+      "tag": "0007_greedy_loners",
+      "breakpoints": true
     }
   ]
 }

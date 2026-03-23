@@ -351,8 +351,13 @@ export default function MissionControl() {
                   <div key={okr.id} className="card-minimal">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-label text-[10px]">{(okr as any).level?.toUpperCase() ?? "COMPANY"}</span>
+                          {(okr as any).source === "strategy" && (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-violet-400/30 bg-violet-400/5 text-violet-400">
+                              ✦ Generated from strategy
+                            </span>
+                          )}
                         </div>
                         <h3 className="font-semibold text-foreground">{okr.objective}</h3>
                         <p className="text-muted-foreground text-sm mt-0.5">{okr.keyResult}</p>
@@ -660,14 +665,23 @@ export default function MissionControl() {
                     </SelectContent>
                   </Select>
                 ) : (
-                  <button
-                    onClick={() => setEditingFrequency(true)}
-                    className="flex items-center gap-1.5 text-[11px] text-muted-foreground border border-border rounded-full px-2.5 py-1 hover:border-foreground/40 transition-colors"
-                  >
-                    <Calendar size={10} />
-                    {((selectedCompany as any).briefingFrequency ?? "weekly").charAt(0).toUpperCase() + ((selectedCompany as any).briefingFrequency ?? "weekly").slice(1)} briefings
-                    <Pencil size={9} className="opacity-50" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditingFrequency(true)}
+                      className="flex items-center gap-1.5 text-[11px] text-muted-foreground border border-border rounded-full px-2.5 py-1 hover:border-foreground/40 transition-colors"
+                    >
+                      <Calendar size={10} />
+                      {((selectedCompany as any).briefingFrequency ?? "weekly").charAt(0).toUpperCase() + ((selectedCompany as any).briefingFrequency ?? "weekly").slice(1)} briefings
+                      <Pencil size={9} className="opacity-50" />
+                    </button>
+                    <button
+                      onClick={() => navigate("/briefings")}
+                      className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <BookOpen size={10} />
+                      History
+                    </button>
+                  </div>
                 )
               )}
             </div>
