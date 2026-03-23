@@ -4,6 +4,24 @@
  */
 
 export const PRODUCTS = {
+  STARTER: {
+    name: "Starter",
+    description: "Perfect for individual operators getting started with autonomous AI execution.",
+    priceAmount: 100, // $1.00 in cents
+    currency: "usd",
+    interval: "month" as const,
+    type: "subscription" as const,
+    tier: "starter",
+  },
+  PRO: {
+    name: "Pro",
+    description: "For high-performance operators who need full orchestration power and advanced context engineering.",
+    priceAmount: 500, // $5.00 in cents
+    currency: "usd",
+    interval: "month" as const,
+    type: "subscription" as const,
+    tier: "pro",
+  },
   SOLO_FOUNDER_CEO: {
     name: "Arch Solo-Founder CEO",
     description: "Your first autonomous executive hire. Orchestrates up to 3 subordinate agents.",

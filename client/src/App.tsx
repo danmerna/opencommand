@@ -26,6 +26,7 @@ import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import AgentOnboarding from "./pages/AgentOnboarding";
 import AgentDetail from "./pages/AgentDetail";
+import Pricing from "./pages/Pricing";
 import Creators from "./pages/Creators";
 
 function Router() {
@@ -59,6 +60,9 @@ function Router() {
       {/* Marketplace & Creator Program hidden — will be re-added later */}
       <Route path="/payments">
         <AppLayout><PaymentHistory /></AppLayout>
+      </Route>
+      <Route path="/pricing">
+        <AppLayout><Pricing /></AppLayout>
       </Route>
       <Route path="/projects">
         <AppLayout><Projects /></AppLayout>

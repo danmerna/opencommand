@@ -33,6 +33,8 @@ const coreNavItems = [
   { href: "/payments",        label: "Payments",         icon: CreditCard },
 ];
 
+const pricingNavItem = { href: "/pricing", label: "Pricing", icon: BarChart3 };
+
 // ─── Colour palette for company avatars ──────────────────────────────────────
 const COMPANY_COLORS = [
   "bg-indigo-600", "bg-violet-600", "bg-emerald-600", "bg-amber-600",
@@ -227,6 +229,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 </Link>
               );
             })}
+
+            {/* Pricing nav item */}
+            {(() => {
+              const isPricingActive = location === pricingNavItem.href;
+              return (
+                <Link href={pricingNavItem.href} onClick={closeMobile}>
+                  <div className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] transition-all ${
+                    isPricingActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                  }`}>
+                    <pricingNavItem.icon size={13} strokeWidth={isPricingActive ? 2 : 1.5} />
+                    <span className="font-medium">{pricingNavItem.label}</span>
+                  </div>
+                </Link>
+              );
+            })()}
 
             {/* Agents section */}
             <div className="pt-3 pb-1">
