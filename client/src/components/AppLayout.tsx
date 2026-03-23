@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { toast } from "sonner";
+import FeedbackWidget from "./FeedbackWidget";
 
 // ─── Company Context ──────────────────────────────────────────────────────────
 interface CompanyContextValue {
@@ -403,6 +404,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             {children}
           </main>
         </div>
+        <FeedbackWidget />
       </div>
     </CompanyContext.Provider>
   );

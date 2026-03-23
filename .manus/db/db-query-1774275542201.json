@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `feature_events` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`feature` varchar(64) NOT NULL,\n\t`action` varchar(64) NOT NULL,\n\t`metadata` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `feature_events_id` PRIMARY KEY(`id`)\n);\n\nCREATE TABLE `user_feedback` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`type` enum('bug','feature','general','praise') NOT NULL DEFAULT 'general',\n\t`content` text NOT NULL,\n\t`page` varchar(128),\n\t`status` enum('new','reviewed','resolved') NOT NULL DEFAULT 'new',\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `user_feedback_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute CREATE TABLE `feature_events` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`feature` varchar(64) NOT NULL,\n\t`action` varchar(64) NOT NULL,\n\t`metadata` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `feature_events_id` PRIMARY KEY(`id`)\n);\n\nCREATE TABLE `user_feedback` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`type` enum('bug','feature','general','praise') NOT NULL DEFAULT 'general',\n\t`content` text NOT NULL,\n\t`page` varchar(128),\n\t`status` enum('new','reviewed','resolved') NOT NULL DEFAULT 'new',\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `user_feedback_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 898
+}

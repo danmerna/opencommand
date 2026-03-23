@@ -671,3 +671,28 @@ export const briefingLogs = mysqlTable("briefing_logs", {
 
 export type BriefingLog = typeof briefingLogs.$inferSelect;
 export type InsertBriefingLog = typeof briefingLogs.$inferInsert;
+
+// ─── Feature Events (Usage Analytics) ───────────────────────────────────────
+export const featureEvents = mysqlTable("feature_events", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  feature: varchar("feature", { length: 64 }).notNull(),
+  action: varchar("action", { length: 64 }).notNull(),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FeatureEvent = typeof featureEvents.$inferSelect;
+export type InsertFeatureEvent = typeof featureEvents.$inferInsert;
+
+// ─── User Feedback (In-App Feedback Widget) ─────────────────────────────────
+export const userFeedback = mysqlTable("user_feedback", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", ["bug", "feature", "general", "praise"]).default("general").notNull(),
+  content: text("content").notNull(),
+  page: varchar("page", { length: 128 }),
+  status: mysqlEnum("status", ["new", "reviewed", "resolved"]).default("new").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type UserFeedback = typeof userFeedback.$inferSelect;
+export type InsertUserFeedback = typeof userFeedback.$inferInsert;

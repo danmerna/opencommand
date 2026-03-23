@@ -30,6 +30,8 @@ import {
   strategyProposals, InsertStrategyProposal,
   waitlistEntries, InsertWaitlistEntry,
   briefingLogs, InsertBriefingLog,
+  featureEvents, InsertFeatureEvent,
+  userFeedback, InsertUserFeedback,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -796,4 +798,46 @@ export async function getBriefingLogsByUserId(userId: number) {
 export async function getBriefingLogsByCompanyId(companyId: number) {
   const db = await getDb(); if (!db) return [];
   return db.select().from(briefingLogs).where(eq(briefingLogs.companyId, companyId)).orderBy(desc(briefingLogs.deliveredAt));
+}
+
+// ─── Feature Events (Usage Analytics) ───────────────────────────────────────
+export async function createFeatureEvent(data: InsertFeatureEvent) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(featureEvents).values(data);
+}
+export async function getFeatureEventsByUserId(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(featureEvents).where(eq(featureEvents.userId, userId)).orderBy(desc(featureEvents.createdAt));
+}
+export async function getFeatureEventsAll() {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(featureEvents).orderBy(desc(featureEvents.createdAt)).limit(5000);
+}
+export async function getFeatureEventsSummary() {
+  const db = await getDb(); if (!db) return [];
+  return db.select({
+    feature: featureEvents.feature,
+    action: featureEvents.action,
+    count: sql<number>`COUNT(*)`,
+    uniqueUsers: sql<number>`COUNT(DISTINCT ${featureEvents.userId})`,
+    lastUsed: sql<Date>`MAX(${featureEvents.createdAt})`,
+  }).from(featureEvents).groupBy(featureEvents.feature, featureEvents.action).orderBy(desc(sql`COUNT(*)`));
+}
+
+// ─── User Feedback ──────────────────────────────────────────────────────────
+export async function createUserFeedback(data: InsertUserFeedback) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(userFeedback).values(data);
+}
+export async function getUserFeedbackAll() {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(userFeedback).orderBy(desc(userFeedback.createdAt)).limit(500);
+}
+export async function getUserFeedbackByUserId(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(userFeedback).where(eq(userFeedback.userId, userId)).orderBy(desc(userFeedback.createdAt));
+}
+export async function updateFeedbackStatus(id: number, status: "new" | "reviewed" | "resolved") {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(userFeedback).set({ status }).where(eq(userFeedback.id, id));
 }

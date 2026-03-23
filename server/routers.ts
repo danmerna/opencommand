@@ -43,6 +43,8 @@ import {
   createStrategyProposal, updateStrategyProposalStatus,
   joinWaitlist, getWaitlistCount, isEmailOnWaitlist,
   createBriefingLog, getBriefingLogsByUserId, getBriefingLogsByCompanyId,
+  createFeatureEvent, getFeatureEventsAll, getFeatureEventsSummary,
+  createUserFeedback, getUserFeedbackAll, getUserFeedbackByUserId, updateFeedbackStatus,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -1547,6 +1549,31 @@ const briefingsRouter = router({
     }),
 });
 
+// ─── Analytics Router (Usage Tracking) ──────────────────────────────────────
+const analyticsRouter = router({
+  track: protectedProcedure
+    .input(z.object({ feature: z.string().max(64), action: z.string().max(64), metadata: z.record(z.string(), z.unknown()).optional() }))
+    .mutation(({ ctx, input }) => createFeatureEvent({ userId: ctx.user.id, feature: input.feature, action: input.action, metadata: input.metadata })),
+  summary: protectedProcedure.query(() => getFeatureEventsSummary()),
+  events: protectedProcedure.query(() => getFeatureEventsAll()),
+});
+
+// ─── Feedback Router ────────────────────────────────────────────────────────
+const feedbackRouter = router({
+  submit: protectedProcedure
+    .input(z.object({ type: z.enum(["bug", "feature", "general", "praise"]).default("general"), content: z.string().min(1).max(2000), page: z.string().max(128).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      await createUserFeedback({ userId: ctx.user.id, type: input.type, content: input.content, page: input.page });
+      try { await notifyOwner({ title: `New ${input.type} feedback`, content: `From ${ctx.user.name || ctx.user.email || "user"}: ${input.content.slice(0, 500)}` }); } catch {}
+      return { success: true };
+    }),
+  list: protectedProcedure.query(() => getUserFeedbackAll()),
+  mine: protectedProcedure.query(({ ctx }) => getUserFeedbackByUserId(ctx.user.id)),
+  updateStatus: protectedProcedure
+    .input(z.object({ id: z.number(), status: z.enum(["new", "reviewed", "resolved"]) }))
+    .mutation(({ input }) => updateFeedbackStatus(input.id, input.status)),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -1579,6 +1606,8 @@ export const appRouter = router({
   onboarding: onboardingRouter,
   waitlist: waitlistRouter,
   briefings: briefingsRouter,
+  analytics: analyticsRouter,
+  feedback: feedbackRouter,
 });
 
 export type AppRouter = typeof appRouter;

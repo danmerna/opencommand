@@ -171,7 +171,10 @@ function DashboardLayoutContent({
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-semibold tracking-tight truncate">
-                    Navigation
+                    OpenCommand
+                  </span>
+                  <span className="text-[9px] font-medium tracking-wider uppercase px-1.5 py-0.5 rounded-full border border-emerald-400/40 text-emerald-400 shrink-0">
+                    Beta
                   </span>
                 </div>
               ) : null}

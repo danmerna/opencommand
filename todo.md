@@ -99,3 +99,14 @@
 - [x] Remove pricing nav link from homepage if present (kept as route but content is beta-only)
 - [x] Update bottom CTA and any other copy referencing paid tiers
 - [x] Update tests to reflect pricing removal
+- [x] Add Beta badge next to OpenCommand logo in homepage nav
+- [x] Add Beta badge next to OpenCommand logo in DashboardLayout sidebar
+- [x] Build usage analytics: create feature_events table in schema
+- [x] Build usage analytics: create server procedures to log and query events
+- [x] Build usage analytics: create Analytics dashboard page with charts
+- [x] Build usage analytics: add route in App.tsx
+- [x] Build feedback widget: create feedback table in schema
+- [x] Build feedback widget: create server procedures for submitting/listing feedback
+- [x] Build feedback widget: create persistent FeedbackWidget component
+- [x] Build feedback widget: add to Mission Control / AppLayout
+- [x] Write tests for analytics and feedback features

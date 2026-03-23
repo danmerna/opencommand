@@ -399,8 +399,9 @@ export default function Home() {
       {/* ─── Section 1: Navigation ─────────────────────────────────── */}
       <nav className="px-6 md:px-8 py-5 max-w-7xl mx-auto">
         <div className="flex items-center justify-between">
-          <Link href="/" className="font-semibold text-foreground text-xl tracking-tight hover:opacity-80 transition-opacity">
+          <Link href="/" className="font-semibold text-foreground text-xl tracking-tight hover:opacity-80 transition-opacity flex items-center gap-2">
             OpenCommand
+            <span className="text-[9px] font-medium tracking-wider uppercase px-1.5 py-0.5 rounded-full border border-emerald-400/40 text-emerald-400">Beta</span>
           </Link>
 
           {/* Desktop nav */}
