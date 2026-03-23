@@ -108,13 +108,51 @@ export default function Home() {
         </div>
       </section>
 
+      {/* How It Works */}
+      <div className="accent-line" />
+      <section className="px-8 py-24 max-w-7xl mx-auto">
+        <div className="mb-16 text-center">
+          <p className="text-label mb-3">How It Works</p>
+          <h2 className="text-heading text-3xl text-foreground">Three steps to a running company.</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 relative">
+          {[
+            {
+              step: "01",
+              title: "State Your Intent",
+              desc: "Tell OpenCommand what you want to achieve. The Intent Engine asks focused questions to transform your goal into a structured, executable command.",
+              detail: "No technical setup. No prompt engineering. Just describe the outcome."
+            },
+            {
+              step: "02",
+              title: "Arch Orchestrates",
+              desc: "Your AI CEO deploys the right agents, assigns tasks, tracks OKRs, and makes decisions — all without human intervention.",
+              detail: "CEO, CTO, CMO, CFO — your full executive suite running in parallel."
+            },
+            {
+              step: "03",
+              title: "Proof of Outcome",
+              desc: "Every completed task generates a verified Proof of Outcome receipt documenting labor saved, dollar value created, and decisions made.",
+              detail: "Immutable audit trail. Full accountability. Zero ambiguity."
+            },
+          ].map((s, i) => (
+            <div key={i} className="relative px-8 py-10 border-l border-border first:border-l-0 md:first:border-l md:border-l">
+              <div className="text-[3.5rem] font-semibold text-border leading-none mb-6 select-none">{s.step}</div>
+              <h3 className="text-heading text-xl text-foreground mb-3">{s.title}</h3>
+              <p className="text-muted-foreground text-body text-sm mb-4">{s.desc}</p>
+              <p className="text-xs text-muted-foreground/60 font-medium uppercase tracking-wider">{s.detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* CTA */}
       <div className="accent-line" />
       <section className="px-8 py-24 text-center max-w-3xl mx-auto">
         <p className="text-label mb-4">Ready to deploy</p>
-        <h2 className="text-heading text-3xl text-foreground mb-5">Hire your AI CEO today.</h2>
+        <h2 className="text-heading text-3xl text-foreground mb-5">Your zero-human company starts here.</h2>
         <p className="text-muted-foreground text-body mb-10 max-w-lg mx-auto">
-          Stop managing tasks. Start commanding outcomes. Arch handles the execution while you focus on the vision.
+          Stop managing people. Start commanding outcomes. Deploy your full executive suite and let Arch run the operation while you focus on vision.
         </p>
         <div className="flex items-center justify-center gap-4 flex-wrap">
           {isAuthenticated ? (

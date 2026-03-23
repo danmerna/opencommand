@@ -321,3 +321,7 @@
 
 ## v3.9 — Hero Headline Update
 - [x] Rewrite hero headline to match zero-human company framing ("Deploy your / zero-human company.")
+
+## v3.10 — Home Page Polish
+- [x] Update bottom CTA section copy to zero-human company framing ("Your zero-human company starts here.")
+- [x] Add 3-step "How It Works" section (State Your Intent → Arch Orchestrates → Proof of Outcome)
