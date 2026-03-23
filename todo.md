@@ -367,3 +367,20 @@
 - [x] Add favicon.ico using the OC logo
 - [x] Add mobile hamburger menu to landing page nav (Blueprints + Creators links)
 - [x] Add sitemap.xml with public routes
+
+## v3.21 — Nav/Footer Logo Removal & Text Resize
+
+- [x] Remove OC logo image from top nav in Home.tsx, enlarge OpenCommand text
+- [x] Remove OC logo image from footer in Home.tsx
+- [x] Remove OC logo image from top nav in Creators.tsx, enlarge OpenCommand text
+- [x] Remove OC logo image from footer in Creators.tsx
+
+## v3.21 — Nav/Footer Logo Removal, Apple Touch Icon, robots.txt, Mobile Menu Animation
+
+- [x] Remove OC logo image from top nav in Home.tsx, enlarge OpenCommand text
+- [x] Remove OC logo image from footer in Home.tsx
+- [x] Remove OC logo image from top nav in Creators.tsx, enlarge OpenCommand text
+- [x] Remove OC logo image from footer in Creators.tsx
+- [x] Add Apple Touch icon (180x180px) from OC logo
+- [x] Add robots.txt pointing to sitemap
+- [x] Add smooth slide-down animation to mobile hamburger menu
