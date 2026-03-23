@@ -18,6 +18,8 @@ import PaymentCancel from "./pages/PaymentCancel";
 import IntegrationHub from "./pages/IntegrationHub";
 import CompatibilityChecker from "./pages/CompatibilityChecker";
 import ContextHistory from "./pages/ContextHistory";
+import PaymentHistory from "./pages/PaymentHistory";
+import ReceiptViewer from "./pages/ReceiptViewer";
 import AppLayout from "./components/AppLayout";
 
 function Router() {
@@ -53,6 +55,10 @@ function Router() {
       </Route>
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/creator-program" component={CreatorProgram} />
+      <Route path="/payments">
+        <AppLayout><PaymentHistory /></AppLayout>
+      </Route>
+      <Route path="/receipt/:receiptNumber" component={ReceiptViewer} />
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />
       <Route path="/404" component={NotFound} />

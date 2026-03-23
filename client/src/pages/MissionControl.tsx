@@ -1,273 +1,238 @@
-import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useState, useEffect, useMemo } from "react";
-import { toast } from "sonner";
-import {
-  Target, Cpu, FileCheck, Inbox, Plus, CheckCircle2, AlertTriangle,
-  Clock, TrendingUp, Zap, ChevronRight, X, Check, Building2,
-  GitBranch, Heart, DollarSign, Shield, Wrench, Activity, Power,
-  Trash2, Edit, ArrowRight, AlertCircle, BarChart3
-} from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import type { JSX } from "react";
+import {
+  Target, Zap, Plus, Trash2, Check, X, Clock, TrendingUp, DollarSign, FileCheck,
+  Inbox, Building2, GitBranch, Heart, Activity, BarChart3, Shield, Power, Wrench,
+  CheckCircle2
+} from "lucide-react";
 
 type Tab = "okrs" | "fleet" | "org" | "heartbeat" | "budget" | "poo" | "inbox" | "governance";
 
+const tabs: { id: Tab; label: string; icon: any }[] = [
+  { id: "okrs", label: "OKRs", icon: Target },
+  { id: "fleet", label: "Fleet", icon: Zap },
+  { id: "org", label: "Org Chart", icon: GitBranch },
+  { id: "heartbeat", label: "Heartbeat", icon: Heart },
+  { id: "budget", label: "P&L", icon: DollarSign },
+  { id: "poo", label: "PoO Ledger", icon: FileCheck },
+  { id: "inbox", label: "Inbox", icon: Inbox },
+  { id: "governance", label: "Governance", icon: Shield },
+];
+
+const typeColors: Record<string, string> = {
+  ceo: "text-amber-400 border-amber-400/30",
+  cto: "text-blue-400 border-blue-400/30",
+  cmo: "text-pink-400 border-pink-400/30",
+  cfo: "text-emerald-400 border-emerald-400/30",
+  vp: "text-violet-400 border-violet-400/30",
+  manager: "text-cyan-400 border-cyan-400/30",
+  specialist: "text-orange-400 border-orange-400/30",
+};
+
 export default function MissionControl() {
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [tab, setTab] = useState<Tab>("okrs");
   const [showAddOkr, setShowAddOkr] = useState(false);
   const [showAddAgent, setShowAddAgent] = useState(false);
   const [showAddDept, setShowAddDept] = useState(false);
   const [showAddGate, setShowAddGate] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
-  const [newOkr, setNewOkr] = useState({ objective: "", keyResult: "", targetValue: "", unit: "", dueDate: "", level: "company" });
+  const [newOkr, setNewOkr] = useState({ objective: "", keyResult: "", targetValue: "", unit: "USD", level: "company" });
   const [newAgent, setNewAgent] = useState({ name: "", type: "specialist", roleTitle: "", description: "", heartbeatCron: "", monthlyBudget: "" });
   const [newDept, setNewDept] = useState({ name: "", budget: "" });
-  const [newGate, setNewGate] = useState({ gateType: "spend", threshold: "", description: "", autoApproveBelow: "" });
-
-  const utils = trpc.useUtils();
-
-  // Seed defaults
-  const seedCompanies = trpc.companies.seedDefaults.useMutation({ onSuccess: () => utils.companies.list.invalidate() });
-  const seedAgents = trpc.agents.seedDefaults.useMutation({ onSuccess: () => utils.agents.list.invalidate() });
-  const seedOkrs = trpc.okrs.seedDefaults.useMutation({ onSuccess: () => utils.okrs.list.invalidate() });
-  const seedMarketplace = trpc.marketplace.seedDefaults.useMutation();
-  const seedCreators = trpc.creators.seedDefaults.useMutation();
-  const seedBlueprints = trpc.blueprints.seedDefaults.useMutation();
-  const seedSkills = trpc.skills.seedDefaults.useMutation();
-  const seedGov = trpc.governance.seedDefaults.useMutation({ onSuccess: () => { if (selectedCompanyId) utils.governance.gates.invalidate({ companyId: selectedCompanyId }); } });
-  const seedTools = trpc.integrations.seedDefaults.useMutation();
-
-  useEffect(() => {
-    seedCompanies.mutate();
-    seedAgents.mutate();
-    seedOkrs.mutate();
-    seedMarketplace.mutate();
-    seedCreators.mutate();
-    seedBlueprints.mutate();
-    seedSkills.mutate();
-    seedGov.mutate();
-    seedTools.mutate();
-  }, []);
+  const [newGate, setNewGate] = useState({ gateType: "spend", description: "", threshold: "" });
 
   // Queries
-  const companiesQ = trpc.companies.list.useQuery();
-  const agentsQ = trpc.agents.list.useQuery();
-  const okrsQ = trpc.okrs.list.useQuery();
-  const pooQ = trpc.poo.list.useQuery();
-  const pooSummaryQ = trpc.poo.summary.useQuery();
-  const inboxQ = trpc.inbox.list.useQuery();
-
-  // Set default company
-  useEffect(() => {
-    if (companiesQ.data && companiesQ.data.length > 0 && !selectedCompanyId) {
-      setSelectedCompanyId(companiesQ.data[0]!.id);
-    }
-  }, [companiesQ.data, selectedCompanyId]);
-
-  // Company-scoped queries
-  const deptsQ = trpc.departments.list.useQuery({ companyId: selectedCompanyId ?? 0 }, { enabled: !!selectedCompanyId });
-  const companyAgentsQ = trpc.agents.listByCompany.useQuery({ companyId: selectedCompanyId ?? 0 }, { enabled: !!selectedCompanyId });
-  const pnlQ = trpc.companies.pnl.useQuery({ companyId: selectedCompanyId ?? 0 }, { enabled: !!selectedCompanyId });
-  const gatesQ = trpc.governance.gates.useQuery({ companyId: selectedCompanyId ?? 0 }, { enabled: !!selectedCompanyId });
-  const auditQ = trpc.governance.auditLog.useQuery({ companyId: selectedCompanyId ?? 0 }, { enabled: !!selectedCompanyId });
-  const toolsQ = trpc.integrations.tools.useQuery({ companyId: selectedCompanyId ?? 0 }, { enabled: !!selectedCompanyId });
-
-  // Mutations
-  const createOkr = trpc.okrs.create.useMutation({ onSuccess: () => { utils.okrs.list.invalidate(); setShowAddOkr(false); setNewOkr({ objective: "", keyResult: "", targetValue: "", unit: "", dueDate: "", level: "company" }); toast.success("OKR created"); } });
-  const resolveInbox = trpc.inbox.resolve.useMutation({ onSuccess: () => utils.inbox.list.invalidate() });
-  const dismissInbox = trpc.inbox.dismiss.useMutation({ onSuccess: () => utils.inbox.list.invalidate() });
-  const updateAgentStatus = trpc.agents.updateStatus.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); if (selectedCompanyId) utils.agents.listByCompany.invalidate({ companyId: selectedCompanyId }); } });
-  const createAgentMut = trpc.agents.create.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); if (selectedCompanyId) utils.agents.listByCompany.invalidate({ companyId: selectedCompanyId }); setShowAddAgent(false); toast.success("Agent deployed"); } });
-  const deleteAgentMut = trpc.agents.remove.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); if (selectedCompanyId) utils.agents.listByCompany.invalidate({ companyId: selectedCompanyId }); toast.success("Agent removed"); } });
-  const createDeptMut = trpc.departments.create.useMutation({ onSuccess: () => { if (selectedCompanyId) utils.departments.list.invalidate({ companyId: selectedCompanyId }); setShowAddDept(false); toast.success("Department created"); } });
-  const triggerHeartbeat = trpc.agents.triggerHeartbeat.useMutation({ onSuccess: (data) => { toast.success(`Heartbeat: ${data.tasksChecked} checked, ${data.tasksActedOn} acted on`); utils.agents.list.invalidate(); } });
-  const createGateMut = trpc.governance.createGate.useMutation({ onSuccess: () => { if (selectedCompanyId) utils.governance.gates.invalidate({ companyId: selectedCompanyId }); setShowAddGate(false); toast.success("Approval gate created"); } });
-  const removeGateMut = trpc.governance.removeGate.useMutation({ onSuccess: () => { if (selectedCompanyId) utils.governance.gates.invalidate({ companyId: selectedCompanyId }); } });
-  const killSwitchMut = trpc.governance.killSwitch.useMutation({ onSuccess: (data) => { toast.error(`KILL SWITCH: ${data.agentsPaused} agents paused`); utils.agents.list.invalidate(); utils.inbox.list.invalidate(); if (selectedCompanyId) utils.agents.listByCompany.invalidate({ companyId: selectedCompanyId }); } });
-
-  const agents = agentsQ.data ?? [];
-  const companyAgents = companyAgentsQ.data ?? [];
-  const okrs = okrsQ.data ?? [];
-  const pooReceipts = pooQ.data ?? [];
-  const inboxItems = inboxQ.data ?? [];
-  const departments = deptsQ.data ?? [];
-  const gates = gatesQ.data ?? [];
-  const auditEntries = auditQ.data ?? [];
-  const tools = toolsQ.data ?? [];
-  const unread = inboxItems.filter(i => i.status === "unread").length;
+  const companiesQ = trpc.companies.list.useQuery(undefined, { enabled: isAuthenticated });
   const companies = companiesQ.data ?? [];
-  const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+  const company0 = companies[0];
+  const effectiveCompanyId = selectedCompanyId ?? company0?.id ?? null;
+  const selectedCompany = companies.find((c: any) => c.id === effectiveCompanyId) ?? null;
 
-  const totalValue = Number(pooSummaryQ.data?.totalValue ?? 0);
-  const totalHours = Number(pooSummaryQ.data?.totalHours ?? 0);
-  const totalReceipts = Number(pooSummaryQ.data?.totalReceipts ?? 0);
-  const totalCosts = Number(pooSummaryQ.data?.totalCosts ?? 0);
+  const agentsQ = trpc.agents.list.useQuery(undefined, { enabled: isAuthenticated });
+  const agents = agentsQ.data ?? [];
+  const companyAgents = agents.filter(a => (a as any).companyId === effectiveCompanyId || !effectiveCompanyId);
+
+  const okrsQ = trpc.okrs.list.useQuery(undefined, { enabled: isAuthenticated });
+  const okrs = okrsQ.data ?? [];
+
+  const pooQ = trpc.poo.list.useQuery(undefined, { enabled: isAuthenticated });
+  const pooReceipts = pooQ.data ?? [];
+
+  const inboxQ = trpc.inbox.list.useQuery(undefined, { enabled: isAuthenticated });
+  const inboxItems = inboxQ.data ?? [];
+  const unread = inboxItems.filter(i => i.status === "unread").length;
+
+  const deptsQ = trpc.departments.list.useQuery({ companyId: effectiveCompanyId! }, { enabled: isAuthenticated && !!effectiveCompanyId });
+  const departments = deptsQ.data ?? [];
+
+  const gatesQ = trpc.governance.gates.useQuery({ companyId: effectiveCompanyId! }, { enabled: isAuthenticated && !!effectiveCompanyId });
+  const gates = gatesQ.data ?? [];
+
+  const toolsQ = trpc.integrations.tools.useQuery({ companyId: effectiveCompanyId! }, { enabled: isAuthenticated && !!effectiveCompanyId });
+  const tools = toolsQ.data ?? [];
+
+  const auditQ = trpc.governance.auditLog.useQuery({ companyId: effectiveCompanyId! }, { enabled: isAuthenticated && !!effectiveCompanyId });
+  const auditEntries = auditQ.data ?? [];
+
+  const pnlQ = trpc.companies.pnl.useQuery({ companyId: effectiveCompanyId! }, { enabled: isAuthenticated && !!effectiveCompanyId });
+
+  // Computed
+  const totalValue = pooReceipts.reduce((s, r) => s + Number(r.dollarValueCreated), 0);
+  const totalCosts = agents.reduce((s, a) => s + Number((a as any).totalCostIncurred ?? 0), 0);
+  const totalHours = pooReceipts.reduce((s, r) => s + Number(r.laborHoursSaved), 0);
+  const totalReceipts = pooReceipts.length;
   const activeAgents = agents.filter(a => a.status === "active").length;
 
-  // Org chart hierarchy
+  // Org tree
   const orgTree = useMemo(() => {
-    const ceo = companyAgents.find(a => a.type === "ceo");
     const byParent = new Map<number | null, typeof companyAgents>();
-    companyAgents.forEach(a => {
-      const parentId = a.parentAgentId ?? null;
-      if (!byParent.has(parentId)) byParent.set(parentId, []);
-      byParent.get(parentId)!.push(a);
-    });
+    let ceo: (typeof companyAgents)[0] | null = null;
+    for (const a of companyAgents) {
+      if (a.type === "ceo") ceo = a;
+      const pid = (a as any).parentAgentId ?? null;
+      if (!byParent.has(pid)) byParent.set(pid, []);
+      byParent.get(pid)!.push(a);
+    }
     return { ceo, byParent };
   }, [companyAgents]);
 
-  const tabs: { id: Tab; label: string; icon: typeof Target; badge?: number }[] = [
-    { id: "okrs", label: "OKRs", icon: Target },
-    { id: "fleet", label: "FLEET", icon: Cpu },
-    { id: "org", label: "ORG CHART", icon: GitBranch },
-    { id: "heartbeat", label: "HEARTBEAT", icon: Heart },
-    { id: "budget", label: "P&L", icon: DollarSign },
-    { id: "poo", label: "PoO LEDGER", icon: FileCheck },
-    { id: "inbox", label: "INBOX", icon: Inbox, badge: unread },
-    { id: "governance", label: "GOVERNANCE", icon: Shield },
-  ];
-
-  const typeColors: Record<string, string> = {
-    ceo: "text-accent border-accent", cto: "text-[oklch(0.62_0.18_240)] border-[oklch(0.62_0.18_240)]",
-    cmo: "text-[oklch(0.72_0.18_330)] border-[oklch(0.72_0.18_330)]", cfo: "text-[oklch(0.82_0.18_90)] border-[oklch(0.82_0.18_90)]",
-    vp: "text-[oklch(0.65_0.18_142)] border-[oklch(0.65_0.18_142)]", manager: "text-[oklch(0.65_0.15_200)] border-[oklch(0.65_0.15_200)]",
-    specialist: "text-foreground border-foreground", marketing: "text-[oklch(0.72_0.18_330)] border-[oklch(0.72_0.18_330)]",
-    research: "text-[oklch(0.82_0.18_90)] border-[oklch(0.82_0.18_90)]", sales: "text-[oklch(0.65_0.18_142)] border-[oklch(0.65_0.18_142)]",
-    admin: "text-muted-foreground border-muted-foreground", custom: "text-foreground border-foreground",
-  };
-
-  const renderOrgNode = (agent: typeof companyAgents[0], depth: number) => {
+  const renderOrgNode = (agent: (typeof companyAgents)[0], depth: number): JSX.Element | null => {
     const children = orgTree.byParent.get(agent.id) ?? [];
     return (
-      <div key={agent.id} className="relative" style={{ marginLeft: depth * 32 }}>
-        <div className="brutal-card-hover p-4 flex items-center gap-4 mb-2">
-          {depth > 0 && <div className="absolute left-[-16px] top-1/2 w-4 h-px bg-border" />}
-          <div className={`w-10 h-10 flex items-center justify-center border ${typeColors[agent.type] ?? "border-foreground"}`}>
-            <span className="font-condensed font-black text-xs">{agent.type.toUpperCase().slice(0, 3)}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-condensed font-bold text-sm text-foreground truncate">{agent.name}</div>
-            <div className="section-label text-[0.6rem]">{agent.roleTitle ?? agent.type.toUpperCase()}</div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className={`w-2 h-2 ${agent.status === "active" ? "bg-[oklch(0.65_0.18_142)] animate-pulse" : agent.status === "error" ? "bg-accent" : "bg-muted-foreground"}`} />
-            <span className="font-mono text-[0.6rem] text-muted-foreground uppercase">{agent.status}</span>
-          </div>
+      <div key={agent.id} style={{ marginLeft: depth * 28 }} className="animate-fade-in">
+        <div className="card-minimal flex items-center gap-3 mb-1.5">
+          <div className={`w-2 h-2 rounded-full ${agent.status === "active" ? "bg-emerald-500 animate-pulse-subtle" : "bg-zinc-700"}`} />
+          <span className={`text-mono text-xs border px-1.5 py-0.5 rounded ${typeColors[agent.type] ?? "text-foreground border-border"}`}>{agent.type}</span>
+          <span className="font-medium text-sm text-foreground">{agent.name}</span>
+          {(agent as any).roleTitle && <span className="text-muted-foreground text-xs">— {(agent as any).roleTitle}</span>}
         </div>
-        {children.length > 0 && (
-          <div className="border-l border-border ml-5">
-            {children.map(child => renderOrgNode(child, depth + 1))}
-          </div>
-        )}
+        {children.map(c => renderOrgNode(c, depth + 1))}
       </div>
     );
   };
 
+  // Mutations
+  const utils = trpc.useUtils();
+  const createOkr = trpc.okrs.create.useMutation({ onSuccess: () => { utils.okrs.list.invalidate(); setShowAddOkr(false); setNewOkr({ objective: "", keyResult: "", targetValue: "", unit: "USD", level: "company" }); toast.success("OKR created"); } });
+  const createAgentMut = trpc.agents.create.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); setShowAddAgent(false); setNewAgent({ name: "", type: "specialist", roleTitle: "", description: "", heartbeatCron: "", monthlyBudget: "" }); toast.success("Agent deployed"); } });
+  const deleteAgentMut = trpc.agents.remove.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); toast.success("Agent removed"); } });
+  const updateAgentStatus = trpc.agents.updateStatus.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); } });
+  const createDeptMut = trpc.departments.create.useMutation({ onSuccess: () => { utils.departments.list.invalidate(); setShowAddDept(false); setNewDept({ name: "", budget: "" }); toast.success("Department created"); } });
+  const resolveInbox = trpc.inbox.resolve.useMutation({ onSuccess: () => { utils.inbox.list.invalidate(); toast.success("Resolved"); } });
+  const dismissInbox = trpc.inbox.dismiss.useMutation({ onSuccess: () => { utils.inbox.list.invalidate(); } });
+  const triggerHeartbeat = trpc.agents.triggerHeartbeat.useMutation({ onSuccess: () => { toast.success("Heartbeat triggered"); } });
+  const createGateMut = trpc.governance.createGate.useMutation({ onSuccess: () => { utils.governance.gates.invalidate(); setShowAddGate(false); setNewGate({ gateType: "spend", description: "", threshold: "" }); toast.success("Gate created"); } });
+  const removeGateMut = trpc.governance.removeGate.useMutation({ onSuccess: () => { utils.governance.gates.invalidate(); toast.success("Gate removed"); } });
+  const killSwitchMut = trpc.governance.killSwitch.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); toast.success("Kill switch activated — all agents paused"); } });
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 lg:p-10 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <div className="section-label">OPENCOMMAND</div>
-          {companies.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Building2 size={12} className="text-muted-foreground" />
-              <Select value={String(selectedCompanyId ?? "")} onValueChange={v => setSelectedCompanyId(Number(v))}>
-                <SelectTrigger className="bg-input border-border text-foreground font-condensed font-bold text-xs uppercase w-auto min-w-[180px] h-8">
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-display text-3xl lg:text-4xl text-foreground">Mission Control</h1>
+            <p className="text-muted-foreground text-sm mt-1.5">Monitor, manage, and optimize your agent organization.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {companies.length > 0 && (
+              <Select value={String(effectiveCompanyId ?? "")} onValueChange={v => setSelectedCompanyId(Number(v))}>
+                <SelectTrigger className="bg-input border-border text-foreground text-xs w-auto min-w-[160px] h-8 rounded-md">
+                  <Building2 size={12} className="mr-1.5 text-muted-foreground" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  {companies.map(c => (
-                    <SelectItem key={c.id} value={String(c.id)} className="font-condensed font-bold text-xs uppercase">{c.name}</SelectItem>
+                  {companies.map((c: any) => (
+                    <SelectItem key={c.id} value={String(c.id)} className="text-xs">{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            )}
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-subtle" />
+              <span className="text-label text-[10px]">ARIA Online</span>
             </div>
-          )}
-        </div>
-        <div className="red-line mb-4" />
-        <div className="flex items-end justify-between">
-          <h1 className="text-display text-5xl lg:text-6xl text-foreground">MISSION CONTROL</h1>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-[oklch(0.65_0.18_142)] animate-pulse" />
-            <span className="section-label">ARIA ONLINE</span>
           </div>
         </div>
+        <div className="accent-line" />
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-px bg-border mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
         {[
-          { label: "VALUE CREATED", value: `$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 0 })}`, icon: TrendingUp, color: "text-[oklch(0.65_0.18_142)]" },
-          { label: "TOTAL COSTS", value: `$${totalCosts.toFixed(2)}`, icon: DollarSign, color: "text-accent" },
-          { label: "HOURS SAVED", value: `${totalHours.toFixed(0)} HRS`, icon: Clock, color: "text-[oklch(0.62_0.18_240)]" },
-          { label: "PoO RECEIPTS", value: totalReceipts.toString(), icon: FileCheck, color: "text-[oklch(0.82_0.18_90)]" },
-          { label: "ACTIVE AGENTS", value: `${activeAgents} / ${agents.length}`, icon: Zap, color: "text-foreground" },
+          { label: "Value Created", value: `$${totalValue.toLocaleString()}`, color: "text-emerald-400" },
+          { label: "Total Costs", value: `$${totalCosts.toFixed(2)}`, color: "text-amber-400" },
+          { label: "Hours Saved", value: `${totalHours.toFixed(0)} hrs`, color: "text-blue-400" },
+          { label: "PoO Receipts", value: totalReceipts.toString(), color: "text-violet-400" },
+          { label: "Active Agents", value: `${activeAgents} / ${agents.length}`, color: "text-foreground" },
         ].map((kpi, i) => (
-          <div key={i} className="bg-background brutal-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="section-label">{kpi.label}</span>
-              <kpi.icon size={14} className={kpi.color} />
-            </div>
-            <div className={`font-condensed font-black text-2xl ${kpi.color}`}>{kpi.value}</div>
+          <div key={i} className="stat-card">
+            <div className="stat-label">{kpi.label}</div>
+            <div className={`stat-value ${kpi.color}`}>{kpi.value}</div>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex overflow-x-auto border-b border-border mb-6 scrollbar-hide">
+      <div className="flex overflow-x-auto border-b border-border mb-8 scrollbar-hide">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 px-4 py-3 font-condensed font-bold text-xs uppercase tracking-wide transition-colors border-b-2 -mb-px whitespace-nowrap ${tab === t.id ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-            <t.icon size={12} />
+            className={`flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
+              tab === t.id
+                ? "border-foreground text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}>
+            <t.icon size={14} strokeWidth={1.5} />
             {t.label}
-            {t.badge ? <span className="bg-accent text-foreground text-[0.6rem] font-mono px-1.5 py-0.5">{t.badge}</span> : null}
+            {t.id === "inbox" && unread > 0 && <span className="badge-accent text-[10px] px-1.5 py-0 ml-1">{unread}</span>}
           </button>
         ))}
       </div>
 
-      {/* ═══ OKR TRACKER ═══ */}
+      {/* ─── OKR TRACKER ─── */}
       {tab === "okrs" && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="section-label">OBJECTIVES & KEY RESULTS</div>
-            <Button onClick={() => setShowAddOkr(true)} size="sm" className="bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase tracking-wide text-xs gap-1">
-              <Plus size={12} /> ADD OKR
+        <div className="animate-fade-in">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-heading text-lg">Objectives & Key Results</h2>
+            <Button onClick={() => setShowAddOkr(true)} size="sm" className="btn-primary text-xs gap-1.5 h-8">
+              <Plus size={13} /> Add OKR
             </Button>
           </div>
           {okrs.length === 0 ? (
-            <div className="brutal-card p-8 text-center">
-              <Target size={32} className="text-muted-foreground mx-auto mb-3" />
-              <div className="font-condensed font-bold text-lg text-muted-foreground">NO OKRs DEFINED</div>
+            <div className="card-minimal text-center py-12">
+              <Target size={28} className="text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
+              <p className="text-muted-foreground text-sm">No OKRs defined yet.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {okrs.map(okr => {
                 const progress = Math.min(100, (Number(okr.currentValue) / Number(okr.targetValue)) * 100);
-                const sc: Record<string, string> = { on_track: "tag-on-track", at_risk: "tag-at-risk", achieved: "tag-achieved", missed: "tag-missed" };
+                const sc: Record<string, string> = { on_track: "badge-success", at_risk: "badge-accent", achieved: "badge-success", missed: "badge-minimal" };
                 return (
-                  <div key={okr.id} className="brutal-card p-5">
+                  <div key={okr.id} className="card-minimal">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="section-label">{(okr as any).level?.toUpperCase() ?? "COMPANY"}</span>
-                          <span className="text-muted-foreground text-[0.6rem]">·</span>
-                          <span className="section-label">OBJECTIVE</span>
+                          <span className="text-label text-[10px]">{(okr as any).level?.toUpperCase() ?? "COMPANY"}</span>
                         </div>
-                        <div className="font-condensed font-bold text-lg text-foreground">{okr.objective}</div>
-                        <div className="text-muted-foreground text-sm mt-1">{okr.keyResult}</div>
+                        <h3 className="font-semibold text-foreground">{okr.objective}</h3>
+                        <p className="text-muted-foreground text-sm mt-0.5">{okr.keyResult}</p>
                       </div>
-                      <span className={`font-mono text-xs border px-2 py-1 uppercase ml-4 ${sc[okr.status]}`}>{okr.status.replace("_", " ")}</span>
+                      <span className={`${sc[okr.status] ?? "badge-minimal"} ml-4`}>{okr.status.replace("_", " ")}</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="flex-1 progress-bar-bg"><div className={progress >= 100 ? "progress-bar-fill-green" : "progress-bar-fill"} style={{ width: `${progress}%` }} /></div>
-                      <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">{Number(okr.currentValue).toLocaleString()} / {Number(okr.targetValue).toLocaleString()} {okr.unit}</span>
-                      <span className="font-condensed font-bold text-sm text-foreground">{progress.toFixed(0)}%</span>
+                      <span className="text-mono text-xs text-muted-foreground whitespace-nowrap">{Number(okr.currentValue).toLocaleString()} / {Number(okr.targetValue).toLocaleString()} {okr.unit}</span>
+                      <span className="font-semibold text-sm text-foreground">{progress.toFixed(0)}%</span>
                     </div>
                   </div>
                 );
@@ -277,54 +242,54 @@ export default function MissionControl() {
         </div>
       )}
 
-      {/* ═══ AGENT FLEET ═══ */}
+      {/* ─── AGENT FLEET ─── */}
       {tab === "fleet" && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="section-label">AGENT FLEET — {agents.length} UNITS DEPLOYED</div>
-            <Button onClick={() => setShowAddAgent(true)} size="sm" className="bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase tracking-wide text-xs gap-1">
-              <Plus size={12} /> DEPLOY AGENT
+        <div className="animate-fade-in">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-heading text-lg">Agent Fleet — {agents.length} units</h2>
+            <Button onClick={() => setShowAddAgent(true)} size="sm" className="btn-primary text-xs gap-1.5 h-8">
+              <Plus size={13} /> Deploy Agent
             </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {agents.map(agent => (
-              <div key={agent.id} className="brutal-card-hover p-5">
+              <div key={agent.id} className="card-minimal">
                 <div className="flex items-start justify-between mb-3">
-                  <span className={`font-mono text-xs border px-2 py-0.5 uppercase ${typeColors[agent.type] ?? "text-foreground border-foreground"}`}>{agent.type}</span>
+                  <span className={`text-mono text-xs border px-1.5 py-0.5 rounded ${typeColors[agent.type] ?? "text-foreground border-border"}`}>{agent.type}</span>
                   <div className="flex items-center gap-1.5">
-                    <div className={`w-2 h-2 ${agent.status === "active" ? "bg-[oklch(0.65_0.18_142)] animate-pulse" : agent.status === "error" ? "bg-accent" : "bg-muted-foreground"}`} />
-                    <span className="font-mono text-xs text-muted-foreground uppercase">{agent.status}</span>
+                    <div className={`w-1.5 h-1.5 rounded-full ${agent.status === "active" ? "bg-emerald-500 animate-pulse-subtle" : agent.status === "error" ? "bg-red-500" : "bg-zinc-600"}`} />
+                    <span className="text-mono text-[11px] text-muted-foreground">{agent.status}</span>
                   </div>
                 </div>
-                <div className="font-condensed font-black text-lg text-foreground mb-0.5">{agent.name}</div>
-                {(agent as any).roleTitle && <div className="section-label mb-2">{(agent as any).roleTitle}</div>}
+                <h3 className="font-semibold text-foreground mb-0.5">{agent.name}</h3>
+                {(agent as any).roleTitle && <p className="text-label text-[10px] mb-2">{(agent as any).roleTitle}</p>}
                 <p className="text-muted-foreground text-xs leading-relaxed mb-4 line-clamp-2">{agent.description}</p>
                 <div className="grid grid-cols-3 gap-2 text-xs mb-3">
-                  <div><span className="section-label">TASKS</span><div className="font-condensed font-bold text-foreground">{agent.tasksCompleted}</div></div>
-                  <div><span className="section-label">VALUE</span><div className="font-condensed font-bold text-[oklch(0.65_0.18_142)]">${Number(agent.totalValueCreated ?? 0).toFixed(0)}</div></div>
-                  <div><span className="section-label">COST</span><div className="font-condensed font-bold text-accent">${Number((agent as any).totalCostIncurred ?? 0).toFixed(2)}</div></div>
+                  <div><span className="text-label text-[10px]">Tasks</span><div className="font-semibold text-foreground">{agent.tasksCompleted}</div></div>
+                  <div><span className="text-label text-[10px]">Value</span><div className="font-semibold text-emerald-400">${Number(agent.totalValueCreated ?? 0).toFixed(0)}</div></div>
+                  <div><span className="text-label text-[10px]">Cost</span><div className="font-semibold text-amber-400">${Number((agent as any).totalCostIncurred ?? 0).toFixed(2)}</div></div>
                 </div>
                 {Number((agent as any).monthlyBudget ?? 0) > 0 && (
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="section-label">BUDGET</span>
-                      <span className="font-mono text-[0.6rem] text-muted-foreground">${Number((agent as any).budgetUsed ?? 0).toFixed(2)} / ${Number((agent as any).monthlyBudget ?? 0).toFixed(0)}</span>
+                      <span className="text-label text-[10px]">Budget</span>
+                      <span className="text-mono text-[10px] text-muted-foreground">${Number((agent as any).budgetUsed ?? 0).toFixed(2)} / ${Number((agent as any).monthlyBudget ?? 0).toFixed(0)}</span>
                     </div>
                     <div className="progress-bar-bg"><div className="progress-bar-fill" style={{ width: `${Math.min(100, (Number((agent as any).budgetUsed ?? 0) / Number((agent as any).monthlyBudget ?? 1)) * 100)}%` }} /></div>
                   </div>
                 )}
                 <div className="flex gap-2">
                   {agent.status === "idle" && (
-                    <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "active" })} className="flex-1 bg-[oklch(0.65_0.18_142)]/10 border border-[oklch(0.65_0.18_142)] text-[oklch(0.65_0.18_142)] font-condensed font-bold text-xs py-1.5 uppercase tracking-wide hover:bg-[oklch(0.65_0.18_142)]/20 transition-colors">ACTIVATE</button>
+                    <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "active" })} className="flex-1 btn-outline text-xs py-1.5">Activate</button>
                   )}
                   {agent.status === "active" && (
-                    <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "idle" })} className="flex-1 bg-muted/10 border border-border text-muted-foreground font-condensed font-bold text-xs py-1.5 uppercase tracking-wide hover:bg-muted/20 transition-colors">PAUSE</button>
+                    <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "idle" })} className="flex-1 btn-outline text-xs py-1.5">Pause</button>
                   )}
                   {agent.status === "paused" && (
-                    <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "active" })} className="flex-1 bg-[oklch(0.65_0.18_142)]/10 border border-[oklch(0.65_0.18_142)] text-[oklch(0.65_0.18_142)] font-condensed font-bold text-xs py-1.5 uppercase tracking-wide hover:bg-[oklch(0.65_0.18_142)]/20 transition-colors">RESUME</button>
+                    <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "active" })} className="flex-1 btn-outline text-xs py-1.5">Resume</button>
                   )}
-                  <button onClick={() => { if (confirm("Remove this agent?")) deleteAgentMut.mutate({ id: agent.id }); }} className="bg-accent/10 border border-accent text-accent font-condensed font-bold text-xs px-3 py-1.5 uppercase tracking-wide hover:bg-accent/20 transition-colors">
-                    <Trash2 size={11} />
+                  <button onClick={() => { if (confirm("Remove this agent?")) deleteAgentMut.mutate({ id: agent.id }); }} className="btn-outline text-xs px-3 py-1.5 text-red-400 border-red-400/30 hover:bg-red-400/10">
+                    <Trash2 size={12} />
                   </button>
                 </div>
               </div>
@@ -333,43 +298,39 @@ export default function MissionControl() {
         </div>
       )}
 
-      {/* ═══ ORG CHART ═══ */}
+      {/* ─── ORG CHART ─── */}
       {tab === "org" && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="section-label">ORGANIZATIONAL HIERARCHY — {selectedCompany?.name?.toUpperCase()}</div>
+        <div className="animate-fade-in">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-heading text-lg">Organizational Hierarchy</h2>
             <div className="flex gap-2">
-              <Button onClick={() => setShowAddDept(true)} size="sm" className="bg-secondary text-foreground hover:bg-secondary/80 font-condensed font-bold uppercase tracking-wide text-xs gap-1">
-                <Plus size={12} /> DEPARTMENT
+              <Button onClick={() => setShowAddDept(true)} size="sm" variant="outline" className="text-xs gap-1.5 h-8">
+                <Plus size={13} /> Department
               </Button>
-              <Button onClick={() => setShowAddAgent(true)} size="sm" className="bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase tracking-wide text-xs gap-1">
-                <Plus size={12} /> AGENT
+              <Button onClick={() => setShowAddAgent(true)} size="sm" className="btn-primary text-xs gap-1.5 h-8">
+                <Plus size={13} /> Agent
               </Button>
             </div>
           </div>
-
-          {/* Departments */}
           {departments.length > 0 && (
             <div className="mb-6">
-              <div className="section-label mb-3">DEPARTMENTS</div>
+              <p className="text-label mb-3">Departments</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {departments.map(dept => (
-                  <div key={dept.id} className="brutal-card p-4">
-                    <div className="font-condensed font-bold text-sm text-foreground">{dept.name}</div>
-                    {Number(dept.budget ?? 0) > 0 && <div className="font-mono text-xs text-muted-foreground mt-1">${Number(dept.budget).toLocaleString()} budget</div>}
-                    <div className="font-mono text-[0.6rem] text-muted-foreground mt-1">{companyAgents.filter(a => a.departmentId === dept.id).length} agents</div>
+                {departments.map((dept: any) => (
+                  <div key={dept.id} className="stat-card">
+                    <div className="font-medium text-sm text-foreground">{dept.name}</div>
+                    {Number(dept.budget ?? 0) > 0 && <div className="text-mono text-xs text-muted-foreground mt-1">${Number(dept.budget).toLocaleString()} budget</div>}
+                    <div className="text-mono text-[10px] text-muted-foreground mt-1">{companyAgents.filter(a => a.departmentId === dept.id).length} agents</div>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {/* Hierarchy */}
-          <div className="section-label mb-3">AGENT HIERARCHY</div>
+          <p className="text-label mb-3">Agent Hierarchy</p>
           {companyAgents.length === 0 ? (
-            <div className="brutal-card p-8 text-center">
-              <GitBranch size={32} className="text-muted-foreground mx-auto mb-3" />
-              <div className="font-condensed font-bold text-lg text-muted-foreground">NO AGENTS IN THIS COMPANY</div>
+            <div className="card-minimal text-center py-12">
+              <GitBranch size={28} className="text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
+              <p className="text-muted-foreground text-sm">No agents in this company.</p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -380,102 +341,78 @@ export default function MissionControl() {
         </div>
       )}
 
-      {/* ═══ HEARTBEAT ═══ */}
+      {/* ─── HEARTBEAT ─── */}
       {tab === "heartbeat" && (
-        <div>
-          <div className="section-label mb-4">HEARTBEAT SCHEDULER — AUTONOMOUS EXECUTION CYCLES</div>
-          <div className="space-y-3">
+        <div className="animate-fade-in">
+          <h2 className="text-heading text-lg mb-5">Heartbeat Scheduler</h2>
+          <div className="space-y-2">
             {agents.map(agent => (
-              <div key={agent.id} className="brutal-card p-5 flex items-center gap-4">
-                <div className={`w-10 h-10 flex items-center justify-center border ${typeColors[agent.type] ?? "border-foreground"}`}>
-                  <Heart size={16} className={agent.status === "active" ? "text-[oklch(0.65_0.18_142)] animate-pulse" : "text-muted-foreground"} />
-                </div>
+              <div key={agent.id} className="card-minimal flex items-center gap-4">
+                <Heart size={16} className={agent.status === "active" ? "text-emerald-500 animate-pulse-subtle" : "text-muted-foreground"} strokeWidth={1.5} />
                 <div className="flex-1 min-w-0">
-                  <div className="font-condensed font-bold text-sm text-foreground">{agent.name}</div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="section-label">{(agent as any).heartbeatCron || "NO SCHEDULE"}</span>
-                    {(agent as any).lastHeartbeat && <span className="font-mono text-[0.6rem] text-muted-foreground">Last: {new Date((agent as any).lastHeartbeat).toLocaleString()}</span>}
+                  <div className="font-medium text-sm text-foreground">{agent.name}</div>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-mono text-xs text-muted-foreground">{(agent as any).heartbeatCron || "No schedule"}</span>
+                    {(agent as any).lastHeartbeat && <span className="text-mono text-[10px] text-muted-foreground">Last: {new Date((agent as any).lastHeartbeat).toLocaleString()}</span>}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`font-mono text-xs px-2 py-1 border uppercase ${(agent as any).heartbeatEnabled ? "text-[oklch(0.65_0.18_142)] border-[oklch(0.65_0.18_142)]" : "text-muted-foreground border-border"}`}>
-                    {(agent as any).heartbeatEnabled ? "ENABLED" : "DISABLED"}
-                  </span>
-                  <button
-                    onClick={() => triggerHeartbeat.mutate({ agentId: agent.id })}
-                    disabled={triggerHeartbeat.isPending}
-                    className="bg-accent/10 border border-accent text-accent font-condensed font-bold text-xs px-3 py-1.5 uppercase tracking-wide hover:bg-accent/20 transition-colors disabled:opacity-50"
-                  >
-                    <Activity size={11} className="inline mr-1" /> PULSE
-                  </button>
-                </div>
+                <span className={`badge-minimal text-[10px] ${(agent as any).heartbeatEnabled ? "!text-emerald-400 !border-emerald-400/30 !bg-emerald-400/10" : ""}`}>
+                  {(agent as any).heartbeatEnabled ? "Enabled" : "Disabled"}
+                </span>
+                <button onClick={() => triggerHeartbeat.mutate({ agentId: agent.id })} disabled={triggerHeartbeat.isPending} className="btn-outline text-xs px-3 py-1.5 gap-1">
+                  <Activity size={12} /> Pulse
+                </button>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* ═══ P&L DASHBOARD ═══ */}
+      {/* ─── P&L DASHBOARD ─── */}
       {tab === "budget" && (
-        <div>
-          <div className="section-label mb-4">PROFIT & LOSS — {selectedCompany?.name?.toUpperCase()}</div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border mb-6">
-            <div className="bg-background brutal-card p-5">
-              <div className="section-label mb-2">TOTAL REVENUE</div>
-              <div className="font-condensed font-black text-3xl text-[oklch(0.65_0.18_142)]">${Number(pnlQ.data?.totalRevenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</div>
-            </div>
-            <div className="bg-background brutal-card p-5">
-              <div className="section-label mb-2">TOTAL COSTS</div>
-              <div className="font-condensed font-black text-3xl text-accent">${Number(pnlQ.data?.totalCosts ?? 0).toFixed(2)}</div>
-            </div>
-            <div className="bg-background brutal-card p-5">
-              <div className="section-label mb-2">NET PROFIT</div>
-              <div className={`font-condensed font-black text-3xl ${Number(pnlQ.data?.netProfit ?? 0) >= 0 ? "text-[oklch(0.65_0.18_142)]" : "text-accent"}`}>
-                ${Number(pnlQ.data?.netProfit ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-              </div>
-            </div>
+        <div className="animate-fade-in">
+          <h2 className="text-heading text-lg mb-5">Profit & Loss</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+            <div className="stat-card"><div className="stat-label">Total Revenue</div><div className="stat-value text-emerald-400">${Number(pnlQ.data?.totalRevenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</div></div>
+            <div className="stat-card"><div className="stat-label">Total Costs</div><div className="stat-value text-amber-400">${Number(pnlQ.data?.totalCosts ?? 0).toFixed(2)}</div></div>
+            <div className="stat-card"><div className="stat-label">Net Profit</div><div className={`stat-value ${Number(pnlQ.data?.netProfit ?? 0) >= 0 ? "text-emerald-400" : "text-red-400"}`}>${Number(pnlQ.data?.netProfit ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</div></div>
           </div>
-
-          {/* Agent cost breakdown */}
-          <div className="section-label mb-3">AGENT COST BREAKDOWN</div>
+          <p className="text-label mb-3">Agent Cost Breakdown</p>
           <div className="space-y-2">
             {agents.filter(a => Number((a as any).totalCostIncurred ?? 0) > 0 || Number(a.totalValueCreated ?? 0) > 0).map(agent => {
               const cost = Number((agent as any).totalCostIncurred ?? 0);
               const value = Number(agent.totalValueCreated ?? 0);
               const roi = cost > 0 ? ((value - cost) / cost * 100) : 0;
               return (
-                <div key={agent.id} className="brutal-card p-4 flex items-center gap-4">
+                <div key={agent.id} className="card-minimal flex items-center gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="font-condensed font-bold text-sm text-foreground">{agent.name}</div>
-                    <div className="section-label">{agent.type.toUpperCase()}</div>
+                    <div className="font-medium text-sm text-foreground">{agent.name}</div>
+                    <span className="text-label text-[10px]">{agent.type}</span>
                   </div>
                   <div className="text-right">
-                    <div className="font-mono text-xs text-[oklch(0.65_0.18_142)]">+${value.toFixed(2)}</div>
-                    <div className="font-mono text-xs text-accent">-${cost.toFixed(2)}</div>
+                    <div className="text-mono text-xs text-emerald-400">+${value.toFixed(2)}</div>
+                    <div className="text-mono text-xs text-amber-400">-${cost.toFixed(2)}</div>
                   </div>
-                  <div className={`font-condensed font-bold text-sm min-w-[60px] text-right ${roi >= 0 ? "text-[oklch(0.65_0.18_142)]" : "text-accent"}`}>
+                  <div className={`font-semibold text-sm min-w-[60px] text-right ${roi >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                     {roi.toFixed(0)}% ROI
                   </div>
                 </div>
               );
             })}
             {agents.filter(a => Number((a as any).totalCostIncurred ?? 0) > 0 || Number(a.totalValueCreated ?? 0) > 0).length === 0 && (
-              <div className="brutal-card p-8 text-center">
-                <BarChart3 size={32} className="text-muted-foreground mx-auto mb-3" />
-                <div className="font-condensed font-bold text-lg text-muted-foreground">NO COST DATA YET</div>
-                <p className="text-muted-foreground text-sm mt-2">Execute tasks to generate cost and revenue data.</p>
+              <div className="card-minimal text-center py-12">
+                <BarChart3 size={28} className="text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
+                <p className="text-muted-foreground text-sm">No cost data yet. Execute tasks to generate data.</p>
               </div>
             )}
           </div>
-
-          {/* Company budget */}
           {selectedCompany && Number(selectedCompany.monthlyBudget ?? 0) > 0 && (
             <div className="mt-6">
-              <div className="section-label mb-3">COMPANY BUDGET</div>
-              <div className="brutal-card p-5">
+              <p className="text-label mb-3">Company Budget</p>
+              <div className="card-minimal">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-condensed font-bold text-sm text-foreground">Monthly Budget</span>
-                  <span className="font-mono text-xs text-muted-foreground">${Number(pnlQ.data?.totalCosts ?? 0).toFixed(2)} / ${Number(selectedCompany.monthlyBudget).toLocaleString()}</span>
+                  <span className="font-medium text-sm text-foreground">Monthly Budget</span>
+                  <span className="text-mono text-xs text-muted-foreground">${Number(pnlQ.data?.totalCosts ?? 0).toFixed(2)} / ${Number(selectedCompany.monthlyBudget).toLocaleString()}</span>
                 </div>
                 <div className="progress-bar-bg"><div className="progress-bar-fill" style={{ width: `${Math.min(100, (Number(pnlQ.data?.totalCosts ?? 0) / Number(selectedCompany.monthlyBudget)) * 100)}%` }} /></div>
               </div>
@@ -484,33 +421,32 @@ export default function MissionControl() {
         </div>
       )}
 
-      {/* ═══ PoO LEDGER ═══ */}
+      {/* ─── PoO LEDGER ─── */}
       {tab === "poo" && (
-        <div>
-          <div className="section-label mb-4">PROOF OF OUTCOME LEDGER — {pooReceipts.length} RECEIPTS</div>
+        <div className="animate-fade-in">
+          <h2 className="text-heading text-lg mb-5">Proof of Outcome Ledger — {pooReceipts.length} receipts</h2>
           {pooReceipts.length === 0 ? (
-            <div className="brutal-card p-8 text-center">
-              <FileCheck size={32} className="text-muted-foreground mx-auto mb-3" />
-              <div className="font-condensed font-bold text-lg text-muted-foreground">NO PoO RECEIPTS YET</div>
-              <p className="text-muted-foreground text-sm mt-2">Execute tasks via the Intent Engine to generate receipts.</p>
+            <div className="card-minimal text-center py-12">
+              <FileCheck size={28} className="text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
+              <p className="text-muted-foreground text-sm">No PoO receipts yet. Execute tasks via the Intent Engine.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {pooReceipts.map(receipt => (
-                <div key={receipt.id} className="brutal-card p-5">
+                <div key={receipt.id} className="card-minimal">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <div className="ticker-line mb-1">{receipt.receiptNumber}</div>
-                      <div className="font-condensed font-bold text-lg text-foreground">{receipt.taskTitle}</div>
+                      <span className="text-mono text-xs text-muted-foreground">{receipt.receiptNumber}</span>
+                      <h3 className="font-semibold text-foreground mt-0.5">{receipt.taskTitle}</h3>
                     </div>
-                    <span className={`font-mono text-xs border px-2 py-1 uppercase ${receipt.verificationStatus === "verified" ? "tag-achieved" : "tag-at-risk"}`}>{receipt.verificationStatus}</span>
+                    <span className={receipt.verificationStatus === "verified" ? "badge-success" : "badge-accent"}>{receipt.verificationStatus}</span>
                   </div>
                   <p className="text-muted-foreground text-sm mb-4 leading-relaxed">{receipt.outcome}</p>
                   <div className="grid grid-cols-4 gap-4 pt-3 border-t border-border">
-                    <div><div className="section-label mb-1">VALUE</div><div className="font-condensed font-black text-xl text-[oklch(0.65_0.18_142)]">${Number(receipt.dollarValueCreated).toLocaleString()}</div></div>
-                    <div><div className="section-label mb-1">COST</div><div className="font-condensed font-black text-xl text-accent">${Number((receipt as any).costIncurred ?? 0).toFixed(4)}</div></div>
-                    <div><div className="section-label mb-1">HOURS SAVED</div><div className="font-condensed font-black text-xl text-foreground">{Number(receipt.laborHoursSaved).toFixed(1)}</div></div>
-                    <div><div className="section-label mb-1">ISSUED</div><div className="font-mono text-xs text-muted-foreground mt-1">{new Date(receipt.createdAt).toLocaleDateString()}</div></div>
+                    <div><div className="text-label text-[10px] mb-1">Value</div><div className="font-semibold text-lg text-emerald-400">${Number(receipt.dollarValueCreated).toLocaleString()}</div></div>
+                    <div><div className="text-label text-[10px] mb-1">Cost</div><div className="font-semibold text-lg text-amber-400">${Number((receipt as any).costIncurred ?? 0).toFixed(4)}</div></div>
+                    <div><div className="text-label text-[10px] mb-1">Hours Saved</div><div className="font-semibold text-lg text-foreground">{Number(receipt.laborHoursSaved).toFixed(1)}</div></div>
+                    <div><div className="text-label text-[10px] mb-1">Issued</div><div className="text-mono text-xs text-muted-foreground mt-1">{new Date(receipt.createdAt).toLocaleDateString()}</div></div>
                   </div>
                 </div>
               ))}
@@ -519,36 +455,37 @@ export default function MissionControl() {
         </div>
       )}
 
-      {/* ═══ INBOX ═══ */}
+      {/* ─── INBOX ─── */}
       {tab === "inbox" && (
-        <div>
-          <div className="section-label mb-4">HUMAN-IN-THE-LOOP INBOX — {unread} UNREAD</div>
+        <div className="animate-fade-in">
+          <h2 className="text-heading text-lg mb-5">Human-in-the-Loop Inbox — {unread} unread</h2>
           {inboxItems.length === 0 ? (
-            <div className="brutal-card p-8 text-center">
-              <Inbox size={32} className="text-muted-foreground mx-auto mb-3" />
-              <div className="font-condensed font-bold text-lg text-muted-foreground">INBOX CLEAR</div>
+            <div className="card-minimal text-center py-12">
+              <Inbox size={28} className="text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
+              <p className="text-muted-foreground text-sm">Inbox clear.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {inboxItems.filter(i => i.status !== "dismissed").map(item => {
-                const pc: Record<string, string> = { critical: "text-accent border-accent", high: "text-[oklch(0.82_0.18_90)] border-[oklch(0.82_0.18_90)]", medium: "text-muted-foreground border-muted-foreground", low: "text-muted-foreground/50 border-muted-foreground/50" };
+                const pc: Record<string, string> = { critical: "badge-accent", high: "badge-accent", medium: "badge-minimal", low: "badge-minimal" };
                 return (
-                  <div key={item.id} className={`brutal-card p-5 ${item.status === "unread" ? "border-l-2 border-l-accent" : ""}`}>
+                  <div key={item.id} className={`card-minimal ${item.status === "unread" ? "!border-l-2 !border-l-amber-400" : ""}`}>
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <div className="font-condensed font-bold text-base text-foreground">{item.title}</div>
-                        <div className="section-label mt-0.5">{item.type.replace(/_/g, " ")} · {new Date(item.createdAt).toLocaleString()}</div>
+                        <h3 className="font-medium text-foreground">{item.title}</h3>
+                        <span className="text-label text-[10px]">{item.type.replace(/_/g, " ")} · {new Date(item.createdAt).toLocaleString()}</span>
                       </div>
-                      <span className={`font-mono text-xs border px-2 py-1 uppercase ${pc[item.priority]}`}>{item.priority}</span>
+                      <span className={pc[item.priority] ?? "badge-minimal"}>{item.priority}</span>
                     </div>
                     <p className="text-muted-foreground text-sm mb-4">{item.body}</p>
-                    {item.status !== "resolved" && (
+                    {item.status !== "resolved" ? (
                       <div className="flex gap-2">
-                        <button onClick={() => resolveInbox.mutate({ id: item.id, resolution: "Acknowledged" })} className="flex items-center gap-1.5 bg-[oklch(0.65_0.18_142)]/10 border border-[oklch(0.65_0.18_142)] text-[oklch(0.65_0.18_142)] font-condensed font-bold text-xs px-3 py-1.5 uppercase tracking-wide hover:bg-[oklch(0.65_0.18_142)]/20 transition-colors"><Check size={11} /> RESOLVE</button>
-                        <button onClick={() => dismissInbox.mutate({ id: item.id })} className="flex items-center gap-1.5 bg-muted/10 border border-border text-muted-foreground font-condensed font-bold text-xs px-3 py-1.5 uppercase tracking-wide hover:bg-muted/20 transition-colors"><X size={11} /> DISMISS</button>
+                        <button onClick={() => resolveInbox.mutate({ id: item.id, resolution: "Acknowledged" })} className="btn-primary text-xs py-1.5 px-4 gap-1"><Check size={12} /> Resolve</button>
+                        <button onClick={() => dismissInbox.mutate({ id: item.id })} className="btn-outline text-xs py-1.5 px-4 gap-1"><X size={12} /> Dismiss</button>
                       </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-emerald-400"><CheckCircle2 size={13} /><span className="text-xs font-medium">Resolved</span></div>
                     )}
-                    {item.status === "resolved" && <div className="flex items-center gap-2 text-[oklch(0.65_0.18_142)]"><CheckCircle2 size={12} /><span className="section-label text-[oklch(0.65_0.18_142)]">RESOLVED</span></div>}
                   </div>
                 );
               })}
@@ -557,74 +494,71 @@ export default function MissionControl() {
         </div>
       )}
 
-      {/* ═══ GOVERNANCE ═══ */}
+      {/* ─── GOVERNANCE ─── */}
       {tab === "governance" && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="section-label">GOVERNANCE & COMPLIANCE — {selectedCompany?.name?.toUpperCase()}</div>
+        <div className="animate-fade-in">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-heading text-lg">Governance & Compliance</h2>
             <div className="flex gap-2">
-              <Button onClick={() => setShowAddGate(true)} size="sm" className="bg-secondary text-foreground hover:bg-secondary/80 font-condensed font-bold uppercase tracking-wide text-xs gap-1">
-                <Plus size={12} /> ADD GATE
+              <Button onClick={() => setShowAddGate(true)} size="sm" variant="outline" className="text-xs gap-1.5 h-8">
+                <Plus size={13} /> Add Gate
               </Button>
-              <Button onClick={() => { if (selectedCompanyId && confirm("EMERGENCY: This will pause ALL agents in this company. Continue?")) killSwitchMut.mutate({ companyId: selectedCompanyId }); }} size="sm" className="bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase tracking-wide text-xs gap-1" disabled={!selectedCompanyId}>
-                <Power size={12} /> KILL SWITCH
+              <Button onClick={() => { if (effectiveCompanyId && confirm("EMERGENCY: Pause ALL agents?")) killSwitchMut.mutate({ companyId: effectiveCompanyId }); }} size="sm" className="bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 text-xs gap-1.5 h-8" disabled={!effectiveCompanyId}>
+                <Power size={13} /> Kill Switch
               </Button>
             </div>
           </div>
 
-          {/* Approval Gates */}
-          <div className="section-label mb-3">APPROVAL GATES</div>
+          <p className="text-label mb-3">Approval Gates</p>
           {gates.length === 0 ? (
-            <div className="brutal-card p-6 text-center mb-6">
-              <Shield size={24} className="text-muted-foreground mx-auto mb-2" />
-              <div className="font-condensed font-bold text-sm text-muted-foreground">NO GATES CONFIGURED</div>
+            <div className="card-minimal text-center py-8 mb-6">
+              <Shield size={24} className="text-muted-foreground mx-auto mb-2" strokeWidth={1.5} />
+              <p className="text-muted-foreground text-sm">No gates configured.</p>
             </div>
           ) : (
             <div className="space-y-2 mb-6">
               {gates.map(gate => (
-                <div key={gate.id} className="brutal-card p-4 flex items-center gap-4">
-                  <Shield size={16} className={gate.isActive ? "text-[oklch(0.65_0.18_142)]" : "text-muted-foreground"} />
+                <div key={gate.id} className="card-minimal flex items-center gap-4">
+                  <Shield size={15} className={gate.isActive ? "text-emerald-400" : "text-muted-foreground"} strokeWidth={1.5} />
                   <div className="flex-1">
-                    <div className="font-condensed font-bold text-sm text-foreground uppercase">{gate.gateType} GATE</div>
-                    <div className="text-muted-foreground text-xs">{gate.description}</div>
+                    <div className="font-medium text-sm text-foreground capitalize">{gate.gateType} Gate</div>
+                    <p className="text-muted-foreground text-xs">{gate.description}</p>
                   </div>
-                  {gate.threshold && <span className="font-mono text-xs text-accent">${Number(gate.threshold).toLocaleString()}</span>}
-                  <span className={`font-mono text-xs border px-2 py-0.5 uppercase ${gate.isActive ? "text-[oklch(0.65_0.18_142)] border-[oklch(0.65_0.18_142)]" : "text-muted-foreground border-border"}`}>{gate.isActive ? "ACTIVE" : "OFF"}</span>
-                  <button onClick={() => removeGateMut.mutate({ id: gate.id })} className="text-muted-foreground hover:text-accent"><Trash2 size={12} /></button>
+                  {gate.threshold && <span className="text-mono text-xs text-amber-400">${Number(gate.threshold).toLocaleString()}</span>}
+                  <span className={gate.isActive ? "badge-success" : "badge-minimal"}>{gate.isActive ? "Active" : "Off"}</span>
+                  <button onClick={() => removeGateMut.mutate({ id: gate.id })} className="text-muted-foreground hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Tool Registry */}
-          <div className="section-label mb-3">TOOL REGISTRY — {tools.length} INTEGRATIONS</div>
+          <p className="text-label mb-3">Tool Registry — {tools.length} integrations</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
             {tools.map(tool => (
-              <div key={tool.id} className="brutal-card p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="font-condensed font-bold text-sm text-foreground">{tool.name}</div>
-                  <Wrench size={12} className={tool.isActive ? "text-[oklch(0.65_0.18_142)]" : "text-muted-foreground"} />
+              <div key={tool.id} className="stat-card">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-medium text-sm text-foreground">{tool.name}</span>
+                  <Wrench size={13} className={tool.isActive ? "text-emerald-400" : "text-muted-foreground"} strokeWidth={1.5} />
                 </div>
-                <div className="section-label">{tool.category}</div>
-                <div className="text-muted-foreground text-xs mt-1">{tool.description}</div>
-                {Number(tool.costPerUse ?? 0) > 0 && <div className="font-mono text-[0.6rem] text-accent mt-2">${Number(tool.costPerUse).toFixed(4)}/use</div>}
+                <span className="text-label text-[10px]">{tool.category}</span>
+                <p className="text-muted-foreground text-xs mt-1">{tool.description}</p>
+                {Number(tool.costPerUse ?? 0) > 0 && <div className="text-mono text-[10px] text-amber-400 mt-2">${Number(tool.costPerUse).toFixed(4)}/use</div>}
               </div>
             ))}
           </div>
 
-          {/* Audit Log */}
-          <div className="section-label mb-3">AUDIT LOG</div>
+          <p className="text-label mb-3">Audit Log</p>
           {auditEntries.length === 0 ? (
-            <div className="brutal-card p-6 text-center">
-              <div className="font-condensed font-bold text-sm text-muted-foreground">NO AUDIT ENTRIES</div>
+            <div className="card-minimal text-center py-8">
+              <p className="text-muted-foreground text-sm">No audit entries.</p>
             </div>
           ) : (
             <div className="space-y-1">
               {auditEntries.slice(0, 20).map(entry => (
-                <div key={entry.id} className="brutal-card p-3 flex items-center gap-3">
-                  <div className="font-mono text-[0.6rem] text-muted-foreground whitespace-nowrap">{new Date(entry.createdAt).toLocaleString()}</div>
-                  <div className={`font-condensed font-bold text-xs uppercase ${entry.action.includes("KILL") ? "text-accent" : "text-foreground"}`}>{entry.action}</div>
-                  <div className="text-muted-foreground text-xs flex-1 truncate">{entry.details}</div>
+                <div key={entry.id} className="card-minimal !py-2.5 flex items-center gap-3">
+                  <span className="text-mono text-[10px] text-muted-foreground whitespace-nowrap">{new Date(entry.createdAt).toLocaleString()}</span>
+                  <span className={`font-medium text-xs ${entry.action.includes("KILL") ? "text-red-400" : "text-foreground"}`}>{entry.action}</span>
+                  <span className="text-muted-foreground text-xs flex-1 truncate">{entry.details}</span>
                 </div>
               ))}
             </div>
@@ -632,19 +566,19 @@ export default function MissionControl() {
         </div>
       )}
 
-      {/* ═══ DIALOGS ═══ */}
+      {/* ─── DIALOGS ─── */}
 
       {/* Add OKR */}
       <Dialog open={showAddOkr} onOpenChange={setShowAddOkr}>
         <DialogContent className="bg-card border-border text-foreground max-w-lg">
-          <DialogHeader><div className="red-line mb-4" /><DialogTitle className="font-condensed font-black text-2xl uppercase">ADD NEW OKR</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-heading text-xl">Add New OKR</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
-            <div><label className="section-label mb-2 block">OBJECTIVE</label><Input value={newOkr.objective} onChange={e => setNewOkr(p => ({ ...p, objective: e.target.value }))} placeholder="e.g. Reach Product-Market Fit" className="bg-input border-border text-foreground" /></div>
-            <div><label className="section-label mb-2 block">KEY RESULT</label><Textarea value={newOkr.keyResult} onChange={e => setNewOkr(p => ({ ...p, keyResult: e.target.value }))} placeholder="e.g. Achieve $50K MRR" className="bg-input border-border text-foreground resize-none" rows={2} /></div>
+            <div><label className="text-label block mb-1.5">Objective</label><Input value={newOkr.objective} onChange={e => setNewOkr(p => ({ ...p, objective: e.target.value }))} placeholder="e.g. Reach Product-Market Fit" className="bg-input border-border text-foreground" /></div>
+            <div><label className="text-label block mb-1.5">Key Result</label><Textarea value={newOkr.keyResult} onChange={e => setNewOkr(p => ({ ...p, keyResult: e.target.value }))} placeholder="e.g. Achieve $50K MRR" className="bg-input border-border text-foreground resize-none" rows={2} /></div>
             <div className="grid grid-cols-3 gap-3">
-              <div><label className="section-label mb-2 block">TARGET</label><Input type="number" value={newOkr.targetValue} onChange={e => setNewOkr(p => ({ ...p, targetValue: e.target.value }))} className="bg-input border-border text-foreground" /></div>
-              <div><label className="section-label mb-2 block">UNIT</label><Input value={newOkr.unit} onChange={e => setNewOkr(p => ({ ...p, unit: e.target.value }))} placeholder="USD/mo" className="bg-input border-border text-foreground" /></div>
-              <div><label className="section-label mb-2 block">LEVEL</label>
+              <div><label className="text-label block mb-1.5">Target</label><Input type="number" value={newOkr.targetValue} onChange={e => setNewOkr(p => ({ ...p, targetValue: e.target.value }))} className="bg-input border-border text-foreground" /></div>
+              <div><label className="text-label block mb-1.5">Unit</label><Input value={newOkr.unit} onChange={e => setNewOkr(p => ({ ...p, unit: e.target.value }))} placeholder="USD/mo" className="bg-input border-border text-foreground" /></div>
+              <div><label className="text-label block mb-1.5">Level</label>
                 <Select value={newOkr.level} onValueChange={v => setNewOkr(p => ({ ...p, level: v }))}>
                   <SelectTrigger className="bg-input border-border text-foreground h-9"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-card border-border"><SelectItem value="company">Company</SelectItem><SelectItem value="department">Department</SelectItem><SelectItem value="agent">Agent</SelectItem></SelectContent>
@@ -652,8 +586,8 @@ export default function MissionControl() {
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <Button onClick={() => createOkr.mutate({ objective: newOkr.objective, keyResult: newOkr.keyResult, targetValue: Number(newOkr.targetValue), unit: newOkr.unit, companyId: selectedCompanyId ?? undefined, level: newOkr.level as any })} disabled={!newOkr.objective || !newOkr.keyResult || !newOkr.targetValue || createOkr.isPending} className="flex-1 bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase tracking-wide">{createOkr.isPending ? "CREATING..." : "CREATE OKR"}</Button>
-              <Button variant="outline" onClick={() => setShowAddOkr(false)} className="border-border text-muted-foreground font-condensed font-bold uppercase">CANCEL</Button>
+              <Button onClick={() => createOkr.mutate({ objective: newOkr.objective, keyResult: newOkr.keyResult, targetValue: Number(newOkr.targetValue), unit: newOkr.unit, companyId: effectiveCompanyId ?? undefined, level: newOkr.level as any })} disabled={!newOkr.objective || !newOkr.keyResult || !newOkr.targetValue || createOkr.isPending} className="flex-1 btn-primary">{createOkr.isPending ? "Creating..." : "Create OKR"}</Button>
+              <Button variant="outline" onClick={() => setShowAddOkr(false)}>Cancel</Button>
             </div>
           </div>
         </DialogContent>
@@ -662,26 +596,26 @@ export default function MissionControl() {
       {/* Add Agent */}
       <Dialog open={showAddAgent} onOpenChange={setShowAddAgent}>
         <DialogContent className="bg-card border-border text-foreground max-w-lg">
-          <DialogHeader><div className="red-line mb-4" /><DialogTitle className="font-condensed font-black text-2xl uppercase">DEPLOY NEW AGENT</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-heading text-xl">Deploy New Agent</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
-            <div><label className="section-label mb-2 block">AGENT NAME</label><Input value={newAgent.name} onChange={e => setNewAgent(p => ({ ...p, name: e.target.value }))} placeholder="e.g. NOVA — CMO" className="bg-input border-border text-foreground" /></div>
+            <div><label className="text-label block mb-1.5">Agent Name</label><Input value={newAgent.name} onChange={e => setNewAgent(p => ({ ...p, name: e.target.value }))} placeholder="e.g. NOVA — CMO" className="bg-input border-border text-foreground" /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="section-label mb-2 block">TYPE</label>
+              <div><label className="text-label block mb-1.5">Type</label>
                 <Select value={newAgent.type} onValueChange={v => setNewAgent(p => ({ ...p, type: v }))}>
                   <SelectTrigger className="bg-input border-border text-foreground h-9"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-card border-border">{["ceo","cto","cmo","cfo","vp","manager","specialist","marketing","research","sales","admin","custom"].map(t => <SelectItem key={t} value={t}>{t.toUpperCase()}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><label className="section-label mb-2 block">ROLE TITLE</label><Input value={newAgent.roleTitle} onChange={e => setNewAgent(p => ({ ...p, roleTitle: e.target.value }))} placeholder="Chief Marketing Officer" className="bg-input border-border text-foreground" /></div>
+              <div><label className="text-label block mb-1.5">Role Title</label><Input value={newAgent.roleTitle} onChange={e => setNewAgent(p => ({ ...p, roleTitle: e.target.value }))} placeholder="Chief Marketing Officer" className="bg-input border-border text-foreground" /></div>
             </div>
-            <div><label className="section-label mb-2 block">DESCRIPTION</label><Textarea value={newAgent.description} onChange={e => setNewAgent(p => ({ ...p, description: e.target.value }))} className="bg-input border-border text-foreground resize-none" rows={2} /></div>
+            <div><label className="text-label block mb-1.5">Description</label><Textarea value={newAgent.description} onChange={e => setNewAgent(p => ({ ...p, description: e.target.value }))} className="bg-input border-border text-foreground resize-none" rows={2} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="section-label mb-2 block">HEARTBEAT CRON</label><Input value={newAgent.heartbeatCron} onChange={e => setNewAgent(p => ({ ...p, heartbeatCron: e.target.value }))} placeholder="*/30 * * * *" className="bg-input border-border text-foreground" /></div>
-              <div><label className="section-label mb-2 block">MONTHLY BUDGET ($)</label><Input type="number" value={newAgent.monthlyBudget} onChange={e => setNewAgent(p => ({ ...p, monthlyBudget: e.target.value }))} placeholder="500" className="bg-input border-border text-foreground" /></div>
+              <div><label className="text-label block mb-1.5">Heartbeat Cron</label><Input value={newAgent.heartbeatCron} onChange={e => setNewAgent(p => ({ ...p, heartbeatCron: e.target.value }))} placeholder="*/30 * * * *" className="bg-input border-border text-foreground" /></div>
+              <div><label className="text-label block mb-1.5">Monthly Budget ($)</label><Input type="number" value={newAgent.monthlyBudget} onChange={e => setNewAgent(p => ({ ...p, monthlyBudget: e.target.value }))} placeholder="500" className="bg-input border-border text-foreground" /></div>
             </div>
             <div className="flex gap-3 pt-2">
-              <Button onClick={() => createAgentMut.mutate({ name: newAgent.name, type: newAgent.type as any, roleTitle: newAgent.roleTitle || undefined, description: newAgent.description || undefined, heartbeatCron: newAgent.heartbeatCron || undefined, monthlyBudget: newAgent.monthlyBudget ? Number(newAgent.monthlyBudget) : undefined, companyId: selectedCompanyId ?? undefined })} disabled={!newAgent.name || createAgentMut.isPending} className="flex-1 bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase tracking-wide">{createAgentMut.isPending ? "DEPLOYING..." : "DEPLOY AGENT"}</Button>
-              <Button variant="outline" onClick={() => setShowAddAgent(false)} className="border-border text-muted-foreground font-condensed font-bold uppercase">CANCEL</Button>
+              <Button onClick={() => createAgentMut.mutate({ name: newAgent.name, type: newAgent.type as any, roleTitle: newAgent.roleTitle || undefined, description: newAgent.description || undefined, heartbeatCron: newAgent.heartbeatCron || undefined, monthlyBudget: newAgent.monthlyBudget ? Number(newAgent.monthlyBudget) : undefined, companyId: effectiveCompanyId ?? undefined })} disabled={!newAgent.name || createAgentMut.isPending} className="flex-1 btn-primary">{createAgentMut.isPending ? "Deploying..." : "Deploy Agent"}</Button>
+              <Button variant="outline" onClick={() => setShowAddAgent(false)}>Cancel</Button>
             </div>
           </div>
         </DialogContent>
@@ -690,13 +624,13 @@ export default function MissionControl() {
       {/* Add Department */}
       <Dialog open={showAddDept} onOpenChange={setShowAddDept}>
         <DialogContent className="bg-card border-border text-foreground max-w-md">
-          <DialogHeader><div className="red-line mb-4" /><DialogTitle className="font-condensed font-black text-2xl uppercase">ADD DEPARTMENT</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-heading text-xl">Add Department</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
-            <div><label className="section-label mb-2 block">NAME</label><Input value={newDept.name} onChange={e => setNewDept(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Marketing" className="bg-input border-border text-foreground" /></div>
-            <div><label className="section-label mb-2 block">BUDGET ($)</label><Input type="number" value={newDept.budget} onChange={e => setNewDept(p => ({ ...p, budget: e.target.value }))} placeholder="2000" className="bg-input border-border text-foreground" /></div>
+            <div><label className="text-label block mb-1.5">Name</label><Input value={newDept.name} onChange={e => setNewDept(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Marketing" className="bg-input border-border text-foreground" /></div>
+            <div><label className="text-label block mb-1.5">Budget ($)</label><Input type="number" value={newDept.budget} onChange={e => setNewDept(p => ({ ...p, budget: e.target.value }))} placeholder="2000" className="bg-input border-border text-foreground" /></div>
             <div className="flex gap-3 pt-2">
-              <Button onClick={() => { if (selectedCompanyId) createDeptMut.mutate({ companyId: selectedCompanyId, name: newDept.name, budget: newDept.budget ? Number(newDept.budget) : undefined }); }} disabled={!newDept.name || !selectedCompanyId || createDeptMut.isPending} className="flex-1 bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase tracking-wide">{createDeptMut.isPending ? "CREATING..." : "CREATE"}</Button>
-              <Button variant="outline" onClick={() => setShowAddDept(false)} className="border-border text-muted-foreground font-condensed font-bold uppercase">CANCEL</Button>
+              <Button onClick={() => { if (effectiveCompanyId) createDeptMut.mutate({ companyId: effectiveCompanyId, name: newDept.name, budget: newDept.budget ? Number(newDept.budget) : undefined }); }} disabled={!newDept.name || !effectiveCompanyId || createDeptMut.isPending} className="flex-1 btn-primary">{createDeptMut.isPending ? "Creating..." : "Create"}</Button>
+              <Button variant="outline" onClick={() => setShowAddDept(false)}>Cancel</Button>
             </div>
           </div>
         </DialogContent>
@@ -705,20 +639,19 @@ export default function MissionControl() {
       {/* Add Approval Gate */}
       <Dialog open={showAddGate} onOpenChange={setShowAddGate}>
         <DialogContent className="bg-card border-border text-foreground max-w-md">
-          <DialogHeader><div className="red-line mb-4" /><DialogTitle className="font-condensed font-black text-2xl uppercase">ADD APPROVAL GATE</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-heading text-xl">Add Approval Gate</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
-            <div><label className="section-label mb-2 block">GATE TYPE</label>
+            <div><label className="text-label block mb-1.5">Gate Type</label>
               <Select value={newGate.gateType} onValueChange={v => setNewGate(p => ({ ...p, gateType: v }))}>
                 <SelectTrigger className="bg-input border-border text-foreground h-9"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-card border-border">{["spend","hire","strategy","terminate","custom"].map(t => <SelectItem key={t} value={t}>{t.toUpperCase()}</SelectItem>)}</SelectContent>
+                <SelectContent className="bg-card border-border"><SelectItem value="spend">Spend</SelectItem><SelectItem value="hire">Hire</SelectItem><SelectItem value="strategy">Strategy</SelectItem><SelectItem value="external">External</SelectItem></SelectContent>
               </Select>
             </div>
-            <div><label className="section-label mb-2 block">THRESHOLD ($)</label><Input type="number" value={newGate.threshold} onChange={e => setNewGate(p => ({ ...p, threshold: e.target.value }))} placeholder="500" className="bg-input border-border text-foreground" /></div>
-            <div><label className="section-label mb-2 block">DESCRIPTION</label><Input value={newGate.description} onChange={e => setNewGate(p => ({ ...p, description: e.target.value }))} placeholder="Spending over $500 requires approval" className="bg-input border-border text-foreground" /></div>
-            <div><label className="section-label mb-2 block">AUTO-APPROVE BELOW ($)</label><Input type="number" value={newGate.autoApproveBelow} onChange={e => setNewGate(p => ({ ...p, autoApproveBelow: e.target.value }))} placeholder="100" className="bg-input border-border text-foreground" /></div>
+            <div><label className="text-label block mb-1.5">Description</label><Input value={newGate.description} onChange={e => setNewGate(p => ({ ...p, description: e.target.value }))} placeholder="e.g. Requires approval for spend > $500" className="bg-input border-border text-foreground" /></div>
+            <div><label className="text-label block mb-1.5">Threshold ($)</label><Input type="number" value={newGate.threshold} onChange={e => setNewGate(p => ({ ...p, threshold: e.target.value }))} placeholder="500" className="bg-input border-border text-foreground" /></div>
             <div className="flex gap-3 pt-2">
-              <Button onClick={() => { if (selectedCompanyId) createGateMut.mutate({ companyId: selectedCompanyId, gateType: newGate.gateType as any, threshold: newGate.threshold ? Number(newGate.threshold) : undefined, description: newGate.description || undefined, autoApproveBelow: newGate.autoApproveBelow ? Number(newGate.autoApproveBelow) : undefined }); }} disabled={!selectedCompanyId || createGateMut.isPending} className="flex-1 bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase tracking-wide">{createGateMut.isPending ? "CREATING..." : "CREATE GATE"}</Button>
-              <Button variant="outline" onClick={() => setShowAddGate(false)} className="border-border text-muted-foreground font-condensed font-bold uppercase">CANCEL</Button>
+              <Button onClick={() => { if (effectiveCompanyId) createGateMut.mutate({ companyId: effectiveCompanyId, gateType: newGate.gateType as any, description: newGate.description, threshold: newGate.threshold ? Number(newGate.threshold) : undefined }); }} disabled={!newGate.description || !effectiveCompanyId || createGateMut.isPending} className="flex-1 btn-primary">{createGateMut.isPending ? "Creating..." : "Create Gate"}</Button>
+              <Button variant="outline" onClick={() => setShowAddGate(false)}>Cancel</Button>
             </div>
           </div>
         </DialogContent>

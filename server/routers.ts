@@ -9,7 +9,7 @@ import {
   getAgentsByUserId, getAgentsByCompanyId, getAgentById, createAgent, updateAgentStatus, updateAgent, deleteAgent,
   getOkrsByUserId, getOkrsByCompanyId, createOkr, updateOkrProgress, deleteOkr,
   getTasksByUserId, getTasksByCompanyId, getTaskById, createTask, updateTask,
-  getPooReceiptsByUserId, createPooReceipt, getPooSummaryByUserId,
+  getPooReceiptsByUserId, getPooReceiptByNumber, createPooReceipt, getPooSummaryByUserId,
   getInboxItemsByUserId, createInboxItem, resolveInboxItem, dismissInboxItem, markInboxItemRead,
   getMarketplaceListings, getMarketplaceListingById, createMarketplaceListing,
   getCreatorPartnerships, createCreatorPartnership,
@@ -314,6 +314,21 @@ const tasksRouter = router({
 const pooRouter = router({
   list: protectedProcedure.query(({ ctx }) => getPooReceiptsByUserId(ctx.user.id)),
   summary: protectedProcedure.query(({ ctx }) => getPooSummaryByUserId(ctx.user.id)),
+  getByNumber: publicProcedure.input(z.object({ receiptNumber: z.string().min(1) })).query(async ({ input }) => {
+    const receipt = await getPooReceiptByNumber(input.receiptNumber);
+    if (!receipt) return null;
+    return {
+      receiptNumber: receipt.receiptNumber,
+      taskTitle: receipt.taskTitle,
+      outcome: receipt.outcome,
+      laborHoursSaved: receipt.laborHoursSaved,
+      dollarValueCreated: receipt.dollarValueCreated,
+      costIncurred: receipt.costIncurred,
+      hourlyRateBenchmark: receipt.hourlyRateBenchmark,
+      verificationStatus: receipt.verificationStatus,
+      createdAt: receipt.createdAt,
+    };
+  }),
 });
 
 // ─── Inbox Router ────────────────────────────────────────────────────────────
@@ -619,6 +634,29 @@ const paymentsRouter = router({
       type: p.type,
       tier: p.tier,
     }));
+  }),
+  history: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const { getStripe } = await import("./stripe/checkout");
+      const stripe = getStripe();
+      const sessions = await stripe.checkout.sessions.list({
+        limit: 50,
+      });
+      const userSessions = sessions.data.filter(
+        s => s.metadata?.user_id === ctx.user.id.toString() && s.status === "complete"
+      );
+      return userSessions.map(s => ({
+        id: s.id,
+        amount: s.amount_total ?? 0,
+        currency: s.currency ?? "usd",
+        status: s.payment_status,
+        productKey: s.metadata?.product_key ?? "unknown",
+        tier: s.metadata?.tier ?? "unknown",
+        createdAt: new Date((s.created ?? 0) * 1000).toISOString(),
+      }));
+    } catch {
+      return [];
+    }
   }),
 });
 

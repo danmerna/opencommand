@@ -3,12 +3,10 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, AlertTriangle, ArrowRight, Loader2,
-  Shield, Layers, Plug, Zap, Globe, BarChart3, RefreshCw,
+  Shield, Layers, Plug, Zap, RefreshCw,
 } from "lucide-react";
 
 type CompatResult = {
@@ -27,12 +25,11 @@ export default function CompatibilityChecker() {
   const { isAuthenticated } = useAuth();
   const [selectedBlueprintId, setSelectedBlueprintId] = useState<number | null>(null);
   const [result, setResult] = useState<CompatResult | null>(null);
+  const [checkLoading, setCheckLoading] = useState(false);
 
   const blueprintsQ = trpc.blueprints.list.useQuery(undefined, { enabled: isAuthenticated });
   const connectionsQ = trpc.hub.connections.useQuery(undefined, { enabled: isAuthenticated });
   const categoriesQ = trpc.hub.categories.useQuery();
-  // Use a manual fetch approach since checkForBlueprint is a query, not a mutation
-  const [checkLoading, setCheckLoading] = useState(false);
 
   const blueprints = blueprintsQ.data ?? [];
   const connections = connectionsQ.data ?? [];
@@ -45,15 +42,11 @@ export default function CompatibilityChecker() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <Shield className="w-16 h-16 text-red-600 mx-auto mb-4" />
-          <h1 className="text-4xl font-black text-white uppercase tracking-tight mb-4">COMPATIBILITY CHECKER</h1>
-          <p className="text-zinc-400 mb-6">Verify your tool stack meets blueprint requirements before deployment</p>
-          <a href={getLoginUrl()}>
-            <Button className="bg-red-600 hover:bg-red-700 text-white font-bold uppercase">Sign In</Button>
-          </a>
-        </div>
+      <div className="flex flex-col items-center justify-center h-full gap-6 p-6">
+        <Shield size={32} className="text-muted-foreground opacity-50" />
+        <h1 className="text-2xl font-light text-foreground">Compatibility Checker</h1>
+        <p className="text-muted-foreground text-sm">Verify your tool stack meets blueprint requirements.</p>
+        <a href={getLoginUrl()}><Button>Sign In</Button></a>
       </div>
     );
   }
@@ -61,7 +54,6 @@ export default function CompatibilityChecker() {
   const runCheck = (blueprintId: number) => {
     setSelectedBlueprintId(blueprintId);
     setCheckLoading(true);
-    // Simulate compatibility check using local data
     const bp = blueprints.find(b => b.id === blueprintId);
     if (!bp) { setCheckLoading(false); return; }
     const requiredCats = (bp.category ? [bp.category] : []).concat(["CRM", "Analytics", "Communication"]);
@@ -85,242 +77,184 @@ export default function CompatibilityChecker() {
     }, 800);
   };
 
-  const scoreColor = (score: number) => score >= 80 ? "text-green-500" : score >= 50 ? "text-yellow-500" : "text-red-500";
-  const scoreBg = (score: number) => score >= 80 ? "bg-green-900/20 border-green-800" : score >= 50 ? "bg-yellow-900/20 border-yellow-800" : "bg-red-900/20 border-red-800";
+  const scoreColor = (score: number) => score >= 80 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <div className="border-b border-zinc-800 px-6 py-6">
-        <div className="flex items-center gap-3 mb-2">
-          <Shield className="w-8 h-8 text-red-600" />
-          <h1 className="text-3xl font-black uppercase tracking-tight">COMPATIBILITY CHECKER</h1>
-        </div>
-        <p className="text-zinc-400 text-sm">
-          Verify your connected tool stack against blueprint requirements — identify gaps before deployment
-        </p>
-        <div className="h-[2px] bg-red-600 mt-4" />
+    <div className="p-6 max-w-6xl mx-auto">
+      <div className="mb-8">
+        <p className="text-xs text-muted-foreground tracking-widest uppercase mb-2">OpenCommand</p>
+        <h1 className="text-4xl font-light text-foreground tracking-tight">Compatibility Checker</h1>
+        <p className="text-muted-foreground text-sm mt-2">Verify your connected tool stack against blueprint requirements before deployment.</p>
       </div>
 
-      <div className="px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Blueprint Selector */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase text-zinc-400 tracking-wide">SELECT BLUEPRINT</h3>
-              <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-[10px]">
-                {blueprints.length} available
-              </Badge>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Blueprint Selector */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground tracking-widest uppercase">Select Blueprint</span>
+            <span className="text-xs text-muted-foreground">{blueprints.length} available</span>
+          </div>
 
-            {blueprints.length === 0 ? (
-              <Card className="bg-zinc-950 border border-zinc-800">
-                <CardContent className="py-8 text-center">
-                  <Layers className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-                  <p className="text-zinc-500 text-sm">No blueprints found. Create one in the Blueprint Builder.</p>
-                </CardContent>
-              </Card>
+          {blueprints.length === 0 ? (
+            <div className="card-minimal p-8 text-center">
+              <Layers size={24} className="text-muted-foreground mx-auto mb-3 opacity-40" />
+              <p className="text-muted-foreground text-sm">No blueprints found. Create one in the Blueprint Builder.</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[500px] overflow-y-auto">
+              {blueprints.map(bp => (
+                <div
+                  key={bp.id}
+                  className={`card-minimal p-3 cursor-pointer transition-colors hover:border-foreground/20 ${selectedBlueprintId === bp.id ? "border-foreground/40" : ""}`}
+                  onClick={() => runCheck(bp.id)}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-foreground truncate">{bp.name}</span>
+                    <span className="text-[10px] text-muted-foreground border border-border px-1.5 rounded">{bp.category}</span>
+                  </div>
+                  <p className="text-muted-foreground text-xs truncate">{bp.description}</p>
+                  <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
+                    <span>{bp.totalDeployments ?? 0} deployments</span>
+                    <span>v{bp.version}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Your Connected Tools */}
+          <div className="card-minimal p-4">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+              <Plug size={12} /> <span className="tracking-widest uppercase">Your Tool Stack</span>
+            </div>
+            {connectedCatNames.length === 0 ? (
+              <p className="text-muted-foreground text-xs">No tools connected. Visit the Integration Hub.</p>
             ) : (
-              <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                {blueprints.map((bp) => (
-                  <Card
-                    key={bp.id}
-                    className={`bg-zinc-950 border cursor-pointer transition-colors hover:border-zinc-600 ${selectedBlueprintId === bp.id ? "border-red-800" : "border-zinc-800"}`}
-                    onClick={() => runCheck(bp.id)}
-                  >
-                    <CardContent className="py-3 px-4">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-bold text-white text-sm truncate">{bp.name}</h4>
-                        <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-[10px] uppercase">{bp.category}</Badge>
-                      </div>
-                      <p className="text-zinc-500 text-xs truncate">{bp.description}</p>
-                      <div className="flex items-center gap-2 mt-2 text-[10px] text-zinc-600">
-                        <span>{bp.totalDeployments ?? 0} deployments</span>
-                        <span>v{bp.version}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+              <div className="space-y-1">
+                {connectedCatNames.map(name => (
+                  <div key={name} className="flex items-center gap-2 text-xs">
+                    <CheckCircle2 size={10} className="text-emerald-400" />
+                    <span className="text-foreground font-mono">{name}</span>
+                  </div>
                 ))}
               </div>
             )}
-
-            {/* Your Connected Tools */}
-            <Card className="bg-zinc-950 border border-zinc-800">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-bold uppercase text-zinc-400 flex items-center gap-1">
-                  <Plug className="w-4 h-4" /> Your Tool Stack
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {connectedCatNames.length === 0 ? (
-                  <p className="text-zinc-600 text-xs">No tools connected. Visit the Integration Hub to connect tools.</p>
-                ) : (
-                  <div className="space-y-1">
-                    {connectedCatNames.map((name) => (
-                      <div key={name} className="flex items-center gap-2 text-xs">
-                        <CheckCircle2 className="w-3 h-3 text-green-500" />
-                        <span className="text-zinc-300 font-mono uppercase">{name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
+        </div>
 
-          {/* Right: Results */}
-          <div className="lg:col-span-2">
-            {checkLoading ? (
-              <Card className="bg-zinc-950 border border-zinc-800">
-                <CardContent className="py-16 text-center">
-                  <Loader2 className="w-12 h-12 text-red-600 mx-auto mb-4 animate-spin" />
-                  <h3 className="text-lg font-bold text-white uppercase mb-2">ANALYZING COMPATIBILITY</h3>
-                  <p className="text-zinc-500 text-sm">Checking your tool stack against blueprint requirements...</p>
-                </CardContent>
-              </Card>
-            ) : result ? (
-              <div className="space-y-4">
-                {/* Score Card */}
-                <Card className={`border ${scoreBg(result.overallScore)}`}>
-                  <CardContent className="py-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-xl font-black text-white uppercase">{result.blueprintName}</h3>
-                        <p className="text-zinc-400 text-sm mt-1">Compatibility Analysis</p>
-                      </div>
-                      <div className="text-right">
-                        <div className={`text-5xl font-black ${scoreColor(result.overallScore)}`}>
-                          {result.overallScore}%
-                        </div>
-                        <div className="flex items-center gap-1 mt-1">
-                          {result.canDeploy ? (
-                            <Badge className="bg-green-900/50 text-green-400 border-green-800 text-xs">
-                              <CheckCircle2 className="w-3 h-3 mr-1" /> DEPLOY READY
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-red-900/50 text-red-400 border-red-800 text-xs">
-                              <XCircle className="w-3 h-3 mr-1" /> NOT READY
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
+        {/* Right: Results */}
+        <div className="lg:col-span-2">
+          {checkLoading ? (
+            <div className="card-minimal p-16 text-center">
+              <Loader2 size={24} className="text-foreground mx-auto mb-4 animate-spin" />
+              <p className="text-foreground text-sm mb-1">Analyzing Compatibility</p>
+              <p className="text-muted-foreground text-xs">Checking your tool stack against blueprint requirements...</p>
+            </div>
+          ) : result ? (
+            <div className="space-y-4">
+              {/* Score Card */}
+              <div className="card-minimal p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-light text-foreground">{result.blueprintName}</h3>
+                    <p className="text-muted-foreground text-sm mt-1">Compatibility Analysis</p>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-5xl font-light ${scoreColor(result.overallScore)}`}>{result.overallScore}%</div>
+                    <div className="mt-1">
+                      {result.canDeploy ? (
+                        <span className="text-xs text-emerald-400 flex items-center gap-1 justify-end"><CheckCircle2 size={10} /> Deploy Ready</span>
+                      ) : (
+                        <span className="text-xs text-red-400 flex items-center gap-1 justify-end"><XCircle size={10} /> Not Ready</span>
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+              </div>
 
-                {/* Category Breakdown */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* Connected */}
-                  <Card className="bg-zinc-950 border border-green-900/50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-xs font-bold uppercase text-green-500 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Connected ({result.connectedCategories.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {result.connectedCategories.length === 0 ? (
-                        <p className="text-zinc-600 text-xs">None</p>
-                      ) : (
-                        <div className="space-y-1">
-                          {result.connectedCategories.map((cat) => (
-                            <div key={cat} className="text-xs text-green-400 font-mono uppercase">{cat}</div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Missing */}
-                  <Card className="bg-zinc-950 border border-red-900/50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-xs font-bold uppercase text-red-500 flex items-center gap-1">
-                        <XCircle className="w-3 h-3" /> Missing ({result.missingCategories.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {result.missingCategories.length === 0 ? (
-                        <p className="text-zinc-600 text-xs">None — all covered</p>
-                      ) : (
-                        <div className="space-y-1">
-                          {result.missingCategories.map((cat) => (
-                            <div key={cat} className="text-xs text-red-400 font-mono uppercase">{cat}</div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Partial */}
-                  <Card className="bg-zinc-950 border border-yellow-900/50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-xs font-bold uppercase text-yellow-500 flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" /> Partial ({result.partialCategories.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {result.partialCategories.length === 0 ? (
-                        <p className="text-zinc-600 text-xs">None</p>
-                      ) : (
-                        <div className="space-y-1">
-                          {result.partialCategories.map((cat) => (
-                            <div key={cat} className="text-xs text-yellow-400 font-mono uppercase">{cat}</div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+              {/* Category Breakdown */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="card-minimal p-4 border-emerald-500/20">
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-400 mb-3">
+                    <CheckCircle2 size={10} /> Connected ({result.connectedCategories.length})
+                  </div>
+                  {result.connectedCategories.length === 0 ? (
+                    <p className="text-muted-foreground text-xs">None</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {result.connectedCategories.map(cat => <div key={cat} className="text-xs text-emerald-400 font-mono">{cat}</div>)}
+                    </div>
+                  )}
                 </div>
 
-                {/* Recommendations */}
-                {result.recommendations.length > 0 && (
-                  <Card className="bg-zinc-950 border border-zinc-800">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-bold uppercase text-zinc-400 flex items-center gap-1">
-                        <Zap className="w-4 h-4 text-red-600" /> Recommendations
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {result.recommendations.map((rec, i) => (
-                          <div key={i} className="flex items-start gap-2 text-sm text-zinc-300">
-                            <ArrowRight className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
-                            <span>{rec}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-3">
-                  {result.canDeploy && (
-                    <Button className="bg-red-600 hover:bg-red-700 text-white font-bold uppercase" onClick={() => toast.success("Redirecting to deploy flow...")}>
-                      <Zap className="w-4 h-4 mr-2" /> Deploy Blueprint
-                    </Button>
+                <div className="card-minimal p-4 border-red-500/20">
+                  <div className="flex items-center gap-1.5 text-xs text-red-400 mb-3">
+                    <XCircle size={10} /> Missing ({result.missingCategories.length})
+                  </div>
+                  {result.missingCategories.length === 0 ? (
+                    <p className="text-muted-foreground text-xs">None — all covered</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {result.missingCategories.map(cat => <div key={cat} className="text-xs text-red-400 font-mono">{cat}</div>)}
+                    </div>
                   )}
-                  <Button variant="outline" className="border-zinc-700 text-zinc-300 font-bold uppercase" onClick={() => runCheck(result.blueprintId)}>
-                    <RefreshCw className="w-4 h-4 mr-2" /> Re-Check
-                  </Button>
-                  {result.missingCategories.length > 0 && (
-                    <Button variant="outline" className="border-zinc-700 text-zinc-300 font-bold uppercase" onClick={() => toast.success("Opening Integration Hub...")}>
-                      <Plug className="w-4 h-4 mr-2" /> Connect Missing Tools
-                    </Button>
+                </div>
+
+                <div className="card-minimal p-4 border-amber-500/20">
+                  <div className="flex items-center gap-1.5 text-xs text-amber-400 mb-3">
+                    <AlertTriangle size={10} /> Partial ({result.partialCategories.length})
+                  </div>
+                  {result.partialCategories.length === 0 ? (
+                    <p className="text-muted-foreground text-xs">None</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {result.partialCategories.map(cat => <div key={cat} className="text-xs text-amber-400 font-mono">{cat}</div>)}
+                    </div>
                   )}
                 </div>
               </div>
-            ) : (
-              <Card className="bg-zinc-950 border border-zinc-800">
-                <CardContent className="py-16 text-center">
-                  <Shield className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-                  <h3 className="text-lg font-bold text-white uppercase mb-2">SELECT A BLUEPRINT</h3>
-                  <p className="text-zinc-500 text-sm max-w-md mx-auto">
-                    Choose a blueprint from the left panel to check if your connected tool stack meets its requirements for deployment.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+
+              {/* Recommendations */}
+              {result.recommendations.length > 0 && (
+                <div className="card-minimal p-4">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                    <Zap size={12} /> <span className="tracking-widest uppercase">Recommendations</span>
+                  </div>
+                  <div className="space-y-2">
+                    {result.recommendations.map((rec, i) => (
+                      <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <ArrowRight size={12} className="mt-0.5 shrink-0 text-foreground" />
+                        <span>{rec}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                {result.canDeploy && (
+                  <Button onClick={() => toast.success("Redirecting to deploy flow...")} className="gap-2">
+                    <Zap size={14} /> Deploy Blueprint
+                  </Button>
+                )}
+                <Button variant="outline" onClick={() => runCheck(result.blueprintId)} className="gap-2">
+                  <RefreshCw size={14} /> Re-Check
+                </Button>
+                {result.missingCategories.length > 0 && (
+                  <Button variant="outline" onClick={() => window.location.href = "/integrations"} className="gap-2">
+                    <Plug size={14} /> Connect Missing Tools
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="card-minimal p-16 text-center">
+              <Shield size={28} className="text-muted-foreground mx-auto mb-3 opacity-40" />
+              <p className="text-foreground text-sm mb-1">Select a Blueprint</p>
+              <p className="text-muted-foreground text-xs max-w-md mx-auto">Choose a blueprint from the left panel to check if your connected tool stack meets its requirements.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

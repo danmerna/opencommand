@@ -182,3 +182,36 @@
 - [x] Raw request and enriched output comparison
 - [x] Filter by date range and inferred category
 - [x] Route and navigation entry
+
+## v3.2 — Minimal Theme Redesign, Payment History, Public PoO Receipt
+
+### Theme Redesign (inspired by davidprotein.com)
+- [x] Analyze davidprotein.com design language (typography, spacing, color, layout)
+- [x] Rewrite index.css with minimal dark design tokens (Inter font, subtle borders, warm accents)
+- [x] Redesign AppLayout sidebar to minimal aesthetic
+- [x] Redesign Home landing page to minimal style
+- [x] Retheme MissionControl page
+- [x] Retheme IntentEngine page
+- [x] Retheme AICeo page
+- [x] Retheme Blueprints page
+- [x] Retheme Marketplace page
+- [x] Retheme CreatorProgram page
+- [x] Retheme Governance page
+- [x] Retheme IntegrationHub page
+- [x] Retheme CompatibilityChecker page
+- [x] Retheme ContextHistory page
+- [x] Retheme BlueprintDashboard page
+
+### Payment History Page
+- [x] Payment History page at /payments
+- [x] List user's past Stripe purchases with date, amount, status
+- [x] Subscription status display
+- [x] Backend router to fetch payment data from Stripe API
+- [x] Route and navigation entry
+
+### Public PoO Receipt Viewer
+- [x] Public PoO Receipt page at /receipt/:receiptNumber (no auth required)
+- [x] Shareable receipt layout showing task, outcome, value created, labor saved
+- [x] Verification badge and timestamp
+- [x] Backend public procedure to fetch receipt by receiptNumber
+- [x] Copy link button for sharing (OG tags require SSR — noted for future)

@@ -230,6 +230,12 @@ export async function getPooReceiptsByUserId(userId: number) {
   const db = await getDb(); if (!db) return [];
   return db.select().from(pooReceipts).where(eq(pooReceipts.userId, userId)).orderBy(desc(pooReceipts.createdAt));
 }
+
+export async function getPooReceiptByNumber(receiptNumber: string) {
+  const db = await getDb(); if (!db) return null;
+  const result = await db.select().from(pooReceipts).where(eq(pooReceipts.receiptNumber, receiptNumber)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
 export async function createPooReceipt(data: InsertPooReceipt) {
   const db = await getDb(); if (!db) throw new Error("Database not available");
   return db.insert(pooReceipts).values(data);

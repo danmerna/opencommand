@@ -4,8 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Send, Zap, Play, FileText, Clock, ChevronRight, RotateCcw, Cpu,
-  Layers, ArrowRight, CheckCircle2, AlertTriangle, Globe, Plug, Loader2,
-  Brain, Eye, Sparkles, Database,
+  Layers, ArrowRight, CheckCircle2, Globe, Plug, Brain, Eye, Sparkles, Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +34,6 @@ export default function IntentEngine() {
   const [contextId, setContextId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Task creation state
   const [taskTitle, setTaskTitle] = useState("");
   const [taskRouting, setTaskRouting] = useState<"ai" | "human" | "hybrid">("ai");
   const [taskPriority, setTaskPriority] = useState<"low" | "medium" | "high" | "critical">("medium");
@@ -59,7 +57,7 @@ export default function IntentEngine() {
       utils.poo.list.invalidate();
       utils.poo.summary.invalidate();
       utils.inbox.list.invalidate();
-      toast.success(`Task executed! $${data.dollarValueCreated.toFixed(2)} value created`);
+      toast.success(`Task executed — $${data.dollarValueCreated.toFixed(2)} value created`);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -84,22 +82,18 @@ export default function IntentEngine() {
     setIsThinking(true);
 
     try {
-      // Step 1: INTERPRET — LLM analyzes the request
       setContextPhase("interpreting");
       const interpretResult = await interpretMut.mutateAsync({ requestText: userMsg.content });
       setContextId(interpretResult.contextId);
 
-      // Step 2: GATHER — Pull live state from connected tools
       setContextPhase("gathering");
-      const gatherResult = await gatherMut.mutateAsync({ contextId: interpretResult.contextId });
+      await gatherMut.mutateAsync({ contextId: interpretResult.contextId });
 
-      // Step 3: CONTEXTUALIZE — Enrich with real data
       setContextPhase("contextualizing");
       const contextResult = await contextualizeMut.mutateAsync({ contextId: interpretResult.contextId });
       setContextData(contextResult);
       setContextPhase("ready");
 
-      // Now run the Socratic engine with enriched context
       const result = await socratiqueQ.mutateAsync({
         userInput: `[CONTEXT-ENRICHED] ${userMsg.content}\n\n[Connected Tools: ${connectedCategories.map(c => c.name).join(", ") || "None"}]\n[Context Confidence: ${contextResult.confidence}]\n[Inferred Categories: ${(interpretResult as any).inferredCategories?.join(", ") || "general"}]`,
         conversationHistory: messages,
@@ -107,10 +101,9 @@ export default function IntentEngine() {
       setMessages([...newMessages, { role: "assistant", content: result.response }]);
       if (result.intentObject) {
         setIntentObject(result.intentObject as IntentObject);
-        toast.success("Intent object structured — context-enriched and ready to deploy");
+        toast.success("Intent object structured — ready to deploy");
       }
-    } catch (e) {
-      // Fallback to basic Socratic without context
+    } catch {
       try {
         const result = await socratiqueQ.mutateAsync({ userInput: userMsg.content, conversationHistory: messages });
         setMessages([...newMessages, { role: "assistant", content: result.response }]);
@@ -140,46 +133,46 @@ export default function IntentEngine() {
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
 
   const PHASE_LABELS: Record<ContextPhase, { label: string; icon: React.ReactNode; color: string }> = {
-    idle: { label: "AWAITING INPUT", icon: <Brain className="w-3 h-3" />, color: "text-zinc-500" },
-    interpreting: { label: "INTERPRETING INTENT", icon: <Eye className="w-3 h-3 animate-pulse" />, color: "text-yellow-500" },
-    gathering: { label: "GATHERING CONTEXT", icon: <Database className="w-3 h-3 animate-pulse" />, color: "text-blue-400" },
-    contextualizing: { label: "CONTEXTUALIZING", icon: <Sparkles className="w-3 h-3 animate-pulse" />, color: "text-purple-400" },
-    ready: { label: "CONTEXT READY", icon: <CheckCircle2 className="w-3 h-3" />, color: "text-green-500" },
+    idle: { label: "Awaiting input", icon: <Brain className="w-3 h-3" />, color: "text-muted-foreground" },
+    interpreting: { label: "Interpreting intent", icon: <Eye className="w-3 h-3 animate-pulse" />, color: "text-yellow-500" },
+    gathering: { label: "Gathering context", icon: <Database className="w-3 h-3 animate-pulse" />, color: "text-blue-400" },
+    contextualizing: { label: "Contextualizing", icon: <Sparkles className="w-3 h-3 animate-pulse" />, color: "text-purple-400" },
+    ready: { label: "Context ready", icon: <CheckCircle2 className="w-3 h-3" />, color: "text-emerald-400" },
   };
 
+  const priorityStyle = (p: string) =>
+    p === "critical" ? "text-red-400 border-red-400/30" : p === "high" ? "text-amber-400 border-amber-400/30" : p === "medium" ? "text-blue-400 border-blue-400/30" : "text-zinc-400 border-zinc-600";
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <div className="section-label mb-2">OPENCOMMAND</div>
-        <div className="red-line mb-4" />
-        <h1 className="text-display text-6xl text-foreground">INTENT ENGINE</h1>
-        <p className="text-muted-foreground text-sm mt-2 font-mono">SELF-CONTEXTUALIZING · SOCRATIC QUESTIONING · AUTONOMOUS EXECUTION</p>
+        <p className="text-xs text-muted-foreground tracking-widest uppercase mb-1">OpenCommand</p>
+        <h1 className="text-3xl font-light text-foreground tracking-tight">Intent Engine</h1>
+        <p className="text-sm text-muted-foreground mt-1">Self-contextualizing · Socratic questioning · Autonomous execution</p>
 
-        {/* Context Pipeline Status Bar */}
-        <div className="mt-4 flex items-center gap-4 p-3 bg-zinc-950 border border-zinc-800 rounded">
-          <div className="flex items-center gap-6">
-            {(["interpreting", "gathering", "contextualizing"] as const).map((phase, i) => {
-              const isActive = contextPhase === phase;
-              const isDone = (["interpreting", "gathering", "contextualizing"].indexOf(contextPhase) > i) || contextPhase === "ready";
-              return (
-                <div key={phase} className="flex items-center gap-2">
-                  {i > 0 && <ArrowRight className={`w-3 h-3 ${isDone ? "text-green-500" : "text-zinc-700"}`} />}
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold uppercase ${isActive ? "bg-zinc-800 " + PHASE_LABELS[phase].color : isDone ? "text-green-500" : "text-zinc-600"}`}>
-                    {isDone && !isActive ? <CheckCircle2 className="w-3 h-3" /> : PHASE_LABELS[phase].icon}
-                    {phase === "interpreting" ? "INTERPRET" : phase === "gathering" ? "GATHER" : "CONTEXTUALIZE"}
-                  </div>
+        {/* Context Pipeline Status */}
+        <div className="mt-5 flex items-center gap-3 p-3 rounded-lg border border-border bg-card/50">
+          {(["interpreting", "gathering", "contextualizing"] as const).map((phase, i) => {
+            const isActive = contextPhase === phase;
+            const isDone = (["interpreting", "gathering", "contextualizing"].indexOf(contextPhase) > i) || contextPhase === "ready";
+            return (
+              <div key={phase} className="flex items-center gap-2">
+                {i > 0 && <ArrowRight className={`w-3 h-3 ${isDone ? "text-emerald-400" : "text-zinc-700"}`} />}
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${isActive ? "bg-zinc-800 " + PHASE_LABELS[phase].color : isDone ? "text-emerald-400" : "text-zinc-600"}`}>
+                  {isDone && !isActive ? <CheckCircle2 className="w-3 h-3" /> : PHASE_LABELS[phase].icon}
+                  {phase === "interpreting" ? "Interpret" : phase === "gathering" ? "Gather" : "Contextualize"}
                 </div>
-              );
-            })}
-          </div>
-          <div className="ml-auto flex items-center gap-3">
+              </div>
+            );
+          })}
+          <div className="ml-auto flex items-center gap-2">
             <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-[10px]">
-              <Plug className="w-3 h-3 mr-1" /> {connectedCount} TOOLS
+              <Plug className="w-3 h-3 mr-1" /> {connectedCount} tools
             </Badge>
             {contextData?.confidence && (
-              <Badge variant="outline" className={`border-zinc-700 text-[10px] ${contextData.confidence > 0.7 ? "text-green-400" : contextData.confidence > 0.4 ? "text-yellow-400" : "text-red-400"}`}>
-                {(contextData.confidence * 100).toFixed(0)}% CONFIDENCE
+              <Badge variant="outline" className={`border-zinc-700 text-[10px] ${contextData.confidence > 0.7 ? "text-emerald-400" : contextData.confidence > 0.4 ? "text-yellow-400" : "text-red-400"}`}>
+                {(contextData.confidence * 100).toFixed(0)}% confidence
               </Badge>
             )}
           </div>
@@ -189,13 +182,13 @@ export default function IntentEngine() {
       {/* Mode Toggle */}
       <div className="flex border-b border-border mb-6">
         {[
-          { id: "socratic" as const, label: "SOCRATIC ENGINE", icon: Cpu },
-          { id: "tasks" as const, label: "TASK EXECUTION", icon: Play },
+          { id: "socratic" as const, label: "Socratic Engine", icon: Cpu },
+          { id: "tasks" as const, label: "Task Execution", icon: Play },
         ].map(m => (
           <button
             key={m.id}
             onClick={() => setMode(m.id)}
-            className={`flex items-center gap-2 px-5 py-3 font-condensed font-bold text-sm uppercase tracking-wide transition-colors border-b-2 -mb-px ${mode === m.id ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${mode === m.id ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
           >
             <m.icon size={14} /> {m.label}
           </button>
@@ -205,38 +198,35 @@ export default function IntentEngine() {
       {/* Socratic Mode */}
       {mode === "socratic" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chat */}
           <div className="lg:col-span-2 flex flex-col">
-            <div className="brutal-card flex-1 flex flex-col" style={{ minHeight: "500px" }}>
-              {/* Chat header */}
+            <div className="card-minimal flex-1 flex flex-col" style={{ minHeight: "500px" }}>
               <div className="p-4 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-accent flex items-center justify-center">
-                    <span className="font-condensed font-black text-foreground text-xs">AI</span>
+                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                    <span className="text-xs font-semibold text-foreground">AI</span>
                   </div>
                   <div>
-                    <div className="font-condensed font-bold text-sm text-foreground">ARIA — SELF-CONTEXTUALIZING ENGINE</div>
-                    <div className={`section-label flex items-center gap-1 ${PHASE_LABELS[contextPhase].color}`}>
+                    <div className="text-sm font-medium text-foreground">ARIA — Self-Contextualizing Engine</div>
+                    <div className={`text-[10px] flex items-center gap-1 ${PHASE_LABELS[contextPhase].color}`}>
                       {PHASE_LABELS[contextPhase].icon} {PHASE_LABELS[contextPhase].label}
                     </div>
                   </div>
                 </div>
-                <button onClick={() => { setMessages([]); setIntentObject(null); setContextPhase("idle"); setContextData(null); setContextId(null); }} className="text-muted-foreground hover:text-foreground transition-colors">
+                <button onClick={() => { setMessages([]); setIntentObject(null); setContextPhase("idle"); setContextData(null); setContextId(null); }} className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-md hover:bg-zinc-800">
                   <RotateCcw size={14} />
                 </button>
               </div>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ maxHeight: "400px" }}>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ maxHeight: "400px" }}>
                 {messages.length === 0 && (
                   <div className="text-center py-12">
-                    <Cpu size={32} className="text-muted-foreground mx-auto mb-4" />
-                    <div className="font-condensed font-bold text-lg text-muted-foreground mb-2">DESCRIBE YOUR GOAL</div>
+                    <Cpu size={28} className="text-muted-foreground mx-auto mb-4 opacity-50" />
+                    <div className="text-base font-medium text-muted-foreground mb-2">Describe your goal</div>
                     <p className="text-muted-foreground text-sm max-w-sm mx-auto">ARIA will interpret your intent, gather context from {connectedCount} connected tools, and produce a precision-enriched execution plan.</p>
-                    <div className="mt-6 space-y-2">
+                    <div className="mt-6 space-y-2 max-w-md mx-auto">
                       {["I want to grow my email list by 50% this quarter", "Help me close the 3 stalled deals in my pipeline", "Automate my weekly content calendar across all channels"].map(s => (
-                        <button key={s} onClick={() => setInput(s)} className="block w-full text-left px-4 py-2 border border-border text-muted-foreground hover:border-accent hover:text-foreground font-mono text-xs transition-colors">
-                          <ChevronRight size={10} className="inline mr-2" />{s}
+                        <button key={s} onClick={() => setInput(s)} className="block w-full text-left px-4 py-2.5 rounded-lg border border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground text-xs transition-all">
+                          <ChevronRight size={10} className="inline mr-2 opacity-50" />{s}
                         </button>
                       ))}
                     </div>
@@ -244,25 +234,23 @@ export default function IntentEngine() {
                 )}
                 {messages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[85%] ${msg.role === "user" ? "bg-accent/10 border border-accent/30" : "bg-secondary border border-border"} p-3`}>
+                    <div className={`max-w-[85%] rounded-lg px-4 py-3 ${msg.role === "user" ? "bg-zinc-800 border border-zinc-700" : "bg-card border border-border"}`}>
                       {msg.role === "assistant" ? (
-                        <div className="text-sm text-foreground font-sans leading-relaxed">
-                          <Streamdown>{msg.content}</Streamdown>
-                        </div>
+                        <div className="text-sm text-foreground leading-relaxed"><Streamdown>{msg.content}</Streamdown></div>
                       ) : (
-                        <p className="text-sm text-foreground font-sans">{msg.content}</p>
+                        <p className="text-sm text-foreground">{msg.content}</p>
                       )}
                     </div>
                   </div>
                 ))}
                 {isThinking && (
                   <div className="flex justify-start">
-                    <div className="bg-secondary border border-border p-3">
-                      <div className="flex items-center gap-2 mb-2">
+                    <div className="bg-card border border-border rounded-lg px-4 py-3">
+                      <div className="flex items-center gap-2 mb-1">
                         <div className="flex gap-1">
-                          {[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 bg-accent animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
+                          {[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-foreground/50 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
                         </div>
-                        <span className={`section-label ${PHASE_LABELS[contextPhase].color}`}>{PHASE_LABELS[contextPhase].label}</span>
+                        <span className={`text-[10px] ${PHASE_LABELS[contextPhase].color}`}>{PHASE_LABELS[contextPhase].label}</span>
                       </div>
                       {contextPhase === "gathering" && connectedCategories.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
@@ -279,18 +267,17 @@ export default function IntentEngine() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
               <div className="p-4 border-t border-border">
                 <div className="flex gap-3">
                   <Textarea
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                    placeholder="Describe your goal — ARIA will self-contextualize from your connected tools..."
-                    className="flex-1 bg-input border-border text-foreground font-sans text-sm resize-none"
+                    placeholder="Describe your goal — ARIA will self-contextualize..."
+                    className="flex-1 bg-zinc-900 border-border text-foreground text-sm resize-none rounded-lg"
                     rows={2}
                   />
-                  <Button onClick={sendMessage} disabled={!input.trim() || isThinking} className="bg-accent text-foreground hover:bg-accent/80 self-end px-4">
+                  <Button onClick={sendMessage} disabled={!input.trim() || isThinking} size="sm" className="self-end px-4">
                     <Send size={16} />
                   </Button>
                 </div>
@@ -298,23 +285,22 @@ export default function IntentEngine() {
             </div>
           </div>
 
-          {/* Right Panel: Intent Object + Context Data */}
+          {/* Right Panel */}
           <div className="space-y-4">
-            {/* Context Object */}
             {contextData && (
-              <div className="brutal-card p-4 space-y-3">
+              <div className="card-minimal p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="section-label flex items-center gap-1">
-                    <Layers className="w-3 h-3 text-red-500" /> CONTEXT OBJECT
+                  <div className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                    <Layers className="w-3 h-3" /> Context Object
                   </div>
-                  <Badge variant="outline" className={`text-[10px] ${contextData.confidence > 0.7 ? "border-green-800 text-green-400" : "border-yellow-800 text-yellow-400"}`}>
+                  <Badge variant="outline" className={`text-[10px] ${contextData.confidence > 0.7 ? "border-emerald-800 text-emerald-400" : "border-yellow-800 text-yellow-400"}`}>
                     {(contextData.confidence * 100).toFixed(0)}%
                   </Badge>
                 </div>
-                <div className="red-line-thin" />
+                <div className="h-px bg-border" />
                 {contextData.inferredCategories && (
                   <div>
-                    <div className="section-label mb-1 text-[9px]">INFERRED CATEGORIES</div>
+                    <div className="text-[10px] text-muted-foreground mb-1 font-medium">Inferred Categories</div>
                     <div className="flex flex-wrap gap-1">
                       {(contextData.inferredCategories as string[]).map((cat: string) => (
                         <Badge key={cat} variant="outline" className="border-zinc-700 text-zinc-300 text-[10px] px-1.5 py-0">{cat}</Badge>
@@ -324,16 +310,16 @@ export default function IntentEngine() {
                 )}
                 {contextData.gatheredData && (
                   <div>
-                    <div className="section-label mb-1 text-[9px]">GATHERED DATA SOURCES</div>
-                    <div className="text-xs text-zinc-400 font-mono bg-zinc-950 border border-zinc-800 p-2 rounded max-h-24 overflow-y-auto">
+                    <div className="text-[10px] text-muted-foreground mb-1 font-medium">Gathered Data</div>
+                    <div className="text-xs text-zinc-400 font-mono bg-zinc-950 border border-zinc-800 p-2 rounded-md max-h-24 overflow-y-auto">
                       {typeof contextData.gatheredData === "string" ? contextData.gatheredData : JSON.stringify(contextData.gatheredData, null, 2)}
                     </div>
                   </div>
                 )}
                 {contextData.enrichedParams && (
                   <div>
-                    <div className="section-label mb-1 text-[9px]">ENRICHED PARAMETERS</div>
-                    <div className="text-xs text-zinc-400 font-mono bg-zinc-950 border border-zinc-800 p-2 rounded max-h-24 overflow-y-auto">
+                    <div className="text-[10px] text-muted-foreground mb-1 font-medium">Enriched Parameters</div>
+                    <div className="text-xs text-zinc-400 font-mono bg-zinc-950 border border-zinc-800 p-2 rounded-md max-h-24 overflow-y-auto">
                       {typeof contextData.enrichedParams === "string" ? contextData.enrichedParams : JSON.stringify(contextData.enrichedParams, null, 2)}
                     </div>
                   </div>
@@ -341,69 +327,64 @@ export default function IntentEngine() {
               </div>
             )}
 
-            {/* Intent Object */}
-            <div className="section-label">STRUCTURED INTENT OBJECT</div>
+            <div className="text-xs text-muted-foreground font-medium mb-2">Structured Intent Object</div>
             {intentObject ? (
-              <div className="brutal-border-red p-5 space-y-4">
-                <div className="red-line-thin" />
+              <div className="card-minimal p-5 space-y-4 border-l-2 border-l-foreground">
                 <div>
-                  <div className="section-label mb-1">TITLE</div>
-                  <div className="font-condensed font-bold text-lg text-foreground">{intentObject.title}</div>
+                  <div className="text-[10px] text-muted-foreground mb-1">Title</div>
+                  <div className="text-base font-medium text-foreground">{intentObject.title}</div>
                 </div>
                 <div>
-                  <div className="section-label mb-1">GOAL</div>
+                  <div className="text-[10px] text-muted-foreground mb-1">Goal</div>
                   <p className="text-muted-foreground text-sm">{intentObject.goal}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <div className="section-label mb-1">ROUTING</div>
-                    <span className="font-mono text-xs border border-border px-2 py-1 uppercase text-foreground">{intentObject.routingMode}</span>
+                    <div className="text-[10px] text-muted-foreground mb-1">Routing</div>
+                    <span className="text-xs border border-border rounded px-2 py-0.5 text-foreground">{intentObject.routingMode}</span>
                   </div>
                   <div>
-                    <div className="section-label mb-1">PRIORITY</div>
-                    <span className={`font-mono text-xs border px-2 py-1 uppercase ${intentObject.priority === "critical" ? "tag-missed" : intentObject.priority === "high" ? "tag-at-risk" : "tag-on-track"}`}>{intentObject.priority}</span>
+                    <div className="text-[10px] text-muted-foreground mb-1">Priority</div>
+                    <span className={`text-xs border rounded px-2 py-0.5 ${priorityStyle(intentObject.priority)}`}>{intentObject.priority}</span>
                   </div>
                 </div>
                 <div>
-                  <div className="section-label mb-1">SUCCESS CRITERIA</div>
+                  <div className="text-[10px] text-muted-foreground mb-1">Success Criteria</div>
                   <ul className="space-y-1">
                     {intentObject.successCriteria.map((c, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                        <ChevronRight size={10} className="mt-0.5 text-accent flex-shrink-0" />
-                        {c}
+                        <ChevronRight size={10} className="mt-0.5 text-foreground/50 flex-shrink-0" />{c}
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={12} className="text-muted-foreground" />
-                  <span className="section-label">{intentObject.estimatedHours} HRS ESTIMATED</span>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock size={12} /> {intentObject.estimatedHours} hrs estimated
                 </div>
-                <div className="red-line-thin" />
-                <Button onClick={deployIntent} disabled={createTask.isPending} className="w-full bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase tracking-wide">
+                <div className="h-px bg-border" />
+                <Button onClick={deployIntent} disabled={createTask.isPending} size="sm" className="w-full">
                   <Zap size={14} className="mr-2" />
-                  {createTask.isPending ? "DEPLOYING..." : "DEPLOY AS TASK"}
+                  {createTask.isPending ? "Deploying..." : "Deploy as Task"}
                 </Button>
               </div>
             ) : (
-              <div className="brutal-card p-6 text-center">
-                <FileText size={24} className="text-muted-foreground mx-auto mb-3" />
-                <div className="font-condensed font-bold text-sm text-muted-foreground">AWAITING INTENT</div>
-                <p className="text-muted-foreground text-xs mt-2">Complete the Socratic dialogue to generate a context-enriched intent object.</p>
+              <div className="card-minimal p-6 text-center">
+                <FileText size={20} className="text-muted-foreground mx-auto mb-3 opacity-50" />
+                <div className="text-sm font-medium text-muted-foreground">Awaiting intent</div>
+                <p className="text-muted-foreground text-xs mt-1">Complete the Socratic dialogue to generate a context-enriched intent object.</p>
               </div>
             )}
 
-            {/* Connected Tools Summary */}
             {connectedCategories.length > 0 && (
-              <div className="brutal-card p-4">
-                <div className="section-label mb-2 flex items-center gap-1">
-                  <Plug className="w-3 h-3" /> ACTIVE CONTEXT SOURCES
+              <div className="card-minimal p-4">
+                <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5 font-medium">
+                  <Plug className="w-3 h-3" /> Active Context Sources
                 </div>
                 <div className="space-y-1">
                   {connectedCategories.map(c => (
                     <div key={c.id} className="flex items-center gap-2 text-xs">
-                      <CheckCircle2 className="w-3 h-3 text-green-500" />
-                      <span className="text-zinc-300 font-mono uppercase">{c.name}</span>
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      <span className="text-zinc-300">{c.name}</span>
                     </div>
                   ))}
                 </div>
@@ -416,41 +397,33 @@ export default function IntentEngine() {
       {/* Task Execution Mode */}
       {mode === "tasks" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Task List */}
           <div className="lg:col-span-1">
-            <div className="flex items-center justify-between mb-3">
-              <div className="section-label">TASK QUEUE — {tasks.length}</div>
-            </div>
+            <div className="text-xs text-muted-foreground font-medium mb-3">Task Queue — {tasks.length}</div>
 
-            {/* Quick create */}
-            <div className="brutal-card p-4 mb-4 space-y-3">
-              <div className="section-label">QUICK CREATE</div>
+            <div className="card-minimal p-4 mb-4 space-y-3">
+              <div className="text-xs text-muted-foreground font-medium">Quick Create</div>
               <input
                 value={taskTitle}
                 onChange={e => setTaskTitle(e.target.value)}
                 placeholder="Task title..."
-                className="w-full bg-input border border-border text-foreground font-sans text-sm px-3 py-2 focus:outline-none focus:border-accent"
+                className="w-full bg-zinc-900 border border-border text-foreground text-sm px-3 py-2 rounded-md focus:outline-none focus:border-foreground/30"
               />
               <div className="grid grid-cols-2 gap-2">
                 <Select value={taskRouting} onValueChange={v => setTaskRouting(v as any)}>
-                  <SelectTrigger className="bg-input border-border text-foreground text-xs h-8">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="bg-zinc-900 border-border text-foreground text-xs h-8 rounded-md"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    <SelectItem value="ai" className="text-foreground text-xs">AI</SelectItem>
-                    <SelectItem value="human" className="text-foreground text-xs">HUMAN</SelectItem>
-                    <SelectItem value="hybrid" className="text-foreground text-xs">HYBRID</SelectItem>
+                    <SelectItem value="ai" className="text-xs">AI</SelectItem>
+                    <SelectItem value="human" className="text-xs">Human</SelectItem>
+                    <SelectItem value="hybrid" className="text-xs">Hybrid</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={taskPriority} onValueChange={v => setTaskPriority(v as any)}>
-                  <SelectTrigger className="bg-input border-border text-foreground text-xs h-8">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="bg-zinc-900 border-border text-foreground text-xs h-8 rounded-md"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    <SelectItem value="low" className="text-foreground text-xs">LOW</SelectItem>
-                    <SelectItem value="medium" className="text-foreground text-xs">MEDIUM</SelectItem>
-                    <SelectItem value="high" className="text-foreground text-xs">HIGH</SelectItem>
-                    <SelectItem value="critical" className="text-foreground text-xs">CRITICAL</SelectItem>
+                    <SelectItem value="low" className="text-xs">Low</SelectItem>
+                    <SelectItem value="medium" className="text-xs">Medium</SelectItem>
+                    <SelectItem value="high" className="text-xs">High</SelectItem>
+                    <SelectItem value="critical" className="text-xs">Critical</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -458,62 +431,60 @@ export default function IntentEngine() {
                 onClick={() => createTask.mutate({ title: taskTitle, routingMode: taskRouting, priority: taskPriority })}
                 disabled={!taskTitle.trim() || createTask.isPending}
                 size="sm"
-                className="w-full bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase text-xs"
+                className="w-full text-xs"
               >
-                CREATE TASK
+                Create Task
               </Button>
             </div>
 
-            {/* Task list */}
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+            <div className="space-y-1.5 max-h-96 overflow-y-auto">
               {tasks.map(task => {
-                const statusColors: Record<string, string> = { pending: "text-muted-foreground", in_progress: "text-[oklch(0.82_0.18_90)]", completed: "text-[oklch(0.65_0.18_142)]", failed: "text-accent", awaiting_human: "text-[oklch(0.62_0.18_240)]" };
+                const statusColors: Record<string, string> = { pending: "text-muted-foreground", in_progress: "text-yellow-400", completed: "text-emerald-400", failed: "text-red-400", awaiting_human: "text-blue-400" };
                 return (
                   <button
                     key={task.id}
                     onClick={() => setSelectedTaskId(task.id)}
-                    className={`w-full text-left brutal-card-hover p-3 transition-colors ${selectedTaskId === task.id ? "brutal-border-red" : ""}`}
+                    className={`w-full text-left card-minimal p-3 transition-all hover:border-foreground/20 ${selectedTaskId === task.id ? "border-foreground/40" : ""}`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className={`font-mono text-xs uppercase ${statusColors[task.status]}`}>{task.status.replace("_", " ")}</span>
-                      <span className="section-label">{task.routingMode.toUpperCase()}</span>
+                      <span className={`text-[10px] font-medium ${statusColors[task.status]}`}>{task.status.replace("_", " ")}</span>
+                      <span className="text-[10px] text-muted-foreground">{task.routingMode}</span>
                     </div>
-                    <div className="font-condensed font-bold text-sm text-foreground truncate">{task.title}</div>
+                    <div className="text-sm font-medium text-foreground truncate">{task.title}</div>
                   </button>
                 );
               })}
               {tasks.length === 0 && (
-                <div className="text-center py-6 text-muted-foreground font-mono text-xs">NO TASKS IN QUEUE</div>
+                <div className="text-center py-6 text-muted-foreground text-xs">No tasks in queue</div>
               )}
             </div>
           </div>
 
-          {/* Task Detail */}
           <div className="lg:col-span-2">
             {selectedTask ? (
-              <div className="brutal-card p-6 space-y-5">
+              <div className="card-minimal p-6 space-y-5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="section-label mb-1">TASK DETAIL</div>
-                    <h2 className="font-condensed font-black text-2xl text-foreground">{selectedTask.title}</h2>
+                    <div className="text-xs text-muted-foreground mb-1">Task Detail</div>
+                    <h2 className="text-xl font-medium text-foreground">{selectedTask.title}</h2>
                   </div>
                   <div className="flex gap-2">
-                    <span className="font-mono text-xs border border-border px-2 py-1 uppercase text-muted-foreground">{selectedTask.routingMode}</span>
-                    <span className={`font-mono text-xs border px-2 py-1 uppercase ${selectedTask.priority === "critical" ? "tag-missed" : selectedTask.priority === "high" ? "tag-at-risk" : "tag-on-track"}`}>{selectedTask.priority}</span>
+                    <span className="text-xs border border-border rounded px-2 py-0.5 text-muted-foreground">{selectedTask.routingMode}</span>
+                    <span className={`text-xs border rounded px-2 py-0.5 ${priorityStyle(selectedTask.priority)}`}>{selectedTask.priority}</span>
                   </div>
                 </div>
 
                 {selectedTask.description && (
                   <div>
-                    <div className="section-label mb-2">DESCRIPTION</div>
+                    <div className="text-xs text-muted-foreground mb-1">Description</div>
                     <p className="text-muted-foreground text-sm">{selectedTask.description}</p>
                   </div>
                 )}
 
                 {selectedTask.generatedPrompt && (
                   <div>
-                    <div className="section-label mb-2">GENERATED EXECUTION PROMPT</div>
-                    <div className="bg-input border border-border p-4 font-mono text-xs text-muted-foreground leading-relaxed max-h-48 overflow-y-auto">
+                    <div className="text-xs text-muted-foreground mb-1">Generated Execution Prompt</div>
+                    <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-md font-mono text-xs text-muted-foreground leading-relaxed max-h-48 overflow-y-auto">
                       {selectedTask.generatedPrompt}
                     </div>
                   </div>
@@ -521,11 +492,11 @@ export default function IntentEngine() {
 
                 {selectedTask.executionLog && Array.isArray(selectedTask.executionLog) && (selectedTask.executionLog as string[]).length > 0 && (
                   <div>
-                    <div className="section-label mb-2">EXECUTION LOG</div>
+                    <div className="text-xs text-muted-foreground mb-1">Execution Log</div>
                     <div className="space-y-1">
                       {(selectedTask.executionLog as string[]).map((step, i) => (
                         <div key={i} className="flex items-start gap-2 font-mono text-xs text-muted-foreground">
-                          <span className="text-accent">[{String(i + 1).padStart(2, "0")}]</span>
+                          <span className="text-foreground/50">[{String(i + 1).padStart(2, "0")}]</span>
                           <span>{step}</span>
                         </div>
                       ))}
@@ -533,7 +504,7 @@ export default function IntentEngine() {
                   </div>
                 )}
 
-                <div className="red-line-thin" />
+                <div className="h-px bg-border" />
 
                 <div className="flex gap-3">
                   {selectedTask.status === "pending" && (
@@ -541,35 +512,37 @@ export default function IntentEngine() {
                       onClick={() => generatePrompt.mutate({ taskId: selectedTask.id })}
                       disabled={generatePrompt.isPending}
                       variant="outline"
-                      className="border-border text-foreground hover:bg-secondary font-condensed font-bold uppercase text-xs gap-2"
+                      size="sm"
+                      className="gap-2 text-xs"
                     >
                       <FileText size={13} />
-                      {generatePrompt.isPending ? "GENERATING..." : "GENERATE PROMPT"}
+                      {generatePrompt.isPending ? "Generating..." : "Generate Prompt"}
                     </Button>
                   )}
                   {(selectedTask.status === "pending" || selectedTask.status === "in_progress") && (
                     <Button
                       onClick={() => executeTask.mutate({ taskId: selectedTask.id })}
                       disabled={executeTask.isPending}
-                      className="bg-accent text-foreground hover:bg-accent/80 font-condensed font-bold uppercase text-xs gap-2 glow-red"
+                      size="sm"
+                      className="gap-2 text-xs"
                     >
                       <Play size={13} />
-                      {executeTask.isPending ? "EXECUTING..." : "EXECUTE TASK"}
+                      {executeTask.isPending ? "Executing..." : "Execute Task"}
                     </Button>
                   )}
                   {selectedTask.status === "completed" && (
-                    <div className="flex items-center gap-2 text-[oklch(0.65_0.18_142)]">
-                      <div className="w-2 h-2 bg-[oklch(0.65_0.18_142)]" />
-                      <span className="font-condensed font-bold text-sm uppercase">TASK COMPLETED — PoO RECEIPT ISSUED</span>
+                    <div className="flex items-center gap-2 text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">Task completed — PoO receipt issued</span>
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="brutal-card p-12 text-center">
-                <Play size={32} className="text-muted-foreground mx-auto mb-4" />
-                <div className="font-condensed font-bold text-xl text-muted-foreground">SELECT A TASK</div>
-                <p className="text-muted-foreground text-sm mt-2">Choose a task from the queue to view details and execute.</p>
+              <div className="card-minimal p-12 text-center">
+                <Play size={28} className="text-muted-foreground mx-auto mb-4 opacity-50" />
+                <div className="text-base font-medium text-muted-foreground">Select a task</div>
+                <p className="text-muted-foreground text-sm mt-1">Choose a task from the queue to view details and execute.</p>
               </div>
             )}
           </div>
