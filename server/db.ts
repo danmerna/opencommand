@@ -28,6 +28,7 @@ import {
   projectChats, InsertProjectChat,
   agentOnboardings, InsertAgentOnboarding,
   strategyProposals, InsertStrategyProposal,
+  waitlistEntries, InsertWaitlistEntry,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -738,4 +739,24 @@ export async function getOnboardingById(id: number) {
   const db = await getDb(); if (!db) return null;
   const rows = await db.select().from(agentOnboardings).where(eq(agentOnboardings.id, id)).limit(1);
   return rows[0] ?? null;
+}
+
+// ─── Waitlist ─────────────────────────────────────────────────────────────────
+export async function joinWaitlist(data: InsertWaitlistEntry) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(waitlistEntries).values(data);
+}
+export async function getWaitlistCount() {
+  const db = await getDb(); if (!db) return 0;
+  const rows = await db.select().from(waitlistEntries);
+  return rows.length;
+}
+export async function getWaitlistEntries() {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(waitlistEntries).orderBy(desc(waitlistEntries.createdAt));
+}
+export async function isEmailOnWaitlist(email: string) {
+  const db = await getDb(); if (!db) return false;
+  const rows = await db.select().from(waitlistEntries).where(eq(waitlistEntries.email, email)).limit(1);
+  return rows.length > 0;
 }

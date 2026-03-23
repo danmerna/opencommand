@@ -642,3 +642,13 @@ export const strategyProposals = mysqlTable("strategy_proposals", {
 });
 export type StrategyProposal = typeof strategyProposals.$inferSelect;
 export type InsertStrategyProposal = typeof strategyProposals.$inferInsert;
+
+// ─── Waitlist Entries (Creators page signup) ─────────────────────────────────
+export const waitlistEntries = mysqlTable("waitlist_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  source: varchar("source", { length: 64 }).default("creators").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type WaitlistEntry = typeof waitlistEntries.$inferSelect;
+export type InsertWaitlistEntry = typeof waitlistEntries.$inferInsert;

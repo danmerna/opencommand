@@ -384,3 +384,12 @@
 - [x] Add Apple Touch icon (180x180px) from OC logo
 - [x] Add robots.txt pointing to sitemap
 - [x] Add smooth slide-down animation to mobile hamburger menu
+
+## v3.23 — Creators Waitlist Email Capture
+
+- [x] Add waitlist_entries table to drizzle schema and apply migration
+- [x] Add DB helpers for waitlist (join, count, list)
+- [x] Add tRPC waitlist router (join, count procedures)
+- [x] Build email capture form on Creators page with validation and success state
+- [x] Fire notifyOwner on new waitlist signup
+- [x] Write vitest tests for waitlist router

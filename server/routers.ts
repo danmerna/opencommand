@@ -41,6 +41,7 @@ import {
   createOnboarding, updateOnboarding, completeOnboarding,
   getStrategyProposalsByCompanyId, getStrategyProposalsByUserId, getStrategyProposalById,
   createStrategyProposal, updateStrategyProposalStatus,
+  joinWaitlist, getWaitlistCount, isEmailOnWaitlist,
 } from "./db";
 import { nanoid } from "nanoid";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
@@ -1317,6 +1318,24 @@ Please produce the formal strategy proposal.` },
     }),
 });
 
+// ─── Waitlist Router ────────────────────────────────────────────────────────
+const waitlistRouter = router({
+  join: publicProcedure
+    .input(z.object({ email: z.string().email(), source: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const already = await isEmailOnWaitlist(input.email);
+      if (already) return { success: true, alreadyJoined: true };
+      await joinWaitlist({ email: input.email, source: input.source ?? "creators" });
+      const count = await getWaitlistCount();
+      await notifyOwner({
+        title: "New Waitlist Signup",
+        content: `${input.email} joined the creators waitlist. Total signups: ${count}.`,
+      });
+      return { success: true, alreadyJoined: false };
+    }),
+  count: publicProcedure.query(() => getWaitlistCount()),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -1347,6 +1366,7 @@ export const appRouter = router({
   compatibility: compatibilityRouter,
   projects: projectsRouter,
   onboarding: onboardingRouter,
+  waitlist: waitlistRouter,
 });
 
 export type AppRouter = typeof appRouter;

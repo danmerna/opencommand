@@ -1,10 +1,31 @@
 import { Link } from "wouter";
-import { ArrowLeft, ArrowRight, Zap, DollarSign, Users, Package } from "lucide-react";
-import { getLoginUrl } from "@/const";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { ArrowLeft, ArrowRight, Zap, DollarSign, Users, Package, CheckCircle, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
 
 export default function Creators() {
-  const { isAuthenticated } = useAuth();
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [alreadyJoined, setAlreadyJoined] = useState(false);
+  const [error, setError] = useState("");
+
+  const joinMutation = trpc.waitlist.join.useMutation({
+    onSuccess: (data) => {
+      setAlreadyJoined(data.alreadyJoined);
+      setSubmitted(true);
+      setError("");
+    },
+    onError: (err) => {
+      setError(err.message || "Something went wrong. Please try again.");
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!email.trim()) { setError("Please enter your email address."); return; }
+    joinMutation.mutate({ email: email.trim(), source: "creators" });
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -65,20 +86,54 @@ export default function Creators() {
         <p className="text-muted-foreground text-body mb-10 max-w-md mx-auto">
           Be first to know when the Creator Program launches. Early creators get priority placement and higher revenue share tiers.
         </p>
-        <div className="flex items-center justify-center gap-4 flex-wrap">
-          {isAuthenticated ? (
-            <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-8 py-3">
-              Go to Mission Control <ArrowRight size={16} />
+
+        {submitted ? (
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center justify-center w-14 h-14 rounded-full border border-border bg-background mb-2">
+              <CheckCircle size={28} className="text-accent" strokeWidth={1.5} />
+            </div>
+            <p className="text-foreground font-medium text-lg">
+              {alreadyJoined ? "You're already on the list." : "You're on the list."}
+            </p>
+            <p className="text-muted-foreground text-sm max-w-xs">
+              {alreadyJoined
+                ? "We already have your email. We'll reach out when the Creator Program launches."
+                : "We'll reach out as soon as the Creator Program opens. Keep building."}
+            </p>
+            <Link href="/" className="mt-4 btn-outline px-8 py-3 inline-flex items-center gap-2">
+              Back to Home <ArrowRight size={14} />
             </Link>
-          ) : (
-            <a href={getLoginUrl()} className="btn-primary flex items-center gap-2 px-8 py-3">
-              Join Waitlist <ArrowRight size={16} />
-            </a>
-          )}
-          <Link href="/" className="btn-outline px-8 py-3">
-            Back to Home
-          </Link>
-        </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 w-full max-w-md mx-auto">
+            <div className="flex w-full gap-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                className="flex-1 px-4 py-3 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-foreground/30 transition-all"
+                disabled={joinMutation.isPending}
+                required
+              />
+              <button
+                type="submit"
+                disabled={joinMutation.isPending}
+                className="btn-primary px-6 py-3 flex items-center gap-2 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {joinMutation.isPending ? (
+                  <><Loader2 size={14} className="animate-spin" /> Joining…</>
+                ) : (
+                  <>Join Waitlist <ArrowRight size={14} /></>
+                )}
+              </button>
+            </div>
+            {error && (
+              <p className="text-sm text-red-400 text-center">{error}</p>
+            )}
+            <p className="text-xs text-muted-foreground/60">No spam. Unsubscribe anytime.</p>
+          </form>
+        )}
       </section>
 
       {/* Footer */}
