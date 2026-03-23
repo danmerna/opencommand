@@ -90,7 +90,7 @@ export default function ContextHistory() {
         <div className="card-minimal p-12 text-center">
           <Brain size={28} className="text-muted-foreground mx-auto mb-3 opacity-40" />
           <p className="text-base font-medium text-muted-foreground mb-2">No Context History Yet</p>
-          <p className="text-muted-foreground text-sm mb-4">Use the Socratic Intent Engine to submit a request.</p>
+          <p className="text-muted-foreground text-sm mb-4">Use the Intent Engine to submit a request.</p>
           <Button onClick={() => window.location.href = "/intent-engine"} className="gap-2"><Zap size={14} /> Open Intent Engine</Button>
         </div>
       ) : (

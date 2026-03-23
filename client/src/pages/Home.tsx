@@ -88,7 +88,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {[
             { icon: BarChart3, title: "Mission Control", desc: "Real-time OKR tracking, agent fleet monitoring, human-in-the-loop inbox, and PoO ledger.", href: "/mission-control" },
-            { icon: Cpu, title: "Socratic Engine", desc: "Transforms vague requests into structured intent objects through guided AI questioning.", href: "/intent-engine" },
+            { icon: Cpu, title: "Intent Engine", desc: "Transforms vague requests into structured intent objects through guided AI questioning.", href: "/intent-engine" },
             { icon: Bot, title: "AI CEO — ARIA", desc: "Executive Core, Orchestration Layer, and Memory Engine. Compounds intelligence over time.", href: "/ai-ceo" },
             { icon: Target, title: "Proof of Outcome", desc: "Every task generates a verifiable receipt documenting labor saved and dollar value created.", href: "/mission-control" },
             { icon: ShoppingBag, title: "Agent Marketplace", desc: "Browse and deploy specialized AI agents. Solo-Founder CEO or Enterprise CEO tiers.", href: "/marketplace" },

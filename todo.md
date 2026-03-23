@@ -13,7 +13,7 @@
 - [x] inbox router (list items, resolve, escalate)
 - [x] marketplace router (list agents, get by tier, creator endorsements)
 - [x] creatorPartnership router (submitApplication, list, revenue share tracking)
-- [x] aiCeo router (LLM-powered orchestration, Socratic engine, decision-making)
+- [x] aiCeo router (LLM-powered orchestration, Intent Engine, decision-making)
 - [x] notifications via notifyOwner (task completion, inbox items, PoO)
 
 ## Phase 3: Design System & Layout
@@ -30,8 +30,8 @@
 - [x] Live metrics summary cards
 - [x] Seed defaults for demo data
 
-## Phase 5: Socratic Intent Engine & Task Execution
-- [x] Socratic questioning flow (LLM-powered guided questions)
+## Phase 5: Intent Engine & Task Execution
+- [x] Intent-driven questioning flow (LLM-powered guided questions)
 - [x] Intent object builder (structured output)
 - [x] Generate Prompt mode
 - [x] Execute Task mode with PoO receipt generation
@@ -141,7 +141,7 @@
 - [x] Integration Hub router: list categories, list providers, connect/disconnect tools
 - [x] Tool Abstraction Layer: abstract category actions mapped to provider-specific API calls
 - [x] Context Routing Engine: request → infer relevant categories → gather data → assemble context object
-- [x] Self-contextualization pipeline: Interpret → Gather → Contextualize (3-step before Socratic questions)
+- [x] Self-contextualization pipeline: Interpret → Gather → Contextualize (3-step before Intent Engine questions)
 
 ### Frontend — Integration Hub Page
 - [x] Integration Hub page with 8 category cards showing connected/available tools
@@ -149,7 +149,7 @@
 - [x] Connected tools dashboard showing status, last sync, data available
 - [x] Category detail view showing abstract actions and mapped providers
 
-### Upgraded Socratic Intent Engine
+### Upgraded Intent Engine
 - [x] 3-step self-contextualization before asking questions (Interpret → Gather → Contextualize)
 - [x] Context object display panel showing live data pulled from connected tools
 - [x] Before/After comparison showing cold-start vs self-contextualized questions

@@ -212,8 +212,8 @@ describe("context history filtering", () => {
   });
 });
 
-// ─── Integration with Socratic Engine ────────────────────────────────────────
-describe("context-aware Socratic questions", () => {
+// ─── Integration with Intent Engine ─────────────────────────────────────────
+describe("context-aware Intent Engine questions", () => {
   it("contextualized questions are stored in context object", async () => {
     const caller = appRouter.createCaller(makeCtx());
     const contexts = await caller.context.list();

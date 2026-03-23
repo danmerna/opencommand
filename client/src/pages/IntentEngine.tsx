@@ -24,7 +24,7 @@ type ContextPhase = "idle" | "interpreting" | "gathering" | "contextualizing" | 
 
 export default function IntentEngine() {
   const { isAuthenticated } = useAuth();
-  const [mode, setMode] = useState<"socratic" | "tasks">("socratic");
+  const [mode, setMode] = useState<"plan" | "tasks">("plan");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [intentObject, setIntentObject] = useState<IntentObject | null>(null);
@@ -44,7 +44,7 @@ export default function IntentEngine() {
   const connectionsQ = trpc.hub.connections.useQuery(undefined, { enabled: isAuthenticated });
   const categoriesQ = trpc.hub.categories.useQuery();
 
-  const socratiqueQ = trpc.aiCeo.socratiqueQuestion.useMutation();
+  const intentQ = trpc.aiCeo.socratiqueQuestion.useMutation();
   const interpretMut = trpc.context.interpret.useMutation();
   const gatherMut = trpc.context.gather.useMutation();
   const contextualizeMut = trpc.context.contextualize.useMutation();
@@ -94,7 +94,7 @@ export default function IntentEngine() {
       setContextData(contextResult);
       setContextPhase("ready");
 
-      const result = await socratiqueQ.mutateAsync({
+      const result = await intentQ.mutateAsync({
         userInput: `[CONTEXT-ENRICHED] ${userMsg.content}\n\n[Connected Tools: ${connectedCategories.map(c => c.name).join(", ") || "None"}]\n[Context Confidence: ${contextResult.confidence}]\n[Inferred Categories: ${(interpretResult as any).inferredCategories?.join(", ") || "general"}]`,
         conversationHistory: messages,
       });
@@ -105,7 +105,7 @@ export default function IntentEngine() {
       }
     } catch {
       try {
-        const result = await socratiqueQ.mutateAsync({ userInput: userMsg.content, conversationHistory: messages });
+        const result = await intentQ.mutateAsync({ userInput: userMsg.content, conversationHistory: messages });
         setMessages([...newMessages, { role: "assistant", content: result.response }]);
         if (result.intentObject) setIntentObject(result.intentObject as IntentObject);
       } catch {
@@ -149,7 +149,7 @@ export default function IntentEngine() {
       <div className="mb-8">
         <p className="text-xs text-muted-foreground tracking-widest uppercase mb-1">OpenCommand</p>
         <h1 className="text-3xl font-light text-foreground tracking-tight">Intent Engine</h1>
-        <p className="text-sm text-muted-foreground mt-1">Self-contextualizing · Socratic questioning · Autonomous execution</p>
+        <p className="text-sm text-muted-foreground mt-1">Self-contextualizing · Intent-driven questioning · Autonomous execution</p>
 
         {/* Context Pipeline Status */}
         <div className="mt-5 flex items-center gap-3 p-3 rounded-lg border border-border bg-card/50">
@@ -182,8 +182,8 @@ export default function IntentEngine() {
       {/* Mode Toggle */}
       <div className="flex border-b border-border mb-6">
         {[
-          { id: "socratic" as const, label: "Socratic Engine", icon: Cpu },
-          { id: "tasks" as const, label: "Task Execution", icon: Play },
+          { id: "plan" as const, label: "Plan", icon: Cpu },
+          { id: "tasks" as const, label: "Execute", icon: Play },
         ].map(m => (
           <button
             key={m.id}
@@ -195,8 +195,8 @@ export default function IntentEngine() {
         ))}
       </div>
 
-      {/* Socratic Mode */}
-      {mode === "socratic" && (
+      {/* Plan Mode */}
+      {mode === "plan" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 flex flex-col">
             <div className="card-minimal flex-1 flex flex-col" style={{ minHeight: "500px" }}>
@@ -371,7 +371,7 @@ export default function IntentEngine() {
               <div className="card-minimal p-6 text-center">
                 <FileText size={20} className="text-muted-foreground mx-auto mb-3 opacity-50" />
                 <div className="text-sm font-medium text-muted-foreground">Awaiting intent</div>
-                <p className="text-muted-foreground text-xs mt-1">Complete the Socratic dialogue to generate a context-enriched intent object.</p>
+                <p className="text-muted-foreground text-xs mt-1">Complete the intent dialogue to generate a context-enriched intent object.</p>
               </div>
             )}
 
