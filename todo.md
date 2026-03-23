@@ -72,3 +72,13 @@
 - [x] Add integration health indicators with last sync time and data freshness on connected tools
 - [x] Add re-analyze gap detection button on agent detail page
 - [x] Fix v3_1 test timeout by updating LLM mock to return inferredCategories instead of categories
+- [x] Redesign homepage: rewrite hero subheadline to highlight self-contextualizing engine
+- [x] Redesign homepage: replace fake metrics strip with animated Context Engine Demo
+- [x] Redesign homepage: add Integration Logo Bar section with tool logos
+- [x] Redesign homepage: update nav with How It Works + Marketplace links + Start Free CTA
+- [x] Redesign homepage: update feature card copy (Intent Engine, AI CEO, Company Blueprints → Agent Marketplace)
+- [x] Redesign homepage: expand How It Works from 3 to 4 steps (add context-pull step)
+- [x] Redesign homepage: add Marketplace + Creators section with example agent cards
+- [x] Redesign homepage: update pricing to Free/$29/$99 three-tier layout
+- [x] Redesign homepage: replace bottom CTA with email capture + Join the Beta
+- [x] Redesign homepage: expand footer to 4-column layout
