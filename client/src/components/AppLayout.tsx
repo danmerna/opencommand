@@ -228,6 +228,55 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               );
             })}
 
+            {/* Agents section */}
+            <div className="pt-3 pb-1">
+              <div className="flex items-center justify-between px-3 mb-1">
+                <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Agents</span>
+                <Link href="/mission-control" onClick={closeMobile}>
+                  <button
+                    title="Manage agents"
+                    className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Plus size={11} />
+                  </button>
+                </Link>
+              </div>
+
+              {visibleAgents.length === 0 ? (
+                <Link href="/mission-control" onClick={closeMobile}>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer">
+                    <Bot size={11} />
+                    <span>No agents yet</span>
+                  </div>
+                </Link>
+              ) : (
+                visibleAgents.slice(0, 8).map(agent => {
+                  const statusColor = agent.status === "active" ? "#22c55e" : agent.status === "error" ? "#ef4444" : "#6b7280";
+                  return (
+                    <Link key={agent.id} href="/mission-control" onClick={closeMobile}>
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all text-muted-foreground hover:text-foreground hover:bg-white/[0.04]">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: statusColor }}
+                        />
+                        <span className="truncate font-medium">{agent.name}</span>
+                        <span className="ml-auto text-[10px] text-muted-foreground/50 uppercase tracking-wide shrink-0">{agent.type}</span>
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+
+              {visibleAgents.length > 8 && (
+                <Link href="/mission-control" onClick={closeMobile}>
+                  <div className="flex items-center gap-1.5 px-3 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                    <ChevronRight size={10} />
+                    <span>{visibleAgents.length - 8} more</span>
+                  </div>
+                </Link>
+              )}
+            </div>
+
             {/* Projects section */}
             <div className="pt-3 pb-1">
               <div className="flex items-center justify-between px-3 mb-1">
@@ -273,55 +322,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   <div className="flex items-center gap-1.5 px-3 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
                     <ChevronRight size={10} />
                     <span>{visibleProjects.length - 8} more</span>
-                  </div>
-                </Link>
-              )}
-            </div>
-
-            {/* Agents section */}
-            <div className="pt-3 pb-1">
-              <div className="flex items-center justify-between px-3 mb-1">
-                <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Agents</span>
-                <Link href="/mission-control" onClick={closeMobile}>
-                  <button
-                    title="Manage agents"
-                    className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Plus size={11} />
-                  </button>
-                </Link>
-              </div>
-
-              {visibleAgents.length === 0 ? (
-                <Link href="/mission-control" onClick={closeMobile}>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer">
-                    <Bot size={11} />
-                    <span>No agents yet</span>
-                  </div>
-                </Link>
-              ) : (
-                visibleAgents.slice(0, 8).map(agent => {
-                  const statusColor = agent.status === "active" ? "#22c55e" : agent.status === "error" ? "#ef4444" : "#6b7280";
-                  return (
-                    <Link key={agent.id} href="/mission-control" onClick={closeMobile}>
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all text-muted-foreground hover:text-foreground hover:bg-white/[0.04]">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: statusColor }}
-                        />
-                        <span className="truncate font-medium">{agent.name}</span>
-                        <span className="ml-auto text-[10px] text-muted-foreground/50 uppercase tracking-wide shrink-0">{agent.type}</span>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-
-              {visibleAgents.length > 8 && (
-                <Link href="/mission-control" onClick={closeMobile}>
-                  <div className="flex items-center gap-1.5 px-3 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-                    <ChevronRight size={10} />
-                    <span>{visibleAgents.length - 8} more</span>
                   </div>
                 </Link>
               )}
