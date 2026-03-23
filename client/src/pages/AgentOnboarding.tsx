@@ -14,7 +14,8 @@ type Message = { role: "user" | "assistant"; content: string };
 export default function AgentOnboarding() {
   const { agentId } = useParams<{ agentId: string }>();
   const [, navigate] = useLocation();
-  const numericId = Number(agentId);
+  const numericId = agentId ? parseInt(agentId, 10) : NaN;
+  const validId = !isNaN(numericId) && numericId > 0;
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -28,8 +29,11 @@ export default function AgentOnboarding() {
   const agentQ = trpc.agents.list.useQuery();
   const agent = agentQ.data?.find((a: any) => a.id === numericId);
 
-  // Fetch existing onboarding
-  const existingQ = trpc.onboarding.getForAgent.useQuery({ agentId: numericId });
+  // Fetch existing onboarding — only run when we have a valid numeric id
+  const existingQ = trpc.onboarding.getForAgent.useQuery(
+    { agentId: numericId },
+    { enabled: validId }
+  );
 
   // Start mutation
   const startMut = trpc.onboarding.start.useMutation({
@@ -88,6 +92,10 @@ export default function AgentOnboarding() {
   }, [messages]);
 
   const handleStart = () => {
+    if (!validId) {
+      navigate("/mission-control");
+      return;
+    }
     setIsStarting(true);
     startMut.mutate({ agentId: numericId });
   };

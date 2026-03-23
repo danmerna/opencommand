@@ -172,3 +172,4 @@
 - [x] Build sign-up funnel view: add admin.funnelStats tRPC procedure
 - [x] Build sign-up funnel view: build FunnelView component in AdminUsers page
 - [x] Build sign-up funnel view: write vitest tests
+- [x] Fix NaN agentId error on /onboarding/:agentId — safely parse route param before tRPC query
