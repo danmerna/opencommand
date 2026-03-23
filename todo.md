@@ -68,3 +68,7 @@
 - [x] Return suggested integrations from onboarding.respond when isComplete=true
 - [x] Show targeted integration suggestions on ProOnboarding post-interview completion screen
 - [x] Show integration suggestions on agent detail page for agents with detected gaps
+- [x] Auto-dismiss integration suggestions when user has already connected that tool
+- [x] Add integration health indicators with last sync time and data freshness on connected tools
+- [x] Add re-analyze gap detection button on agent detail page
+- [x] Fix v3_1 test timeout by updating LLM mock to return inferredCategories instead of categories

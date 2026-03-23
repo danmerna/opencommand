@@ -1290,6 +1290,37 @@ const onboardingRouter = router({
       }
     }),
 
+  // Re-analyze gap detection for a completed onboarding
+  reAnalyzeGaps: protectedProcedure
+    .input(z.object({ agentId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const onboarding = await getOnboardingByAgentId(input.agentId);
+      if (!onboarding || onboarding.status !== "completed") throw new Error("Onboarding not completed");
+      const history = (onboarding.conversationHistory ?? []) as { role: string; content: string }[];
+      const conversationText = history.map(h => `${h.role}: ${h.content}`).join("\n");
+      const connectedTools = await getUserConnectionsByUserId(ctx.user.id);
+      const connectedSlugs = new Set<string>();
+      const allProviders = await getAllToolProviders();
+      for (const conn of connectedTools.filter(c => c.status === "connected")) {
+        const provider = allProviders.find(p => p.id === conn.providerId);
+        if (provider) connectedSlugs.add(provider.slug);
+      }
+      const gapResponse = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: `You are an integration advisor for an AI executive onboarding system. Analyze the conversation between a user and an AI ${onboarding.agentType.toUpperCase()} agent. Identify data gaps — topics discussed where the user mentioned metrics, tools, or data sources they use but don't have connected. Return a JSON array of suggested integrations.\n\nAvailable integrations: hubspot (CRM/pipeline), salesforce (CRM/pipeline), meta_ads (Facebook/Instagram ads), google_ads (Search/display ads), tiktok_ads (TikTok video ads), ga4 (Google Analytics/traffic), mailchimp (Email marketing), slack (Team communication), stripe_connect (Payments).\n\nAlready connected: ${Array.from(connectedSlugs).join(", ") || "none"}\n\nReturn ONLY a JSON array like: [{"slug": "meta_ads", "name": "Meta Ads", "reason": "You mentioned Facebook ad spend but don't have Meta Ads connected"}]. Return [] if no gaps detected. Do NOT suggest already-connected tools.` },
+          { role: "user" as const, content: conversationText },
+        ],
+      });
+      const gapText = (gapResponse.choices[0]?.message?.content ?? "[]") as string;
+      const jsonMatch = gapText.match(/\[[\s\S]*\]/);
+      let suggestedIntegrations: { slug: string; name: string; reason: string }[] = [];
+      if (jsonMatch) suggestedIntegrations = JSON.parse(jsonMatch[0]);
+      const existingContext = (onboarding.context ?? {}) as Record<string, unknown>;
+      const enrichedContext = { ...existingContext, suggestedIntegrations };
+      await updateOnboarding(onboarding.id, { context: enrichedContext });
+      return { suggestedIntegrations };
+    }),
+
   // Generate CEO strategy proposal after all C-suite are onboarded
   generateStrategy: protectedProcedure
     .input(z.object({ companyId: z.number() }))

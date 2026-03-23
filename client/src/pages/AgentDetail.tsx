@@ -10,7 +10,9 @@ import {
   ArrowLeft, Bot, Pencil, Activity, Heart, Zap, DollarSign,
   Clock, Loader2, Shield, Wrench, Play, Pause, AlertTriangle,
   Power, BarChart3, CheckCircle2, XCircle, Settings, FileText,
+  RefreshCw, Wifi, WifiOff,
 } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 type Tab = "overview" | "capabilities" | "heartbeat" | "budget" | "settings";
 
@@ -57,10 +59,18 @@ export default function AgentDetail() {
   const [descVal, setDescVal] = useState("");
   const [jobDescVal, setJobDescVal] = useState("");
 
+  const { isAuthenticated } = useAuth();
   const { data: agent, isLoading } = trpc.agents.get.useQuery({ id: agentId }, { enabled: !!agentId });
   const { data: onboardingData } = trpc.onboarding.getForAgent.useQuery({ agentId }, { enabled: !!agentId && activeTab === "overview" });
   const { data: capabilities = [] } = trpc.agents.capabilities.useQuery({ agentId }, { enabled: !!agentId && activeTab === "capabilities" });
   const { data: heartbeatLog = [] } = trpc.agents.heartbeatLog.useQuery({ agentId }, { enabled: !!agentId && activeTab === "heartbeat" });
+  const { data: connections = [] } = trpc.hub.connections.useQuery(undefined, { enabled: isAuthenticated && activeTab === "overview" });
+  const { data: providers = [] } = trpc.hub.providers.useQuery(undefined, { enabled: activeTab === "overview" });
+
+  const reAnalyzeMutation = trpc.onboarding.reAnalyzeGaps.useMutation({
+    onSuccess: () => { utils.onboarding.getForAgent.invalidate({ agentId }); toast.success("Gap analysis updated"); },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const updateMutation = trpc.agents.updateFull.useMutation({
     onSuccess: () => { utils.agents.get.invalidate({ id: agentId }); utils.agents.list.invalidate(); toast.success("Agent updated"); },
@@ -260,29 +270,86 @@ export default function AgentDetail() {
               </div>
             </div>
 
-            {/* Suggested integrations from onboarding gap detection */}
-            {onboardingData?.context &&
-              (onboardingData.context as any).suggestedIntegrations?.length > 0 && (
-              <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Zap size={14} className="text-amber-400" />
-                  <span className="text-xs font-medium text-amber-400">Recommended integrations based on onboarding insights</span>
+            {/* Integration health indicators for connected tools */}
+            {connections.length > 0 && (() => {
+              const connectedTools = connections.filter(c => c.status === "connected");
+              if (connectedTools.length === 0) return null;
+              return (
+                <div className="rounded-xl border border-border/50 bg-card/30 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Wifi size={14} className="text-emerald-400" />
+                    <span className="text-xs font-medium text-muted-foreground">Connected integrations</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {connectedTools.map(conn => {
+                      const provider = providers.find(p => p.id === conn.providerId);
+                      const lastSync = conn.lastSyncAt ? new Date(conn.lastSyncAt) : null;
+                      const now = new Date();
+                      const hoursSinceSync = lastSync ? (now.getTime() - lastSync.getTime()) / (1000 * 60 * 60) : null;
+                      const isFresh = hoursSinceSync !== null && hoursSinceSync < 24;
+                      const isStale = hoursSinceSync !== null && hoursSinceSync >= 72;
+                      const tokenExpired = conn.tokenExpiresAt ? new Date(conn.tokenExpiresAt) < now : false;
+                      return (
+                        <div key={conn.id} className="flex items-center gap-2 rounded-lg border border-border/30 bg-secondary/30 px-3 py-2">
+                          <div className={`w-2 h-2 rounded-full ${tokenExpired ? "bg-red-400" : isStale ? "bg-amber-400" : isFresh ? "bg-emerald-400" : "bg-zinc-400"}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-foreground truncate">{provider?.name ?? "Unknown"}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {tokenExpired ? "Token expired" : lastSync ? `Synced ${lastSync.toLocaleDateString()} ${lastSync.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Never synced"}
+                            </p>
+                          </div>
+                          {(tokenExpired || isStale) && <WifiOff size={10} className="text-amber-400 shrink-0" />}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {((onboardingData.context as any).suggestedIntegrations as { slug: string; name: string; reason: string }[]).map((integration) => (
-                    <div key={integration.slug} className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-card/50 px-3 py-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground">{integration.name}</p>
-                        <p className="text-xs text-muted-foreground">{integration.reason}</p>
-                      </div>
-                      <Button size="sm" variant="outline" className="shrink-0 text-xs h-7" onClick={() => navigate("/integration-hub")}>
-                        Connect
-                      </Button>
+              );
+            })()}
+
+            {/* Suggested integrations from onboarding gap detection (auto-dismiss connected) */}
+            {onboardingData?.context && (() => {
+              const allSuggestions = ((onboardingData.context as any).suggestedIntegrations ?? []) as { slug: string; name: string; reason: string }[];
+              const connectedSlugs = new Set(connections.filter(c => c.status === "connected").map(c => {
+                const p = providers.find(pr => pr.id === c.providerId);
+                return p?.slug;
+              }).filter(Boolean));
+              const filtered = allSuggestions.filter(s => !connectedSlugs.has(s.slug));
+              if (filtered.length === 0) return null;
+              return (
+                <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Zap size={14} className="text-amber-400" />
+                      <span className="text-xs font-medium text-amber-400">Recommended integrations based on onboarding insights</span>
                     </div>
-                  ))}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-[10px] h-6 gap-1 text-muted-foreground hover:text-foreground"
+                      onClick={() => reAnalyzeMutation.mutate({ agentId })}
+                      disabled={reAnalyzeMutation.isPending}
+                    >
+                      {reAnalyzeMutation.isPending ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />}
+                      Re-analyze
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {filtered.map((integration) => (
+                      <div key={integration.slug} className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-card/50 px-3 py-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground">{integration.name}</p>
+                          <p className="text-xs text-muted-foreground">{integration.reason}</p>
+                        </div>
+                        <Button size="sm" variant="outline" className="shrink-0 text-xs h-7" onClick={() => navigate("/integration-hub")}>
+                          Connect
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Quick actions */}
             <div className="flex flex-wrap gap-2 pt-2">

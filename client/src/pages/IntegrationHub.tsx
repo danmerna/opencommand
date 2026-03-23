@@ -284,7 +284,16 @@ export default function IntegrationHub() {
                               {conn.status}
                             </span>
                             {conn.accountName && <span>Account: {conn.accountName}</span>}
-                            {conn.lastSyncAt && <span>Last sync: {new Date(conn.lastSyncAt).toLocaleDateString()}</span>}
+                            {conn.lastSyncAt && (() => {
+                              const lastSync = new Date(conn.lastSyncAt);
+                              const hours = (Date.now() - lastSync.getTime()) / (1000 * 60 * 60);
+                              const freshColor = hours < 24 ? "text-emerald-400" : hours < 72 ? "text-amber-400" : "text-red-400";
+                              const freshLabel = hours < 1 ? "just now" : hours < 24 ? `${Math.round(hours)}h ago` : hours < 168 ? `${Math.round(hours / 24)}d ago` : lastSync.toLocaleDateString();
+                              return <span className={freshColor}>Synced {freshLabel}</span>;
+                            })()}
+                            {conn.tokenExpiresAt && new Date(conn.tokenExpiresAt) < new Date() && (
+                              <span className="text-red-400 flex items-center gap-0.5"><AlertTriangle size={9} /> Token expired</span>
+                            )}
                           </div>
                         </div>
                       </div>

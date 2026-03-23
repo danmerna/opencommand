@@ -62,9 +62,9 @@ vi.mock("./db", () => ({
   getUserPayments: vi.fn().mockResolvedValue([]),
 }));
 
-vi.mock("./server/_core/llm", () => ({
+vi.mock("./_core/llm", () => ({
   invokeLLM: vi.fn().mockResolvedValue({
-    choices: [{ message: { content: JSON.stringify({ domain: "marketing", categories: ["email_marketing"], insights: ["User wants growth"], questions: ["What is your current subscriber count?"] }) } }],
+    choices: [{ message: { content: JSON.stringify({ domain: "marketing", inferredCategories: ["email_marketing"], insights: ["User wants growth", "Need to analyze engagement", "Check conversion rates"], contextualizedQuestions: ["What is your current subscriber count?", "What tools do you use for email?"], suggestedParameters: { channel: "email" } }) } }],
   }),
 }));
 
