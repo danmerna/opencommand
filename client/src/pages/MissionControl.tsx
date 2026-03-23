@@ -15,7 +15,7 @@ import { Streamdown } from "streamdown";
 import {
   Target, Zap, Plus, Trash2, Check, X, Clock, TrendingUp, DollarSign, FileCheck,
   Inbox, Building2, GitBranch, Heart, Activity, BarChart3, Shield, Power, Wrench,
-  CheckCircle2, Sparkles, ArrowRight, Bot, BookOpen, RefreshCw
+  CheckCircle2, Sparkles, ArrowRight, Bot, BookOpen, RefreshCw, Calendar, Pencil
 } from "lucide-react";
 
 type Tab = "okrs" | "fleet" | "org" | "heartbeat" | "budget" | "poo" | "inbox" | "governance" | "strategy";
@@ -182,6 +182,19 @@ export default function MissionControl() {
     onSuccess: () => { proposalsQ.refetch(); toast.success("Strategy generated!"); },
     onError: (err: any) => toast.error("Failed to generate strategy", { description: err.message }),
   });
+  const acceptStrategyMut = trpc.onboarding.acceptStrategy.useMutation({
+    onSuccess: (data) => {
+      proposalsQ.refetch();
+      okrsQ.refetch();
+      toast.success("Strategy accepted!", { description: data.okrsCreated > 0 ? `${data.okrsCreated} OKRs auto-created from Key Metrics.` : "Arch will begin execution." });
+    },
+    onError: (err: any) => toast.error("Failed to accept strategy", { description: err.message }),
+  });
+  const updateCompanyMut = trpc.companies.update.useMutation({
+    onSuccess: () => { companiesQ.refetch(); toast.success("Briefing frequency updated."); },
+    onError: (err: any) => toast.error("Failed to update", { description: err.message }),
+  });
+  const [editingFrequency, setEditingFrequency] = useState(false);
 
   // Computed
   const totalValue = pooReceipts.reduce((s, r) => s + Number(r.dollarValueCreated), 0);
@@ -624,7 +637,40 @@ export default function MissionControl() {
       {tab === "strategy" && (
         <div className="animate-fade-in">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-heading text-lg">Combined Strategy</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-heading text-lg">Combined Strategy</h2>
+              {/* Briefing frequency badge + quick-edit */}
+              {selectedCompany && (
+                editingFrequency ? (
+                  <Select
+                    value={(selectedCompany as any).briefingFrequency ?? "weekly"}
+                    onValueChange={(val) => {
+                      if (effectiveCompanyId) updateCompanyMut.mutate({ id: effectiveCompanyId, briefingFrequency: val as any });
+                      setEditingFrequency(false);
+                    }}
+                  >
+                    <SelectTrigger className="h-7 text-xs w-32 border-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <button
+                    onClick={() => setEditingFrequency(true)}
+                    className="flex items-center gap-1.5 text-[11px] text-muted-foreground border border-border rounded-full px-2.5 py-1 hover:border-foreground/40 transition-colors"
+                  >
+                    <Calendar size={10} />
+                    {((selectedCompany as any).briefingFrequency ?? "weekly").charAt(0).toUpperCase() + ((selectedCompany as any).briefingFrequency ?? "weekly").slice(1)} briefings
+                    <Pencil size={9} className="opacity-50" />
+                  </button>
+                )
+              )}
+            </div>
             <Button
               size="sm"
               variant="outline"
@@ -673,9 +719,18 @@ export default function MissionControl() {
                 <Button
                   size="sm"
                   className="gap-1.5 text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
-                  onClick={() => trpc.useUtils() && toast.info("Strategy accepted — Arch will begin execution.")}
+                  onClick={() => {
+                    if (latestProposal && effectiveCompanyId) {
+                      acceptStrategyMut.mutate({ proposalId: latestProposal.id, companyId: effectiveCompanyId });
+                    }
+                  }}
+                  disabled={acceptStrategyMut.isPending || latestProposal?.status === "accepted"}
                 >
-                  <Check size={12} /> Accept Strategy
+                  {acceptStrategyMut.isPending
+                    ? <><RefreshCw size={12} className="animate-spin" /> Accepting...</>
+                    : latestProposal?.status === "accepted"
+                    ? <><CheckCircle2 size={12} /> Accepted</>
+                    : <><Check size={12} /> Accept Strategy</>}
                 </Button>
                 <Button
                   size="sm"

@@ -1333,6 +1333,87 @@ Please produce the formal strategy proposal.` },
       await updateStrategyProposalStatus(input.id, input.status);
       return { success: true };
     }),
+
+  // Accept strategy and auto-populate OKRs from Key Metrics section
+  acceptStrategy: protectedProcedure
+    .input(z.object({ proposalId: z.number(), companyId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      // Mark proposal as accepted
+      await updateStrategyProposalStatus(input.proposalId, "accepted");
+
+      // Fetch the proposal content
+      const proposals = await getStrategyProposalsByCompanyId(input.companyId);
+      const proposal = proposals.find(p => p.id === input.proposalId);
+      if (!proposal?.content) return { success: true, okrsCreated: 0 };
+
+      // Use LLM to extract OKRs from the strategy content
+      const extraction = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `You are an OKR extraction specialist. Extract 3-5 concrete, measurable OKRs from the provided strategy document. Focus on Key Metrics, Goals, and Targets sections. Return ONLY valid JSON — no markdown, no explanation.`,
+          },
+          {
+            role: "user",
+            content: `Extract OKRs from this strategy:\n\n${proposal.content.slice(0, 4000)}\n\nReturn JSON array: [{"objective": string, "keyResult": string, "targetValue": number, "unit": string}]`,
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "okr_list",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                okrs: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      objective: { type: "string" },
+                      keyResult: { type: "string" },
+                      targetValue: { type: "number" },
+                      unit: { type: "string" },
+                    },
+                    required: ["objective", "keyResult", "targetValue", "unit"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["okrs"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      let okrsCreated = 0;
+      try {
+        const raw = extraction.choices?.[0]?.message?.content ?? "{}";
+        const parsed = JSON.parse(typeof raw === "string" ? raw : JSON.stringify(raw));
+        const okrList: { objective: string; keyResult: string; targetValue: number; unit: string }[] = parsed.okrs ?? [];
+        for (const okr of okrList.slice(0, 5)) {
+          if (!okr.objective || !okr.keyResult) continue;
+          await createOkr({
+            userId: ctx.user.id,
+            companyId: input.companyId,
+            objective: okr.objective,
+            keyResult: okr.keyResult,
+            targetValue: String(okr.targetValue ?? 0),
+            currentValue: "0",
+            unit: okr.unit ?? "",
+            status: "on_track",
+            level: "company",
+          });
+          okrsCreated++;
+        }
+      } catch (e) {
+        console.error("[acceptStrategy] OKR extraction failed:", e);
+      }
+
+      return { success: true, okrsCreated };
+    }),
 });
 
 // ─── Waitlist Router ────────────────────────────────────────────────────────

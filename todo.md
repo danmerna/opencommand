@@ -27,3 +27,8 @@
 - [x] Generate PDF mockup of combined strategy document
 - [x] Add strategy briefing frequency preference step to ProOnboarding (daily/weekly/monthly/quarterly)
 - [x] Allow users to skip CTO or CFO interviews without blocking strategy generation
+- [x] Make CMO interview skippable in Pro onboarding (same as CTO/CFO)
+- [x] Update landing page headline: "zero-human company" → "zero-human workforce"
+- [x] Show briefing frequency badge + edit control on Mission Control Strategy tab
+- [x] Add scheduled briefing delivery via cron/notification on chosen cadence
+- [x] "Accept Strategy" button auto-populates OKRs from Key Metrics section

@@ -74,7 +74,7 @@ export default function Marketplace() {
       <section className="px-6 pt-20 pb-12 max-w-5xl mx-auto">
         <p className="text-xs text-muted-foreground tracking-widest uppercase mb-3">OpenCommand Marketplace</p>
         <h1 className="text-5xl lg:text-6xl font-light text-foreground tracking-tight leading-[1.1] mb-5">
-          Deploy your<br /><span className="text-muted-foreground">zero-human company</span>
+          Deploy your<br /><span className="text-muted-foreground">zero-human workforce</span>
         </h1>
         <p className="text-muted-foreground text-lg max-w-xl leading-relaxed">
           AI agents, company blueprints, and skills — everything you need to build and scale autonomous businesses with verified Proof of Outcome.

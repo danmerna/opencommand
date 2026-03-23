@@ -12,6 +12,7 @@ import { ENV } from "./env";
 import Stripe from "stripe";
 import { handleWebhookEvent } from "../stripe/checkout";
 import { registerIntegrationOAuthRoutes } from "../integrationOAuth";
+import { startBriefingScheduler } from "../briefingScheduler";
 
 // Global Socket.IO instance for emitting events from routers
 export let io: SocketIOServer;
@@ -105,6 +106,8 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // Start scheduled briefing delivery
+    startBriefingScheduler();
   });
 }
 
