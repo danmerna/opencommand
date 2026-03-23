@@ -240,13 +240,13 @@ export default function Home() {
       {/* Footer */}
       <div className="accent-line" />
       <footer className="px-8 py-8 flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-md bg-white flex items-center justify-center">
-            <span className="font-semibold text-black text-[10px]">OC</span>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+            <span className="font-bold text-black text-sm leading-none tracking-tight">OC</span>
           </div>
-          <span className="text-[13px] text-muted-foreground font-medium">OpenCommand</span>
+          <span className="text-base text-foreground font-semibold tracking-tight">OpenCommand</span>
         </div>
-        <div className="text-label">The Intent-to-Outcome Engine · {new Date().getFullYear()}</div>
+        <div className="text-label">IntelligenceOS · {new Date().getFullYear()}</div>
       </footer>
     </div>
   );

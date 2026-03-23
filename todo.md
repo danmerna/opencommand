@@ -349,3 +349,8 @@
 - [x] Add meta description (137 chars) to index.html
 - [x] Add meta keywords to index.html (9 keywords)
 - [x] Add meta robots index/follow tag
+
+## v3.17 — Footer Fixes
+- [x] Replace "THE INTENT-TO-OUTCOME ENGINE" with "IntelligenceOS" in footer
+- [x] Make "OpenCommand" text bigger in footer (text-base, font-semibold)
+- [x] Fix OC logo clipping in footer (w-10 h-10 rounded-xl, flex-shrink-0, text-sm bold)
