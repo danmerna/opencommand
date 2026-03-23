@@ -45,6 +45,7 @@ import {
   createBriefingLog, getBriefingLogsByUserId, getBriefingLogsByCompanyId,
 } from "./db";
 import { nanoid } from "nanoid";
+import { assembleContext } from "./integrations/contextAssembler";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
 import { emitToUser } from "./socketEmit";
 
@@ -879,6 +880,14 @@ const contextEngineRouter = router({
     });
     return { success: true, liveState, historyCount: recentHistory.length };
   }),
+  // Live data-informed contextualization — replaces the 3-step interpret/gather/contextualize pipeline
+  liveContextualize: protectedProcedure.input(z.object({
+    requestText: z.string().min(1),
+  })).mutation(async ({ ctx, input }) => {
+    const result = await assembleContext(input.requestText, ctx.user.id);
+    return result;
+  }),
+
   contextualize: protectedProcedure.input(z.object({
     contextId: z.number(),
   })).mutation(async ({ ctx, input }) => {

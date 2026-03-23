@@ -5,12 +5,14 @@ import { toast } from "sonner";
 import {
   Send, Zap, Play, FileText, Clock, ChevronRight, RotateCcw, Cpu,
   Layers, ArrowRight, CheckCircle2, Globe, Plug, Brain, Eye, Sparkles, Database,
+  BarChart3, AlertTriangle, Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Streamdown } from "streamdown";
+import { Link } from "wouter";
 
 type Message = { role: "user" | "assistant"; content: string };
 type IntentObject = {
@@ -20,7 +22,23 @@ type IntentObject = {
   estimatedHours: number;
 };
 
-type ContextPhase = "idle" | "interpreting" | "gathering" | "contextualizing" | "ready";
+type LiveContextPhase =
+  | "idle"
+  | "connecting"    // "Connecting to your tools..."
+  | "reading"       // "Reading HubSpot pipeline data..."
+  | "analyzing"     // "Analyzing patterns..."
+  | "building"      // "Building context..."
+  | "ready";
+
+interface LiveContextData {
+  contextId: number;
+  questions: string[];
+  insights: string[];
+  contextSummary: string;
+  suggestedParameters: Record<string, unknown>;
+  hasLiveData: boolean;
+  connectedProviders: string[];
+}
 
 export default function IntentEngine() {
   const { isAuthenticated } = useAuth();
@@ -29,9 +47,8 @@ export default function IntentEngine() {
   const [input, setInput] = useState("");
   const [intentObject, setIntentObject] = useState<IntentObject | null>(null);
   const [isThinking, setIsThinking] = useState(false);
-  const [contextPhase, setContextPhase] = useState<ContextPhase>("idle");
-  const [contextData, setContextData] = useState<any>(null);
-  const [contextId, setContextId] = useState<number | null>(null);
+  const [livePhase, setLivePhase] = useState<LiveContextPhase>("idle");
+  const [liveContext, setLiveContext] = useState<LiveContextData | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [taskTitle, setTaskTitle] = useState("");
@@ -45,9 +62,7 @@ export default function IntentEngine() {
   const categoriesQ = trpc.hub.categories.useQuery();
 
   const intentQ = trpc.aiCeo.socratiqueQuestion.useMutation();
-  const interpretMut = trpc.context.interpret.useMutation();
-  const gatherMut = trpc.context.gather.useMutation();
-  const contextualizeMut = trpc.context.contextualize.useMutation();
+  const liveContextualizeMut = trpc.context.liveContextualize.useMutation();
 
   const createTask = trpc.tasks.create.useMutation({ onSuccess: () => { utils.tasks.list.invalidate(); toast.success("Task created"); } });
   const generatePrompt = trpc.tasks.generatePrompt.useMutation({ onSuccess: () => { utils.tasks.list.invalidate(); toast.success("Prompt generated"); } });
@@ -73,6 +88,16 @@ export default function IntentEngine() {
     return categories.filter(c => connCatIds.has(c.id));
   }, [connections, categories]);
 
+  // Progressive loading label sequence
+  const PHASE_CONFIG: Record<LiveContextPhase, { label: string; icon: React.ReactNode; color: string }> = {
+    idle: { label: "Awaiting input", icon: <Brain className="w-3 h-3" />, color: "text-muted-foreground" },
+    connecting: { label: "Connecting to your tools...", icon: <Plug className="w-3 h-3 animate-pulse" />, color: "text-yellow-400" },
+    reading: { label: "Reading pipeline data...", icon: <Database className="w-3 h-3 animate-pulse" />, color: "text-blue-400" },
+    analyzing: { label: "Analyzing patterns...", icon: <Eye className="w-3 h-3 animate-pulse" />, color: "text-purple-400" },
+    building: { label: "Building context...", icon: <Sparkles className="w-3 h-3 animate-pulse" />, color: "text-orange-400" },
+    ready: { label: "Context ready", icon: <CheckCircle2 className="w-3 h-3" />, color: "text-emerald-400" },
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isThinking) return;
     const userMsg: Message = { role: "user", content: input.trim() };
@@ -80,22 +105,38 @@ export default function IntentEngine() {
     setMessages(newMessages);
     setInput("");
     setIsThinking(true);
+    setLiveContext(null);
 
     try {
-      setContextPhase("interpreting");
-      const interpretResult = await interpretMut.mutateAsync({ requestText: userMsg.content });
-      setContextId(interpretResult.contextId);
+      // Progressive loading states
+      setLivePhase("connecting");
+      await new Promise(r => setTimeout(r, 400));
 
-      setContextPhase("gathering");
-      await gatherMut.mutateAsync({ contextId: interpretResult.contextId });
+      if (connectedCount > 0) {
+        setLivePhase("reading");
+        await new Promise(r => setTimeout(r, 300));
+        setLivePhase("analyzing");
+      }
 
-      setContextPhase("contextualizing");
-      const contextResult = await contextualizeMut.mutateAsync({ contextId: interpretResult.contextId });
-      setContextData(contextResult);
-      setContextPhase("ready");
+      setLivePhase("building");
+
+      // Single call to the new live contextualize procedure
+      const ctx = await liveContextualizeMut.mutateAsync({ requestText: userMsg.content });
+      setLiveContext(ctx as LiveContextData);
+      setLivePhase("ready");
+
+      // Feed the contextualized questions directly as the AI's first response
+      const contextEnrichedInput = [
+        `[CONTEXT-ENRICHED REQUEST] ${userMsg.content}`,
+        ctx.hasLiveData ? `[Live Data Available: ${ctx.connectedProviders.join(", ")}]` : "[No connected tools]",
+        `[Context Summary: ${ctx.contextSummary}]`,
+        `[Key Insights: ${ctx.insights.slice(0, 3).join(" | ")}]`,
+        `[Pre-filled Parameters: ${JSON.stringify(ctx.suggestedParameters)}]`,
+        `\nBased on the above live data context, ask the following data-informed clarifying questions:\n${ctx.questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}`,
+      ].join("\n");
 
       const result = await intentQ.mutateAsync({
-        userInput: `[CONTEXT-ENRICHED] ${userMsg.content}\n\n[Connected Tools: ${connectedCategories.map(c => c.name).join(", ") || "None"}]\n[Context Confidence: ${contextResult.confidence}]\n[Inferred Categories: ${(interpretResult as any).inferredCategories?.join(", ") || "general"}]`,
+        userInput: contextEnrichedInput,
         conversationHistory: messages,
       });
       setMessages([...newMessages, { role: "assistant", content: result.response }]);
@@ -103,7 +144,8 @@ export default function IntentEngine() {
         setIntentObject(result.intentObject as IntentObject);
         toast.success("Intent object structured — ready to deploy");
       }
-    } catch {
+    } catch (err) {
+      // Graceful fallback to generic Socratic questions
       try {
         const result = await intentQ.mutateAsync({ userInput: userMsg.content, conversationHistory: messages });
         setMessages([...newMessages, { role: "assistant", content: result.response }]);
@@ -111,7 +153,7 @@ export default function IntentEngine() {
       } catch {
         toast.error("Arch is unavailable. Try again.");
       }
-      setContextPhase("idle");
+      setLivePhase("idle");
     } finally {
       setIsThinking(false);
     }
@@ -132,16 +174,11 @@ export default function IntentEngine() {
   const tasks = tasksQ.data ?? [];
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
 
-  const PHASE_LABELS: Record<ContextPhase, { label: string; icon: React.ReactNode; color: string }> = {
-    idle: { label: "Awaiting input", icon: <Brain className="w-3 h-3" />, color: "text-muted-foreground" },
-    interpreting: { label: "Interpreting intent", icon: <Eye className="w-3 h-3 animate-pulse" />, color: "text-yellow-500" },
-    gathering: { label: "Gathering context", icon: <Database className="w-3 h-3 animate-pulse" />, color: "text-blue-400" },
-    contextualizing: { label: "Contextualizing", icon: <Sparkles className="w-3 h-3 animate-pulse" />, color: "text-purple-400" },
-    ready: { label: "Context ready", icon: <CheckCircle2 className="w-3 h-3" />, color: "text-emerald-400" },
-  };
-
   const priorityStyle = (p: string) =>
     p === "critical" ? "text-red-400 border-red-400/30" : p === "high" ? "text-amber-400 border-amber-400/30" : p === "medium" ? "text-blue-400 border-blue-400/30" : "text-zinc-400 border-zinc-600";
+
+  const phaseOrder: LiveContextPhase[] = ["connecting", "reading", "analyzing", "building"];
+  const currentPhaseIdx = phaseOrder.indexOf(livePhase);
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -149,19 +186,34 @@ export default function IntentEngine() {
       <div className="mb-8">
         <p className="text-xs text-muted-foreground tracking-widest uppercase mb-1">OpenCommand</p>
         <h1 className="text-3xl font-light text-foreground tracking-tight">Intent Engine</h1>
-        <p className="text-sm text-muted-foreground mt-1">Self-contextualizing · Intent-driven questioning · Autonomous execution</p>
+        <p className="text-sm text-muted-foreground mt-1">Self-contextualizing · Live data-informed · Autonomous execution</p>
+
+        {/* No-connection banner */}
+        {connectedCount === 0 && !connectionsQ.isLoading && (
+          <div className="mt-4 flex items-center gap-3 p-3 rounded-lg border border-yellow-800/50 bg-yellow-950/20">
+            <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+            <p className="text-xs text-yellow-300 flex-1">
+              Connect your tools for smarter, data-informed questions — Arch will reference your actual pipeline, contacts, and deals.
+            </p>
+            <Link href="/integration-hub">
+              <Button variant="outline" size="sm" className="text-xs border-yellow-700 text-yellow-400 hover:bg-yellow-950 gap-1.5 flex-shrink-0">
+                <Link2 className="w-3 h-3" /> Go to Integration Hub
+              </Button>
+            </Link>
+          </div>
+        )}
 
         {/* Context Pipeline Status */}
-        <div className="mt-5 flex items-center gap-3 p-3 rounded-lg border border-border bg-card/50">
-          {(["interpreting", "gathering", "contextualizing"] as const).map((phase, i) => {
-            const isActive = contextPhase === phase;
-            const isDone = (["interpreting", "gathering", "contextualizing"].indexOf(contextPhase) > i) || contextPhase === "ready";
+        <div className="mt-4 flex items-center gap-3 p-3 rounded-lg border border-border bg-card/50">
+          {phaseOrder.map((phase, i) => {
+            const isActive = livePhase === phase;
+            const isDone = currentPhaseIdx > i || livePhase === "ready";
             return (
               <div key={phase} className="flex items-center gap-2">
                 {i > 0 && <ArrowRight className={`w-3 h-3 ${isDone ? "text-emerald-400" : "text-zinc-700"}`} />}
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${isActive ? "bg-zinc-800 " + PHASE_LABELS[phase].color : isDone ? "text-emerald-400" : "text-zinc-600"}`}>
-                  {isDone && !isActive ? <CheckCircle2 className="w-3 h-3" /> : PHASE_LABELS[phase].icon}
-                  {phase === "interpreting" ? "Interpret" : phase === "gathering" ? "Gather" : "Contextualize"}
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${isActive ? "bg-zinc-800 " + PHASE_CONFIG[phase].color : isDone ? "text-emerald-400" : "text-zinc-600"}`}>
+                  {isDone && !isActive ? <CheckCircle2 className="w-3 h-3" /> : PHASE_CONFIG[phase].icon}
+                  {phase === "connecting" ? "Connect" : phase === "reading" ? "Read" : phase === "analyzing" ? "Analyze" : "Build"}
                 </div>
               </div>
             );
@@ -170,9 +222,9 @@ export default function IntentEngine() {
             <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-[10px]">
               <Plug className="w-3 h-3 mr-1" /> {connectedCount} tools
             </Badge>
-            {contextData?.confidence && (
-              <Badge variant="outline" className={`border-zinc-700 text-[10px] ${contextData.confidence > 0.7 ? "text-emerald-400" : contextData.confidence > 0.4 ? "text-yellow-400" : "text-red-400"}`}>
-                {(contextData.confidence * 100).toFixed(0)}% confidence
+            {liveContext?.hasLiveData && (
+              <Badge variant="outline" className="border-emerald-800 text-emerald-400 text-[10px]">
+                <BarChart3 className="w-3 h-3 mr-1" /> Live data
               </Badge>
             )}
           </div>
@@ -207,12 +259,15 @@ export default function IntentEngine() {
                   </div>
                   <div>
                     <div className="text-sm font-medium text-foreground">Arch — Self-Contextualizing Engine</div>
-                    <div className={`text-[10px] flex items-center gap-1 ${PHASE_LABELS[contextPhase].color}`}>
-                      {PHASE_LABELS[contextPhase].icon} {PHASE_LABELS[contextPhase].label}
+                    <div className={`text-[10px] flex items-center gap-1 ${PHASE_CONFIG[livePhase].color}`}>
+                      {PHASE_CONFIG[livePhase].icon} {PHASE_CONFIG[livePhase].label}
                     </div>
                   </div>
                 </div>
-                <button onClick={() => { setMessages([]); setIntentObject(null); setContextPhase("idle"); setContextData(null); setContextId(null); }} className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-md hover:bg-zinc-800">
+                <button
+                  onClick={() => { setMessages([]); setIntentObject(null); setLivePhase("idle"); setLiveContext(null); }}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-md hover:bg-zinc-800"
+                >
                   <RotateCcw size={14} />
                 </button>
               </div>
@@ -222,16 +277,47 @@ export default function IntentEngine() {
                   <div className="text-center py-12">
                     <Cpu size={28} className="text-muted-foreground mx-auto mb-4 opacity-50" />
                     <div className="text-base font-medium text-muted-foreground mb-2">Describe your goal</div>
-                    <p className="text-muted-foreground text-sm max-w-sm mx-auto">Arch will interpret your intent, gather context from {connectedCount} connected tools, and produce a precision-enriched execution plan.</p>
+                    <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                      Arch will connect to your tools, read live data, and ask questions that reference your actual pipeline — not generic ones.
+                    </p>
                     <div className="mt-6 space-y-2 max-w-md mx-auto">
-                      {["I want to grow my email list by 50% this quarter", "Help me close the 3 stalled deals in my pipeline", "Automate my weekly content calendar across all channels"].map(s => (
-                        <button key={s} onClick={() => setInput(s)} className="block w-full text-left px-4 py-2.5 rounded-lg border border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground text-xs transition-all">
+                      {[
+                        "I want more leads",
+                        "Help me close the stalled deals in my pipeline",
+                        "Automate my weekly content calendar across all channels",
+                      ].map(s => (
+                        <button
+                          key={s}
+                          onClick={() => setInput(s)}
+                          className="block w-full text-left px-4 py-2.5 rounded-lg border border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground text-xs transition-all"
+                        >
                           <ChevronRight size={10} className="inline mr-2 opacity-50" />{s}
                         </button>
                       ))}
                     </div>
                   </div>
                 )}
+
+                {/* Context card — shown above messages when live data is ready */}
+                {liveContext?.hasLiveData && liveContext.contextSummary && messages.length > 0 && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[90%] rounded-lg border border-emerald-800/40 bg-emerald-950/20 px-4 py-3">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wide">Context assembled</span>
+                      </div>
+                      <p className="text-xs text-emerald-200/80 leading-relaxed">{liveContext.contextSummary}</p>
+                      {liveContext.connectedProviders.length > 0 && (
+                        <div className="flex gap-1 mt-2 flex-wrap">
+                          {liveContext.connectedProviders.map(p => (
+                            <Badge key={p} variant="outline" className="border-emerald-800/50 text-emerald-500 text-[9px] px-1.5 py-0 capitalize">{p}</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {messages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[85%] rounded-lg px-4 py-3 ${msg.role === "user" ? "bg-zinc-800 border border-zinc-700" : "bg-card border border-border"}`}>
@@ -243,16 +329,19 @@ export default function IntentEngine() {
                     </div>
                   </div>
                 ))}
+
                 {isThinking && (
                   <div className="flex justify-start">
                     <div className="bg-card border border-border rounded-lg px-4 py-3">
                       <div className="flex items-center gap-2 mb-1">
                         <div className="flex gap-1">
-                          {[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-foreground/50 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
+                          {[0, 1, 2].map(i => (
+                            <div key={i} className="w-1.5 h-1.5 rounded-full bg-foreground/50 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                          ))}
                         </div>
-                        <span className={`text-[10px] ${PHASE_LABELS[contextPhase].color}`}>{PHASE_LABELS[contextPhase].label}</span>
+                        <span className={`text-[10px] ${PHASE_CONFIG[livePhase].color}`}>{PHASE_CONFIG[livePhase].label}</span>
                       </div>
-                      {contextPhase === "gathering" && connectedCategories.length > 0 && (
+                      {(livePhase === "reading" || livePhase === "analyzing") && connectedCategories.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {connectedCategories.map(c => (
                             <Badge key={c.id} variant="outline" className="border-zinc-700 text-zinc-400 text-[9px] px-1.5 py-0">
@@ -273,7 +362,7 @@ export default function IntentEngine() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                    placeholder="Describe your goal — Arch will self-contextualize..."
+                    placeholder="Describe your goal — Arch will read your live data first..."
                     className="flex-1 bg-zinc-900 border-border text-foreground text-sm resize-none rounded-lg"
                     rows={2}
                   />
@@ -287,40 +376,36 @@ export default function IntentEngine() {
 
           {/* Right Panel */}
           <div className="space-y-4">
-            {contextData && (
+            {/* Live Context Object */}
+            {liveContext && (
               <div className="card-minimal p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
                     <Layers className="w-3 h-3" /> Context Object
                   </div>
-                  <Badge variant="outline" className={`text-[10px] ${contextData.confidence > 0.7 ? "border-emerald-800 text-emerald-400" : "border-yellow-800 text-yellow-400"}`}>
-                    {(contextData.confidence * 100).toFixed(0)}%
+                  <Badge variant="outline" className={`text-[10px] ${liveContext.hasLiveData ? "border-emerald-800 text-emerald-400" : "border-zinc-700 text-zinc-400"}`}>
+                    {liveContext.hasLiveData ? "Live data" : "Generic"}
                   </Badge>
                 </div>
                 <div className="h-px bg-border" />
-                {contextData.inferredCategories && (
+                {liveContext.insights.length > 0 && (
                   <div>
-                    <div className="text-[10px] text-muted-foreground mb-1 font-medium">Inferred Categories</div>
-                    <div className="flex flex-wrap gap-1">
-                      {(contextData.inferredCategories as string[]).map((cat: string) => (
-                        <Badge key={cat} variant="outline" className="border-zinc-700 text-zinc-300 text-[10px] px-1.5 py-0">{cat}</Badge>
+                    <div className="text-[10px] text-muted-foreground mb-1.5 font-medium">Key Insights</div>
+                    <ul className="space-y-1.5">
+                      {liveContext.insights.map((ins, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-zinc-300">
+                          <span className="text-emerald-500 mt-0.5 flex-shrink-0">•</span>
+                          <span>{ins}</span>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 )}
-                {contextData.gatheredData && (
+                {Object.keys(liveContext.suggestedParameters).length > 0 && (
                   <div>
-                    <div className="text-[10px] text-muted-foreground mb-1 font-medium">Gathered Data</div>
+                    <div className="text-[10px] text-muted-foreground mb-1 font-medium">Suggested Parameters</div>
                     <div className="text-xs text-zinc-400 font-mono bg-zinc-950 border border-zinc-800 p-2 rounded-md max-h-24 overflow-y-auto">
-                      {typeof contextData.gatheredData === "string" ? contextData.gatheredData : JSON.stringify(contextData.gatheredData, null, 2)}
-                    </div>
-                  </div>
-                )}
-                {contextData.enrichedParams && (
-                  <div>
-                    <div className="text-[10px] text-muted-foreground mb-1 font-medium">Enriched Parameters</div>
-                    <div className="text-xs text-zinc-400 font-mono bg-zinc-950 border border-zinc-800 p-2 rounded-md max-h-24 overflow-y-auto">
-                      {typeof contextData.enrichedParams === "string" ? contextData.enrichedParams : JSON.stringify(contextData.enrichedParams, null, 2)}
+                      {JSON.stringify(liveContext.suggestedParameters, null, 2)}
                     </div>
                   </div>
                 )}

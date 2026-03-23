@@ -48,3 +48,7 @@
 - [x] Add email unsubscribe token to users table and one-click unsubscribe endpoint
 - [x] Add unsubscribe link to briefing email footer
 - [x] Update RESEND_FROM_EMAIL to briefings@opencommand.co
+- [x] Create server/integrations/hubspot.ts with token refresh and CRM data fetchers
+- [x] Create server/integrations/contextAssembler.ts orchestrator
+- [x] Add context.liveContextualize tRPC procedure to routers.ts
+- [x] Update IntentEngine.tsx with progressive loading, context card, and no-connection fallback banner
