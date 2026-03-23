@@ -344,3 +344,8 @@
 
 ## v3.15 — OAuth Callback Retry
 - [x] Add retry logic (up to 3 attempts, exponential backoff 200/400/800ms) to OAuth callback DB write to handle ECONNRESET/ETIMEDOUT/ECONNREFUSED
+
+## v3.16 — SEO Fixes (Home Page)
+- [x] Add meta description (137 chars) to index.html
+- [x] Add meta keywords to index.html (9 keywords)
+- [x] Add meta robots index/follow tag
