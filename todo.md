@@ -338,3 +338,6 @@
 
 ## v3.13 — Agents Sidebar Section
 - [x] Add Agents section to sidebar above Projects, formatted identically to Projects section (status dot, name, type label, + button, empty state, 8-item cap with overflow link)
+
+## v3.14 — Sidebar Section Order
+- [x] Swap Projects and Agents sections so Projects is above Agents
