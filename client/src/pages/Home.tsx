@@ -456,9 +456,9 @@ export default function Home() {
                 </Link>
               )
             ) : (
-              <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary text-[13px] px-5 py-2">
+              <a href={getLoginUrl("/onboarding/pro")} className="btn-primary text-[13px] px-5 py-2">
                 Start Free
-              </button>
+              </a>
             )}
           </div>
 
@@ -496,9 +496,9 @@ export default function Home() {
                   </Link>
                 )
               ) : (
-                <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary text-[13px] px-5 py-2">
+                <a href={getLoginUrl("/onboarding/pro")} className="btn-primary text-[13px] px-5 py-2">
                   Start Free
-                </button>
+                </a>
               )}
             </div>
           </div>
@@ -530,9 +530,9 @@ export default function Home() {
                   </Link>
                 )
               ) : (
-                <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary flex items-center gap-2 px-7 py-3">
+                <a href={getLoginUrl("/onboarding/pro")} className="btn-primary flex items-center gap-2 px-7 py-3">
                   Start Free — Build Your Executive Team <ArrowRight size={16} />
-                </button>
+                </a>
               )}
               <button onClick={() => scrollToSection("how-it-works")} className="btn-outline px-7 py-3">
                 See How It Works
@@ -781,9 +781,9 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-6 flex-wrap">
-          <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary flex items-center gap-2 px-6 py-2.5 text-sm">
+          <a href={getLoginUrl("/onboarding/pro")} className="btn-primary flex items-center gap-2 px-6 py-2.5 text-sm">
             Join the Waitlist <ArrowRight size={14} />
-          </button>
+          </a>
           <Link href="/creators" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             Build Blueprints as a Creator <ArrowRight size={14} />
           </Link>
@@ -830,9 +830,9 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary text-center text-sm py-3 w-full">
+          <a href={getLoginUrl("/onboarding/pro")} className="btn-primary text-center text-sm py-3 w-full block">
             Get Started — It's Free <ArrowRight size={14} className="inline ml-1" />
-          </button>
+          </a>
           <p className="text-center text-xs text-muted-foreground/60 mt-4">
             Paid plans will be introduced later. Early users will be grandfathered.
           </p>
