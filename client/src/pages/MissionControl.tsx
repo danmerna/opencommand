@@ -11,13 +11,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { JSX } from "react";
+import { Streamdown } from "streamdown";
 import {
   Target, Zap, Plus, Trash2, Check, X, Clock, TrendingUp, DollarSign, FileCheck,
   Inbox, Building2, GitBranch, Heart, Activity, BarChart3, Shield, Power, Wrench,
-  CheckCircle2, Sparkles, ArrowRight, Bot
+  CheckCircle2, Sparkles, ArrowRight, Bot, BookOpen, RefreshCw
 } from "lucide-react";
 
-type Tab = "okrs" | "fleet" | "org" | "heartbeat" | "budget" | "poo" | "inbox" | "governance";
+type Tab = "okrs" | "fleet" | "org" | "heartbeat" | "budget" | "poo" | "inbox" | "governance" | "strategy";
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "okrs", label: "OKRs", icon: Target },
@@ -28,6 +29,7 @@ const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "poo", label: "PoO Ledger", icon: FileCheck },
   { id: "inbox", label: "Inbox", icon: Inbox },
   { id: "governance", label: "Governance", icon: Shield },
+  { id: "strategy", label: "Strategy", icon: BookOpen },
 ];
 
 const typeColors: Record<string, string> = {
@@ -170,6 +172,16 @@ export default function MissionControl() {
   const auditEntries = auditQ.data ?? [];
 
   const pnlQ = trpc.companies.pnl.useQuery({ companyId: effectiveCompanyId! }, { enabled: isAuthenticated && !!effectiveCompanyId });
+  const proposalsQ = trpc.onboarding.proposals.useQuery(
+    { companyId: effectiveCompanyId ?? undefined },
+    { enabled: isAuthenticated && tab === "strategy" }
+  );
+  const proposals = proposalsQ.data ?? [];
+  const latestProposal = proposals[0] ?? null;
+  const generateStrategyMut = trpc.onboarding.generateStrategy.useMutation({
+    onSuccess: () => { proposalsQ.refetch(); toast.success("Strategy generated!"); },
+    onError: (err: any) => toast.error("Failed to generate strategy", { description: err.message }),
+  });
 
   // Computed
   const totalValue = pooReceipts.reduce((s, r) => s + Number(r.dollarValueCreated), 0);
@@ -270,6 +282,22 @@ export default function MissionControl() {
 
       {/* ─── ONBOARDING BANNER ─── */}
       <OnboardingBanner companyId={effectiveCompanyId} navigate={navigate} />
+
+      {/* ─── STRATEGY PINNED CARD (shown when proposal exists and not on strategy tab) ─── */}
+      {latestProposal && tab !== "strategy" && (
+        <div className="mb-6 border border-amber-500/20 rounded-xl p-4 bg-amber-500/5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Sparkles size={15} className="text-amber-400 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Combined Strategy available</p>
+              <p className="text-xs text-muted-foreground line-clamp-1">{latestProposal.executiveSummary ?? "Arch has produced a formal strategic plan."}</p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="text-xs gap-1.5 h-8 shrink-0" onClick={() => setTab("strategy")}>
+            <BookOpen size={12} /> View Strategy
+          </Button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex overflow-x-auto border-b border-border mb-8 scrollbar-hide">
@@ -592,7 +620,78 @@ export default function MissionControl() {
         </div>
       )}
 
-      {/* ─── GOVERNANCE ─── */}
+      {/* ─── STRATEGY ─── */}
+      {tab === "strategy" && (
+        <div className="animate-fade-in">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-heading text-lg">Combined Strategy</h2>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs gap-1.5 h-8"
+              onClick={() => effectiveCompanyId && generateStrategyMut.mutate({ companyId: effectiveCompanyId })}
+              disabled={!effectiveCompanyId || generateStrategyMut.isPending}
+            >
+              {generateStrategyMut.isPending ? <><RefreshCw size={12} className="animate-spin" /> Generating...</> : <><RefreshCw size={12} /> Regenerate</>}
+            </Button>
+          </div>
+
+          {proposalsQ.isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <RefreshCw size={18} className="animate-spin text-muted-foreground" />
+            </div>
+          ) : !latestProposal ? (
+            <div className="card-minimal text-center py-16">
+              <BookOpen size={28} className="text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
+              <p className="text-foreground text-sm font-medium mb-1">No strategy generated yet</p>
+              <p className="text-muted-foreground text-xs mb-6 max-w-xs mx-auto">Complete the executive onboarding interviews, then generate your combined strategic plan.</p>
+              <Button
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => effectiveCompanyId && generateStrategyMut.mutate({ companyId: effectiveCompanyId })}
+                disabled={!effectiveCompanyId || generateStrategyMut.isPending}
+              >
+                <Sparkles size={12} /> Generate Strategy
+              </Button>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <span className="badge-minimal text-[10px]">{latestProposal.status?.toUpperCase() ?? "PROPOSED"}</span>
+                <span className="text-muted-foreground text-xs">{new Date(latestProposal.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span>
+              </div>
+              {latestProposal.executiveSummary && (
+                <div className="card-minimal mb-6 border-amber-500/20 bg-amber-500/5">
+                  <p className="text-label mb-1.5">Executive Summary</p>
+                  <p className="text-sm text-foreground leading-relaxed">{latestProposal.executiveSummary}</p>
+                </div>
+              )}
+              <div className="prose prose-sm max-w-none text-foreground [&_h2]:text-foreground [&_h3]:text-foreground [&_strong]:text-foreground [&_p]:text-muted-foreground [&_li]:text-muted-foreground [&_h2]:mt-8 [&_h2]:mb-3 [&_h3]:mt-5 [&_h3]:mb-2">
+                <Streamdown>{latestProposal.content ?? ""}</Streamdown>
+              </div>
+              <div className="flex gap-3 mt-8 pt-6 border-t border-border">
+                <Button
+                  size="sm"
+                  className="gap-1.5 text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+                  onClick={() => trpc.useUtils() && toast.info("Strategy accepted — Arch will begin execution.")}
+                >
+                  <Check size={12} /> Accept Strategy
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs"
+                  onClick={() => effectiveCompanyId && generateStrategyMut.mutate({ companyId: effectiveCompanyId })}
+                  disabled={generateStrategyMut.isPending}
+                >
+                  <RefreshCw size={12} /> Revise
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {tab === "governance" && (
         <div className="animate-fade-in">
           <div className="flex items-center justify-between mb-5">

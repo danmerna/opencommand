@@ -61,6 +61,58 @@ export default function ProOnboarding() {
 
   const utils = trpc.useUtils();
 
+  // Queries for resume detection
+  const companiesQ = trpc.companies.list.useQuery(undefined, { enabled: true });
+  const agentsQ = trpc.agents.list.useQuery(undefined, { enabled: true });
+
+  // Resume detection: on mount, check if user already has a company + agents and resume from correct step
+  useEffect(() => {
+    const companies = companiesQ.data;
+    const agents = agentsQ.data;
+    if (!companies || !agents || step !== "welcome") return;
+
+    const existingCompany = companies[0];
+    if (!existingCompany) return;
+
+    const csuiteAgents = agents.filter((a: any) =>
+      ["ceo", "cto", "cmo", "cfo"].includes(a.type) && a.companyId === existingCompany.id
+    );
+    if (csuiteAgents.length === 0) return;
+
+    // Company + agents exist — restore state and resume
+    setCompanyId(existingCompany.id);
+    setCompanyName(existingCompany.name ?? "");
+    setCompanyMission(existingCompany.mission ?? "");
+    setCompanyIndustry(existingCompany.industry ?? "");
+    const mapped = csuiteAgents.map((a: any) => ({ id: a.id, type: a.type }));
+    setCreatedAgents(mapped);
+
+    // Find the first agent not yet onboarded
+    const typeToStep: Record<string, OnboardingStep> = {
+      ceo: "onboarding-ceo",
+      cto: "onboarding-cto",
+      cmo: "onboarding-cmo",
+      cfo: "onboarding-cfo",
+    };
+    const onboardedTypes = new Set(
+      csuiteAgents
+        .filter((a: any) => a.onboardingStatus === "completed")
+        .map((a: any) => a.type)
+    );
+    const nextUnboarded = ["ceo", "cto", "cmo", "cfo"].find(t => !onboardedTypes.has(t));
+    if (!nextUnboarded) {
+      // All onboarded — go straight to strategy
+      setStep("generating-strategy");
+    } else {
+      const resumeStep = typeToStep[nextUnboarded];
+      if (resumeStep) {
+        toast.info("Resuming your onboarding session", { description: `Continuing with ${nextUnboarded.toUpperCase()} interview.` });
+        startAgentOnboarding(resumeStep, mapped);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companiesQ.data, agentsQ.data]);
+
   // Mutations
   const createCompanyMut = trpc.companies.create.useMutation();
   const createAgentMut = trpc.agents.create.useMutation();

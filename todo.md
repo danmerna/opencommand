@@ -22,3 +22,6 @@
 - [x] Build ProOnboarding page: auto-create executive agents, combined strategy generation, first question walkthrough
 - [x] Wire post-checkout Stripe redirect to /onboarding/pro route
 - [x] Add /onboarding/pro route to App.tsx
+- [x] Persist Pro onboarding progress to DB with resume logic
+- [x] Add combined strategy view to Mission Control
+- [x] Generate PDF mockup of combined strategy document
