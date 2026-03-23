@@ -325,3 +325,7 @@
 ## v3.10 — Home Page Polish
 - [x] Update bottom CTA section copy to zero-human company framing ("Your zero-human company starts here.")
 - [x] Add 3-step "How It Works" section (State Your Intent → Arch Orchestrates → Proof of Outcome)
+
+## v3.11 — Animations + CTA Revert
+- [x] Animate How It Works steps with scroll-triggered fade-in-up stagger (IntersectionObserver, 150ms delay per step)
+- [x] Revert bottom CTA headline back to "Hire your AI CEO today." with original supporting copy
