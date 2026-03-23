@@ -7,7 +7,7 @@ import { invokeLLM } from "./_core/llm";
 import { notifyOwner } from "./_core/notification";
 import {
   getAgentsByUserId, getAgentsByCompanyId, getAgentById, createAgent, updateAgentStatus, updateAgent, deleteAgent,
-  getOkrsByUserId, getOkrsByCompanyId, createOkr, updateOkrProgress, deleteOkr,
+  getOkrsByUserId, getOkrsByCompanyId, getOkrById, createOkr, updateOkrProgress, deleteOkr,
   getTasksByUserId, getTasksByCompanyId, getTaskById, createTask, updateTask,
   getPooReceiptsByUserId, getPooReceiptByNumber, createPooReceipt, getPooSummaryByUserId,
   getInboxItemsByUserId, createInboxItem, resolveInboxItem, dismissInboxItem, markInboxItemRead,
@@ -215,8 +215,31 @@ const okrsRouter = router({
   updateProgress: protectedProcedure
     .input(z.object({ id: z.number(), currentValue: z.number(), status: z.enum(["on_track", "at_risk", "achieved", "missed"]) }))
     .mutation(async ({ ctx, input }) => {
+      // Fetch the OKR before update to detect status transitions
+      const existing = await getOkrById(input.id);
       await updateOkrProgress(input.id, String(input.currentValue), input.status);
       emitToUser(ctx.user.id, "okr_updated", "OKR Progress Updated", `OKR #${input.id} → ${input.currentValue} (${input.status})`, { okrId: input.id, currentValue: input.currentValue, status: input.status });
+
+      // Notify owner for strategy-sourced OKRs that hit achieved or at_risk
+      if (existing && (existing as any).source === "strategy") {
+        const prevStatus = existing.status;
+        const newStatus = input.status;
+        if (newStatus === "achieved" && prevStatus !== "achieved") {
+          const progress = existing.targetValue
+            ? Math.round((input.currentValue / Number(existing.targetValue)) * 100)
+            : 100;
+          await notifyOwner({
+            title: `OKR Achieved — ${existing.objective}`,
+            content: `Your strategy OKR "${existing.objective}" has been marked as achieved.\n\nKey Result: ${existing.keyResult}\nProgress: ${input.currentValue.toLocaleString()} / ${Number(existing.targetValue).toLocaleString()} ${existing.unit} (${progress}%)\n\nVisit Mission Control → OKRs to review your progress.`,
+          });
+        } else if (newStatus === "at_risk" && prevStatus !== "at_risk") {
+          await notifyOwner({
+            title: `OKR At Risk — ${existing.objective}`,
+            content: `Your strategy OKR "${existing.objective}" has been flagged as at risk.\n\nKey Result: ${existing.keyResult}\nCurrent Progress: ${input.currentValue.toLocaleString()} / ${Number(existing.targetValue).toLocaleString()} ${existing.unit}\n\nVisit Mission Control → OKRs to review and take corrective action.`,
+          });
+        }
+      }
+
       return { success: true };
     }),
 

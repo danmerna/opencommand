@@ -1,13 +1,14 @@
 /**
  * Briefing Scheduler
  * Sends strategy briefings to users on their chosen cadence (daily/weekly/monthly/quarterly).
- * Logs every delivered briefing to the briefing_logs table for the /briefings history page.
+ * Delivers via: (1) in-app owner notification, (2) Resend email, (3) briefing_logs DB record.
  */
 import cron from "node-cron";
 import { getDb, createBriefingLog } from "./db";
 import { companies, strategyProposals, users } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { notifyOwner } from "./_core/notification";
+import { sendBriefingEmail } from "./email";
 
 // Map briefing frequency to cron expressions
 const FREQUENCY_CRON: Record<string, string> = {
@@ -21,15 +22,16 @@ async function deliverBriefingForFrequency(frequency: string) {
   const db = await getDb();
   if (!db) return;
 
-  // Find all companies with this briefing frequency
+  // Find all companies with this briefing frequency, joined with their owner user
   const matchingCompanies = await db
-    .select()
+    .select({ company: companies, user: users })
     .from(companies)
+    .innerJoin(users, eq(users.id, companies.userId))
     .where(eq((companies as any).briefingFrequency, frequency));
 
-  for (const company of matchingCompanies) {
+  for (const { company, user } of matchingCompanies) {
     try {
-      // Get the latest strategy proposal
+      // Get the latest accepted or pending strategy proposal
       const proposals = await db
         .select()
         .from(strategyProposals)
@@ -45,20 +47,35 @@ async function deliverBriefingForFrequency(frequency: string) {
 
       if (latest) {
         const summary = latest.executiveSummary
-          ? latest.executiveSummary.slice(0, 300) + (latest.executiveSummary.length > 300 ? "..." : "")
+          ? latest.executiveSummary.slice(0, 600) + (latest.executiveSummary.length > 600 ? "..." : "")
           : "Your executive team has a strategy ready for review.";
 
         title = `${freqLabel} Strategy Briefing — ${company.name}`;
         content = `Your ${frequency} OpenCommand briefing is ready.\n\n${summary}\n\nVisit Mission Control → Strategy to review the full plan and accept or revise it.`;
       } else {
         title = `${freqLabel} Briefing Reminder — ${company.name}`;
-        content = `Your ${frequency} strategy briefing is due, but no strategy has been generated yet for ${company.name}. Visit Mission Control → Strategy to generate your first combined strategic plan.`;
+        content = `Your ${frequency} strategy briefing is due, but no strategy has been generated yet for ${company.name}.\n\nVisit Mission Control → Strategy to generate your first combined strategic plan.`;
       }
 
-      // Send notification
+      // 1. In-app owner notification
       await notifyOwner({ title, content });
 
-      // Log to DB for briefing history
+      // 2. Email delivery via Resend (non-blocking — failure doesn't abort the log)
+      if (user.email) {
+        const emailSent = await sendBriefingEmail({
+          to: user.email,
+          name: user.name ?? "there",
+          companyName: company.name,
+          frequency,
+          title,
+          content,
+        });
+        if (!emailSent) {
+          console.warn(`[BriefingScheduler] Email delivery failed for user ${user.id} (${user.email})`);
+        }
+      }
+
+      // 3. Log to DB for /briefings history page
       await createBriefingLog({
         userId: company.userId,
         companyId: company.id,

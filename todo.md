@@ -39,3 +39,9 @@
 - [x] Build /briefings history log page with timestamped list of past briefings
 - [x] Add briefing_logs DB table and server procedure to store/retrieve briefing history
 - [x] Add briefing preview card in ProOnboarding after frequency selection step
+- [x] Notify owner when a strategy-sourced OKR reaches "achieved" (100%)
+- [x] Notify owner when a strategy-sourced OKR status changes to "at_risk"
+- [x] Notify owner when a strategy-sourced OKR reaches "achieved" (100%)
+- [x] Notify owner when a strategy-sourced OKR status changes to "at_risk"
+- [x] Integrate Resend email API to send briefing content as formatted email
+- [x] Add PDF download button per briefing entry on /briefings page

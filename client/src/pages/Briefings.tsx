@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookOpen, Calendar, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, BookOpen, Calendar, Clock, ChevronDown, ChevronUp, Download } from "lucide-react";
 
 const FREQ_COLORS: Record<string, string> = {
   daily:     "text-blue-400 border-blue-400/30 bg-blue-400/5",
@@ -12,9 +12,89 @@ const FREQ_COLORS: Record<string, string> = {
   quarterly: "text-emerald-400 border-emerald-400/30 bg-emerald-400/5",
 };
 
+async function downloadBriefingPdf(log: any) {
+  // Dynamically import jsPDF to keep the initial bundle lean
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  const contentW = pageW - margin * 2;
+  let y = margin;
+
+  // Header bar
+  doc.setFillColor(17, 17, 17);
+  doc.rect(0, 0, pageW, 18, "F");
+
+  doc.setFontSize(7);
+  doc.setTextColor(100, 100, 100);
+  doc.text("OpenCommand — Personal Intelligence Engine", margin, 11);
+
+  const freqLabel = (log.frequency as string).charAt(0).toUpperCase() + (log.frequency as string).slice(1);
+  const dateStr = new Date(log.deliveredAt).toLocaleDateString(undefined, {
+    year: "numeric", month: "long", day: "numeric",
+  });
+  doc.text(`${freqLabel} Briefing  ·  ${log.companyName ?? ""}  ·  ${dateStr}`, pageW - margin, 11, { align: "right" });
+
+  y = 30;
+
+  // Title
+  doc.setFontSize(16);
+  doc.setTextColor(240, 240, 240);
+  doc.setFont("helvetica", "normal");
+  const titleLines = doc.splitTextToSize(log.title as string, contentW);
+  doc.text(titleLines, margin, y);
+  y += titleLines.length * 7 + 6;
+
+  // Divider
+  doc.setDrawColor(50, 50, 50);
+  doc.line(margin, y, pageW - margin, y);
+  y += 8;
+
+  // Body content
+  doc.setFontSize(10);
+  doc.setTextColor(170, 170, 170);
+  doc.setFont("helvetica", "normal");
+
+  const bodyLines = doc.splitTextToSize((log.content as string) ?? "", contentW);
+  const lineH = 5.5;
+  const pageH = doc.internal.pageSize.getHeight();
+
+  for (const line of bodyLines) {
+    if (y + lineH > pageH - margin) {
+      doc.addPage();
+      y = margin;
+    }
+    doc.text(line, margin, y);
+    y += lineH;
+  }
+
+  // Footer
+  const totalPages = (doc.internal as any).getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`opencommand.co  ·  Page ${i} of ${totalPages}`, pageW / 2, pageH - 8, { align: "center" });
+  }
+
+  const safeTitle = (log.title as string).replace(/[^a-z0-9]/gi, "_").slice(0, 50);
+  doc.save(`${safeTitle}.pdf`);
+}
+
 function BriefingCard({ log }: { log: any }) {
   const [expanded, setExpanded] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const freqClass = FREQ_COLORS[log.frequency] ?? "text-muted-foreground border-border bg-muted/10";
+
+  async function handleDownload() {
+    setDownloading(true);
+    try {
+      await downloadBriefingPdf(log);
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <div className="card-minimal group">
@@ -40,18 +120,42 @@ function BriefingCard({ log }: { log: any }) {
             })}
           </div>
         </div>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="shrink-0 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label={expanded ? "Collapse" : "Expand"}
-        >
-          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+            aria-label="Download as PDF"
+            title="Download as PDF"
+          >
+            {downloading
+              ? <div className="w-3.5 h-3.5 border border-muted-foreground/40 border-t-foreground rounded-full animate-spin" />
+              : <Download size={14} />
+            }
+          </button>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={expanded ? "Collapse" : "Expand"}
+          >
+            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+        </div>
       </div>
 
       {expanded && (
         <div className="mt-4 pt-4 border-t border-border">
           <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{log.content}</p>
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+          >
+            <Download size={11} />
+            {downloading ? "Generating PDF..." : "Download PDF"}
+          </button>
         </div>
       )}
     </div>

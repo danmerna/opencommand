@@ -172,6 +172,11 @@ export async function getOkrsByCompanyId(companyId: number) {
   const db = await getDb(); if (!db) return [];
   return db.select().from(okrs).where(eq(okrs.companyId, companyId)).orderBy(desc(okrs.createdAt));
 }
+export async function getOkrById(id: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(okrs).where(eq(okrs.id, id)).limit(1);
+  return r[0];
+}
 export async function createOkr(data: InsertOkr) {
   const db = await getDb(); if (!db) throw new Error("Database not available");
   return db.insert(okrs).values(data);
