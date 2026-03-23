@@ -19,3 +19,6 @@
 - [x] Add current plan badge on Pricing page using subscription tier detection
 - [x] Gate Pro-only features with upgrade prompts (unlimited agents, advanced orchestration)
 - [x] Add pricing section to public landing page (Home.tsx)
+- [x] Build ProOnboarding page: auto-create executive agents, combined strategy generation, first question walkthrough
+- [x] Wire post-checkout Stripe redirect to /onboarding/pro route
+- [x] Add /onboarding/pro route to App.tsx

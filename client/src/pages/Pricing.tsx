@@ -70,6 +70,8 @@ export default function Pricing() {
       window.location.href = getLoginUrl();
       return;
     }
+    // Store the tier so PaymentSuccess can route Pro users to onboarding
+    sessionStorage.setItem("oc_checkout_tier", productKey.toLowerCase());
     setLoadingKey(productKey);
     checkoutMutation.mutate({
       productKey,
