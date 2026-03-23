@@ -5,33 +5,84 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import MissionControl from "./pages/MissionControl";
+import IntentEngine from "./pages/IntentEngine";
+// Marketplace hidden — will be re-added later
+// import Marketplace from "./pages/Marketplace";
+// import CreatorProgram from "./pages/CreatorProgram";
+import AICeo from "./pages/AICeo";
+import Blueprints from "./pages/Blueprints";
+import Governance from "./pages/Governance";
+// import BlueprintDashboard from "./pages/BlueprintDashboard";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
+import IntegrationHub from "./pages/IntegrationHub";
+// import CompatibilityChecker from "./pages/CompatibilityChecker";
+import ContextHistory from "./pages/ContextHistory";
+import PaymentHistory from "./pages/PaymentHistory";
+import ReceiptViewer from "./pages/ReceiptViewer";
+import AppLayout from "./components/AppLayout";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
+import AgentOnboarding from "./pages/AgentOnboarding";
+import Creators from "./pages/Creators";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      <Route path="/" component={Home} />
+      <Route path="/mission-control">
+        <AppLayout><MissionControl /></AppLayout>
+      </Route>
+      <Route path="/intent-engine">
+        <AppLayout><IntentEngine /></AppLayout>
+      </Route>
+      <Route path="/ai-ceo">
+        <AppLayout><AICeo /></AppLayout>
+      </Route>
+      <Route path="/blueprints">
+        <AppLayout><Blueprints /></AppLayout>
+      </Route>
+      {/* Blueprint Dashboard hidden — will be re-added later */}
+      <Route path="/governance">
+        <AppLayout><Governance /></AppLayout>
+      </Route>
+      <Route path="/integration-hub">
+        <AppLayout><IntegrationHub /></AppLayout>
+      </Route>
+      {/* Compatibility hidden — will be re-added later */}
+      <Route path="/context-history">
+        <AppLayout><ContextHistory /></AppLayout>
+      </Route>
+      <Route path="/creators" component={Creators} />
+      {/* Marketplace & Creator Program hidden — will be re-added later */}
+      <Route path="/payments">
+        <AppLayout><PaymentHistory /></AppLayout>
+      </Route>
+      <Route path="/projects">
+        <AppLayout><Projects /></AppLayout>
+      </Route>
+      <Route path="/projects/:id">
+        <AppLayout><ProjectDetail /></AppLayout>
+      </Route>
+      <Route path="/onboarding/:agentId">
+        <AppLayout><AgentOnboarding /></AppLayout>
+      </Route>
+      <Route path="/receipt/:receiptNumber" component={ReceiptViewer} />
+      <Route path="/payment/success" component={PaymentSuccess} />
+      <Route path="/payment/cancel" component={PaymentCancel} />
+      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
-          <Toaster />
+          <Toaster theme="dark" />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
