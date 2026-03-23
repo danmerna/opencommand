@@ -50,6 +50,7 @@ import {
   insertPageView, getPageViewsByUser, getTopPagesByUser,
   upsertUserSession, getSessionsByUser,
   adminGetAllUsers, adminGetUserKpis, adminGetUserTimeline, adminGetDailyActivity,
+  adminGetFunnelStats, adminGetUserFunnelStage,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -1680,6 +1681,10 @@ const adminRouter = router({
   userFeedback: adminProcedure
     .input(z.object({ userId: z.number() }))
     .query(({ input }) => getUserFeedbackByUserId(input.userId)),
+  funnelStats: adminProcedure.query(() => adminGetFunnelStats()),
+  userFunnelStage: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => adminGetUserFunnelStage(input.userId)),
 });
 
 export const appRouter = router({

@@ -1005,3 +1005,73 @@ export async function adminGetDailyActivity(userId: number) {
     .from(featureEvents).where(and(eq(featureEvents.userId, userId), sql`${featureEvents.createdAt} >= DATE_SUB(NOW(), INTERVAL 30 DAY)`))
     .groupBy(sql`DATE(${featureEvents.createdAt})`).orderBy(sql`DATE(${featureEvents.createdAt})`);
 }
+
+// ─── Sign-up Funnel Analytics ─────────────────────────────────────────────────
+// Funnel stages (in order):
+//  1. Signed Up        → users table (all users)
+//  2. Created Company  → companies table (at least 1 company)
+//  3. Started Onboarding → agent_onboardings (at least 1 row, any status)
+//  4. Completed CEO    → agent_onboardings where agentType='ceo' AND status='completed'
+//  5. Full Team Built  → agent_onboardings where status='completed' AND count >= 2
+//  6. Strategy Generated → strategy_proposals (at least 1 row)
+//  7. Strategy Accepted  → strategy_proposals where status='accepted'
+//  8. OKRs Created     → okrs where source='strategy' (auto-created from accepted strategy)
+
+export async function adminGetFunnelStats() {
+  const db = await getDb(); if (!db) return null;
+
+  const [signedUp] = await db.select({ count: sql<number>`count(*)` }).from(users);
+  const [createdCompany] = await db.select({ count: sql<number>`count(distinct ${companies.userId})` }).from(companies);
+  const [startedOnboarding] = await db.select({ count: sql<number>`count(distinct ${agentOnboardings.userId})` }).from(agentOnboardings);
+  const [completedCeo] = await db.select({ count: sql<number>`count(distinct ${agentOnboardings.userId})` }).from(agentOnboardings).where(and(eq(agentOnboardings.agentType, "ceo"), eq(agentOnboardings.status, "completed")));
+  const [fullTeam] = await db.select({ count: sql<number>`count(*)` }).from(
+    db.select({ userId: agentOnboardings.userId, cnt: sql<number>`count(*)`.as("cnt") })
+      .from(agentOnboardings).where(eq(agentOnboardings.status, "completed"))
+      .groupBy(agentOnboardings.userId)
+      .having(sql`count(*) >= 2`)
+      .as("sub")
+  );
+  const [strategyGenerated] = await db.select({ count: sql<number>`count(distinct ${strategyProposals.userId})` }).from(strategyProposals);
+  const [strategyAccepted] = await db.select({ count: sql<number>`count(distinct ${strategyProposals.userId})` }).from(strategyProposals).where(eq(strategyProposals.status, "accepted"));
+  const [okrsCreated] = await db.select({ count: sql<number>`count(distinct ${okrs.userId})` }).from(okrs).where(eq(okrs.source, "strategy"));
+
+  return {
+    stages: [
+      { key: "signed_up", label: "Signed Up", description: "Created an account", count: Number(signedUp?.count ?? 0) },
+      { key: "created_company", label: "Created Company", description: "Set up at least one company", count: Number(createdCompany?.count ?? 0) },
+      { key: "started_onboarding", label: "Started Onboarding", description: "Began executive team setup", count: Number(startedOnboarding?.count ?? 0) },
+      { key: "completed_ceo", label: "CEO Contextualized", description: "Completed CEO interview", count: Number(completedCeo?.count ?? 0) },
+      { key: "full_team", label: "Full Team Built", description: "2+ executives contextualized", count: Number(fullTeam?.count ?? 0) },
+      { key: "strategy_generated", label: "Strategy Generated", description: "AI strategy proposal created", count: Number(strategyGenerated?.count ?? 0) },
+      { key: "strategy_accepted", label: "Strategy Accepted", description: "Approved the strategy proposal", count: Number(strategyAccepted?.count ?? 0) },
+      { key: "okrs_created", label: "OKRs Created", description: "Strategy converted to OKRs", count: Number(okrsCreated?.count ?? 0) },
+    ],
+  };
+}
+
+export async function adminGetUserFunnelStage(userId: number): Promise<string> {
+  const db = await getDb(); if (!db) return "signed_up";
+
+  const [hasOkrs] = await db.select({ count: sql<number>`count(*)` }).from(okrs).where(and(eq(okrs.userId, userId), eq(okrs.source, "strategy")));
+  if (Number(hasOkrs?.count) > 0) return "okrs_created";
+
+  const [hasAccepted] = await db.select({ count: sql<number>`count(*)` }).from(strategyProposals).where(and(eq(strategyProposals.userId, userId), eq(strategyProposals.status, "accepted")));
+  if (Number(hasAccepted?.count) > 0) return "strategy_accepted";
+
+  const [hasStrategy] = await db.select({ count: sql<number>`count(*)` }).from(strategyProposals).where(eq(strategyProposals.userId, userId));
+  if (Number(hasStrategy?.count) > 0) return "strategy_generated";
+
+  const [completedCount] = await db.select({ count: sql<number>`count(*)` }).from(agentOnboardings).where(and(eq(agentOnboardings.userId, userId), eq(agentOnboardings.status, "completed")));
+  if (Number(completedCount?.count) >= 2) return "full_team";
+
+  const [hasCeo] = await db.select({ count: sql<number>`count(*)` }).from(agentOnboardings).where(and(eq(agentOnboardings.userId, userId), eq(agentOnboardings.agentType, "ceo"), eq(agentOnboardings.status, "completed")));
+  if (Number(hasCeo?.count) > 0) return "completed_ceo";
+
+  const [hasOnboarding] = await db.select({ count: sql<number>`count(*)` }).from(agentOnboardings).where(eq(agentOnboardings.userId, userId));
+  if (Number(hasOnboarding?.count) > 0) return "started_onboarding";
+
+  const [hasCompany] = await db.select({ count: sql<number>`count(*)` }).from(companies).where(eq(companies.userId, userId));
+  if (Number(hasCompany?.count) > 0) return "created_company";
+
+  return "signed_up";
+}

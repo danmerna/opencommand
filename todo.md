@@ -167,3 +167,8 @@
 - [x] Build admin analytics dashboard: write 9 vitest tests for admin analytics helpers
 - [x] Set OG link preview image to Full Access card screenshot (og-preview.png)
 - [x] Fix hero CTA buttons to go directly to onboarding builder instead of scrolling to beta sign-up
+- [x] Build sign-up funnel view: define funnel stages from DB data
+- [x] Build sign-up funnel view: add adminGetFunnelStats DB helper
+- [x] Build sign-up funnel view: add admin.funnelStats tRPC procedure
+- [x] Build sign-up funnel view: build FunnelView component in AdminUsers page
+- [x] Build sign-up funnel view: write vitest tests

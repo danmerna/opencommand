@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import FunnelView from "@/components/FunnelView";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -270,6 +271,7 @@ export default function AdminUsers() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [mainView, setMainView] = useState<"users" | "funnel">("users");
 
   const { data: allUsers = [], isLoading } = trpc.admin.users.useQuery(undefined, {
     enabled: user?.role === "admin",
@@ -313,9 +315,31 @@ export default function AdminUsers() {
               <h1 className="text-2xl font-semibold text-foreground mb-1">User Analytics</h1>
               <p className="text-sm text-muted-foreground">Monitor individual user behavior, activity, and onboarding progress.</p>
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 border border-border rounded-lg px-3 py-2">
-              <Users size={13} />
-              <span>{allUsers.length} total users</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-muted/40 border border-border rounded-xl p-1">
+                <button
+                  onClick={() => setMainView("users")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    mainView === "users" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Users size={12} />
+                  Users
+                </button>
+                <button
+                  onClick={() => setMainView("funnel")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    mainView === "funnel" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <TrendingUp size={12} />
+                  Funnel
+                </button>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 border border-border rounded-lg px-3 py-2">
+                <Users size={13} />
+                <span>{allUsers.length} total users</span>
+              </div>
             </div>
           </div>
         </div>
@@ -350,7 +374,15 @@ export default function AdminUsers() {
           />
         </div>
 
-        {/* Search */}
+        {/* Funnel View */}
+        {mainView === "funnel" && (
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <FunnelView />
+          </div>
+        )}
+
+        {mainView === "users" && (
+        <>{/* Search */}
         <div className="relative mb-4">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -422,6 +454,8 @@ export default function AdminUsers() {
             ))
           )}
         </div>
+        </>
+        )}
       </div>
 
       {/* User Detail Slide-over */}
