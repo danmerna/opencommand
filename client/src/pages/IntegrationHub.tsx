@@ -15,10 +15,10 @@ import {
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   crm: <Users size={16} />, email_marketing: <Mail size={16} />, analytics: <BarChart3 size={16} />,
   project_mgmt: <Kanban size={16} />, payments: <CreditCard size={16} />, communication: <MessageSquare size={16} />,
-  personal_email: <Inbox size={16} />, ecommerce: <ShoppingCart size={16} />,
+  personal_email: <Inbox size={16} />, ecommerce: <ShoppingCart size={16} />, digital_ads: <Zap size={16} />,
 };
 
-const OAUTH2_PROVIDERS = ["hubspot", "mailchimp", "slack", "stripe_connect", "salesforce"];
+const OAUTH2_PROVIDERS = ["hubspot", "mailchimp", "slack", "stripe_connect", "salesforce", "meta_ads", "google_ads", "tiktok_ads", "ga4"];
 
 type Tab = "overview" | "connections" | "abstraction";
 

@@ -1174,7 +1174,7 @@ const onboardingRouter = router({
 
   // Start onboarding for a C-suite agent
   start: protectedProcedure
-    .input(z.object({ agentId: z.number() }))
+    .input(z.object({ agentId: z.number(), contextSummary: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       const agent = await getAgentById(input.agentId);
       if (!agent) throw new Error("Agent not found");
@@ -1183,10 +1183,17 @@ const onboardingRouter = router({
       if (existing?.status === "completed") throw new Error("Agent already onboarded");
       if (existing?.status === "in_progress") return { onboardingId: existing.id, resumed: true };
       const systemPrompt = ONBOARDING_SYSTEM_PROMPTS[agent.type] ?? ONBOARDING_SYSTEM_PROMPTS.vp;
+
+      // If live context was assembled from connected tools, inject it so the first question is data-informed
+      let contextPreamble = `I'm ready to onboard ${agent.name} (${agent.roleTitle ?? agent.type}). Let's begin.`;
+      if (input.contextSummary) {
+        contextPreamble = `I'm ready to onboard ${agent.name} (${agent.roleTitle ?? agent.type}). Here is live data from our connected business tools that you should reference in your questions:\n\n${input.contextSummary}\n\nUse this data to ask specific, data-informed questions rather than generic ones. Reference actual numbers, trends, and metrics from the data above.`;
+      }
+
       const response = await invokeLLM({
         messages: [
           { role: "system" as const, content: systemPrompt },
-          { role: "user" as const, content: `I'm ready to onboard ${agent.name} (${agent.roleTitle ?? agent.type}). Let's begin.` },
+          { role: "user" as const, content: contextPreamble },
         ],
       });
       const firstQuestion = (response.choices[0]?.message?.content ?? "Tell me about your company.") as string;

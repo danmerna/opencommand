@@ -21,6 +21,10 @@ import {
 import { eq, and } from "drizzle-orm";
 import { getHubSpotSnapshot, type HubSpotSnapshot } from "./hubspot";
 import { getSalesforceSnapshot, type SalesforceSnapshot } from "./salesforce";
+import { getMetaAdsSnapshot, type MetaAdsSnapshot } from "./metaAds";
+import { getGoogleAdsSnapshot, type GoogleAdsSnapshot } from "./googleAds";
+import { getTikTokAdsSnapshot, type TikTokAdsSnapshot } from "./tiktokAds";
+import { getGA4Snapshot, type GA4Snapshot } from "./ga4";
 import type { UserConnection } from "../../drizzle/schema";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -112,6 +116,18 @@ async function fetchLiveData(
       } else if (conn.providerSlug === "salesforce") {
         const snapshot: SalesforceSnapshot = await getSalesforceSnapshot(conn);
         liveState.salesforce = snapshot;
+      } else if (conn.providerSlug === "meta_ads") {
+        const snapshot: MetaAdsSnapshot = await getMetaAdsSnapshot(conn);
+        liveState.meta_ads = snapshot;
+      } else if (conn.providerSlug === "google_ads") {
+        const snapshot: GoogleAdsSnapshot = await getGoogleAdsSnapshot(conn);
+        liveState.google_ads = snapshot;
+      } else if (conn.providerSlug === "tiktok_ads") {
+        const snapshot: TikTokAdsSnapshot = await getTikTokAdsSnapshot(conn);
+        liveState.tiktok_ads = snapshot;
+      } else if (conn.providerSlug === "ga4") {
+        const snapshot: GA4Snapshot = await getGA4Snapshot(conn);
+        liveState.ga4 = snapshot;
       }
       // Future: add mailchimp, stripe_connect, slack, etc.
     } catch (err: unknown) {
@@ -149,6 +165,35 @@ function buildContextSummary(liveState: Record<string, unknown>): string {
     if (velocity.stalledCount > 0) {
       parts.push(`${velocity.stalledCount} stalled opps worth $${Math.round(velocity.totalStalledValue / 1000)}K`);
     }
+  }
+
+  const meta = liveState.meta_ads as MetaAdsSnapshot | undefined;
+  if (meta) {
+    const activeCampaigns = meta.accounts.reduce((sum, a) => sum + a.activeCampaigns, 0);
+    parts.push(
+      `Meta Ads: ${meta.accounts.length} accounts · ${activeCampaigns} active campaigns · $${Math.round(meta.audience.totalSpend30d)}  spend (30d) · ${Math.round(meta.audience.totalReach30d / 1000)}K reach`
+    );
+  }
+
+  const gads = liveState.google_ads as GoogleAdsSnapshot | undefined;
+  if (gads) {
+    parts.push(
+      `Google Ads: ${gads.account.activeCampaigns} active campaigns · $${Math.round(gads.spend.totalSpend30d)} spend (30d) · ${gads.spend.totalClicks30d} clicks · ${Math.round(gads.spend.totalConversions30d)} conversions`
+    );
+  }
+
+  const tt = liveState.tiktok_ads as TikTokAdsSnapshot | undefined;
+  if (tt) {
+    parts.push(
+      `TikTok Ads: ${tt.campaigns.length} campaigns · $${Math.round(tt.spend.totalSpend30d)} spend (30d) · ${tt.spend.totalClicks30d} clicks · ${Math.round(tt.spend.totalConversions30d)} conversions`
+    );
+  }
+
+  const ga = liveState.ga4 as GA4Snapshot | undefined;
+  if (ga) {
+    parts.push(
+      `GA4: ${ga.traffic.totalUsers30d} users (30d) · ${ga.traffic.totalSessions30d} sessions · ${Math.round(ga.traffic.bounceRate * 100) / 100}% bounce · ${ga.conversions.totalConversions30d} conversions`
+    );
   }
 
   return parts.join(" · ") || "No live data available";

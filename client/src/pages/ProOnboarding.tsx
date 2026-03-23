@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -10,7 +11,7 @@ import {
   Bot, CheckCircle2, Loader2, ArrowRight, Sparkles,
   Send, Building2, Users, Brain, ChevronRight, SkipForward,
   Calendar, Clock, CalendarDays, CalendarRange,
-  BarChart3, Plug, Database, Eye,
+  BarChart3, Plug, Database, Eye, Link2, ExternalLink,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
@@ -23,9 +24,13 @@ type OnboardingStep =
   | "company-setup"
   | "briefing-frequency"
   | "creating-agents"
+  | "integrations-ceo"
   | "onboarding-ceo"
+  | "integrations-cto"
   | "onboarding-cto"
+  | "integrations-cmo"
   | "onboarding-cmo"
+  | "integrations-cfo"
   | "onboarding-cfo"
   | "generating-strategy"
   | "strategy-reveal"
@@ -45,12 +50,43 @@ const BRIEFING_OPTIONS: { value: BriefingFrequency; label: string; description: 
   { value: "quarterly", label: "Quarterly", description: "High-level strategic reviews — for long-horizon planning", icon: <CalendarRange size={16} /> },
 ];
 
+// Role-specific integration suggestions
+const ROLE_INTEGRATIONS: Record<string, { slug: string; name: string; description: string; icon: string }[]> = {
+  ceo: [
+    { slug: "hubspot", name: "HubSpot", description: "CRM data — pipeline, contacts, and deal velocity", icon: "🟠" },
+    { slug: "salesforce", name: "Salesforce", description: "CRM data — opportunities, forecasts, and accounts", icon: "☁️" },
+    { slug: "ga4", name: "Google Analytics", description: "Website traffic, user behavior, and conversion data", icon: "📊" },
+  ],
+  cto: [
+    { slug: "hubspot", name: "HubSpot", description: "Product usage data and customer feedback signals", icon: "🟠" },
+    { slug: "salesforce", name: "Salesforce", description: "Technical requirements from deal data", icon: "☁️" },
+  ],
+  cmo: [
+    { slug: "meta_ads", name: "Meta Ads", description: "Facebook & Instagram campaign performance and audience data", icon: "📘" },
+    { slug: "google_ads", name: "Google Ads", description: "Search & display campaign metrics and keyword performance", icon: "🔍" },
+    { slug: "tiktok_ads", name: "TikTok Ads", description: "Video ad campaign performance and engagement metrics", icon: "🎵" },
+    { slug: "ga4", name: "Google Analytics", description: "Traffic sources, conversion funnels, and user journeys", icon: "📊" },
+    { slug: "mailchimp", name: "Mailchimp", description: "Email campaign performance and subscriber engagement", icon: "📧" },
+  ],
+  cfo: [
+    { slug: "hubspot", name: "HubSpot", description: "Revenue pipeline and deal forecasting data", icon: "🟠" },
+    { slug: "salesforce", name: "Salesforce", description: "Revenue data, closed deals, and financial forecasts", icon: "☁️" },
+    { slug: "meta_ads", name: "Meta Ads", description: "Ad spend and ROAS data for budget allocation", icon: "📘" },
+    { slug: "google_ads", name: "Google Ads", description: "Ad spend efficiency and cost-per-acquisition data", icon: "🔍" },
+  ],
+};
+
 const ONBOARDING_ORDER: OnboardingStep[] = ["onboarding-ceo", "onboarding-cto", "onboarding-cmo", "onboarding-cfo"];
+const INTEGRATION_ORDER: OnboardingStep[] = ["integrations-ceo", "integrations-cto", "integrations-cmo", "integrations-cfo"];
 const STEP_TO_TYPE: Record<string, string> = {
   "onboarding-ceo": "ceo",
   "onboarding-cto": "cto",
   "onboarding-cmo": "cmo",
   "onboarding-cfo": "cfo",
+  "integrations-ceo": "ceo",
+  "integrations-cto": "cto",
+  "integrations-cmo": "cmo",
+  "integrations-cfo": "cfo",
 };
 
 export default function ProOnboarding() {
@@ -71,16 +107,19 @@ export default function ProOnboarding() {
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [strategy, setStrategy] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [ceoContext, setCeoContext] = useState<{ contextSummary: string; insights: string[]; connectedProviders: string[]; hasLiveData: boolean } | null>(null);
-  const [ceoContextLoading, setCeoContextLoading] = useState(false);
+  const [agentContext, setAgentContext] = useState<{ contextSummary: string; insights: string[]; connectedProviders: string[]; hasLiveData: boolean } | null>(null);
+  const [agentContextLoading, setAgentContextLoading] = useState(false);
+  const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const { user } = useAuth();
   const utils = trpc.useUtils();
 
   // Queries for resume detection
   const companiesQ = trpc.companies.list.useQuery(undefined, { enabled: true });
   const agentsQ = trpc.agents.list.useQuery(undefined, { enabled: true });
   const onboardingStatusQ = trpc.onboarding.status.useQuery({ companyId: undefined }, { enabled: true });
+  const connectionsQ = trpc.hub.connections.useQuery(undefined, { enabled: true });
 
   // Resume detection: on mount, check if user already has a company + agents and resume from correct step
   useEffect(() => {
@@ -109,11 +148,11 @@ export default function ProOnboarding() {
     setCreatedAgents(mapped);
 
     // Find the first agent not yet onboarded using the onboarding status query
-    const typeToStep: Record<string, OnboardingStep> = {
-      ceo: "onboarding-ceo",
-      cto: "onboarding-cto",
-      cmo: "onboarding-cmo",
-      cfo: "onboarding-cfo",
+    const typeToIntegrationStep: Record<string, OnboardingStep> = {
+      ceo: "integrations-ceo",
+      cto: "integrations-cto",
+      cmo: "integrations-cmo",
+      cfo: "integrations-cfo",
     };
     const onboardedTypes = new Set(
       onboardingStatus.agents
@@ -125,10 +164,10 @@ export default function ProOnboarding() {
       // All onboarded — go straight to strategy
       setStep("generating-strategy");
     } else {
-      const resumeStep = typeToStep[nextUnboarded];
+      const resumeStep = typeToIntegrationStep[nextUnboarded];
       if (resumeStep) {
-        toast.info("Resuming your onboarding session", { description: `Continuing with ${nextUnboarded.toUpperCase()} interview.` });
-        startAgentOnboarding(resumeStep, mapped);
+        toast.info("Resuming your onboarding session", { description: `Continuing with ${nextUnboarded.toUpperCase()} setup.` });
+        setStep(resumeStep);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,12 +182,20 @@ export default function ProOnboarding() {
   const generateStrategyMut = trpc.onboarding.generateStrategy.useMutation();
   const liveContextualizeMut = trpc.context.liveContextualize.useMutation();
 
+
   // Auto-scroll chat
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Connected provider slugs for quick lookup
+  const connectedSlugs = new Set(
+    (connectionsQ.data ?? [])
+      .filter((c: any) => c.status === "connected")
+      .map((c: any) => c.providerSlug)
+  );
 
   async function handleCompanySetup() {
     if (!companyName.trim()) {
@@ -162,7 +209,6 @@ export default function ProOnboarding() {
       const company = companies[0];
       if (!company) throw new Error("Company not created");
       setCompanyId(company.id);
-      // Move to briefing frequency selection before creating agents
       setStep("briefing-frequency");
     } catch (err: any) {
       toast.error("Failed to set up company", { description: err.message });
@@ -172,7 +218,6 @@ export default function ProOnboarding() {
   async function handleBriefingFrequencyConfirm() {
     if (!companyId) return;
     try {
-      // Save the briefing frequency to the company record
       await updateCompanyMut.mutateAsync({ id: companyId, briefingFrequency });
       setStep("creating-agents");
       await createAllAgents(companyId);
@@ -195,20 +240,50 @@ export default function ProOnboarding() {
           tools: agent.tools,
           companyId: cId,
         });
-        // Fetch agents to get the new IDs
         await utils.agents.list.invalidate();
         const agents = await utils.agents.list.fetch();
         const found = agents.find((a: any) => a.type === agent.type && a.companyId === cId);
         if (found) created.push({ id: found.id, type: agent.type });
-        await new Promise(r => setTimeout(r, 400)); // Stagger for visual effect
+        await new Promise(r => setTimeout(r, 400));
       } catch (err: any) {
         toast.error(`Failed to create ${agent.name}`, { description: err.message });
       }
     }
     setCreatedAgents(created);
-    // Move to first onboarding step
     await new Promise(r => setTimeout(r, 800));
-    await startAgentOnboarding("onboarding-ceo", created);
+    // Go to first integration step instead of directly to interview
+    setStep("integrations-ceo");
+  }
+
+  async function handleConnectOAuth(providerSlug: string) {
+    setConnectingProvider(providerSlug);
+    try {
+      // OAuth is an Express redirect route, not a tRPC procedure
+      const authUrl = `/api/integration/oauth/start?provider=${encodeURIComponent(providerSlug)}&userId=${user?.id ?? ""}&origin=${encodeURIComponent(window.location.origin)}`;
+      window.open(authUrl, "_blank");
+      toast.info(`Connecting to ${providerSlug}...`, {
+        description: "Complete the authorization in the new tab, then return here.",
+      });
+      // Poll for connection status
+      const pollInterval = setInterval(async () => {
+        await connectionsQ.refetch();
+      }, 3000);
+      setTimeout(() => clearInterval(pollInterval), 120000); // Stop after 2 min
+    } catch (err: any) {
+      toast.error(`Failed to start ${providerSlug} connection`, { description: err.message });
+    } finally {
+      setConnectingProvider(null);
+    }
+  }
+
+  function handleIntegrationsContinue(agentType: string) {
+    const onboardingStep = `onboarding-${agentType}` as OnboardingStep;
+    startAgentOnboarding(onboardingStep, createdAgents);
+  }
+
+  function handleIntegrationsSkipToInterview(agentType: string) {
+    const onboardingStep = `onboarding-${agentType}` as OnboardingStep;
+    startAgentOnboarding(onboardingStep, createdAgents);
   }
 
   async function startAgentOnboarding(onboardStep: OnboardingStep, agents: { id: number; type: string }[]) {
@@ -224,27 +299,38 @@ export default function ProOnboarding() {
     setIsOnboardingComplete(false);
     setStep(onboardStep);
 
-    // For CEO interview, fetch live context from connected tools
-    if (agentType === "ceo") {
-      setCeoContext(null);
-      setCeoContextLoading(true);
-      try {
-        const ctx = await liveContextualizeMut.mutateAsync({ requestText: `CEO onboarding for ${companyName || "the company"} in ${companyIndustry || "technology"}` });
-        setCeoContext({
-          contextSummary: ctx.contextSummary,
-          insights: ctx.insights,
-          connectedProviders: ctx.connectedProviders,
-          hasLiveData: ctx.hasLiveData,
-        });
-      } catch {
-        // Non-fatal — CEO interview works without live context
-      } finally {
-        setCeoContextLoading(false);
-      }
+    // Fetch live context from connected tools for all agents
+    setAgentContext(null);
+    setAgentContextLoading(true);
+    let fetchedContext: { contextSummary: string; insights: string[]; connectedProviders: string[]; hasLiveData: boolean } | null = null;
+    try {
+      const roleLabel = EXEC_AGENTS.find(a => a.type === agentType)?.roleTitle ?? agentType;
+      const ctx = await liveContextualizeMut.mutateAsync({
+        requestText: `${roleLabel} onboarding for ${companyName || "the company"} in ${companyIndustry || "technology"}`,
+      });
+      fetchedContext = {
+        contextSummary: ctx.contextSummary,
+        insights: ctx.insights,
+        connectedProviders: ctx.connectedProviders,
+        hasLiveData: ctx.hasLiveData,
+      };
+      setAgentContext(fetchedContext);
+    } catch {
+      // Non-fatal — interview works without live context
+    } finally {
+      setAgentContextLoading(false);
     }
 
     try {
-      const data = await startOnboardingMut.mutateAsync({ agentId: agent.id });
+      // Use the fetched context directly (not state, which may not be updated yet)
+      let contextSummary: string | undefined;
+      if (fetchedContext?.hasLiveData && fetchedContext.contextSummary) {
+        contextSummary = fetchedContext.contextSummary;
+        if (fetchedContext.insights.length > 0) {
+          contextSummary += "\n\nKey insights:\n" + fetchedContext.insights.map(i => `- ${i}`).join("\n");
+        }
+      }
+      const data = await startOnboardingMut.mutateAsync({ agentId: agent.id, contextSummary });
       setOnboardingId(data.onboardingId);
       if (data.firstQuestion) {
         setMessages([{ role: "assistant", content: data.firstQuestion }]);
@@ -275,9 +361,12 @@ export default function ProOnboarding() {
 
   async function handleNextAgent() {
     const currentIdx = ONBOARDING_ORDER.indexOf(step);
-    const nextStep = ONBOARDING_ORDER[currentIdx + 1];
-    if (nextStep) {
-      await startAgentOnboarding(nextStep, createdAgents);
+    if (currentIdx < ONBOARDING_ORDER.length - 1) {
+      // Go to the next agent's integration step
+      const nextIntStep = INTEGRATION_ORDER[currentIdx + 1];
+      if (nextIntStep) {
+        setStep(nextIntStep);
+      }
     } else {
       // All agents onboarded — generate strategy
       await handleGenerateStrategy();
@@ -288,16 +377,17 @@ export default function ProOnboarding() {
     const agentType = STEP_TO_TYPE[step];
     if (!agentType) return;
 
-    // Mark this agent as skipped
     setSkippedAgents(prev => new Set(Array.from(prev).concat(agentType)));
     toast.info(`${agentType.toUpperCase()} interview skipped`, {
       description: "Strategy will be generated using available executive context.",
     });
 
     const currentIdx = ONBOARDING_ORDER.indexOf(step);
-    const nextStep = ONBOARDING_ORDER[currentIdx + 1];
-    if (nextStep) {
-      await startAgentOnboarding(nextStep, createdAgents);
+    if (currentIdx < ONBOARDING_ORDER.length - 1) {
+      const nextIntStep = INTEGRATION_ORDER[currentIdx + 1];
+      if (nextIntStep) {
+        setStep(nextIntStep);
+      }
     } else {
       await handleGenerateStrategy();
     }
@@ -323,6 +413,10 @@ export default function ProOnboarding() {
 
   const currentExecIndex = ONBOARDING_ORDER.indexOf(step);
   const currentExec = EXEC_AGENTS[currentExecIndex] ?? null;
+
+  // Also resolve exec for integration steps
+  const integrationExecIndex = INTEGRATION_ORDER.indexOf(step);
+  const integrationExec = EXEC_AGENTS[integrationExecIndex] ?? null;
 
   // ── WELCOME ──────────────────────────────────────────────────────────────
   if (step === "welcome") {
@@ -471,18 +565,15 @@ export default function ProOnboarding() {
               nextDate.setDate(nextDate.getDate() + (now.getHours() >= 8 ? 1 : 0));
               nextDate.setHours(8, 0, 0, 0);
             } else if (briefingFrequency === "weekly") {
-              // Next Monday
-              const day = now.getDay(); // 0=Sun
+              const day = now.getDay();
               const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7 || 7;
               nextDate = new Date(now);
               nextDate.setDate(nextDate.getDate() + daysUntilMonday);
               nextDate.setHours(8, 0, 0, 0);
             } else if (briefingFrequency === "monthly") {
-              // 1st of next month
               nextDate = new Date(now.getFullYear(), now.getMonth() + 1, 1, 8, 0, 0);
             } else {
-              // Quarterly: next 1st of Jan/Apr/Jul/Oct
-              const quarterStarts = [0, 3, 6, 9]; // month indices
+              const quarterStarts = [0, 3, 6, 9];
               const currentMonth = now.getMonth();
               const nextQStart = quarterStarts.find(m => m > currentMonth) ?? 0;
               const nextYear = nextQStart === 0 ? now.getFullYear() + 1 : now.getFullYear();
@@ -545,6 +636,140 @@ export default function ProOnboarding() {
     );
   }
 
+  // ── INTEGRATION PROMPT STEP ──────────────────────────────────────────────
+  if (INTEGRATION_ORDER.includes(step) && integrationExec) {
+    const agentType = STEP_TO_TYPE[step];
+    const suggestions = ROLE_INTEGRATIONS[agentType] ?? [];
+    const completedIntIdx = INTEGRATION_ORDER.indexOf(step);
+    const isSkippable = integrationExec.skippable;
+
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-8">
+        <div className="max-w-lg w-full">
+          {/* Header with progress */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <span className="text-lg">{integrationExec.icon}</span>
+              <div>
+                <p className={`text-sm font-medium ${integrationExec.color}`}>{integrationExec.name}</p>
+                <p className="text-xs text-muted-foreground">Data Integrations</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {EXEC_AGENTS.map((a, i) => (
+                <div
+                  key={a.type}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    i < completedIntIdx ? "bg-emerald-400" :
+                    i === completedIntIdx ? "bg-foreground scale-125" :
+                    "bg-border"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-light text-foreground tracking-tight mb-2">
+            Connect tools for {integrationExec.roleTitle}
+          </h2>
+          <p className="text-muted-foreground text-sm mb-6">
+            These integrations will give {integrationExec.name.split("—")[0].trim()} access to live data during the interview, resulting in more specific and actionable strategic questions.
+          </p>
+
+          {/* Integration suggestions */}
+          <div className="space-y-3 mb-8">
+            {suggestions.map(s => {
+              const isConnected = connectedSlugs.has(s.slug);
+              const isConnecting = connectingProvider === s.slug;
+              return (
+                <div
+                  key={s.slug}
+                  className={`flex items-center gap-4 border rounded-xl p-4 transition-all ${
+                    isConnected
+                      ? "border-emerald-800/40 bg-emerald-950/10"
+                      : "border-border hover:border-foreground/30"
+                  }`}
+                >
+                  <span className="text-xl shrink-0">{s.icon}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{s.name}</p>
+                      {isConnected && (
+                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 text-emerald-400 border-emerald-400/30">
+                          Connected
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.description}</p>
+                  </div>
+                  {isConnected ? (
+                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs h-8 shrink-0"
+                      onClick={() => handleConnectOAuth(s.slug)}
+                      disabled={isConnecting}
+                    >
+                      {isConnecting ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Link2 size={12} />
+                      )}
+                      Connect
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Info note */}
+          <div className="rounded-xl border border-border bg-muted/5 px-4 py-3 flex items-start gap-3 mb-6">
+            <Database size={14} className="text-muted-foreground mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Connected tools are shared across all executives. You can add more integrations later from the Integration Hub.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            {isSkippable && (
+              <Button
+                variant="ghost"
+                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setSkippedAgents(prev => new Set(Array.from(prev).concat(agentType)));
+                  toast.info(`${agentType.toUpperCase()} interview skipped`);
+                  const nextIntIdx = completedIntIdx + 1;
+                  if (nextIntIdx < INTEGRATION_ORDER.length) {
+                    setStep(INTEGRATION_ORDER[nextIntIdx]);
+                  } else {
+                    handleGenerateStrategy();
+                  }
+                }}
+              >
+                <SkipForward size={12} />
+                Skip {integrationExec.roleTitle}
+              </Button>
+            )}
+            <Button
+              className="flex-1 h-11 gap-2"
+              onClick={() => handleIntegrationsContinue(agentType)}
+            >
+              {connectedSlugs.size > 0 ? (
+                <>Start Interview with Live Data <ArrowRight size={14} /></>
+              ) : (
+                <>Continue Without Integrations <ArrowRight size={14} /></>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── ONBOARDING INTERVIEWS ────────────────────────────────────────────────
   if (ONBOARDING_ORDER.includes(step) && currentExec) {
     const completedCount = ONBOARDING_ORDER.indexOf(step);
@@ -562,7 +787,6 @@ export default function ProOnboarding() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {/* Skip button for CTO and CFO */}
             {isSkippable && !isOnboardingComplete && messages.length > 0 && (
               <Button
                 variant="ghost"
@@ -574,7 +798,6 @@ export default function ProOnboarding() {
                 Skip interview
               </Button>
             )}
-            {/* Progress dots */}
             <div className="flex items-center gap-1.5">
               {EXEC_AGENTS.map((a, i) => (
                 <div
@@ -592,26 +815,26 @@ export default function ProOnboarding() {
 
         {/* Chat area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-4 max-w-2xl mx-auto w-full">
-          {/* CEO Context Card — shows live data assembled from connected tools */}
-          {step === "onboarding-ceo" && ceoContextLoading && (
+          {/* Context Card — shows live data assembled from connected tools */}
+          {agentContextLoading && (
             <div className="rounded-lg border border-blue-800/40 bg-blue-950/20 px-4 py-3 flex items-center gap-3">
               <Loader2 size={14} className="animate-spin text-blue-400" />
               <div>
                 <p className="text-[11px] font-semibold text-blue-400 uppercase tracking-wide">Assembling context from your tools...</p>
-                <p className="text-xs text-blue-200/60 mt-0.5">Reading pipeline data to inform the interview</p>
+                <p className="text-xs text-blue-200/60 mt-0.5">Reading live data to inform the interview</p>
               </div>
             </div>
           )}
-          {step === "onboarding-ceo" && ceoContext?.hasLiveData && (
+          {agentContext?.hasLiveData && !agentContextLoading && (
             <div className="rounded-lg border border-emerald-800/40 bg-emerald-950/20 px-4 py-3">
               <div className="flex items-center gap-2 mb-1.5">
                 <BarChart3 size={14} className="text-emerald-400" />
                 <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wide">Live context assembled</span>
               </div>
-              <p className="text-xs text-emerald-200/80 leading-relaxed mb-2">{ceoContext.contextSummary}</p>
-              {ceoContext.insights.length > 0 && (
+              <p className="text-xs text-emerald-200/80 leading-relaxed mb-2">{agentContext.contextSummary}</p>
+              {agentContext.insights.length > 0 && (
                 <ul className="space-y-1 mb-2">
-                  {ceoContext.insights.slice(0, 3).map((insight, i) => (
+                  {agentContext.insights.slice(0, 3).map((insight, i) => (
                     <li key={i} className="text-[11px] text-emerald-300/70 flex items-start gap-1.5">
                       <Eye size={10} className="mt-0.5 shrink-0 text-emerald-500" />
                       {insight}
@@ -619,19 +842,19 @@ export default function ProOnboarding() {
                   ))}
                 </ul>
               )}
-              {ceoContext.connectedProviders.length > 0 && (
+              {agentContext.connectedProviders.length > 0 && (
                 <div className="flex gap-1 flex-wrap">
-                  {ceoContext.connectedProviders.map(p => (
+                  {agentContext.connectedProviders.map(p => (
                     <Badge key={p} variant="outline" className="border-emerald-800/50 text-emerald-500 text-[9px] px-1.5 py-0 capitalize">{p}</Badge>
                   ))}
                 </div>
               )}
             </div>
           )}
-          {step === "onboarding-ceo" && ceoContext && !ceoContext.hasLiveData && !ceoContextLoading && (
+          {agentContext && !agentContext.hasLiveData && !agentContextLoading && (
             <div className="rounded-lg border border-yellow-800/40 bg-yellow-950/15 px-4 py-3 flex items-center gap-3">
               <Plug size={14} className="text-yellow-500 shrink-0" />
-              <p className="text-xs text-yellow-300/80">No connected tools detected. Arch will ask general questions — connect your CRM in the Integration Hub for data-informed onboarding.</p>
+              <p className="text-xs text-yellow-300/80">No connected tools detected. {currentExec.name.split("—")[0].trim()} will ask general questions — connect tools in the Integration Hub for data-informed interviews.</p>
             </div>
           )}
           {messages.length === 0 && (
@@ -681,7 +904,6 @@ export default function ProOnboarding() {
         {!isOnboardingComplete && (
           <div className="border-t border-border px-6 py-4 shrink-0">
             <div className="max-w-2xl mx-auto space-y-2">
-              {/* Skip hint for skippable agents */}
               {isSkippable && messages.length > 0 && (
                 <p className="text-[11px] text-muted-foreground text-center">
                   This interview is optional — you can{" "}

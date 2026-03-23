@@ -63,6 +63,42 @@ const OAUTH_PROVIDERS: Record<string, OAuthProviderConfig> = {
     clientId: () => ENV.salesforceClientId,
     clientSecret: () => ENV.salesforceClientSecret,
   },
+  meta_ads: {
+    slug: "meta_ads",
+    name: "Meta Ads",
+    authUrl: "https://www.facebook.com/v19.0/dialog/oauth",
+    tokenUrl: "https://graph.facebook.com/v19.0/oauth/access_token",
+    scopes: ["ads_read", "ads_management", "business_management"],
+    clientId: () => ENV.metaAppId,
+    clientSecret: () => ENV.metaAppSecret,
+  },
+  google_ads: {
+    slug: "google_ads",
+    name: "Google Ads",
+    authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    scopes: ["https://www.googleapis.com/auth/adwords"],
+    clientId: () => ENV.googleAdsClientId,
+    clientSecret: () => ENV.googleAdsClientSecret,
+  },
+  tiktok_ads: {
+    slug: "tiktok_ads",
+    name: "TikTok Ads",
+    authUrl: "https://business-api.tiktok.com/portal/auth",
+    tokenUrl: "https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/",
+    scopes: ["ad.read", "campaign.read", "report.read"],
+    clientId: () => ENV.tiktokAppId,
+    clientSecret: () => ENV.tiktokAppSecret,
+  },
+  ga4: {
+    slug: "ga4",
+    name: "Google Analytics",
+    authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    scopes: ["https://www.googleapis.com/auth/analytics.readonly"],
+    clientId: () => ENV.googleAdsClientId,
+    clientSecret: () => ENV.googleAdsClientSecret,
+  },
 };
 
 // ─── State Store (in-memory, short-lived) ─────────────────────────────────────
@@ -310,6 +346,28 @@ async function fetchAccountName(providerSlug: string, accessToken: string): Prom
       const d = await r.json() as { organization_id?: string; name?: string };
       return d.name ?? `Salesforce Org ${d.organization_id ?? ""}`;
     }
+    case "meta_ads": {
+      const r = await fetch(`https://graph.facebook.com/v19.0/me?fields=name&access_token=${accessToken}`);
+      const d = await r.json() as { name?: string };
+      return d.name ?? "Meta Ads Account";
+    }
+    case "google_ads": {
+      const r = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const d = await r.json() as { name?: string; email?: string };
+      return d.name ?? d.email ?? "Google Ads Account";
+    }
+    case "tiktok_ads": {
+      return "TikTok Ads Account";
+    }
+    case "ga4": {
+      const r = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const d = await r.json() as { name?: string; email?: string };
+      return d.name ?? d.email ?? "Google Analytics";
+    }
     default:
       return providerSlug;
   }
@@ -351,12 +409,25 @@ async function fetchLivePreview(providerSlug: string, accessToken: string): Prom
       return { message: "Stripe account connected. Payments are live." };
     }
     case "salesforce": {
-      // Note: Salesforce preview needs instance_url from metadata, but for preview we use the standard endpoint
       const r = await fetch("https://login.salesforce.com/services/oauth2/userinfo", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const d = await r.json() as { name?: string; email?: string; organization_id?: string };
       return { user: d.name ?? "Unknown", email: d.email ?? "", orgId: d.organization_id ?? "" };
+    }
+    case "meta_ads": {
+      const r = await fetch(`https://graph.facebook.com/v19.0/me/adaccounts?fields=name,account_status,currency&limit=3&access_token=${accessToken}`);
+      const d = await r.json() as { data?: Array<{ name?: string; currency?: string }> };
+      return { accounts: (d.data ?? []).map(a => ({ name: a.name, currency: a.currency })) };
+    }
+    case "google_ads": {
+      return { status: "connected", message: "Google Ads account linked" };
+    }
+    case "tiktok_ads": {
+      return { status: "connected", message: "TikTok Ads account linked" };
+    }
+    case "ga4": {
+      return { status: "connected", message: "Google Analytics property linked" };
     }
     default:
       return { status: "connected" };

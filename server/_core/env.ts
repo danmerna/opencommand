@@ -19,5 +19,15 @@ export const ENV = {
   stripeOAuthClientId: process.env.STRIPE_OAUTH_CLIENT_ID ?? "",
   salesforceClientId: process.env.SALESFORCE_CLIENT_ID ?? "",
   salesforceClientSecret: process.env.SALESFORCE_CLIENT_SECRET ?? "",
+  // Meta (Facebook/Instagram) Ads
+  metaAppId: process.env.META_APP_ID ?? "",
+  metaAppSecret: process.env.META_APP_SECRET ?? "",
+  // Google Ads
+  googleAdsClientId: process.env.GOOGLE_ADS_CLIENT_ID ?? "",
+  googleAdsClientSecret: process.env.GOOGLE_ADS_CLIENT_SECRET ?? "",
+  googleAdsDeveloperToken: process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? "",
+  // TikTok Ads
+  tiktokAppId: process.env.TIKTOK_APP_ID ?? "",
+  tiktokAppSecret: process.env.TIKTOK_APP_SECRET ?? "",
   appBaseUrl: process.env.APP_BASE_URL ?? "",
 };

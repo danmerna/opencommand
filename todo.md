@@ -57,3 +57,10 @@
 - [x] Show context card in ProOnboarding CEO interview step with live business data
 - [x] Add History tab to Intent Engine linking to existing /context-history page
 - [x] Server procedure for listing past context objects already exists (context.list)
+- [x] Create server/integrations/metaAds.ts for Meta Ads campaign data
+- [x] Create server/integrations/googleAds.ts for Google Ads campaign data
+- [x] Create server/integrations/tiktokAds.ts for TikTok Ads campaign data
+- [x] Create server/integrations/ga4.ts for Google Analytics data
+- [x] Register Meta Ads, Google Ads, TikTok Ads, GA4 in contextAssembler, integrationOAuth, env, IntegrationHub
+- [x] Add integration prompt step before each executive interview in ProOnboarding (role-specific tool suggestions)
+- [x] Feed assembled live context into onboarding.start so first question references real business data
