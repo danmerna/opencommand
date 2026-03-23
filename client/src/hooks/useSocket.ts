@@ -4,10 +4,19 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 
 export type NotificationEvent = {
-  type: "task_completed" | "inbox_item" | "agent_status" | "heartbeat" | "poo_receipt" | "payment_success";
+  type:
+    | "task_completed"
+    | "inbox_item"
+    | "agent_status"
+    | "heartbeat"
+    | "poo_receipt"
+    | "payment_success"
+    | "okr_updated"
+    | "kill_switch";
   title: string;
   message: string;
   timestamp: number;
+  meta?: Record<string, unknown>;
 };
 
 export function useSocket() {
@@ -49,6 +58,11 @@ export function useSocket() {
           utils.tasks.list.invalidate();
           utils.poo.list.invalidate();
           utils.poo.summary.invalidate();
+          utils.inbox.list.invalidate();
+          break;
+        case "poo_receipt":
+          utils.poo.list.invalidate();
+          utils.poo.summary.invalidate();
           break;
         case "inbox_item":
           utils.inbox.list.invalidate();
@@ -58,10 +72,15 @@ export function useSocket() {
           break;
         case "heartbeat":
           utils.agents.list.invalidate();
+          utils.tasks.list.invalidate();
           break;
-        case "poo_receipt":
-          utils.poo.list.invalidate();
-          utils.poo.summary.invalidate();
+        case "okr_updated":
+          utils.okrs.list.invalidate();
+          break;
+        case "kill_switch":
+          utils.agents.list.invalidate();
+          utils.companies.list.invalidate();
+          utils.inbox.list.invalidate();
           break;
         case "payment_success":
           break;

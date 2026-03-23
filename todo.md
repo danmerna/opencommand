@@ -215,3 +215,16 @@
 - [x] Verification badge and timestamp
 - [x] Backend public procedure to fetch receipt by receiptNumber
 - [x] Copy link button for sharing (OG tags require SSR — noted for future)
+
+## v3.4 — Live Socket.IO Emit Wiring
+
+- [x] Audit existing Socket.IO server setup and io instance location
+- [x] Expose io instance to tRPC router context or as a shared singleton
+- [x] Emit `task_completed` on tasks.executeTask with task id, title, value created
+- [x] Emit `poo_receipt` on pooReceipts generation with receipt number and value
+- [x] Emit `inbox_item` on inbox item creation (via executeTask and killSwitch)
+- [x] Emit `agent_status` on agent status changes (active/idle/error)
+- [x] Emit `heartbeat` on heartbeat scheduler cycle
+- [x] Emit `okr_updated` on OKR progress updates
+- [x] Verify client-side listeners handle all new event types (okr_updated, kill_switch added)
+- [x] Run vitest to confirm no regressions (108 tests passing)

@@ -37,6 +37,7 @@ import {
 } from "./db";
 import { nanoid } from "nanoid";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
+import { emitToUser } from "./socketEmit";
 
 // ─── Companies Router ────────────────────────────────────────────────────────
 const companiesRouter = router({
@@ -116,7 +117,11 @@ const agentsRouter = router({
 
   updateStatus: protectedProcedure
     .input(z.object({ id: z.number(), status: agentStatusEnum }))
-    .mutation(async ({ input }) => { await updateAgentStatus(input.id, input.status); return { success: true }; }),
+    .mutation(async ({ ctx, input }) => {
+      await updateAgentStatus(input.id, input.status);
+      emitToUser(ctx.user.id, "agent_status", `Agent Status Updated`, `Agent #${input.id} is now ${input.status}`, { agentId: input.id, status: input.status });
+      return { success: true };
+    }),
 
   updateFull: protectedProcedure
     .input(z.object({
@@ -162,6 +167,7 @@ const agentsRouter = router({
       const duration = Date.now() - start;
       await createHeartbeatLogEntry({ agentId: input.agentId, companyId: agent.companyId, status: "success", tasksChecked: pendingTasks.length, tasksActedOn, duration, tokenCost: "0.0050" });
       await updateAgent(input.agentId, { lastHeartbeat: new Date() });
+      emitToUser(ctx.user.id, "heartbeat", `Heartbeat: ${agent.name}`, `Checked ${pendingTasks.length} tasks, acted on ${tasksActedOn}. Duration: ${duration}ms`, { agentId: input.agentId, tasksChecked: pendingTasks.length, tasksActedOn });
       return { success: true, tasksChecked: pendingTasks.length, tasksActedOn, duration };
     }),
 
@@ -198,7 +204,11 @@ const okrsRouter = router({
 
   updateProgress: protectedProcedure
     .input(z.object({ id: z.number(), currentValue: z.number(), status: z.enum(["on_track", "at_risk", "achieved", "missed"]) }))
-    .mutation(async ({ input }) => { await updateOkrProgress(input.id, String(input.currentValue), input.status); return { success: true }; }),
+    .mutation(async ({ ctx, input }) => {
+      await updateOkrProgress(input.id, String(input.currentValue), input.status);
+      emitToUser(ctx.user.id, "okr_updated", "OKR Progress Updated", `OKR #${input.id} → ${input.currentValue} (${input.status})`, { okrId: input.id, currentValue: input.currentValue, status: input.status });
+      return { success: true };
+    }),
 
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => { await deleteOkr(input.id); return { success: true }; }),
 
@@ -306,6 +316,10 @@ const tasksRouter = router({
         if (agent) await updateAgent(task.agentId, { tasksCompleted: agent.tasksCompleted + 1, totalValueCreated: String(Number(agent.totalValueCreated) + result.dollarValueCreated), totalCostIncurred: String(Number(agent.totalCostIncurred) + result.costIncurred), budgetUsed: String(Number(agent.budgetUsed) + result.costIncurred) });
       }
       try { await notifyOwner({ title: `Task Completed: ${task.title}`, content: `Receipt ${receiptNumber} — $${result.dollarValueCreated} value created, ${result.laborHoursSaved}h saved. Cost: $${result.costIncurred}` }); } catch (_) {}
+      // Emit real-time events for task completion, PoO receipt, and inbox item
+      emitToUser(ctx.user.id, "task_completed", `Task Completed: ${task.title}`, `$${result.dollarValueCreated.toFixed(2)} value created · ${result.laborHoursSaved}h saved`, { taskId: input.taskId, receiptNumber, dollarValueCreated: result.dollarValueCreated });
+      emitToUser(ctx.user.id, "poo_receipt", `PoO Receipt: ${receiptNumber}`, `Verified receipt for "${task.title}" — $${result.dollarValueCreated.toFixed(2)} value`, { receiptNumber, taskTitle: task.title });
+      emitToUser(ctx.user.id, "inbox_item", "New Inbox Item", `PoO Receipt Generated: ${task.title}`, { taskId: input.taskId });
       return { success: true, receiptNumber, outcome: result.outcome, laborHoursSaved: result.laborHoursSaved, dollarValueCreated: result.dollarValueCreated, costIncurred: result.costIncurred };
     }),
 });
@@ -359,6 +373,7 @@ const governanceRouter = router({
       await createAuditLogEntry({ companyId: input.companyId, userId: ctx.user.id, action: "KILL_SWITCH_ACTIVATED", details: `All ${companyAgents.length} agents paused. Company operations halted.` });
       await createInboxItem({ userId: ctx.user.id, companyId: input.companyId, type: "kill_switch", title: "KILL SWITCH ACTIVATED", body: `Emergency shutdown initiated. ${companyAgents.length} agents paused.`, priority: "critical" });
       try { await notifyOwner({ title: "KILL SWITCH ACTIVATED", content: `Company #${input.companyId} emergency shutdown. ${companyAgents.length} agents paused.` }); } catch (_) {}
+      emitToUser(ctx.user.id, "kill_switch", "KILL SWITCH ACTIVATED", `Emergency shutdown — ${companyAgents.length} agents paused. Company #${input.companyId} halted.`, { companyId: input.companyId, agentsPaused: companyAgents.length });
       return { success: true, agentsPaused: companyAgents.length };
     }),
 
