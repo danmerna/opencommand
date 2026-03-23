@@ -314,3 +314,7 @@
 - [x] Users can alter baseline later via agent's strategy engine chat
 - [x] Progress indicator showing X of Y executives onboarded
 - [x] 130 tests passing, 0 TypeScript errors
+
+## v3.8 — Home Page CTA Updates
+- [x] Swap "Deploy Your AI CEO" button text to "Deploy Your Zero-Human Company"
+- [x] Replace "View Blueprints" button with "See How It Works" (links to /intent-engine)

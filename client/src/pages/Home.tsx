@@ -48,11 +48,11 @@ export default function Home() {
               </Link>
             ) : (
               <a href={getLoginUrl()} className="btn-primary flex items-center gap-2 px-7 py-3">
-                Deploy Your AI CEO <ArrowRight size={16} />
+                Deploy Your Zero-Human Company <ArrowRight size={16} />
               </a>
             )}
-            <Link href="/blueprints" className="btn-outline px-7 py-3">
-              View Blueprints
+            <Link href="/intent-engine" className="btn-outline px-7 py-3">
+              See How It Works
             </Link>
           </div>
         </div>
@@ -123,11 +123,11 @@ export default function Home() {
             </Link>
           ) : (
             <a href={getLoginUrl()} className="btn-primary flex items-center gap-2 px-8 py-3">
-              Deploy Your AI CEO <ArrowRight size={16} />
+              Deploy Your Zero-Human Company <ArrowRight size={16} />
             </a>
           )}
-          <Link href="/blueprints" className="btn-outline px-8 py-3">
-            View Blueprints
+          <Link href="/intent-engine" className="btn-outline px-8 py-3">
+              See How It Works
           </Link>
         </div>
       </section>
