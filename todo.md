@@ -133,3 +133,9 @@
 - [x] Build Quick Tour overlay: show only for first-time users after onboarding completion
 - [x] Build Quick Tour overlay: persist tour completion state so it doesn't repeat
 - [x] Write tests for all three new features
+- [x] Build animated hero illustration: create ContextEngineHero component showing data flowing from tool icons into central brain
+- [x] Build animated hero illustration: integrate into homepage right column alongside hero text
+- [x] Build onboarding reminder emails: create server procedure to check incomplete onboarding after 48 hours
+- [x] Build onboarding reminder emails: send reminder email with direct resume link
+- [x] Build onboarding reminder emails: track reminder state to avoid duplicate sends
+- [x] Write tests for hero illustration and onboarding reminders

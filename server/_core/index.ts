@@ -13,6 +13,7 @@ import Stripe from "stripe";
 import { handleWebhookEvent } from "../stripe/checkout";
 import { registerIntegrationOAuthRoutes } from "../integrationOAuth";
 import { startBriefingScheduler } from "../briefingScheduler";
+import { startOnboardingReminderScheduler } from "../onboardingReminderScheduler";
 import { unsubscribeUserByToken } from "../db";
 
 // Global Socket.IO instance for emitting events from routers
@@ -123,6 +124,7 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
     // Start scheduled briefing delivery
     startBriefingScheduler();
+    startOnboardingReminderScheduler();
   });
 }
 

@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
 import { ArrowRight, Target, BarChart3, Bot, Cpu, Shield, Package, Check, Zap, Star, Menu, X, RefreshCw, Layers, Users, Globe, Lock } from "lucide-react";
+import { ContextEngineHero } from "@/components/ContextEngineHero";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 
@@ -479,34 +480,42 @@ export default function Home() {
 
       {/* ─── Section 2: Hero ───────────────────────────────────────── */}
       <section className="px-8 pt-28 pb-20 max-w-7xl mx-auto">
-        <div className="max-w-3xl">
-          <p className="hero-label text-label mb-6">Personal Intelligence Engine</p>
-          <h1 className="hero-h1 text-display text-6xl lg:text-[5.5rem] text-foreground leading-none mb-8">
-            Deploy your<br />
-            <span className="text-muted-foreground">zero-human workforce.</span>
-          </h1>
-          <p className="hero-sub text-muted-foreground text-lg text-body max-w-xl mb-12">
-            Open Command connects to your tools, builds its own context, and executes work autonomously — delivering a verified receipt for every outcome. The intent engine that context-engineers itself.
-          </p>
-          <div className="hero-cta flex items-center gap-4 flex-wrap">
-            {isAuthenticated ? (
-              hasCompany ? (
-                <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-7 py-3">
-                  Enter Mission Control <ArrowRight size={16} />
-                </Link>
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+          {/* Left: Copy */}
+          <div>
+            <p className="hero-label text-label mb-6">Personal Intelligence Engine</p>
+            <h1 className="hero-h1 text-display text-5xl lg:text-[4.5rem] text-foreground leading-none mb-8">
+              Deploy your<br />
+              <span className="text-muted-foreground">zero-human workforce.</span>
+            </h1>
+            <p className="hero-sub text-muted-foreground text-lg text-body max-w-xl mb-12">
+              Open Command connects to your tools, builds its own context, and executes work autonomously — delivering a verified receipt for every outcome. The intent engine that context-engineers itself.
+            </p>
+            <div className="hero-cta flex items-center gap-4 flex-wrap">
+              {isAuthenticated ? (
+                hasCompany ? (
+                  <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-7 py-3">
+                    Enter Mission Control <ArrowRight size={16} />
+                  </Link>
+                ) : (
+                  <Link href="/onboarding/pro" className="btn-primary flex items-center gap-2 px-7 py-3">
+                    Start Executive Onboarding <ArrowRight size={16} />
+                  </Link>
+                )
               ) : (
-                <Link href="/onboarding/pro" className="btn-primary flex items-center gap-2 px-7 py-3">
-                  Start Executive Onboarding <ArrowRight size={16} />
-                </Link>
-              )
-            ) : (
-              <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary flex items-center gap-2 px-7 py-3">
-                Start Free — Build Your Executive Team <ArrowRight size={16} />
+                <button onClick={() => scrollToSection("bottom-cta")} className="btn-primary flex items-center gap-2 px-7 py-3">
+                  Start Free — Build Your Executive Team <ArrowRight size={16} />
+                </button>
+              )}
+              <button onClick={() => scrollToSection("how-it-works")} className="btn-outline px-7 py-3">
+                See How It Works
               </button>
-            )}
-            <button onClick={() => scrollToSection("how-it-works")} className="btn-outline px-7 py-3">
-              See How It Works
-            </button>
+            </div>
+          </div>
+
+          {/* Right: Animated Context Engine Illustration */}
+          <div className="hidden lg:block">
+            <ContextEngineHero />
           </div>
         </div>
       </section>

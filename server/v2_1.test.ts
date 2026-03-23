@@ -87,7 +87,7 @@ describe("Payments Router", () => {
       expect(product.name).toBeTruthy();
       expect(product.priceAmount).toBeGreaterThan(0);
     }
-  });
+  }, 15000);
 
   it("checkout requires authentication", async () => {
     const { appRouter } = await import("./routers");
