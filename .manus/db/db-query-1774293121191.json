@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `page_views` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int,\n\t`sessionId` varchar(64),\n\t`path` varchar(512) NOT NULL,\n\t`referrer` varchar(512),\n\t`userAgent` text,\n\t`duration` int,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `page_views_id` PRIMARY KEY(`id`)\n);\nCREATE TABLE `user_sessions` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`sessionId` varchar(64) NOT NULL,\n\t`startedAt` timestamp NOT NULL DEFAULT (now()),\n\t`lastSeenAt` timestamp NOT NULL DEFAULT (now()),\n\t`pageCount` int NOT NULL DEFAULT 1,\n\t`entryPath` varchar(512),\n\t`exitPath` varchar(512),\n\t`userAgent` text,\n\t`duration` int DEFAULT 0,\n\tCONSTRAINT `user_sessions_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `user_sessions_sessionId_unique` UNIQUE(`sessionId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute CREATE TABLE `page_views` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int,\n\t`sessionId` varchar(64),\n\t`path` varchar(512) NOT NULL,\n\t`referrer` varchar(512),\n\t`userAgent` text,\n\t`duration` int,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `page_views_id` PRIMARY KEY(`id`)\n);\nCREATE TABLE `user_sessions` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`sessionId` varchar(64) NOT NULL,\n\t`startedAt` timestamp NOT NULL DEFAULT (now()),\n\t`lastSeenAt` timestamp NOT NULL DEFAULT (now()),\n\t`pageCount` int NOT NULL DEFAULT 1,\n\t`entryPath` varchar(512),\n\t`exitPath` varchar(512),\n\t`userAgent` text,\n\t`duration` int DEFAULT 0,\n\tCONSTRAINT `user_sessions_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `user_sessions_sessionId_unique` UNIQUE(`sessionId`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 450
+}

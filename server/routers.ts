@@ -47,6 +47,9 @@ import {
   createUserFeedback, getUserFeedbackAll, getUserFeedbackByUserId, updateFeedbackStatus,
   hasWelcomeEmailBeenSent, markWelcomeEmailSent,
   getChangelogEntries,
+  insertPageView, getPageViewsByUser, getTopPagesByUser,
+  upsertUserSession, getSessionsByUser,
+  adminGetAllUsers, adminGetUserKpis, adminGetUserTimeline, adminGetDailyActivity,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -1615,6 +1618,70 @@ const feedbackRouter = router({
     .mutation(({ input }) => updateFeedbackStatus(input.id, input.status)),
 });
 
+// ─── Page Tracking (beacon from client) ──────────────────────────────────────
+const trackingRouter = router({
+  pageView: publicProcedure
+    .input(z.object({
+      path: z.string().max(512),
+      sessionId: z.string().max(64),
+      referrer: z.string().max(512).optional(),
+      userAgent: z.string().max(512).optional(),
+      duration: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await insertPageView({
+        userId: ctx.user?.id ?? null,
+        sessionId: input.sessionId,
+        path: input.path,
+        referrer: input.referrer ?? null,
+        userAgent: input.userAgent ?? null,
+        duration: input.duration ?? null,
+      });
+      if (ctx.user?.id) {
+        await upsertUserSession({
+          userId: ctx.user.id,
+          sessionId: input.sessionId,
+          lastSeenAt: new Date(),
+          exitPath: input.path,
+          userAgent: input.userAgent ?? null,
+          duration: input.duration ?? 0,
+        });
+      }
+      return { ok: true };
+    }),
+});
+
+// ─── Admin Router (owner-only) ────────────────────────────────────────────────
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== "admin") throw new Error("FORBIDDEN");
+  return next({ ctx });
+});
+
+const adminRouter = router({
+  users: adminProcedure.query(() => adminGetAllUsers()),
+  userKpis: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => adminGetUserKpis(input.userId)),
+  userTimeline: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => adminGetUserTimeline(input.userId)),
+  userDailyActivity: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => adminGetDailyActivity(input.userId)),
+  userPageViews: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getPageViewsByUser(input.userId)),
+  userTopPages: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getTopPagesByUser(input.userId)),
+  userSessions: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getSessionsByUser(input.userId)),
+  userFeedback: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getUserFeedbackByUserId(input.userId)),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -1650,6 +1717,8 @@ export const appRouter = router({
   analytics: analyticsRouter,
   feedback: feedbackRouter,
   changelog: changelogRouter,
+  tracking: trackingRouter,
+  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -33,8 +33,11 @@ import Briefings from "./pages/Briefings";
 import Analytics from "./pages/Analytics";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
 import WhatsNew from "./pages/WhatsNew";
+import AdminUsers from "./pages/AdminUsers";
+import { usePageTracking } from "./hooks/usePageTracking";
 
 function Router() {
+  usePageTracking();
   return (
     <Switch>
       <Route path="/" component={Home} />
@@ -85,6 +88,7 @@ function Router() {
       <Route path="/feedback-admin">
         <AppLayout><FeedbackAdmin /></AppLayout>
       </Route>
+      <Route path="/admin/users" component={AdminUsers} />
       <Route path="/whats-new" component={WhatsNew} />
       <Route path="/onboarding/pro" component={ProOnboarding} />
       <Route path="/onboarding/:agentId">

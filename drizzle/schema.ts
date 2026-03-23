@@ -719,3 +719,33 @@ export const onboardingWelcomeEmails = mysqlTable("onboarding_welcome_emails", {
 });
 export type OnboardingWelcomeEmail = typeof onboardingWelcomeEmails.$inferSelect;
 export type InsertOnboardingWelcomeEmail = typeof onboardingWelcomeEmails.$inferInsert;
+
+// ─── Page Views (Client-side beacon tracking) ────────────────────────────────
+export const pageViews = mysqlTable("page_views", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  sessionId: varchar("sessionId", { length: 64 }),
+  path: varchar("path", { length: 512 }).notNull(),
+  referrer: varchar("referrer", { length: 512 }),
+  userAgent: text("userAgent"),
+  duration: int("duration"), // ms spent on page (sent on next navigation)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PageView = typeof pageViews.$inferSelect;
+export type InsertPageView = typeof pageViews.$inferInsert;
+
+// ─── User Sessions ────────────────────────────────────────────────────────────
+export const userSessions = mysqlTable("user_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  sessionId: varchar("sessionId", { length: 64 }).notNull().unique(),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  lastSeenAt: timestamp("lastSeenAt").defaultNow().notNull(),
+  pageCount: int("pageCount").default(1).notNull(),
+  entryPath: varchar("entryPath", { length: 512 }),
+  exitPath: varchar("exitPath", { length: 512 }),
+  userAgent: text("userAgent"),
+  duration: int("duration").default(0), // total session ms
+});
+export type UserSession = typeof userSessions.$inferSelect;
+export type InsertUserSession = typeof userSessions.$inferInsert;

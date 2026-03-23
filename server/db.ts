@@ -34,6 +34,8 @@ import {
   userFeedback, InsertUserFeedback,
   onboardingWelcomeEmails,
   changelogEntries,
+  pageViews, InsertPageView,
+  userSessions, InsertUserSession,
 } from "../drizzle/schema";
 import type { InsertChangelogEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -921,4 +923,85 @@ export async function seedChangelogIfEmpty(): Promise<void> {
   ];
 
   await db.insert(changelogEntries).values(entries);
+}
+
+// ─── Page Views ───────────────────────────────────────────────────────────────
+export async function insertPageView(data: InsertPageView) {
+  const db = await getDb(); if (!db) return;
+  await db.insert(pageViews).values(data);
+}
+
+export async function getPageViewsByUser(userId: number, limit = 100) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(pageViews).where(eq(pageViews.userId, userId)).orderBy(desc(pageViews.createdAt)).limit(limit);
+}
+
+export async function getTopPagesByUser(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select({ path: pageViews.path, count: sql<number>`count(*)`.as("count") })
+    .from(pageViews).where(eq(pageViews.userId, userId))
+    .groupBy(pageViews.path).orderBy(desc(sql`count(*)`)).limit(10);
+}
+
+// ─── User Sessions ────────────────────────────────────────────────────────────
+export async function upsertUserSession(data: InsertUserSession) {
+  const db = await getDb(); if (!db) return;
+  await db.insert(userSessions).values(data).onDuplicateKeyUpdate({
+    set: { lastSeenAt: data.lastSeenAt, pageCount: sql`${userSessions.pageCount} + 1`, exitPath: data.exitPath, duration: data.duration ?? 0 },
+  });
+}
+
+export async function getSessionsByUser(userId: number, limit = 20) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(userSessions).where(eq(userSessions.userId, userId)).orderBy(desc(userSessions.startedAt)).limit(limit);
+}
+
+// ─── Admin: All Users with KPIs ───────────────────────────────────────────────
+export async function adminGetAllUsers() {
+  const db = await getDb(); if (!db) return [];
+  return db.select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+    role: users.role,
+    loginMethod: users.loginMethod,
+    createdAt: users.createdAt,
+    lastSignedIn: users.lastSignedIn,
+  }).from(users).orderBy(desc(users.createdAt));
+}
+
+export async function adminGetUserKpis(userId: number) {
+  const db = await getDb(); if (!db) return null;
+  const [agentCount] = await db.select({ count: sql<number>`count(*)` }).from(agents).where(eq(agents.userId, userId));
+  const [companyCount] = await db.select({ count: sql<number>`count(*)` }).from(companies).where(eq(companies.userId, userId));
+  const [pageViewCount] = await db.select({ count: sql<number>`count(*)` }).from(pageViews).where(eq(pageViews.userId, userId));
+  const [sessionCount] = await db.select({ count: sql<number>`count(*)` }).from(userSessions).where(eq(userSessions.userId, userId));
+  const [featureEventCount] = await db.select({ count: sql<number>`count(*)` }).from(featureEvents).where(eq(featureEvents.userId, userId));
+  const [feedbackCount] = await db.select({ count: sql<number>`count(*)` }).from(userFeedback).where(eq(userFeedback.userId, userId));
+  const [onboardingCount] = await db.select({ count: sql<number>`count(*)` }).from(agentOnboardings).where(and(eq(agentOnboardings.userId, userId), eq(agentOnboardings.status, "completed")));
+  return {
+    agents: Number(agentCount?.count ?? 0),
+    companies: Number(companyCount?.count ?? 0),
+    pageViews: Number(pageViewCount?.count ?? 0),
+    sessions: Number(sessionCount?.count ?? 0),
+    featureEvents: Number(featureEventCount?.count ?? 0),
+    feedback: Number(feedbackCount?.count ?? 0),
+    completedOnboardings: Number(onboardingCount?.count ?? 0),
+  };
+}
+
+export async function adminGetUserTimeline(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  // Merge feature events + page views into a unified timeline
+  const fEvents = await db.select({ id: featureEvents.id, type: sql<string>`'feature'`, label: sql<string>`concat(${featureEvents.feature}, ':', ${featureEvents.action})`, metadata: featureEvents.metadata, createdAt: featureEvents.createdAt }).from(featureEvents).where(eq(featureEvents.userId, userId)).orderBy(desc(featureEvents.createdAt)).limit(200);
+  const pViews = await db.select({ id: pageViews.id, type: sql<string>`'pageview'`, label: pageViews.path, metadata: sql<null>`null`, createdAt: pageViews.createdAt }).from(pageViews).where(eq(pageViews.userId, userId)).orderBy(desc(pageViews.createdAt)).limit(200);
+  const combined = [...fEvents, ...pViews].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 300);
+  return combined;
+}
+
+export async function adminGetDailyActivity(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select({ date: sql<string>`DATE(${featureEvents.createdAt})`, count: sql<number>`count(*)` })
+    .from(featureEvents).where(and(eq(featureEvents.userId, userId), sql`${featureEvents.createdAt} >= DATE_SUB(NOW(), INTERVAL 30 DAY)`))
+    .groupBy(sql`DATE(${featureEvents.createdAt})`).orderBy(sql`DATE(${featureEvents.createdAt})`);
 }

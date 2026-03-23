@@ -158,3 +158,12 @@
 - [x] Build What's New changelog: sidebar link in AppLayout
 - [x] Build What's New changelog: page at /changelog with dated entries
 - [x] Write tests for welcome email and changelog features
+- [x] Build admin analytics dashboard: add page_views and user_sessions tables to schema and migrate DB
+- [x] Build admin analytics dashboard: add admin tRPC procedures (user list, KPIs, timeline, sessions, top pages)
+- [x] Build admin analytics dashboard: add tracking tRPC procedure for page view beacon
+- [x] Build admin analytics dashboard: create AdminUsers page at /admin/users
+- [x] Build admin analytics dashboard: wire page tracking beacon via usePageTracking hook
+- [x] Build admin analytics dashboard: add Admin section to DashboardLayout sidebar (admin-only)
+- [x] Build admin analytics dashboard: write 9 vitest tests for admin analytics helpers
+- [x] Set OG link preview image to Full Access card screenshot (og-preview.png)
+- [x] Fix hero CTA buttons to go directly to onboarding builder instead of scrolling to beta sign-up

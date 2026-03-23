@@ -78,6 +78,13 @@
       "when": 1774283178577,
       "tag": "0010_tricky_magneto",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1774293112471,
+      "tag": "0011_calm_omega_flight",
+      "breakpoints": true
     }
   ]
 }
