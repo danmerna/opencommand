@@ -70,6 +70,23 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserByUnsubscribeToken(token: string) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(users).where(eq(users.emailUnsubscribeToken, token)).limit(1);
+  return r[0];
+}
+export async function setUserUnsubscribeToken(userId: number, token: string) {
+  const db = await getDb(); if (!db) return;
+  await db.update(users).set({ emailUnsubscribeToken: token }).where(eq(users.id, userId));
+}
+export async function unsubscribeUserByToken(token: string) {
+  const db = await getDb(); if (!db) return false;
+  const user = await getUserByUnsubscribeToken(token);
+  if (!user) return false;
+  await db.update(users).set({ emailUnsubscribed: true }).where(eq(users.id, user.id));
+  return true;
+}
+
 // ─── Companies ───────────────────────────────────────────────────────────────
 export async function getCompaniesByUserId(userId: number) {
   const db = await getDb(); if (!db) return [];

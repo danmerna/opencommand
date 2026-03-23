@@ -10,6 +10,7 @@ export interface BriefingEmailOptions {
   frequency: string;
   title: string;
   content: string;
+  unsubscribeUrl?: string;
 }
 
 /**
@@ -58,6 +59,7 @@ export async function sendBriefingEmail(opts: BriefingEmailOptions): Promise<boo
               <p style="margin:0;font-size:11px;color:#555;line-height:1.6;">
                 You're receiving this because you set up ${frequency} briefings for <strong style="color:#777;">${companyName}</strong> in OpenCommand.<br/>
                 <a href="https://opencommand.co/mission-control" style="color:#888;text-decoration:underline;">Manage briefing settings</a>
+                ${opts.unsubscribeUrl ? `&nbsp;&middot;&nbsp;<a href="${opts.unsubscribeUrl}" style="color:#666;text-decoration:underline;">Unsubscribe from emails</a>` : ""}
               </p>
             </td>
           </tr>

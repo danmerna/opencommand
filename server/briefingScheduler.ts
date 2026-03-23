@@ -9,6 +9,8 @@ import { companies, strategyProposals, users } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { notifyOwner } from "./_core/notification";
 import { sendBriefingEmail } from "./email";
+import { setUserUnsubscribeToken } from "./db";
+import crypto from "crypto";
 
 // Map briefing frequency to cron expressions
 const FREQUENCY_CRON: Record<string, string> = {
@@ -61,7 +63,18 @@ async function deliverBriefingForFrequency(frequency: string) {
       await notifyOwner({ title, content });
 
       // 2. Email delivery via Resend (non-blocking — failure doesn't abort the log)
-      if (user.email) {
+      if (user.email && !(user as any).emailUnsubscribed) {
+        // Ensure user has an unsubscribe token; generate one if missing
+        let unsubToken = (user as any).emailUnsubscribeToken as string | undefined;
+        if (!unsubToken) {
+          unsubToken = crypto.randomBytes(32).toString("hex");
+          await setUserUnsubscribeToken(user.id, unsubToken);
+        }
+        const baseUrl = process.env.VITE_FRONTEND_FORGE_API_URL
+          ? "https://opencommand.co"
+          : "http://localhost:3000";
+        const unsubscribeUrl = `${baseUrl}/api/unsubscribe?token=${unsubToken}`;
+
         const emailSent = await sendBriefingEmail({
           to: user.email,
           name: user.name ?? "there",
@@ -69,6 +82,7 @@ async function deliverBriefingForFrequency(frequency: string) {
           frequency,
           title,
           content,
+          unsubscribeUrl,
         });
         if (!emailSent) {
           console.warn(`[BriefingScheduler] Email delivery failed for user ${user.id} (${user.email})`);

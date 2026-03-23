@@ -45,3 +45,6 @@
 - [x] Notify owner when a strategy-sourced OKR status changes to "at_risk"
 - [x] Integrate Resend email API to send briefing content as formatted email
 - [x] Add PDF download button per briefing entry on /briefings page
+- [x] Add email unsubscribe token to users table and one-click unsubscribe endpoint
+- [x] Add unsubscribe link to briefing email footer
+- [x] Update RESEND_FROM_EMAIL to briefings@opencommand.co

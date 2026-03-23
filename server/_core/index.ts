@@ -13,6 +13,7 @@ import Stripe from "stripe";
 import { handleWebhookEvent } from "../stripe/checkout";
 import { registerIntegrationOAuthRoutes } from "../integrationOAuth";
 import { startBriefingScheduler } from "../briefingScheduler";
+import { unsubscribeUserByToken } from "../db";
 
 // Global Socket.IO instance for emitting events from routers
 export let io: SocketIOServer;
@@ -90,6 +91,20 @@ async function startServer() {
       createContext,
     })
   );
+  // ─── Email Unsubscribe (one-click, no auth required) ────────────────────────
+  app.get("/api/unsubscribe", async (req, res) => {
+    const token = req.query.token as string | undefined;
+    if (!token) {
+      return res.status(400).send("<html><body style='font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0a;color:#e5e5e5'><h2>Invalid unsubscribe link</h2><p>The link you followed is missing a token. Please use the link from your email.</p></body></html>");
+    }
+    const success = await unsubscribeUserByToken(token);
+    if (success) {
+      return res.send("<html><body style='font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0a;color:#e5e5e5'><h2 style='color:#fff'>You\'ve been unsubscribed</h2><p style='color:#aaa'>You will no longer receive OpenCommand strategy briefing emails.<br/>You can re-enable email briefings at any time from Mission Control.</p><p style='margin-top:32px'><a href='https://opencommand.co/mission-control' style='color:#888;text-decoration:underline;font-size:13px'>Go to Mission Control</a></p></body></html>");
+    } else {
+      return res.status(404).send("<html><body style='font-family:sans-serif;text-align:center;padding:60px;background:#0a0a0a;color:#e5e5e5'><h2>Link not found</h2><p>This unsubscribe link may have already been used or is invalid.</p></body></html>");
+    }
+  });
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
