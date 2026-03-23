@@ -83,9 +83,7 @@ export default function Home() {
       {/* Top nav */}
       <nav className="px-8 py-5 flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center">
-            <span className="font-semibold text-black text-xs">OC</span>
-          </div>
+          <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/2mC5vAT6JzxCS9FMA7E83Y/opencommand-logo_f5f7a99c.png" alt="OpenCommand" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-semibold text-foreground text-sm tracking-tight">OpenCommand</span>
         </div>
         <div className="flex items-center gap-8">
@@ -241,9 +239,7 @@ export default function Home() {
       <div className="accent-line" />
       <footer className="px-8 py-8 flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
-            <span className="font-bold text-black text-sm leading-none tracking-tight">OC</span>
-          </div>
+          <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/2mC5vAT6JzxCS9FMA7E83Y/opencommand-logo_f5f7a99c.png" alt="OpenCommand" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
           <span className="text-base text-foreground font-semibold tracking-tight">OpenCommand</span>
         </div>
         <div className="text-label">IntelligenceOS · {new Date().getFullYear()}</div>

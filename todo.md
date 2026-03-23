@@ -354,3 +354,10 @@
 - [x] Replace "THE INTENT-TO-OUTCOME ENGINE" with "IntelligenceOS" in footer
 - [x] Make "OpenCommand" text bigger in footer (text-base, font-semibold)
 - [x] Fix OC logo clipping in footer (w-10 h-10 rounded-xl, flex-shrink-0, text-sm bold)
+
+## v3.18 — Logo, Footer Consistency, OG Tags
+- [x] Upload OC logo image to CDN
+- [x] Replace text "OC" with actual logo image in Home nav and footer
+- [x] Apply consistent footer (IntelligenceOS, bigger logo/text) to Creators page
+- [x] Add Open Graph tags (og:title, og:description, og:image) to index.html
+- [x] Add Twitter Card meta tags to index.html

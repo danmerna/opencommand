@@ -11,9 +11,7 @@ export default function Creators() {
       {/* Top nav */}
       <nav className="px-8 py-5 flex items-center justify-between max-w-7xl mx-auto border-b border-border">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center">
-            <span className="font-semibold text-black text-xs">OC</span>
-          </div>
+          <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/2mC5vAT6JzxCS9FMA7E83Y/opencommand-logo_f5f7a99c.png" alt="OpenCommand" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-semibold text-foreground text-sm tracking-tight">OpenCommand</span>
         </div>
         <Link href="/" className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors">
@@ -89,13 +87,11 @@ export default function Creators() {
       {/* Footer */}
       <div className="accent-line" />
       <footer className="px-8 py-8 flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-md bg-white flex items-center justify-center">
-            <span className="font-semibold text-black text-[10px]">OC</span>
-          </div>
-          <span className="text-[13px] text-muted-foreground font-medium">OpenCommand</span>
+        <div className="flex items-center gap-3">
+          <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/2mC5vAT6JzxCS9FMA7E83Y/opencommand-logo_f5f7a99c.png" alt="OpenCommand" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+          <span className="text-base text-foreground font-semibold tracking-tight">OpenCommand</span>
         </div>
-        <div className="text-label">The Intent-to-Outcome Engine · {new Date().getFullYear()}</div>
+        <div className="text-label">IntelligenceOS · {new Date().getFullYear()}</div>
       </footer>
     </div>
   );
