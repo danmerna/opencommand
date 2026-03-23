@@ -92,6 +92,10 @@ vi.mock("./db", () => ({
   getMarketplaceLeaderboard: vi.fn().mockResolvedValue([]),
   seedDefaultAgents: vi.fn().mockResolvedValue(undefined),
   seedDefaultOkrs: vi.fn().mockResolvedValue(undefined),
+  hasWelcomeEmailBeenSent: vi.fn().mockResolvedValue(false),
+  markWelcomeEmailSent: vi.fn().mockResolvedValue(undefined),
+  getChangelogEntries: vi.fn().mockResolvedValue([]),
+  seedChangelogIfEmpty: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock LLM

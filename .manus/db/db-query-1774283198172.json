@@ -1,0 +1,9 @@
+{
+  "query": "\nCREATE TABLE `changelog_entries` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `version` varchar(32) NOT NULL,\n  `title` varchar(256) NOT NULL,\n  `description` text NOT NULL,\n  `type` enum('feature','improvement','fix','announcement') NOT NULL DEFAULT 'feature',\n  `publishedAt` timestamp NOT NULL DEFAULT (now()),\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `changelog_entries_id` PRIMARY KEY(`id`)\n);\n\nCREATE TABLE `onboarding_welcome_emails` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `companyId` int,\n  `sentAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `onboarding_welcome_emails_id` PRIMARY KEY(`id`),\n  CONSTRAINT `onboarding_welcome_emails_userId_unique` UNIQUE(`userId`)\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \nCREATE TABLE `changelog_entries` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `version` varchar(32) NOT NULL,\n  `title` varchar(256) NOT NULL,\n  `description` text NOT NULL,\n  `type` enum('feature','improvement','fix','announcement') NOT NULL DEFAULT 'feature',\n  `publishedAt` timestamp NOT NULL DEFAULT (now()),\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `changelog_entries_id` PRIMARY KEY(`id`)\n);\n\nCREATE TABLE `onboarding_welcome_emails` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `companyId` int,\n  `sentAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `onboarding_welcome_emails_id` PRIMARY KEY(`id`),\n  CONSTRAINT `onboarding_welcome_emails_userId_unique` UNIQUE(`userId`)\n);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 255
+}

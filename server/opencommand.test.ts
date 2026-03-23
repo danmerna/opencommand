@@ -71,6 +71,10 @@ vi.mock("./db", () => ({
   createBlueprintDeployment: vi.fn().mockResolvedValue({ id: 1 }),
   createBlueprintReview: vi.fn().mockResolvedValue({ id: 1 }),
   getMarketplaceListingsByType: vi.fn().mockResolvedValue([]),
+  hasWelcomeEmailBeenSent: vi.fn().mockResolvedValue(false),
+  markWelcomeEmailSent: vi.fn().mockResolvedValue(undefined),
+  getChangelogEntries: vi.fn().mockResolvedValue([]),
+  seedChangelogIfEmpty: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./_core/llm", () => ({

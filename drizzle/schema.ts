@@ -696,3 +696,26 @@ export const userFeedback = mysqlTable("user_feedback", {
 });
 export type UserFeedback = typeof userFeedback.$inferSelect;
 export type InsertUserFeedback = typeof userFeedback.$inferInsert;
+
+// ─── Changelog Entries (What's New) ─────────────────────────────────────────
+export const changelogEntries = mysqlTable("changelog_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  version: varchar("version", { length: 32 }).notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description").notNull(),
+  type: mysqlEnum("type", ["feature", "improvement", "fix", "announcement"]).default("feature").notNull(),
+  publishedAt: timestamp("publishedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ChangelogEntry = typeof changelogEntries.$inferSelect;
+export type InsertChangelogEntry = typeof changelogEntries.$inferInsert;
+
+// ─── Onboarding Welcome Email Tracking ──────────────────────────────────────
+export const onboardingWelcomeEmails = mysqlTable("onboarding_welcome_emails", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  companyId: int("companyId"),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+});
+export type OnboardingWelcomeEmail = typeof onboardingWelcomeEmails.$inferSelect;
+export type InsertOnboardingWelcomeEmail = typeof onboardingWelcomeEmails.$inferInsert;

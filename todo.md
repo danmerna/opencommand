@@ -150,3 +150,11 @@
 - [x] Add TikTok Ads integration: schema, OAuth flow, data pull infrastructure (already existed)
 - [x] Update integration logo bar and onboarding to include ad platforms (already done)
 - [x] Write/update tests for homepage and integration changes
+- [x] Build post-onboarding welcome email: send when all 4 executives are contextualized
+- [x] Build post-onboarding welcome email: template with team composition summary and Strategy tab link
+- [x] Build post-onboarding welcome email: track sent state to avoid duplicate sends
+- [x] Build What's New changelog: create changelog_entries table in schema
+- [x] Build What's New changelog: server procedures to list and create entries
+- [x] Build What's New changelog: sidebar link in AppLayout
+- [x] Build What's New changelog: page at /changelog with dated entries
+- [x] Write tests for welcome email and changelog features

@@ -108,6 +108,16 @@ vi.mock("./db", () => ({
   getRequiredCategoriesByListingId: vi.fn().mockResolvedValue([]),
   createAgentRequiredCategory: vi.fn().mockResolvedValue({}),
   checkUserCompatibility: vi.fn().mockResolvedValue({ score: 100, missing: [], connected: [] }),
+  hasWelcomeEmailBeenSent: vi.fn().mockResolvedValue(false),
+  markWelcomeEmailSent: vi.fn().mockResolvedValue(undefined),
+  getChangelogEntries: vi.fn().mockResolvedValue([]),
+  seedChangelogIfEmpty: vi.fn().mockResolvedValue(undefined),
+  logFeatureEvent: vi.fn().mockResolvedValue(undefined),
+  getFeatureEventsSummary: vi.fn().mockResolvedValue([]),
+  getFeatureEventsAll: vi.fn().mockResolvedValue([]),
+  createUserFeedback: vi.fn().mockResolvedValue({}),
+  getUserFeedback: vi.fn().mockResolvedValue([]),
+  updateFeedbackStatus: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock("./_core/llm", () => ({

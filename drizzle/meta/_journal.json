@@ -71,6 +71,13 @@
       "when": 1774275528307,
       "tag": "0009_lovely_doorman",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1774283178577,
+      "tag": "0010_tricky_magneto",
+      "breakpoints": true
     }
   ]
 }

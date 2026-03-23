@@ -60,6 +60,16 @@ vi.mock("./db", () => ({
   getBlueprintDeployments: vi.fn().mockResolvedValue([]),
   getBlueprintReviews: vi.fn().mockResolvedValue([]),
   getUserPayments: vi.fn().mockResolvedValue([]),
+  hasWelcomeEmailBeenSent: vi.fn().mockResolvedValue(false),
+  markWelcomeEmailSent: vi.fn().mockResolvedValue(undefined),
+  getChangelogEntries: vi.fn().mockResolvedValue([]),
+  seedChangelogIfEmpty: vi.fn().mockResolvedValue(undefined),
+  logFeatureEvent: vi.fn().mockResolvedValue(undefined),
+  getFeatureEventsSummary: vi.fn().mockResolvedValue([]),
+  getFeatureEventsAll: vi.fn().mockResolvedValue([]),
+  createUserFeedback: vi.fn().mockResolvedValue({}),
+  getUserFeedback: vi.fn().mockResolvedValue([]),
+  updateFeedbackStatus: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock("./_core/llm", () => ({

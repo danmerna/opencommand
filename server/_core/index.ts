@@ -14,7 +14,7 @@ import { handleWebhookEvent } from "../stripe/checkout";
 import { registerIntegrationOAuthRoutes } from "../integrationOAuth";
 import { startBriefingScheduler } from "../briefingScheduler";
 import { startOnboardingReminderScheduler } from "../onboardingReminderScheduler";
-import { unsubscribeUserByToken } from "../db";
+import { unsubscribeUserByToken, seedChangelogIfEmpty } from "../db";
 
 // Global Socket.IO instance for emitting events from routers
 export let io: SocketIOServer;
@@ -125,6 +125,8 @@ async function startServer() {
     // Start scheduled briefing delivery
     startBriefingScheduler();
     startOnboardingReminderScheduler();
+    // Seed changelog entries if the table is empty
+    seedChangelogIfEmpty().catch(err => console.error("[Changelog] Seed error:", err));
   });
 }
 

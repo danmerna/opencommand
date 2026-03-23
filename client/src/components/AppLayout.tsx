@@ -6,7 +6,7 @@ import { ReactNode, useState, useEffect, useRef, useCallback, createContext, use
 import {
   LayoutDashboard, Cpu, ShoppingBag, Users, Bot, Menu, X, LogOut,
   FileStack, Shield, BarChart3, Wifi, WifiOff, Plug, CheckSquare, History,
-  CreditCard, FolderOpen, Plus, Building2, ChevronRight, MessageSquare, Activity,
+  CreditCard, FolderOpen, Plus, Building2, ChevronRight, MessageSquare, Activity, Megaphone,
 } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ const coreNavItems = [
   { href: "/context-history", label: "Context History",  icon: History },
   { href: "/analytics",       label: "Analytics",        icon: Activity },
   { href: "/feedback-admin",   label: "Feedback",         icon: MessageSquare },
+  { href: "/whats-new",        label: "What's New",        icon: Megaphone },
   { href: "/payments",         label: "Payments",         icon: CreditCard },
 ];
 

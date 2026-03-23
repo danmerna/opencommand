@@ -45,11 +45,14 @@ import {
   createBriefingLog, getBriefingLogsByUserId, getBriefingLogsByCompanyId,
   createFeatureEvent, getFeatureEventsAll, getFeatureEventsSummary,
   createUserFeedback, getUserFeedbackAll, getUserFeedbackByUserId, updateFeedbackStatus,
+  hasWelcomeEmailBeenSent, markWelcomeEmailSent,
+  getChangelogEntries,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
 import { emitToUser } from "./socketEmit";
+import { sendWelcomeEmail } from "./email";
 
 // ─── Companies Router ────────────────────────────────────────────────────────
 const companiesRouter = router({
@@ -1217,7 +1220,7 @@ const onboardingRouter = router({
   // Respond to an onboarding question
   respond: protectedProcedure
     .input(z.object({ onboardingId: z.number(), answer: z.string().min(1) }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const onboarding = await getOnboardingById(input.onboardingId);
       if (!onboarding) throw new Error("Onboarding not found");
       if (onboarding.status === "completed") throw new Error("Onboarding already completed");
@@ -1284,6 +1287,36 @@ const onboardingRouter = router({
         const enrichedContext = { ...context, suggestedIntegrations };
         await completeOnboarding(onboarding.id, summary, enrichedContext);
         await updateOnboarding(onboarding.id, { conversationHistory: history });
+
+        // Check if all executives are now complete → send welcome email
+        try {
+          if (onboarding.companyId) {
+            const allOnboardings = await getOnboardingsByCompanyId(onboarding.companyId);
+            const completedCount = allOnboardings.filter(o => o.status === "completed").length;
+            const EXEC_TOTAL = 4;
+            if (completedCount >= EXEC_TOTAL) {
+              const alreadySent = await hasWelcomeEmailBeenSent(ctx.user.id);
+              if (!alreadySent && ctx.user.email) {
+                const company = await getCompanyById(onboarding.companyId);
+                const completedAgents = await getAgentsByCompanyId(onboarding.companyId);
+                const agentList = completedAgents.slice(0, EXEC_TOTAL).map(a => ({ role: a.roleTitle ?? a.type ?? "Executive", name: a.name }));
+                const origin = (ctx.req as any).headers?.origin ?? "https://opencommand.co";
+                await sendWelcomeEmail({
+                  to: ctx.user.email,
+                  name: ctx.user.name ?? "there",
+                  companyName: company?.name ?? "your company",
+                  agents: agentList,
+                  strategyUrl: `${origin}/mission-control`,
+                });
+                await markWelcomeEmailSent(ctx.user.id, onboarding.companyId);
+                console.log(`[WelcomeEmail] Sent to ${ctx.user.email} for company ${onboarding.companyId}`);
+              }
+            }
+          }
+        } catch (emailErr) {
+          console.error("[WelcomeEmail] Non-fatal error:", emailErr);
+        }
+
         return { reply: summary, isComplete: true, context: enrichedContext, suggestedIntegrations };
       } else {
         history.push({ role: "assistant", content: reply });
@@ -1559,6 +1592,14 @@ const analyticsRouter = router({
 });
 
 // ─── Feedback Router ────────────────────────────────────────────────────────
+const changelogRouter = router({
+  list: publicProcedure
+    .input(z.object({ limit: z.number().min(1).max(50).default(20) }).optional())
+    .query(async ({ input }) => {
+      return getChangelogEntries(input?.limit ?? 20);
+    }),
+});
+
 const feedbackRouter = router({
   submit: protectedProcedure
     .input(z.object({ type: z.enum(["bug", "feature", "general", "praise"]).default("general"), content: z.string().min(1).max(2000), page: z.string().max(128).optional() }))
@@ -1608,6 +1649,7 @@ export const appRouter = router({
   briefings: briefingsRouter,
   analytics: analyticsRouter,
   feedback: feedbackRouter,
+  changelog: changelogRouter,
 });
 
 export type AppRouter = typeof appRouter;

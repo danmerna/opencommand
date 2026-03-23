@@ -19,6 +19,10 @@ vi.mock("./db", () => ({
   getProjectChats: vi.fn().mockResolvedValue([]),
   createProjectChat: vi.fn().mockResolvedValue({ insertId: 5 }),
   createTaskThread: vi.fn().mockResolvedValue({}),
+  hasWelcomeEmailBeenSent: vi.fn().mockResolvedValue(false),
+  markWelcomeEmailSent: vi.fn().mockResolvedValue(undefined),
+  getChangelogEntries: vi.fn().mockResolvedValue([]),
+  seedChangelogIfEmpty: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./_core/llm", () => ({

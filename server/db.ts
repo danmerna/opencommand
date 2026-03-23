@@ -32,7 +32,10 @@ import {
   briefingLogs, InsertBriefingLog,
   featureEvents, InsertFeatureEvent,
   userFeedback, InsertUserFeedback,
+  onboardingWelcomeEmails,
+  changelogEntries,
 } from "../drizzle/schema";
+import type { InsertChangelogEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -840,4 +843,82 @@ export async function getUserFeedbackByUserId(userId: number) {
 export async function updateFeedbackStatus(id: number, status: "new" | "reviewed" | "resolved") {
   const db = await getDb(); if (!db) throw new Error("Database not available");
   return db.update(userFeedback).set({ status }).where(eq(userFeedback.id, id));
+}
+
+// ─── Onboarding Welcome Email Tracking ──────────────────────────────────────
+
+export async function hasWelcomeEmailBeenSent(userId: number): Promise<boolean> {
+  const db = await getDb(); if (!db) return false;
+  const rows = await db.select().from(onboardingWelcomeEmails).where(eq(onboardingWelcomeEmails.userId, userId)).limit(1);
+  return rows.length > 0;
+}
+
+export async function markWelcomeEmailSent(userId: number, companyId?: number | null): Promise<void> {
+  const db = await getDb(); if (!db) return;
+  await db.insert(onboardingWelcomeEmails).values({ userId, companyId: companyId ?? null }).onDuplicateKeyUpdate({ set: { sentAt: new Date() } });
+}
+
+// ─── Changelog Entries ───────────────────────────────────────────────────────
+export async function getChangelogEntries(limit = 20) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(changelogEntries).orderBy(desc(changelogEntries.publishedAt)).limit(limit);
+}
+
+export async function createChangelogEntry(data: InsertChangelogEntry) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(changelogEntries).values(data);
+  return result;
+}
+
+export async function seedChangelogIfEmpty(): Promise<void> {
+  const db = await getDb(); if (!db) return;
+  const existing = await db.select().from(changelogEntries).limit(1);
+  if (existing.length > 0) return;
+
+  const entries: InsertChangelogEntry[] = [
+    {
+      version: "0.9.5",
+      title: "Introducing Self-Contextualization",
+      description: "Your executive agents now pull live data from connected tools before their first question. Connect HubSpot, Salesforce, Meta Ads, Google Ads, or GA4 — and your CMO, CFO, CEO, and CTO will already know your business before the interview begins.",
+      type: "feature",
+      publishedAt: new Date("2026-03-23"),
+    },
+    {
+      version: "0.9.4",
+      title: "Ad Platform Integrations: Meta, Google, TikTok",
+      description: "Connect Meta Ads, Google Ads, and TikTok Ads to pull campaign performance, ROAS, keyword data, and audience insights directly into your executive agents' context. Your CMO now has full visibility across your entire ad stack from day one.",
+      type: "feature",
+      publishedAt: new Date("2026-03-20"),
+    },
+    {
+      version: "0.9.3",
+      title: "Context Assembly Animation",
+      description: "Watch your agents pull context in real time during onboarding. The new animated visualization shows data flowing from each connected tool into the context engine — so you can see exactly what your executives know before they start working.",
+      type: "improvement",
+      publishedAt: new Date("2026-03-18"),
+    },
+    {
+      version: "0.9.2",
+      title: "Quick Tour & Onboarding Resume",
+      description: "New users now get a guided Quick Tour highlighting the Strategy tab, Agent Fleet, and Intent Engine. If you leave mid-onboarding, Mission Control shows a resume banner with your exact progress so you can pick up exactly where you left off.",
+      type: "improvement",
+      publishedAt: new Date("2026-03-15"),
+    },
+    {
+      version: "0.9.1",
+      title: "Integration Health Indicators",
+      description: "See at a glance which integrations are active, when data was last synced, and whether any agents have data gaps. The new health indicators on each agent card surface missing context before it becomes a problem.",
+      type: "feature",
+      publishedAt: new Date("2026-03-10"),
+    },
+    {
+      version: "0.9.0",
+      title: "Free During Beta — Full Access for All",
+      description: "All pricing tiers are disabled. Every account that signs up gets full unrestricted access to all features — unlimited agents, tools, commands, context engineering, and Proof of Outcome receipts. Early users will be grandfathered when pricing launches.",
+      type: "announcement",
+      publishedAt: new Date("2026-03-05"),
+    },
+  ];
+
+  await db.insert(changelogEntries).values(entries);
 }

@@ -32,6 +32,7 @@ import ProOnboarding from "./pages/ProOnboarding";
 import Briefings from "./pages/Briefings";
 import Analytics from "./pages/Analytics";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
+import WhatsNew from "./pages/WhatsNew";
 
 function Router() {
   return (
@@ -84,6 +85,7 @@ function Router() {
       <Route path="/feedback-admin">
         <AppLayout><FeedbackAdmin /></AppLayout>
       </Route>
+      <Route path="/whats-new" component={WhatsNew} />
       <Route path="/onboarding/pro" component={ProOnboarding} />
       <Route path="/onboarding/:agentId">
         <AppLayout><AgentOnboarding /></AppLayout>
