@@ -24,6 +24,7 @@ import ReceiptViewer from "./pages/ReceiptViewer";
 import AppLayout from "./components/AppLayout";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import AgentOnboarding from "./pages/AgentOnboarding";
 
 function Router() {
   return (
@@ -61,6 +62,9 @@ function Router() {
       </Route>
       <Route path="/projects/:id">
         <AppLayout><ProjectDetail /></AppLayout>
+      </Route>
+      <Route path="/onboarding/:agentId">
+        <AppLayout><AgentOnboarding /></AppLayout>
       </Route>
       <Route path="/receipt/:receiptNumber" component={ReceiptViewer} />
       <Route path="/payment/success" component={PaymentSuccess} />

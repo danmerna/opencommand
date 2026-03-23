@@ -26,6 +26,8 @@ import {
   projects, InsertProject,
   projectFiles, InsertProjectFile,
   projectChats, InsertProjectChat,
+  agentOnboardings, InsertAgentOnboarding,
+  strategyProposals, InsertStrategyProposal,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -681,4 +683,59 @@ export async function getProjectChats(projectId: number, limit = 100) {
 export async function createProjectChat(data: InsertProjectChat) {
   const db = await getDb(); if (!db) throw new Error("Database not available");
   return db.insert(projectChats).values(data);
+}
+
+// ─── Agent Onboardings ────────────────────────────────────────────────────────
+export async function getOnboardingByAgentId(agentId: number) {
+  const db = await getDb(); if (!db) return null;
+  const rows = await db.select().from(agentOnboardings).where(eq(agentOnboardings.agentId, agentId)).limit(1);
+  return rows[0] ?? null;
+}
+export async function getOnboardingsByUserId(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(agentOnboardings).where(eq(agentOnboardings.userId, userId)).orderBy(desc(agentOnboardings.createdAt));
+}
+export async function getOnboardingsByCompanyId(companyId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(agentOnboardings).where(eq(agentOnboardings.companyId, companyId)).orderBy(desc(agentOnboardings.createdAt));
+}
+export async function createOnboarding(data: InsertAgentOnboarding) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(agentOnboardings).values(data);
+}
+export async function updateOnboarding(id: number, data: Partial<InsertAgentOnboarding>) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(agentOnboardings).set(data).where(eq(agentOnboardings.id, id));
+}
+export async function completeOnboarding(id: number, summary: string, context: Record<string, unknown>) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(agentOnboardings).set({ status: "completed", summary, context, completedAt: new Date() }).where(eq(agentOnboardings.id, id));
+}
+
+// ─── Strategy Proposals ───────────────────────────────────────────────────────
+export async function getStrategyProposalsByCompanyId(companyId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(strategyProposals).where(eq(strategyProposals.companyId, companyId)).orderBy(desc(strategyProposals.createdAt));
+}
+export async function getStrategyProposalsByUserId(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(strategyProposals).where(eq(strategyProposals.userId, userId)).orderBy(desc(strategyProposals.createdAt));
+}
+export async function getStrategyProposalById(id: number) {
+  const db = await getDb(); if (!db) return null;
+  const rows = await db.select().from(strategyProposals).where(eq(strategyProposals.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+export async function createStrategyProposal(data: InsertStrategyProposal) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(strategyProposals).values(data);
+}
+export async function updateStrategyProposalStatus(id: number, status: "draft" | "proposed" | "accepted" | "revised") {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(strategyProposals).set({ status }).where(eq(strategyProposals.id, id));
+}
+export async function getOnboardingById(id: number) {
+  const db = await getDb(); if (!db) return null;
+  const rows = await db.select().from(agentOnboardings).where(eq(agentOnboardings.id, id)).limit(1);
+  return rows[0] ?? null;
 }

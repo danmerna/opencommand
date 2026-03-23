@@ -608,3 +608,37 @@ export const projectChats = mysqlTable("project_chats", {
 });
 export type ProjectChat = typeof projectChats.$inferSelect;
 export type InsertProjectChat = typeof projectChats.$inferInsert;
+
+// ─── Agent Onboardings (Socratic C-Suite Context Gathering) ─────────────────
+export const agentOnboardings = mysqlTable("agent_onboardings", {
+  id: int("id").autoincrement().primaryKey(),
+  agentId: int("agentId").notNull(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  status: mysqlEnum("status", ["in_progress", "completed"]).default("in_progress").notNull(),
+  agentType: varchar("agentType", { length: 32 }).notNull(),
+  context: json("context").$type<Record<string, unknown>>(),
+  conversationHistory: json("conversationHistory").$type<{ role: string; content: string }[]>(),
+  summary: text("summary"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AgentOnboarding = typeof agentOnboardings.$inferSelect;
+export type InsertAgentOnboarding = typeof agentOnboardings.$inferInsert;
+
+// ─── Strategy Proposals (CEO-generated after onboarding) ────────────────────
+export const strategyProposals = mysqlTable("strategy_proposals", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  proposedByAgentId: int("proposedByAgentId"),
+  title: varchar("title", { length: 256 }).notNull(),
+  content: text("content").notNull(),
+  executiveSummary: text("executiveSummary"),
+  status: mysqlEnum("status", ["draft", "proposed", "accepted", "revised"]).default("proposed").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type StrategyProposal = typeof strategyProposals.$inferSelect;
+export type InsertStrategyProposal = typeof strategyProposals.$inferInsert;

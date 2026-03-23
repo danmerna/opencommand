@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +12,7 @@ import type { JSX } from "react";
 import {
   Target, Zap, Plus, Trash2, Check, X, Clock, TrendingUp, DollarSign, FileCheck,
   Inbox, Building2, GitBranch, Heart, Activity, BarChart3, Shield, Power, Wrench,
-  CheckCircle2
+  CheckCircle2, Sparkles, ArrowRight, Bot
 } from "lucide-react";
 
 type Tab = "okrs" | "fleet" | "org" | "heartbeat" | "budget" | "poo" | "inbox" | "governance";
@@ -37,8 +38,90 @@ const typeColors: Record<string, string> = {
   specialist: "text-orange-400 border-orange-400/30",
 };
 
+// ─── Onboarding Banner Component ──────────────────────────────────────────────
+function OnboardingBanner({ companyId, navigate }: { companyId: number | null; navigate: (to: string) => void }) {
+  const onboardingQ = trpc.onboarding.status.useQuery(
+    { companyId: companyId ?? undefined },
+    { enabled: !!companyId }
+  );
+  const generateStrategy = trpc.onboarding.generateStrategy.useMutation({
+    onSuccess: () => {
+      toast.success("Strategy proposal generated!", { description: "Arch has produced a formal strategic plan." });
+    },
+    onError: (err: any) => toast.error("Failed to generate strategy", { description: err.message }),
+  });
+
+  const data = onboardingQ.data;
+  if (!data || data.total === 0) return null;
+
+  const roleColors: Record<string, string> = {
+    ceo: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+    cto: "text-blue-400 bg-blue-400/10 border-blue-400/20",
+    cmo: "text-pink-400 bg-pink-400/10 border-pink-400/20",
+    cfo: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+    vp: "text-purple-400 bg-purple-400/10 border-purple-400/20",
+  };
+
+  if (data.allOnboarded) {
+    return (
+      <div className="mb-6 border border-emerald-500/20 rounded-xl p-4 bg-emerald-500/5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 size={18} className="text-emerald-400" />
+            <div>
+              <p className="text-sm font-medium text-emerald-400">All executives onboarded</p>
+              <p className="text-xs text-muted-foreground">Baseline context established for {data.total} C-suite agents.</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => companyId && generateStrategy.mutate({ companyId })}
+            disabled={generateStrategy.isPending}
+            className="gap-1.5 text-xs"
+          >
+            <Sparkles size={12} />
+            {generateStrategy.isPending ? "Generating..." : "Generate Strategy"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-6 border border-amber-500/20 rounded-xl p-4 bg-amber-500/5">
+      <div className="flex items-center gap-3 mb-3">
+        <Bot size={18} className="text-amber-400" />
+        <div>
+          <p className="text-sm font-medium text-amber-400">Executive Onboarding Required</p>
+          <p className="text-xs text-muted-foreground">
+            {data.completed} of {data.total} C-suite agents onboarded. Complete all to unlock Arch's strategy proposal.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {data.agents.map((a: any) => (
+          <button
+            key={a.agentId}
+            onClick={() => navigate(`/onboarding/${a.agentId}`)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors hover:opacity-80 ${
+              a.isOnboarded
+                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                : roleColors[a.agentType] ?? "text-foreground bg-zinc-800 border-border"
+            }`}
+          >
+            {a.isOnboarded ? <CheckCircle2 size={12} /> : <ArrowRight size={12} />}
+            {a.agentName}
+            <span className="text-[10px] opacity-60">{a.agentType.toUpperCase()}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function MissionControl() {
   const { isAuthenticated } = useAuth();
+  const [, navigate] = useLocation();
   const [tab, setTab] = useState<Tab>("okrs");
   const [showAddOkr, setShowAddOkr] = useState(false);
   const [showAddAgent, setShowAddAgent] = useState(false);
@@ -181,6 +264,9 @@ export default function MissionControl() {
           </div>
         ))}
       </div>
+
+      {/* ─── ONBOARDING BANNER ─── */}
+      <OnboardingBanner companyId={effectiveCompanyId} navigate={navigate} />
 
       {/* Tabs */}
       <div className="flex overflow-x-auto border-b border-border mb-8 scrollbar-hide">

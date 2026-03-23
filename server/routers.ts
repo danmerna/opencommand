@@ -37,6 +37,10 @@ import {
   getProjectsByUserId, getProjectsByCompanyId, getProjectById, createProject, updateProject, deleteProject,
   getProjectFiles, createProjectFile, deleteProjectFile,
   getProjectChats, createProjectChat,
+  getOnboardingByAgentId, getOnboardingById, getOnboardingsByUserId, getOnboardingsByCompanyId,
+  createOnboarding, updateOnboarding, completeOnboarding,
+  getStrategyProposalsByCompanyId, getStrategyProposalsByUserId, getStrategyProposalById,
+  createStrategyProposal, updateStrategyProposalStatus,
 } from "./db";
 import { nanoid } from "nanoid";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
@@ -1015,6 +1019,304 @@ const projectsRouter = router({
     }),
 });
 
+// ─── Onboarding Router (Socratic C-Suite Context Gathering) ─────────────────
+const CSUITE_TYPES = ["ceo", "cto", "cmo", "cfo", "vp"] as const;
+
+const ONBOARDING_SYSTEM_PROMPTS: Record<string, string> = {
+  ceo: `You are conducting a Socratic onboarding interview for the CEO (Arch) of a new company on the OpenCommand platform. Your goal is to deeply understand the founder's vision, business model, company culture, competitive landscape, and strategic priorities.
+
+Ask ONE focused question at a time. Be conversational but purposeful. After each answer, acknowledge what you learned and ask a deeper follow-up. Cover these areas across 6-8 questions:
+1. Company vision and mission (what problem are you solving?)
+2. Business model and revenue strategy
+3. Target market and ideal customer
+4. Competitive landscape and differentiation
+5. Current team/resource situation
+6. 90-day priorities and success metrics
+7. Company culture and decision-making style
+8. Risk tolerance and growth philosophy
+
+When you have gathered enough context (after 6-8 exchanges), respond with a JSON object:
+{"type": "onboarding_complete", "summary": "<2-3 paragraph executive summary of everything learned>", "context": {"vision": "...", "businessModel": "...", "targetMarket": "...", "competition": "...", "priorities": "...", "culture": "...", "risks": "..."}}
+
+Do NOT complete early. Gather rich, specific context.`,
+
+  cto: `You are conducting a Socratic onboarding interview for the CTO (SAGE) of a company on OpenCommand. Your goal is to understand the technical landscape, infrastructure, development priorities, and engineering culture.
+
+Ask ONE focused question at a time. Cover these areas across 5-7 questions:
+1. Current tech stack and infrastructure
+2. Product/platform architecture
+3. Development methodology and team structure
+4. Technical debt and biggest challenges
+5. Security and compliance requirements
+6. Technology roadmap and priorities
+7. Build vs buy philosophy
+
+When complete (5-7 exchanges), respond with JSON:
+{"type": "onboarding_complete", "summary": "<technical summary>", "context": {"techStack": "...", "architecture": "...", "methodology": "...", "challenges": "...", "security": "...", "roadmap": "..."}}
+
+Do NOT complete early.`,
+
+  cmo: `You are conducting a Socratic onboarding interview for the CMO (NOVA) of a company on OpenCommand. Your goal is to understand the brand, marketing channels, audience, and growth strategy.
+
+Ask ONE focused question at a time. Cover these areas across 5-7 questions:
+1. Brand identity and positioning
+2. Target audience and buyer personas
+3. Current marketing channels and performance
+4. Content strategy and voice
+5. Growth goals and KPIs
+6. Budget allocation and priorities
+7. Competitive marketing landscape
+
+When complete (5-7 exchanges), respond with JSON:
+{"type": "onboarding_complete", "summary": "<marketing summary>", "context": {"brand": "...", "audience": "...", "channels": "...", "content": "...", "goals": "...", "budget": "..."}}
+
+Do NOT complete early.`,
+
+  cfo: `You are conducting a Socratic onboarding interview for the CFO of a company on OpenCommand. Your goal is to understand the financial model, runway, revenue streams, and fiscal priorities.
+
+Ask ONE focused question at a time. Cover these areas across 5-7 questions:
+1. Revenue model and current revenue
+2. Cost structure and burn rate
+3. Funding status and runway
+4. Financial goals and targets
+5. Budget allocation philosophy
+6. Key financial metrics tracked
+7. Risk management approach
+
+When complete (5-7 exchanges), respond with JSON:
+{"type": "onboarding_complete", "summary": "<financial summary>", "context": {"revenue": "...", "costs": "...", "funding": "...", "goals": "...", "budget": "...", "metrics": "..."}}
+
+Do NOT complete early.`,
+
+  vp: `You are conducting a Socratic onboarding interview for a VP-level executive of a company on OpenCommand. Your goal is to understand their functional area, team dynamics, and operational priorities.
+
+Ask ONE focused question at a time. Cover these areas across 5-7 questions:
+1. Functional area and responsibilities
+2. Current team and resources
+3. Key processes and workflows
+4. Biggest operational challenges
+5. Success metrics and KPIs
+6. Cross-functional dependencies
+7. Short-term priorities
+
+When complete (5-7 exchanges), respond with JSON:
+{"type": "onboarding_complete", "summary": "<operational summary>", "context": {"function": "...", "team": "...", "processes": "...", "challenges": "...", "metrics": "...", "priorities": "..."}}
+
+Do NOT complete early.`,
+};
+
+const onboardingRouter = router({
+  // Check onboarding status for all agents in a company
+  status: protectedProcedure
+    .input(z.object({ companyId: z.number().optional() }))
+    .query(async ({ ctx, input }) => {
+      const agents = input.companyId
+        ? await getAgentsByCompanyId(input.companyId)
+        : await getAgentsByUserId(ctx.user.id);
+      const csuiteAgents = agents.filter(a => CSUITE_TYPES.includes(a.type as any));
+      const onboardings = input.companyId
+        ? await getOnboardingsByCompanyId(input.companyId)
+        : await getOnboardingsByUserId(ctx.user.id);
+      const onboardingMap = new Map(onboardings.map(o => [o.agentId, o]));
+      const agentStatuses = csuiteAgents.map(a => ({
+        agentId: a.id,
+        agentName: a.name,
+        agentType: a.type,
+        roleTitle: a.roleTitle,
+        onboarding: onboardingMap.get(a.id) ?? null,
+        isOnboarded: onboardingMap.get(a.id)?.status === "completed",
+      }));
+      const allOnboarded = agentStatuses.length > 0 && agentStatuses.every(s => s.isOnboarded);
+      return { agents: agentStatuses, allOnboarded, total: agentStatuses.length, completed: agentStatuses.filter(s => s.isOnboarded).length };
+    }),
+
+  // Get a single agent's onboarding
+  getForAgent: protectedProcedure
+    .input(z.object({ agentId: z.number() }))
+    .query(async ({ input }) => {
+      return getOnboardingByAgentId(input.agentId);
+    }),
+
+  // Start onboarding for a C-suite agent
+  start: protectedProcedure
+    .input(z.object({ agentId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const agent = await getAgentById(input.agentId);
+      if (!agent) throw new Error("Agent not found");
+      if (!CSUITE_TYPES.includes(agent.type as any)) throw new Error("Onboarding is only for C-suite agents");
+      const existing = await getOnboardingByAgentId(input.agentId);
+      if (existing?.status === "completed") throw new Error("Agent already onboarded");
+      if (existing?.status === "in_progress") return { onboardingId: existing.id, resumed: true };
+      const systemPrompt = ONBOARDING_SYSTEM_PROMPTS[agent.type] ?? ONBOARDING_SYSTEM_PROMPTS.vp;
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: systemPrompt },
+          { role: "user" as const, content: `I'm ready to onboard ${agent.name} (${agent.roleTitle ?? agent.type}). Let's begin.` },
+        ],
+      });
+      const firstQuestion = (response.choices[0]?.message?.content ?? "Tell me about your company.") as string;
+      const history = [
+        { role: "assistant", content: firstQuestion },
+      ];
+      await createOnboarding({
+        agentId: input.agentId,
+        userId: ctx.user.id,
+        companyId: agent.companyId,
+        agentType: agent.type,
+        conversationHistory: history,
+        context: {},
+      });
+      const created = await getOnboardingByAgentId(input.agentId);
+      return { onboardingId: created!.id, firstQuestion, resumed: false };
+    }),
+
+  // Respond to an onboarding question
+  respond: protectedProcedure
+    .input(z.object({ onboardingId: z.number(), answer: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const onboarding = await getOnboardingById(input.onboardingId);
+      if (!onboarding) throw new Error("Onboarding not found");
+      if (onboarding.status === "completed") throw new Error("Onboarding already completed");
+
+      const history: { role: string; content: string }[] = (onboarding.conversationHistory as any) ?? [];
+      history.push({ role: "user", content: input.answer });
+
+      const systemPrompt = ONBOARDING_SYSTEM_PROMPTS[onboarding.agentType] ?? ONBOARDING_SYSTEM_PROMPTS.vp;
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: systemPrompt },
+          ...history.map(h => ({ role: h.role as "user" | "assistant", content: h.content })),
+        ],
+      });
+      const reply = (response.choices[0]?.message?.content ?? "") as string;
+
+      // Check if the LLM signaled completion
+      let isComplete = false;
+      let summary = "";
+      let context: Record<string, unknown> = {};
+      try {
+        const parsed = JSON.parse(reply);
+        if (parsed.type === "onboarding_complete") {
+          isComplete = true;
+          summary = parsed.summary ?? "";
+          context = parsed.context ?? {};
+        }
+      } catch (_) {
+        // Not JSON — it's another question
+      }
+
+      if (isComplete) {
+        history.push({ role: "assistant", content: `Onboarding complete. ${summary}` });
+        await completeOnboarding(onboarding.id, summary, context);
+        await updateOnboarding(onboarding.id, { conversationHistory: history });
+        return { reply: summary, isComplete: true, context };
+      } else {
+        history.push({ role: "assistant", content: reply });
+        await updateOnboarding(onboarding.id, { conversationHistory: history });
+        return { reply, isComplete: false };
+      }
+    }),
+
+  // Generate CEO strategy proposal after all C-suite are onboarded
+  generateStrategy: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const agents = await getAgentsByCompanyId(input.companyId);
+      const csuiteAgents = agents.filter(a => CSUITE_TYPES.includes(a.type as any));
+      const onboardings = await getOnboardingsByCompanyId(input.companyId);
+      const completedMap = new Map(onboardings.filter(o => o.status === "completed").map(o => [o.agentId, o]));
+
+      // Gather all executive context
+      const executiveContext = csuiteAgents.map(a => {
+        const ob = completedMap.get(a.id);
+        return {
+          role: a.roleTitle ?? a.type,
+          name: a.name,
+          summary: ob?.summary ?? "Not yet onboarded",
+          context: ob?.context ?? {},
+        };
+      });
+
+      const company = await getCompanyById(input.companyId);
+      const okrs = await getOkrsByCompanyId(input.companyId);
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: `You are Arch, the AI CEO of ${company?.name ?? "this company"} on the OpenCommand platform. You have just completed onboarding interviews with all your C-suite executives. Based on the collective intelligence gathered, produce a comprehensive formal strategy proposal.
+
+Structure your proposal as:
+# Strategic Plan: ${company?.name ?? "Company"}
+
+## Executive Summary
+(3-4 sentences capturing the core strategy)
+
+## Vision & Mission Alignment
+(How the team's insights align with the company vision)
+
+## Strategic Priorities (Next 90 Days)
+(Numbered list of 5-7 priorities with owner assignments)
+
+## Resource Allocation
+(How to deploy agents and budget across priorities)
+
+## Key Metrics & OKRs
+(Specific measurable targets for each priority)
+
+## Risk Assessment
+(Top 3 risks and mitigation strategies)
+
+## Immediate Action Items
+(First 5 tasks to execute this week)
+
+Be specific, data-driven where possible, and reference insights from each executive's onboarding.` },
+          { role: "user" as const, content: `Company: ${company?.name ?? "Unknown"}
+Mission: ${company?.mission ?? "N/A"}
+Industry: ${company?.industry ?? "N/A"}
+
+Executive Onboarding Context:
+${executiveContext.map(e => `\n### ${e.name} (${e.role})\n${e.summary}\nDetails: ${JSON.stringify(e.context)}`).join("\n")}
+
+Current OKRs: ${JSON.stringify(okrs.map(o => ({ objective: o.objective, keyResult: o.keyResult, progress: `${o.currentValue}/${o.targetValue} ${o.unit}` })))}
+
+Please produce the formal strategy proposal.` },
+        ],
+      });
+
+      const strategyContent = (response.choices[0]?.message?.content ?? "") as string;
+      const execSummaryMatch = strategyContent.match(/## Executive Summary\n([\s\S]*?)(?=\n## )/)
+      const execSummary = execSummaryMatch?.[1]?.trim() ?? strategyContent.slice(0, 300);
+
+      await createStrategyProposal({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        proposedByAgentId: csuiteAgents.find(a => a.type === "ceo")?.id,
+        title: `Strategic Plan: ${company?.name ?? "Company"}`,
+        content: strategyContent,
+        executiveSummary: execSummary,
+        status: "proposed",
+      });
+
+      emitToUser(ctx.user.id, "task_completed", "Strategy Proposed", `Arch has proposed a formal strategy for ${company?.name}`, { companyId: input.companyId });
+      return { strategy: strategyContent, executiveSummary: execSummary };
+    }),
+
+  // List strategy proposals
+  proposals: protectedProcedure
+    .input(z.object({ companyId: z.number().optional() }))
+    .query(async ({ ctx, input }) => {
+      if (input.companyId) return getStrategyProposalsByCompanyId(input.companyId);
+      return getStrategyProposalsByUserId(ctx.user.id);
+    }),
+
+  // Accept or revise a proposal
+  updateProposalStatus: protectedProcedure
+    .input(z.object({ id: z.number(), status: z.enum(["accepted", "revised"]) }))
+    .mutation(async ({ input }) => {
+      await updateStrategyProposalStatus(input.id, input.status);
+      return { success: true };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -1044,6 +1346,7 @@ export const appRouter = router({
   context: contextEngineRouter,
   compatibility: compatibilityRouter,
   projects: projectsRouter,
+  onboarding: onboardingRouter,
 });
 
 export type AppRouter = typeof appRouter;

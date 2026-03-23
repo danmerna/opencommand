@@ -281,3 +281,36 @@
 - [x] Remove marketplace links from Home landing page
 - [x] Rename all ARIA references to Arch across the codebase (12 files updated)
 - [x] 122 tests passing, 0 TypeScript errors
+
+## v3.7 — Socratic C-Suite Onboarding
+
+### Data Model
+- [x] Add `agent_onboardings` table (id, agentId, userId, companyId, agentType, status, context JSON, conversationHistory JSON, summary, completedAt, createdAt)
+- [x] Add `strategy_proposals` table (id, userId, companyId, proposedByAgentId, title, content, executiveSummary, status, createdAt)
+- [x] Generate migration SQL and apply via webdev_execute_sql
+
+### Backend
+- [x] DB helpers: getOnboardingByAgentId, getOnboardingById, createOnboarding, updateOnboarding, completeOnboarding
+- [x] DB helpers: getStrategyProposalsByCompanyId, createStrategyProposal, updateStrategyProposalStatus
+- [x] tRPC onboarding.status — check onboarding status for all C-suite agents in a company
+- [x] tRPC onboarding.getForAgent — get single agent's onboarding
+- [x] tRPC onboarding.start — begin Socratic onboarding for a C-suite agent (LLM first question)
+- [x] tRPC onboarding.respond — send user answer, get next LLM question (role-specific prompts)
+- [x] tRPC onboarding.generateStrategy — after all C-suite onboarded, CEO synthesizes formal strategy
+- [x] tRPC onboarding.proposals — list strategy proposals
+- [x] tRPC onboarding.updateProposalStatus — accept/revise proposals
+- [x] Role-specific system prompts for CEO, CTO, CMO, CFO, VP (6-8 questions each)
+
+### Frontend
+- [x] AgentOnboarding.tsx — Socratic question flow UI (chat-like, one question at a time)
+- [x] Role-specific question sets via LLM system prompts per agent type
+- [x] OnboardingBanner in MissionControl — shows which agents need onboarding, links to each
+- [x] After onboarding complete, shows green "Onboarded" badge on agent button
+- [x] After all executives onboarded, "Generate Strategy" button appears in banner
+- [x] Route /onboarding/:agentId registered in App.tsx
+
+### UX
+- [x] Onboarding only required once per executive agent (auto-resumes if in progress)
+- [x] Users can alter baseline later via agent's strategy engine chat
+- [x] Progress indicator showing X of Y executives onboarded
+- [x] 130 tests passing, 0 TypeScript errors
