@@ -217,3 +217,6 @@
 - [x] Add professional manual interview completion button to ProOnboarding UI (count-based two-button card after 3rd answer)
 - [x] Test demo user onboarding flow end-to-end (demo login verified, mission control shows correct onboarding state)
 - [x] Show two-button choice UI after 3rd user answer: "Continue the conversation" vs "Next: [executive name]" (count-based, no JSON)
+- [x] Refine two-button choice card copy in onboarding interview: "Go deeper" vs "Advance to [Name]"
+- [x] Add Demo Mode banner in app header when logged in as demo user (amber pulsing indicator, sticky)
+- [x] Tune completion phrase detection: expanded to 35+ natural closing phrases across 4 categories

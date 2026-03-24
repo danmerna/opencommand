@@ -1264,12 +1264,49 @@ IMPORTANT: You have access to the above live data. Use it throughout the convers
       let isComplete = false;
       let isCoreComplete = false;
       const completionPhrases = [
+        // Direct closure statements
         "i have what i need",
-        "that gives me a",
-        "i have a clear picture",
-        "i have a strong foundation",
         "that's everything i need",
         "i have enough",
+        "i have enough context",
+        "i have enough to work with",
+        "i have enough information",
+        // Clear picture / foundation
+        "i have a clear picture",
+        "i have a clear enough picture",
+        "i have a strong foundation",
+        "i have a solid foundation",
+        "i have a good foundation",
+        "that gives me a clear",
+        "that gives me a solid",
+        "that gives me a strong",
+        "that gives me enough",
+        "that gives me a good",
+        "that gives me a comprehensive",
+        // Readiness to proceed
+        "i'm ready to",
+        "i am ready to",
+        "ready to begin",
+        "ready to get started",
+        "ready to start building",
+        "let's get to work",
+        "let me get to work",
+        "i can now",
+        "i can begin",
+        "i can start",
+        // Wrap-up language
+        "this concludes",
+        "that wraps up",
+        "we've covered",
+        "we have covered",
+        "thank you for sharing",
+        "thanks for sharing",
+        "appreciate you sharing",
+        "i appreciate your",
+        "excellent — i now",
+        "excellent, i now",
+        "perfect — i now",
+        "perfect, i now",
       ];
       const replyLower = reply.toLowerCase();
       if (completionPhrases.some(p => replyLower.includes(p))) {

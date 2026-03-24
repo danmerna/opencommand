@@ -1098,10 +1098,10 @@ export default function ProOnboarding() {
             <div className="flex flex-col items-center gap-4 py-6">
               <div className="w-full max-w-md rounded-xl border border-border bg-card/60 p-5">
                 <p className="text-sm font-medium text-foreground mb-1">
-                  {currentExec.name.split("—")[0].trim()} has what it needs to get started.
+                  {currentExec.name.split("—")[0].trim()} has sufficient context to proceed.
                 </p>
                 <p className="text-xs text-muted-foreground mb-5">
-                  You can continue for a more detailed briefing, or move on to the next executive.
+                  Go deeper for a richer strategic foundation, or advance to the next executive.
                 </p>
                 <div className="flex gap-3">
                   <Button
@@ -1112,7 +1112,7 @@ export default function ProOnboarding() {
                     disabled={isSending}
                   >
                     {isSending ? <Loader2 size={12} className="animate-spin" /> : null}
-                    Continue the conversation
+                    Go deeper
                   </Button>
                   <Button
                     size="sm"
@@ -1121,7 +1121,7 @@ export default function ProOnboarding() {
                     disabled={isSending}
                   >
                     {completedCount < EXEC_AGENTS.length - 1
-                      ? <>{"Next: "}{EXEC_AGENTS[completedCount + 1]?.name.split("—")[0].trim()} <ChevronRight size={12} /></>
+                      ? <>Advance to {EXEC_AGENTS[completedCount + 1]?.name.split("—")[0].trim()} <ChevronRight size={12} /></>
                       : <>Generate Strategy <Sparkles size={12} /></>
                     }
                   </Button>

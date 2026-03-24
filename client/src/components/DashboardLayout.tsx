@@ -290,6 +290,16 @@ function DashboardLayoutContent({
             </div>
           </div>
         )}
+        {user?.email === "demo@opencommand.co" && (
+          <div className="flex items-center justify-center gap-2 bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-xs text-amber-400">
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Demo Mode — Meridian Software
+            </span>
+            <span className="text-amber-400/60">·</span>
+            <span className="text-amber-400/70">You are viewing a simulated account with mock integration data.</span>
+          </div>
+        )}
         <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
     </>
