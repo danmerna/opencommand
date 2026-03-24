@@ -341,7 +341,14 @@ export default function ProOnboarding() {
       }
       const data = await startOnboardingMut.mutateAsync({ agentId: agent.id, contextSummary });
       setOnboardingId(data.onboardingId);
-      if (data.firstQuestion) {
+      if (data.resumed && (data as any).conversationHistory?.length) {
+        // Resume existing conversation
+        const history = (data as any).conversationHistory as { role: string; content: string }[];
+        setMessages(history);
+        // Count user messages to set question count
+        const userMsgCount = history.filter((m: any) => m.role === "user").length;
+        setQuestionCount(userMsgCount);
+      } else if (data.firstQuestion) {
         setMessages([{ role: "assistant", content: data.firstQuestion }]);
       }
     } catch (err: any) {

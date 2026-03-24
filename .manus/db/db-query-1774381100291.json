@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, agentId, status, JSON_LENGTH(conversationHistory) as msg_count, SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(conversationHistory, '$[0].content')), 1, 200) as first_msg FROM agent_onboardings WHERE id = 60003;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id, agentId, status, JSON_LENGTH(conversationHistory) as msg_count, SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(conversationHistory, '$[0].content')), 1, 200) as first_msg FROM agent_onboardings WHERE id = 60003;",
+  "rows": [
+    {
+      "id": "60003",
+      "agentId": "30006",
+      "status": "in_progress",
+      "msg_count": "5",
+      "first_msg": "Hello! I'm SAGE, and I'm here to understand your technical landscape. Let's start with the foundational elements."
+    }
+  ],
+  "messages": [
+    "What technologies and infrastructure do you currently use?"
+  ],
+  "stdout": "id\tagentId\tstatus\tmsg_count\tfirst_msg\n60003\t30006\tin_progress\t5\tHello! I'm SAGE, and I'm here to understand your technical landscape. Let's start with the foundational elements.\n\nWhat technologies and infrastructure do you currently use?\n",
+  "stderr": "",
+  "execution_time_ms": 110
+}

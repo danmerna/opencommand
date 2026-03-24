@@ -1,0 +1,28 @@
+{
+  "query": "SELECT o.id, o.status, o.completedAt, a.name as agent_name FROM agent_onboardings o LEFT JOIN agents a ON o.agentId = a.id WHERE o.userId = 1 ORDER BY o.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT o.id, o.status, o.completedAt, a.name as agent_name FROM agent_onboardings o LEFT JOIN agents a ON o.agentId = a.id WHERE o.userId = 1 ORDER BY o.id;",
+  "rows": [
+    {
+      "id": "60001",
+      "status": "completed",
+      "completedAt": "2026-03-24 19:33:39",
+      "agent_name": "ARCH — AI CEO"
+    },
+    {
+      "id": "60002",
+      "status": "in_progress",
+      "completedAt": "NULL",
+      "agent_name": "NOVA — CMO"
+    },
+    {
+      "id": "60003",
+      "status": "in_progress",
+      "completedAt": "NULL",
+      "agent_name": "SAGE — CTO"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstatus\tcompletedAt\tagent_name\n60001\tcompleted\t2026-03-24 19:33:39\tARCH — AI CEO\n60002\tin_progress\tNULL\tNOVA — CMO\n60003\tin_progress\tNULL\tSAGE — CTO\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

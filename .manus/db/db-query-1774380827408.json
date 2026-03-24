@@ -1,0 +1,30 @@
+{
+  "query": "UPDATE agents SET name = 'ARCH — AI CEO' WHERE name = 'Arch — AI CEO' AND companyId = 30002; SELECT id, name, type FROM agents WHERE companyId = 30002;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute UPDATE agents SET name = 'ARCH — AI CEO' WHERE name = 'Arch — AI CEO' AND companyId = 30002; SELECT id, name, type FROM agents WHERE companyId = 30002;",
+  "rows": [
+    {
+      "id": "30005",
+      "name": "ARCH — AI CEO",
+      "type": "ceo"
+    },
+    {
+      "id": "30006",
+      "name": "SAGE — CTO",
+      "type": "cto"
+    },
+    {
+      "id": "30007",
+      "name": "NOVA — CMO",
+      "type": "cmo"
+    },
+    {
+      "id": "30008",
+      "name": "CFO",
+      "type": "cfo"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\ttype\n30005\tARCH — AI CEO\tceo\n30006\tSAGE — CTO\tcto\n30007\tNOVA — CMO\tcmo\n30008\tCFO\tcfo\n",
+  "stderr": "",
+  "execution_time_ms": 77
+}

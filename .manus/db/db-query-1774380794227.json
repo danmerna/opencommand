@@ -1,0 +1,18 @@
+{
+  "query": "SELECT JSON_EXTRACT(conversationHistory, '$[25].role') as role25, SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(conversationHistory, '$[25].content')), 1, 200) as content25, JSON_EXTRACT(conversationHistory, '$[26].role') as role26, SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(conversationHistory, '$[26].content')), 1, 200) as content26 FROM agent_onboardings WHERE id = 60001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT JSON_EXTRACT(conversationHistory, '$[25].role') as role25, SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(conversationHistory, '$[25].content')), 1, 200) as content25, JSON_EXTRACT(conversationHistory, '$[26].role') as role26, SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(conversationHistory, '$[26].content')), 1, 200) as content26 FROM agent_onboardings WHERE id = 60001;",
+  "rows": [
+    {
+      "role25": "\"user\"",
+      "content25": "ok what's next",
+      "role26": "\"assistant\"",
+      "content26": "Okay, Arch, what's next is that this comprehensive summary will now be integrated into your profile on the OpenCommand platform."
+    }
+  ],
+  "messages": [
+    "This detailed context about your vision, business model, target market"
+  ],
+  "stdout": "role25\tcontent25\trole26\tcontent26\n\"user\"\tok what's next\t\"assistant\"\tOkay, Arch, what's next is that this comprehensive summary will now be integrated into your profile on the OpenCommand platform.\n\nThis detailed context about your vision, business model, target market\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

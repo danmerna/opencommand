@@ -1228,7 +1228,10 @@ const onboardingRouter = router({
       if (!CSUITE_TYPES.includes(agent.type as any)) throw new Error("Onboarding is only for C-suite agents");
       const existing = await getOnboardingByAgentId(input.agentId);
       if (existing?.status === "completed") throw new Error("Agent already onboarded");
-      if (existing?.status === "in_progress") return { onboardingId: existing.id, resumed: true };
+      if (existing?.status === "in_progress") {
+        const history = (existing.conversationHistory as { role: string; content: string }[]) ?? [];
+        return { onboardingId: existing.id, resumed: true, conversationHistory: history };
+      }
       const systemPrompt = ONBOARDING_SYSTEM_PROMPTS[agent.type] ?? ONBOARDING_SYSTEM_PROMPTS.vp;
 
       // If live context was assembled from connected tools, inject it so the first question is data-informed

@@ -1,0 +1,136 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "abstraction_mappings"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "agent_capabilities"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "agent_onboardings"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "agent_required_categories"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "agents"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "approval_gates"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "audit_log"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "blueprint_deployments"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "blueprint_reviews"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "blueprints"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "briefing_logs"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "changelog_entries"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "companies"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "context_objects"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "creator_partnerships"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "decision_log"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "departments"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "feature_events"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "heartbeat_log"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "inbox_items"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "marketplace_listings"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "okrs"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "onboarding_welcome_emails"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "page_views"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "poo_receipts"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "project_chats"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "project_files"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "projects"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "skills"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "strategy_proposals"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "task_threads"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "tasks"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "tool_categories"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "tool_providers"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "tool_registry"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "user_connections"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "user_feedback"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "user_sessions"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "users"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "waitlist_entries"
+    },
+    {
+      "Tables_in_WP82CNZ6C5SdwCUYfYptJQ": "webhooks"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_WP82CNZ6C5SdwCUYfYptJQ\n__drizzle_migrations\nabstraction_mappings\nagent_capabilities\nagent_onboardings\nagent_required_categories\nagents\napproval_gates\naudit_log\nblueprint_deployments\nblueprint_reviews\nblueprints\nbriefing_logs\nchangelog_entries\ncompanies\ncontext_objects\ncreator_partnerships\ndecision_log\ndepartments\nfeature_events\nheartbeat_log\ninbox_items\nmarketplace_listings\nokrs\nonboarding_welcome_emails\npage_views\npoo_receipts\nproject_chats\nproject_files\nprojects\nskills\nstrategy_proposals\ntask_threads\ntasks\ntool_categories\ntool_providers\ntool_registry\nuser_connections\nuser_feedback\nuser_sessions\nusers\nwaitlist_entries\nwebhooks\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

@@ -1,0 +1,40 @@
+{
+  "query": "SELECT o.id, o.agentId, o.userId, o.agentType, o.status, o.companyId, o.completedAt, a.name as agent_name FROM agent_onboardings o LEFT JOIN agents a ON o.agentId = a.id WHERE o.userId = 1 ORDER BY o.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT o.id, o.agentId, o.userId, o.agentType, o.status, o.companyId, o.completedAt, a.name as agent_name FROM agent_onboardings o LEFT JOIN agents a ON o.agentId = a.id WHERE o.userId = 1 ORDER BY o.id;",
+  "rows": [
+    {
+      "id": "60001",
+      "agentId": "30005",
+      "userId": "1",
+      "agentType": "ceo",
+      "status": "in_progress",
+      "companyId": "30002",
+      "completedAt": "NULL",
+      "agent_name": "Arch — AI CEO"
+    },
+    {
+      "id": "60002",
+      "agentId": "30007",
+      "userId": "1",
+      "agentType": "cmo",
+      "status": "in_progress",
+      "companyId": "30002",
+      "completedAt": "NULL",
+      "agent_name": "NOVA — CMO"
+    },
+    {
+      "id": "60003",
+      "agentId": "30006",
+      "userId": "1",
+      "agentType": "cto",
+      "status": "in_progress",
+      "companyId": "30002",
+      "completedAt": "NULL",
+      "agent_name": "SAGE — CTO"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tagentId\tuserId\tagentType\tstatus\tcompanyId\tcompletedAt\tagent_name\n60001\t30005\t1\tceo\tin_progress\t30002\tNULL\tArch — AI CEO\n60002\t30007\t1\tcmo\tin_progress\t30002\tNULL\tNOVA — CMO\n60003\t30006\t1\tcto\tin_progress\t30002\tNULL\tSAGE — CTO\n",
+  "stderr": "",
+  "execution_time_ms": 71
+}
