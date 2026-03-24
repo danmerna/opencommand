@@ -12,6 +12,7 @@ import { ENV } from "./env";
 import Stripe from "stripe";
 import { handleWebhookEvent } from "../stripe/checkout";
 import { registerIntegrationOAuthRoutes } from "../integrationOAuth";
+import { registerNangoRoutes } from "../nangoIntegration";
 import { startBriefingScheduler } from "../briefingScheduler";
 import { startOnboardingReminderScheduler } from "../onboardingReminderScheduler";
 import { unsubscribeUserByToken, seedChangelogIfEmpty } from "../db";
@@ -84,6 +85,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // Integration Hub OAuth routes
   registerIntegrationOAuthRoutes(app);
+  // Nango OAuth proxy routes (Salesforce etc.)
+  registerNangoRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

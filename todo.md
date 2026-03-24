@@ -201,3 +201,8 @@
 - [x] Fix: tRPC mutation on /onboarding/30006 returns HTML instead of JSON (API route not matching)
 - [x] Fix: Onboarding progress counter shows 0/4 after ARCH completion (was caused by timeout preventing completeOnboarding DB call)
 - [x] Fix: Onboarding resume returns conversation history so in-progress interviews can be continued
+- [x] Set up HubSpot developer account and OAuth app, configure credentials
+- [x] Set up Salesforce OAuth via Nango (Nango developer app — no Connected App required)
+- [ ] Set up Google Cloud project for GA4 + Google Ads OAuth (submit for review)
+- [ ] Set up Meta developer app for Meta Ads OAuth (submit for review)
+- [ ] Test all configured integrations end-to-end

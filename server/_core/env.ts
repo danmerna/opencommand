@@ -30,4 +30,7 @@ export const ENV = {
   tiktokAppId: process.env.TIKTOK_APP_ID ?? "",
   tiktokAppSecret: process.env.TIKTOK_APP_SECRET ?? "",
   appBaseUrl: process.env.APP_BASE_URL ?? "",
+  // Nango (OAuth proxy for Salesforce and future integrations)
+  nangoSecretKey: process.env.NANGO_SECRET_KEY ?? "",
+  nangoPublicKey: process.env.NANGO_PUBLIC_KEY ?? "",
 };

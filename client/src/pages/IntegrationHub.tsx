@@ -19,6 +19,8 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 const OAUTH2_PROVIDERS = ["hubspot", "mailchimp", "slack", "stripe_connect", "salesforce", "meta_ads", "google_ads", "tiktok_ads", "ga4"];
+/** Providers handled via Nango Connect UI instead of direct OAuth redirect */
+const NANGO_PROVIDERS = ["salesforce"];
 
 type Tab = "overview" | "connections" | "abstraction";
 
@@ -79,8 +81,43 @@ export default function IntegrationHub() {
     );
   }
 
-  const handleOAuthConnect = (provider: any) => {
+  const handleOAuthConnect = async (provider: any) => {
     const origin = window.location.origin;
+
+    // Nango-managed providers: open Nango Connect UI in a popup
+    if (NANGO_PROVIDERS.includes(provider.slug)) {
+      try {
+        const res = await fetch("/api/nango/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider: provider.slug, userId: user?.id, origin }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.connectUrl) {
+          toast.error(data.error ?? "Failed to start Nango session");
+          return;
+        }
+        // Open Nango Connect UI in a popup window
+        const popup = window.open(data.connectUrl, "nango-connect", "width=600,height=700,scrollbars=yes");
+        if (!popup) {
+          // Fallback: open in same tab
+          window.location.href = data.connectUrl;
+        }
+        // Poll for popup close and then refresh connections
+        const timer = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(timer);
+            connectionsQuery.refetch();
+            toast.success(`${provider.name} connection updated`);
+          }
+        }, 1000);
+      } catch (err: any) {
+        toast.error(`Failed to connect ${provider.name}: ${err.message}`);
+      }
+      return;
+    }
+
+    // Standard direct OAuth redirect
     window.location.href = `/api/integration/oauth/start?provider=${encodeURIComponent(provider.slug)}&userId=${user?.id}&origin=${encodeURIComponent(origin)}`;
   };
 
