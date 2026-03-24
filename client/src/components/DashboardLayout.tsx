@@ -30,7 +30,7 @@ import { Button } from "./ui/button";
 const menuItems = [
   { icon: LayoutDashboard, label: "Mission Control", path: "/mission-control" },
   { icon: BarChart2, label: "Analytics", path: "/analytics" },
-  { icon: Users, label: "Agents", path: "/mission-control" },
+  { icon: Users, label: "Agents", path: "/agents" },
 ];
 
 const adminMenuItems = [

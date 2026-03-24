@@ -173,3 +173,5 @@
 - [x] Build sign-up funnel view: build FunnelView component in AdminUsers page
 - [x] Build sign-up funnel view: write vitest tests
 - [x] Fix NaN agentId error on /onboarding/:agentId — safely parse route param before tRPC query
+- [ ] Fix duplicate /mission-control key in DashboardLayout sidebar nav
+- [ ] Fix broken DATE() SQL query in admin activity chart helper
