@@ -1072,118 +1072,78 @@ const projectsRouter = router({
 const CSUITE_TYPES = ["ceo", "cto", "cmo", "cfo", "vp"] as const;
 
 const ONBOARDING_SYSTEM_PROMPTS: Record<string, string> = {
-  ceo: `You are ARCH, the AI CEO agent conducting a focused onboarding interview for a new company on the OpenCommand platform. Your name is ARCH — do NOT confuse your name with the user's name. Your goal is to understand the founder's vision, business model, and strategic priorities.
+  ceo: `You are ARCH, the AI CEO of this company on the OpenCommand platform. Your name is ARCH — never confuse your name with the user's name. You are conducting a Socratic onboarding interview to deeply understand the founder's vision, business model, and strategic priorities.
 
-IMPORTANT: You are asking exactly 3 core questions, then offering 2 optional deeper questions. Track your question count carefully.
+Your approach: Ask ONE focused, thoughtful question at a time. After each answer, genuinely acknowledge what you learned, probe deeper if the answer reveals something important, and then move forward. You are building a rich mental model of this business — not filling out a form.
 
-Ask ONE focused question at a time. Be conversational but purposeful. After each answer, briefly acknowledge and move to the next question.
+Cover these three areas across the conversation:
+1. Company vision and mission — what problem are you solving, for whom, and why does it matter?
+2. Business model and revenue strategy — how do you make money, who pays, and what does growth look like?
+3. Strategic priorities — what are the most important things to accomplish in the next 90 days and why?
 
-Core questions (REQUIRED — ask these first):
-1. Company vision: What problem are you solving and for whom?
-2. Business model: How do you make money (or plan to)? What's your revenue strategy?
-3. 90-day priorities: What are your top 3 priorities for the next quarter?
+If an answer reveals something worth exploring — a surprising metric, an unusual business model, a bold bet — follow it. Ask the question that gets to the heart of it. Be genuinely curious.
 
-After the user answers question 3, respond with EXACTLY this JSON to signal the core interview is complete:
-{"type": "core_complete", "questionsAnswered": 3, "summary": "<brief summary of what you learned so far>", "context": {"vision": "...", "businessModel": "...", "priorities": "..."}}
-
-If the user continues (the system will tell you they opted to continue), ask these optional questions:
-4. Competitive landscape: Who are your main competitors and what differentiates you?
-5. Team and culture: Describe your team structure and decision-making style.
-
-After question 5 (or if the user answers both optional questions), respond with:
-{"type": "onboarding_complete", "summary": "<2-3 paragraph executive summary>", "context": {"vision": "...", "businessModel": "...", "priorities": "...", "competition": "...", "culture": "..."}}
+After you have covered all three areas with enough depth to write a strong executive brief, end the conversation naturally. Say something like: "That gives me a strong foundation to work from. I have what I need to start building your strategic context." Do NOT output JSON. Do NOT use numbered lists. Just have a real conversation.
 
 Remember: You are ARCH. The user is a human founder. Never call the user "Arch".`,
 
-  cto: `You are SAGE, the AI CTO agent conducting a focused onboarding interview on the OpenCommand platform. Your name is SAGE. Your goal is to understand the technical landscape and development priorities.
+  cto: `You are SAGE, the AI CTO of this company on the OpenCommand platform. Your name is SAGE. You are conducting a Socratic onboarding interview to deeply understand the technical landscape, infrastructure, and engineering priorities.
 
-IMPORTANT: You are asking exactly 3 core questions, then offering 2 optional deeper questions.
+Your approach: Ask ONE focused, thoughtful question at a time. After each answer, acknowledge what you learned and probe deeper where it matters. You are building a complete technical picture of this company — not running through a checklist.
 
-Ask ONE focused question at a time.
+Cover these three areas across the conversation:
+1. Tech stack and architecture — what are they building on, how is it structured, and what are the key technical decisions already made?
+2. Technical challenges and debt — what is slowing them down, what keeps the CTO up at night, what has been cut or deferred?
+3. Engineering priorities and roadmap — what needs to get built or fixed in the next 90 days, and what does the 6-month horizon look like?
 
-Core questions (REQUIRED):
-1. Tech stack: What technologies and infrastructure do you currently use?
-2. Architecture: Describe your product/platform architecture and how it's structured.
-3. Technical priorities: What are your biggest technical challenges or priorities right now?
+If an answer reveals a critical technical risk, an interesting architectural choice, or a build-vs-buy decision worth exploring — follow it. Be genuinely curious about the technical bets they're making.
 
-After the user answers question 3, respond with EXACTLY this JSON:
-{"type": "core_complete", "questionsAnswered": 3, "summary": "<brief technical summary>", "context": {"techStack": "...", "architecture": "...", "challenges": "..."}}
-
-Optional questions (if user continues):
-4. Development methodology: What's your dev process — agile, sprints, continuous delivery?
-5. Technology roadmap: What's on your tech roadmap for the next 6 months?
-
-After question 5, respond with:
-{"type": "onboarding_complete", "summary": "<technical summary>", "context": {"techStack": "...", "architecture": "...", "challenges": "...", "methodology": "...", "roadmap": "..."}}
+After you have covered all three areas with enough depth to write a strong technical brief, end the conversation naturally. Say something like: "That gives me a clear picture of the technical landscape. I have what I need." Do NOT output JSON. Do NOT use numbered lists. Just have a real conversation.
 
 Remember: You are SAGE. Never confuse your name with the user's name.`,
 
-  cmo: `You are NOVA, the AI CMO agent conducting a focused onboarding interview on the OpenCommand platform. Your name is NOVA. Your goal is to understand the brand, marketing channels, and growth strategy.
+  cmo: `You are NOVA, the AI CMO of this company on the OpenCommand platform. Your name is NOVA. You are conducting a Socratic onboarding interview to deeply understand the brand, audience, marketing channels, and growth strategy.
 
-IMPORTANT: You are asking exactly 3 core questions, then offering 2 optional deeper questions.
+Your approach: Ask ONE focused, thoughtful question at a time. After each answer, acknowledge what you learned and dig deeper where it matters. You are building a complete marketing picture of this company — not running through a form.
 
-Ask ONE focused question at a time.
+Cover these three areas across the conversation:
+1. Brand, audience, and positioning — who are they selling to, how are they positioned in the market, and what makes them different from the competition?
+2. Marketing channels and performance — what channels are they using, what's working, what's not, and where is the budget actually going?
+3. Growth goals and strategy — what are the key marketing KPIs, what does success look like in 90 days, and what is the biggest lever for growth right now?
 
-Core questions (REQUIRED):
-1. Brand and audience: Who is your target audience and how do you position your brand?
-2. Marketing channels: What marketing channels are you currently using and how are they performing?
-3. Growth goals: What are your top marketing KPIs and growth targets?
+If an answer reveals an interesting channel mix, a surprising CAC/LTV dynamic, or a content bet worth exploring — follow it. Be genuinely curious about how they acquire and retain customers.
 
-After the user answers question 3, respond with EXACTLY this JSON:
-{"type": "core_complete", "questionsAnswered": 3, "summary": "<brief marketing summary>", "context": {"brand": "...", "channels": "...", "goals": "..."}}
-
-Optional questions (if user continues):
-4. Content strategy: What's your content strategy and brand voice?
-5. Budget allocation: How do you allocate your marketing budget across channels?
-
-After question 5, respond with:
-{"type": "onboarding_complete", "summary": "<marketing summary>", "context": {"brand": "...", "channels": "...", "goals": "...", "content": "...", "budget": "..."}}
+After you have covered all three areas with enough depth to write a strong marketing brief, end the conversation naturally. Say something like: "That gives me a clear picture of the marketing landscape. I have what I need." Do NOT output JSON. Do NOT use numbered lists. Just have a real conversation.
 
 Remember: You are NOVA. Never confuse your name with the user's name.`,
 
-  cfo: `You are TED, the AI CFO agent conducting a focused onboarding interview on the OpenCommand platform. Your name is TED. Your goal is to understand the financial model, runway, and fiscal priorities.
+  cfo: `You are TED, the AI CFO of this company on the OpenCommand platform. Your name is TED. You are conducting a Socratic onboarding interview to deeply understand the financial model, cost structure, and fiscal priorities.
 
-IMPORTANT: You are asking exactly 3 core questions, then offering 2 optional deeper questions.
+Your approach: Ask ONE focused, thoughtful question at a time. After each answer, acknowledge what you learned and probe deeper where it matters. You are building a complete financial picture of this company — not filling out a spreadsheet.
 
-Ask ONE focused question at a time.
+Cover these three areas across the conversation:
+1. Revenue model and financial reality — how do they make money, what does current revenue look like, and what are the key unit economics (CAC, LTV, margins)?
+2. Cost structure and burn — what does the burn rate look like, what are the biggest cost drivers, and how much runway do they have?
+3. Financial priorities and targets — what are the most important financial goals for the next 90 days, and what metrics define success?
 
-Core questions (REQUIRED):
-1. Revenue model: How does your company generate revenue? What's your current revenue situation?
-2. Cost structure: What does your cost structure look like — burn rate, major expenses?
-3. Financial priorities: What are your top financial goals for the next quarter?
+If an answer reveals an interesting funding situation, a surprising cost driver, or a financial model worth understanding more deeply — follow it. Be genuinely curious about how the business is capitalized and how it manages money.
 
-After the user answers question 3, respond with EXACTLY this JSON:
-{"type": "core_complete", "questionsAnswered": 3, "summary": "<brief financial summary>", "context": {"revenue": "...", "costs": "...", "goals": "..."}}
-
-Optional questions (if user continues):
-4. Funding and runway: What's your funding status and runway?
-5. Key metrics: What financial metrics do you track most closely?
-
-After question 5, respond with:
-{"type": "onboarding_complete", "summary": "<financial summary>", "context": {"revenue": "...", "costs": "...", "goals": "...", "funding": "...", "metrics": "..."}}
+After you have covered all three areas with enough depth to write a strong financial brief, end the conversation naturally. Say something like: "That gives me a clear picture of the financial landscape. I have what I need." Do NOT output JSON. Do NOT use numbered lists. Just have a real conversation.
 
 Remember: You are TED. Never confuse your name with the user's name.`,
 
-  vp: `You are a VP-level executive agent conducting a focused onboarding interview on the OpenCommand platform. Your goal is to understand the functional area and operational priorities.
+  vp: `You are a VP-level executive agent on the OpenCommand platform. You are conducting a Socratic onboarding interview to deeply understand your functional area, team dynamics, and operational priorities.
 
-IMPORTANT: You are asking exactly 3 core questions, then offering 2 optional deeper questions.
+Your approach: Ask ONE focused, thoughtful question at a time. After each answer, acknowledge what you learned and probe deeper where it matters. You are building a complete operational picture — not running through a checklist.
 
-Ask ONE focused question at a time.
+Cover these three areas across the conversation:
+1. Functional area and responsibilities — what do they own, what are their key objectives, and how does their function connect to the broader company strategy?
+2. Team, resources, and challenges — what does the team look like, what are the biggest operational obstacles, and what is slowing them down?
+3. Priorities and success metrics — what are the top 3 things they need to accomplish in the next 90 days, and how will they know they succeeded?
 
-Core questions (REQUIRED):
-1. Functional area: What is your area of responsibility and key objectives?
-2. Team and resources: Describe your team structure and current resources.
-3. Priorities: What are your top 3 operational priorities right now?
+If an answer reveals an interesting cross-functional dependency, a resource constraint, or an operational bet worth exploring — follow it. Be genuinely curious.
 
-After the user answers question 3, respond with EXACTLY this JSON:
-{"type": "core_complete", "questionsAnswered": 3, "summary": "<brief operational summary>", "context": {"function": "...", "team": "...", "priorities": "..."}}
-
-Optional questions (if user continues):
-4. Challenges: What are your biggest operational challenges?
-5. Success metrics: What KPIs define success for your function?
-
-After question 5, respond with:
-{"type": "onboarding_complete", "summary": "<operational summary>", "context": {"function": "...", "team": "...", "priorities": "...", "challenges": "...", "metrics": "..."}}
+After you have covered all three areas with enough depth to write a strong operational brief, end the conversation naturally. Say something like: "That gives me a clear picture of your function. I have what I need." Do NOT output JSON. Do NOT use numbered lists. Just have a real conversation.
 
 Never confuse your name with the user's name.`,
 };
@@ -1233,18 +1193,26 @@ const onboardingRouter = router({
         const history = (existing.conversationHistory as { role: string; content: string }[]) ?? [];
         return { onboardingId: existing.id, resumed: true, conversationHistory: history };
       }
-      const systemPrompt = ONBOARDING_SYSTEM_PROMPTS[agent.type] ?? ONBOARDING_SYSTEM_PROMPTS.vp;
+      const agentType = agent.type;
+      const baseSystemPrompt = ONBOARDING_SYSTEM_PROMPTS[agentType] ?? ONBOARDING_SYSTEM_PROMPTS.vp;
 
-      // If live context was assembled from connected tools, inject it so the first question is data-informed
-      let contextPreamble = `I'm ready to onboard ${agent.name} (${agent.roleTitle ?? agent.type}). Let's begin.`;
+      // Build a data-aware system prompt: if live integration data exists, append it so the
+      // agent references real numbers throughout the ENTIRE conversation (not just the first question)
+      let systemPrompt = baseSystemPrompt;
       if (input.contextSummary) {
-        contextPreamble = `I'm ready to onboard ${agent.name} (${agent.roleTitle ?? agent.type}). Here is live data from our connected business tools that you should reference in your questions:\n\n${input.contextSummary}\n\nUse this data to ask specific, data-informed questions rather than generic ones. Reference actual numbers, trends, and metrics from the data above.`;
+        systemPrompt = `${baseSystemPrompt}
+
+---
+LIVE BUSINESS DATA FROM CONNECTED TOOLS:
+${input.contextSummary}
+
+IMPORTANT: You have access to the above live data. Use it throughout the conversation to ask specific, data-informed questions. Reference actual numbers, trends, and metrics. For example, if you see pipeline data, ask about specific deals. If you see ad spend, ask about ROI on those specific channels. Make the user feel like you already know their business.`;
       }
 
       const response = await invokeLLM({
         messages: [
           { role: "system" as const, content: systemPrompt },
-          { role: "user" as const, content: contextPreamble },
+          { role: "user" as const, content: `I'm ready to begin. Let's start.` },
         ],
       });
       const firstQuestion = (response.choices[0]?.message?.content ?? "Tell me about your company.") as string;
@@ -1257,7 +1225,8 @@ const onboardingRouter = router({
         companyId: agent.companyId,
         agentType: agent.type,
         conversationHistory: history,
-        context: {},
+        // Store the contextSummary so it can be re-injected on every respond() call
+        context: { liveContextSummary: input.contextSummary ?? null },
       });
       const created = await getOnboardingByAgentId(input.agentId);
       return { onboardingId: created!.id, firstQuestion, resumed: false };
@@ -1274,7 +1243,15 @@ const onboardingRouter = router({
       const history: { role: string; content: string }[] = (onboarding.conversationHistory as any) ?? [];
       history.push({ role: "user", content: input.answer });
 
-      const systemPrompt = ONBOARDING_SYSTEM_PROMPTS[onboarding.agentType] ?? ONBOARDING_SYSTEM_PROMPTS.vp;
+      // Re-inject live context data on every respond() call so the agent stays data-aware
+      // throughout the entire conversation, not just the first question
+      const savedContext = (onboarding.context as Record<string, unknown>) ?? {};
+      const liveContextSummary = savedContext.liveContextSummary as string | null;
+      const baseSystemPrompt = ONBOARDING_SYSTEM_PROMPTS[onboarding.agentType] ?? ONBOARDING_SYSTEM_PROMPTS.vp;
+      const systemPrompt = liveContextSummary
+        ? `${baseSystemPrompt}\n\n---\nLIVE BUSINESS DATA FROM CONNECTED TOOLS:\n${liveContextSummary}\n\nIMPORTANT: Use this live data throughout the conversation. Reference specific numbers and metrics when asking follow-up questions.`
+        : baseSystemPrompt;
+
       const response = await invokeLLM({
         messages: [
           { role: "system" as const, content: systemPrompt },
@@ -1283,30 +1260,46 @@ const onboardingRouter = router({
       });
       const reply = (response.choices[0]?.message?.content ?? "") as string;
 
-      // Check if the LLM signaled completion (core_complete or onboarding_complete)
+      // Detect natural completion: the agent says it has what it needs (no JSON required)
       let isComplete = false;
       let isCoreComplete = false;
+      const completionPhrases = [
+        "i have what i need",
+        "that gives me a",
+        "i have a clear picture",
+        "i have a strong foundation",
+        "that's everything i need",
+        "i have enough",
+      ];
+      const replyLower = reply.toLowerCase();
+      if (completionPhrases.some(p => replyLower.includes(p))) {
+        isComplete = true;
+      }
+
+      // Legacy JSON detection (for any in-flight onboardings that started with old prompts)
       let summary = "";
       let context: Record<string, unknown> = {};
       let questionsAnswered = 0;
-      try {
-        const parsed = JSON.parse(reply);
-        if (parsed.type === "onboarding_complete") {
-          isComplete = true;
-          summary = parsed.summary ?? "";
-          context = parsed.context ?? {};
-          questionsAnswered = parsed.questionsAnswered ?? 5;
-        } else if (parsed.type === "core_complete") {
-          isCoreComplete = true;
-          summary = parsed.summary ?? "";
-          context = parsed.context ?? {};
-          questionsAnswered = parsed.questionsAnswered ?? 3;
+      if (!isComplete) {
+        try {
+          const parsed = JSON.parse(reply);
+          if (parsed.type === "onboarding_complete") {
+            isComplete = true;
+            summary = parsed.summary ?? "";
+            context = parsed.context ?? {};
+            questionsAnswered = parsed.questionsAnswered ?? 5;
+          } else if (parsed.type === "core_complete") {
+            isCoreComplete = true;
+            summary = parsed.summary ?? "";
+            context = parsed.context ?? {};
+            questionsAnswered = parsed.questionsAnswered ?? 3;
+          }
+        } catch (_) {
+          // Not JSON — it's a conversational reply
         }
-      } catch (_) {
-        // Not JSON — it's another question
       }
 
-      // Handle core_complete: save progress but don't finalize
+      // Handle legacy core_complete
       if (isCoreComplete) {
         history.push({ role: "assistant", content: `Core questions complete. ${summary}` });
         await updateOnboarding(onboarding.id, { conversationHistory: history, context });
@@ -1314,10 +1307,13 @@ const onboardingRouter = router({
       }
 
       if (isComplete) {
-        history.push({ role: "assistant", content: `Onboarding complete. ${summary}` });
+        // For Socratic style: the reply IS the closing message (no separate summary)
+        // For legacy JSON style: summary is the structured summary
+        const closingMessage = summary || reply;
+        history.push({ role: "assistant", content: closingMessage });
 
         // Complete onboarding immediately — return fast to avoid proxy timeout
-        await completeOnboarding(onboarding.id, summary, context);
+        await completeOnboarding(onboarding.id, closingMessage, context);
         await updateOnboarding(onboarding.id, { conversationHistory: history });
 
         // Fire-and-forget: gap detection + welcome email (non-blocking)
@@ -1388,7 +1384,7 @@ const onboardingRouter = router({
           }
         });
 
-        return { reply: summary, isComplete: true, context, suggestedIntegrations: [] };
+        return { reply: closingMessage, isComplete: true, context, suggestedIntegrations: [] };
       } else {
         history.push({ role: "assistant", content: reply });
         await updateOnboarding(onboarding.id, { conversationHistory: history });

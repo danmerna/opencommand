@@ -229,13 +229,15 @@ describe("Onboarding Router", () => {
     expect(source).not.toMatch(/You are Arch[^"]/);
   });
 
-  it("system prompts should enforce 3 required + 2 optional question structure", async () => {
+  it("system prompts should use Socratic style covering 3 key areas", async () => {
     const fs = await import("fs");
     const source = fs.readFileSync("server/routers.ts", "utf-8");
-    // All prompts should mention 3 required questions
-    expect(source).toContain("asking exactly 3 core questions");
-    // All prompts should mention optional continuation
-    expect(source).toContain("core_complete");
+    // All prompts should cover three areas in a Socratic style
+    expect(source).toContain("Cover these three areas");
+    // All prompts should instruct the agent not to output JSON
+    expect(source).toContain("Do NOT output JSON");
+    // All prompts should instruct conversational style
+    expect(source).toContain("Just have a real conversation");
   });
 
   it("respond procedure should handle core_complete response type", async () => {

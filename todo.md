@@ -211,3 +211,6 @@
 - [x] Add mock data module with realistic business metrics for all four integrations (Meridian Software)
 - [x] Add admin UI button to create/reset demo user (Admin > Demo tab)
 - [x] Write vitest tests for demo mode data (demoUser.test.ts)
+- [x] Restore Socratic onboarding interview style: 3 deep questions per agent, no JSON signals, conversational flow
+- [x] Improve live integration data injection: liveContextSummary stored in onboarding.context and re-injected on every LLM call
+- [x] Update onboarding tests to reflect new Socratic prompt structure
