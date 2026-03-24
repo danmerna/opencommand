@@ -35,7 +35,7 @@ const mockOnboarding = {
 
 const mockAgent = {
   id: 10,
-  name: "Arch",
+  name: "ARCH",
   type: "ceo",
   roleTitle: "Chief Executive Officer",
   companyId: 1,
@@ -217,10 +217,38 @@ describe("Onboarding Router", () => {
     expect(onboardingProcedures.length).toBe(9);
   });
 
-  it("should define system prompts for ceo, cto, cmo, cfo, vp", () => {
-    // This tests that the module-level constants are correctly defined
-    // by checking the router loaded successfully (they're used in procedures)
-    expect(true).toBe(true);
+  it("should define system prompts for ceo, cto, cmo, cfo, vp", async () => {
+    // Verify the system prompts use correct agent names
+    const fs = await import("fs");
+    const source = fs.readFileSync("server/routers.ts", "utf-8");
+    expect(source).toContain("You are ARCH");
+    expect(source).toContain("You are NOVA");
+    expect(source).toContain("You are SAGE");
+    expect(source).toContain("You are TED");
+    // Ensure no lowercase "Arch" confusion (only ARCH is valid)
+    expect(source).not.toMatch(/You are Arch[^"]/);
+  });
+
+  it("system prompts should enforce 3 required + 2 optional question structure", async () => {
+    const fs = await import("fs");
+    const source = fs.readFileSync("server/routers.ts", "utf-8");
+    // All prompts should mention 3 required questions
+    expect(source).toContain("asking exactly 3 core questions");
+    // All prompts should mention optional continuation
+    expect(source).toContain("core_complete");
+  });
+
+  it("respond procedure should handle core_complete response type", async () => {
+    const fs = await import("fs");
+    const source = fs.readFileSync("server/routers.ts", "utf-8");
+    expect(source).toContain("isCoreComplete");
+  });
+
+  it("default agents should include TED as CFO", async () => {
+    const fs = await import("fs");
+    const source = fs.readFileSync("server/routers.ts", "utf-8");
+    expect(source).toContain('"TED \u2014 AI CFO"');
+    expect(source).toContain('type: "cfo" as const');
   });
 
   it("getOnboardingById helper should exist in db module", async () => {

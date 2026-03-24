@@ -59,8 +59,8 @@ describe("ProOnboarding Welcome Step - Self-Contextualization", () => {
   });
 
   it("mentions time estimate and skip option", () => {
-    expect(proOnboardingSource).toContain("Takes about 10 minutes");
-    expect(proOnboardingSource).toContain("skip any executive");
+    expect(proOnboardingSource).toContain("Takes about 5 minutes");
+    expect(proOnboardingSource).toContain("optional deep-dives");
   });
 });
 

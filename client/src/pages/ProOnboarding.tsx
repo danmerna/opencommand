@@ -39,10 +39,10 @@ type OnboardingStep =
   | "complete";
 
 const EXEC_AGENTS = [
-  { type: "ceo", name: "Arch — AI CEO", roleTitle: "Chief Executive Officer", description: "Executive Core orchestrating all operations, OKR tracking, and strategic decision-making.", capabilities: ["strategy", "orchestration", "okr-tracking", "decision-making"], tools: ["llm", "calendar", "analytics"], color: "text-amber-400", icon: "👑", skippable: false },
+  { type: "ceo", name: "ARCH — AI CEO", roleTitle: "Chief Executive Officer", description: "Executive Core orchestrating all operations, OKR tracking, and strategic decision-making.", capabilities: ["strategy", "orchestration", "okr-tracking", "decision-making"], tools: ["llm", "calendar", "analytics"], color: "text-amber-400", icon: "👑", skippable: false },
   { type: "cto", name: "SAGE — CTO", roleTitle: "Chief Technology Officer", description: "Deep research and competitive intelligence agent.", capabilities: ["market-research", "competitor-analysis", "data-synthesis", "code-review"], tools: ["github", "jira", "datadog"], color: "text-blue-400", icon: "⚡", skippable: true },
   { type: "cmo", name: "NOVA — CMO", roleTitle: "Chief Marketing Officer", description: "Autonomous marketing agent handling content, campaigns, and lead generation.", capabilities: ["content-creation", "seo", "email-campaigns", "social-media"], tools: ["mailchimp", "analytics", "social-scheduler"], color: "text-purple-400", icon: "✦", skippable: true },
-  { type: "cfo", name: "CFO", roleTitle: "Chief Financial Officer", description: "Financial intelligence agent managing budget, runway, and fiscal strategy.", capabilities: ["financial-modeling", "budget-tracking", "revenue-analysis", "risk-assessment"], tools: ["stripe", "quickbooks", "analytics"], color: "text-emerald-400", icon: "◈", skippable: true },
+  { type: "cfo", name: "TED — AI CFO", roleTitle: "Chief Financial Officer", description: "Financial intelligence agent managing budget, runway, and fiscal strategy.", capabilities: ["financial-modeling", "budget-tracking", "revenue-analysis", "risk-assessment"], tools: ["stripe", "quickbooks", "analytics"], color: "text-emerald-400", icon: "◈", skippable: true },
 ];
 
 const BRIEFING_OPTIONS: { value: BriefingFrequency; label: string; description: string; icon: React.ReactNode }[] = [
@@ -107,6 +107,8 @@ export default function ProOnboarding() {
   const [onboardingId, setOnboardingId] = useState<number | null>(null);
   const [currentAgentId, setCurrentAgentId] = useState<number | null>(null);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
+  const [isCoreComplete, setIsCoreComplete] = useState(false);
+  const [questionCount, setQuestionCount] = useState(0);
   const [strategy, setStrategy] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [agentContext, setAgentContext] = useState<{ contextSummary: string; insights: string[]; connectedProviders: string[]; hasLiveData: boolean } | null>(null);
@@ -301,6 +303,8 @@ export default function ProOnboarding() {
     setMessages([]);
     setOnboardingId(null);
     setIsOnboardingComplete(false);
+    setIsCoreComplete(false);
+    setQuestionCount(0);
     setStep(onboardStep);
 
     // Fetch live context from connected tools for all agents
@@ -350,8 +354,42 @@ export default function ProOnboarding() {
     setInput("");
     setMessages(prev => [...prev, { role: "user", content: userMsg }]);
     setIsSending(true);
+    setQuestionCount(prev => prev + 1);
     try {
       const data = await respondMut.mutateAsync({ onboardingId, answer: userMsg });
+      if ((data as any).isCoreComplete) {
+        // Core 3 questions done — show continue/skip choice
+        setIsCoreComplete(true);
+        setQuestionCount((data as any).questionsAnswered ?? 3);
+        // Don't add the summary as a message — we'll show a UI card instead
+      } else {
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      }
+      if (data.isComplete) {
+        setIsOnboardingComplete(true);
+        setQuestionCount((data as any).questionsAnswered ?? 5);
+        if ((data as any).suggestedIntegrations?.length) {
+          setSuggestedIntegrations((data as any).suggestedIntegrations);
+        }
+      }
+    } catch (err: any) {
+      toast.error("Failed to send response", { description: err.message });
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  // When user opts to continue with optional questions after core_complete
+  async function handleContinueOptional() {
+    if (!onboardingId) return;
+    setIsCoreComplete(false);
+    setIsSending(true);
+    try {
+      // Send a system message telling the LLM the user wants to continue
+      const data = await respondMut.mutateAsync({
+        onboardingId,
+        answer: "I'd like to answer the optional questions to give you more context.",
+      });
       setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
       if (data.isComplete) {
         setIsOnboardingComplete(true);
@@ -360,7 +398,35 @@ export default function ProOnboarding() {
         }
       }
     } catch (err: any) {
-      toast.error("Failed to send response", { description: err.message });
+      toast.error("Failed to continue", { description: err.message });
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  // When user opts to skip optional questions and finalize after core_complete
+  async function handleSkipOptional() {
+    if (!onboardingId) return;
+    setIsCoreComplete(false);
+    setIsSending(true);
+    try {
+      // Tell the LLM to finalize with what we have
+      const data = await respondMut.mutateAsync({
+        onboardingId,
+        answer: "That's enough for now. Please finalize the onboarding with what you have.",
+      });
+      if (data.isComplete || (data as any).isCoreComplete) {
+        setIsOnboardingComplete(true);
+        if ((data as any).suggestedIntegrations?.length) {
+          setSuggestedIntegrations((data as any).suggestedIntegrations);
+        }
+      } else {
+        // LLM didn't finalize — force it
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+        setIsOnboardingComplete(true);
+      }
+    } catch (err: any) {
+      toast.error("Failed to finalize", { description: err.message });
     } finally {
       setIsSending(false);
     }
@@ -494,7 +560,7 @@ export default function ProOnboarding() {
           <Button className="h-11 px-8 gap-2" onClick={() => setStep("company-setup")}>
             Begin Setup <ArrowRight size={14} />
           </Button>
-          <p className="text-[11px] text-muted-foreground mt-4">Takes about 10 minutes. You can skip any executive and come back later.</p>
+          <p className="text-[11px] text-muted-foreground mt-4">Takes about 5 minutes. 3 quick questions per executive, with optional deep-dives.</p>
         </div>
       </div>
     );
@@ -835,46 +901,83 @@ export default function ProOnboarding() {
     );
   }
 
-  // ── ONBOARDING INTERVIEWS ────────────────────────────────────────────────
+  // ── ONBOARDING INTERVIEWS ────────────────────────────────────────────────────────
   if (ONBOARDING_ORDER.includes(step) && currentExec) {
     const completedCount = ONBOARDING_ORDER.indexOf(step);
     const isSkippable = currentExec.skippable;
+    const totalQuestions = 5;
+    const userAnswerCount = messages.filter(m => m.role === "user").length;
+    const displayQuestionCount = isCoreComplete ? 3 : isOnboardingComplete ? totalQuestions : Math.min(userAnswerCount, totalQuestions);
+    const progressPercent = Math.round(((completedCount * totalQuestions + displayQuestionCount) / (EXEC_AGENTS.length * totalQuestions)) * 100);
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        {/* Header */}
-        <div className="border-b border-border px-6 py-4 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="text-lg">{currentExec.icon}</span>
-            <div>
-              <p className={`text-sm font-medium ${currentExec.color}`}>{currentExec.name}</p>
-              <p className="text-xs text-muted-foreground">{currentExec.roleTitle} Onboarding</p>
+        {/* Header with progress bar */}
+        <div className="border-b border-border shrink-0">
+          <div className="px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-lg">{currentExec.icon}</span>
+              <div>
+                <p className={`text-sm font-medium ${currentExec.color}`}>{currentExec.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  Question {displayQuestionCount} of {totalQuestions}
+                  {displayQuestionCount <= 3 ? " (required)" : " (optional)"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {isSkippable && !isOnboardingComplete && !isCoreComplete && messages.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-xs text-muted-foreground hover:text-foreground h-8"
+                  onClick={handleSkipAgent}
+                >
+                  <SkipForward size={12} />
+                  Skip
+                </Button>
+              )}
+              {/* Executive dots */}
+              <div className="flex items-center gap-1.5">
+                {EXEC_AGENTS.map((a, i) => (
+                  <div
+                    key={a.type}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      i < completedCount ? "bg-emerald-400" :
+                      i === completedCount ? "bg-foreground scale-125" :
+                      "bg-border"
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {isSkippable && !isOnboardingComplete && messages.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground h-8"
-                onClick={handleSkipAgent}
-              >
-                <SkipForward size={12} />
-                Skip interview
-              </Button>
-            )}
-            <div className="flex items-center gap-1.5">
-              {EXEC_AGENTS.map((a, i) => (
-                <div
-                  key={a.type}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    i < completedCount ? "bg-emerald-400" :
-                    i === completedCount ? "bg-foreground scale-125" :
-                    "bg-border"
-                  }`}
-                />
-              ))}
-            </div>
+          {/* Progress bar */}
+          <div className="h-1 bg-border/30 w-full">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          {/* Question dots for current executive */}
+          <div className="px-6 py-2 flex items-center gap-1.5">
+            {Array.from({ length: totalQuestions }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i < displayQuestionCount
+                    ? "bg-emerald-400 w-6"
+                    : i === displayQuestionCount && !isOnboardingComplete && !isCoreComplete
+                      ? "bg-foreground/60 w-4"
+                      : i < 3
+                        ? "bg-border w-3"
+                        : "bg-border/40 w-3"
+                }`}
+              />
+            ))}
+            <span className="text-[10px] text-muted-foreground/50 ml-2">
+              {displayQuestionCount <= 3 ? `${3 - displayQuestionCount} required left` : `${totalQuestions - displayQuestionCount} optional left`}
+            </span>
           </div>
         </div>
 
@@ -945,6 +1048,43 @@ export default function ProOnboarding() {
               </div>
             </div>
           ))}
+          {/* Core complete card — 3 required questions done, offer optional */}
+          {isCoreComplete && !isOnboardingComplete && (
+            <div className="flex flex-col items-center gap-4 py-6">
+              <div className="w-full max-w-md rounded-xl border border-emerald-800/40 bg-emerald-950/10 p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle2 size={18} className="text-emerald-400" />
+                  <p className="text-sm font-medium text-foreground">Core questions complete</p>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4">
+                  {currentExec.name.split("\u2014")[0].trim()} has enough context to get started. You can answer 2 more optional questions for deeper personalization, or move on.
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-1.5 text-xs h-9"
+                    onClick={handleContinueOptional}
+                    disabled={isSending}
+                  >
+                    {isSending ? <Loader2 size={12} className="animate-spin" /> : <ArrowRight size={12} />}
+                    Answer 2 More
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="flex-1 gap-1.5 text-xs h-9"
+                    onClick={() => { handleSkipOptional(); }}
+                    disabled={isSending}
+                  >
+                    {completedCount < EXEC_AGENTS.length - 1
+                      ? <>Next: {EXEC_AGENTS[completedCount + 1]?.name.split("\u2014")[0].trim()} <ChevronRight size={12} /></>
+                      : <>Generate Strategy <Sparkles size={12} /></>
+                    }
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           {isOnboardingComplete && (
             <div className="flex flex-col items-center gap-4 py-6">
               <CheckCircle2 size={28} className="text-emerald-400" />
@@ -1009,7 +1149,7 @@ export default function ProOnboarding() {
         </div>
 
         {/* Input */}
-        {!isOnboardingComplete && (
+        {!isOnboardingComplete && !isCoreComplete && (
           <div className="border-t border-border px-6 py-4 shrink-0">
             <div className="max-w-2xl mx-auto space-y-2">
               {isSkippable && messages.length > 0 && (
@@ -1062,11 +1202,11 @@ export default function ProOnboarding() {
           <Brain size={28} className="text-foreground mx-auto mb-6 animate-pulse" />
           <h2 className="text-xl font-light text-foreground mb-2">Synthesizing executive intelligence</h2>
           <p className="text-muted-foreground text-xs mb-2">
-            Arch is combining insights from {EXEC_AGENTS.length - skippedCount} of {EXEC_AGENTS.length} executives to generate your combined strategic plan...
+            ARCH is combining insights from {EXEC_AGENTS.length - skippedCount} of {EXEC_AGENTS.length} executives to generate your combined strategic plan...
           </p>
           {skippedCount > 0 && (
             <p className="text-[11px] text-muted-foreground/60 mb-6">
-              {skippedCount} interview{skippedCount > 1 ? "s" : ""} skipped — Arch will make informed assumptions for those domains.
+              {skippedCount} interview{skippedCount > 1 ? "s" : ""} skipped — ARCH will make informed assumptions for those domains.
             </p>
           )}
           {skippedCount === 0 && <div className="mb-6" />}

@@ -25,7 +25,7 @@ export const PRODUCTS = {
     trialDays: 7,
   },
   SOLO_FOUNDER_CEO: {
-    name: "Arch Solo-Founder CEO",
+    name: "ARCH Solo-Founder CEO",
     description: "Your first autonomous executive hire. Orchestrates up to 3 subordinate agents.",
     priceAmount: 19900, // $199.00 in cents
     currency: "usd",
@@ -34,7 +34,7 @@ export const PRODUCTS = {
     tier: "solo_founder",
   },
   ENTERPRISE_CEO: {
-    name: "Arch Enterprise CEO",
+    name: "ARCH Enterprise CEO",
     description: "Full Agentic Operating Model with unlimited agents and 5% value capture.",
     priceAmount: 99900, // $999.00 in cents
     currency: "usd",

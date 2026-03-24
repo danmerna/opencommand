@@ -151,8 +151,8 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("Pulls live data before asking its first question");
     });
 
-    it("includes AI CEO — Arch", () => {
-      expect(homeSource).toContain("AI CEO — Arch");
+    it("includes AI CEO — ARCH", () => {
+      expect(homeSource).toContain("AI CEO — ARCH");
     });
 
     it("includes Company Blueprints feature card", () => {

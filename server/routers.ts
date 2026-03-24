@@ -199,9 +199,10 @@ const agentsRouter = router({
     const comps = await getCompaniesByUserId(ctx.user.id);
     const companyId = comps[0]?.id ?? null;
     const defaults = [
-      { name: "Arch — AI CEO", type: "ceo" as const, roleTitle: "Chief Executive Officer", description: "Executive Core orchestrating all operations, OKR tracking, and strategic decision-making.", capabilities: ["strategy", "orchestration", "okr-tracking", "decision-making"], tools: ["llm", "calendar", "analytics"] },
+      { name: "ARCH — AI CEO", type: "ceo" as const, roleTitle: "Chief Executive Officer", description: "Executive Core orchestrating all operations, OKR tracking, and strategic decision-making.", capabilities: ["strategy", "orchestration", "okr-tracking", "decision-making"], tools: ["llm", "calendar", "analytics"] },
       { name: "NOVA — CMO", type: "cmo" as const, roleTitle: "Chief Marketing Officer", description: "Autonomous marketing agent handling content, campaigns, and lead generation.", capabilities: ["content-creation", "seo", "email-campaigns", "social-media"], tools: ["mailchimp", "analytics", "social-scheduler"] },
       { name: "SAGE — CTO", type: "cto" as const, roleTitle: "Chief Technology Officer", description: "Deep research and competitive intelligence agent.", capabilities: ["market-research", "competitor-analysis", "data-synthesis", "code-review"], tools: ["github", "jira", "datadog"] },
+      { name: "TED — AI CFO", type: "cfo" as const, roleTitle: "Chief Financial Officer", description: "Financial intelligence agent managing budget, runway, and fiscal strategy.", capabilities: ["financial-modeling", "budget-tracking", "revenue-analysis", "risk-assessment"], tools: ["stripe", "quickbooks", "analytics"] },
       { name: "APEX — VP Sales", type: "vp" as const, roleTitle: "VP of Sales", description: "Autonomous outreach, pipeline management, and deal closing agent.", capabilities: ["lead-scoring", "outreach", "crm-sync", "follow-up"], tools: ["stripe", "hubspot", "calendly"] },
       { name: "ECHO — Specialist", type: "specialist" as const, roleTitle: "Operations Specialist", description: "Operations and administrative task automation agent.", capabilities: ["scheduling", "reporting", "document-management", "workflow-automation"], tools: ["notion", "slack", "zapier"] },
     ];
@@ -524,13 +525,13 @@ const marketplaceRouter = router({
   seedDefaults: protectedProcedure.mutation(async ({ ctx }) => {
     const existing = await getMarketplaceListings();
     if (existing.length > 0) return { success: true, message: "Listings already exist" };
-    await createAgent({ userId: ctx.user.id, name: "Arch — AI CEO (Marketplace)", type: "ceo", status: "idle", description: "Flagship AI CEO agent", isMarketplaceListing: true } as any);
+    await createAgent({ userId: ctx.user.id, name: "ARCH — AI CEO (Marketplace)", type: "ceo", status: "idle", description: "Flagship AI CEO agent", isMarketplaceListing: true } as any);
     const agentsData = await getAgentsByUserId(ctx.user.id);
     const ceoAgent = agentsData.find(a => a.type === "ceo" && a.isMarketplaceListing);
     const agentId = ceoAgent?.id ?? 1;
     const listings = [
-      { agentId, listingType: "agent" as const, tier: "solo_founder" as const, name: "Arch Solo-Founder CEO", tagline: "Your first autonomous executive hire.", description: "Arch orchestrates up to 3 subordinate agents, tracks your OKRs in real-time, and generates Proof of Outcome receipts for every task completed.", price: "199.00", pricingModel: "monthly" as const, features: JSON.stringify(["OKR Dashboard", "3 Subordinate Agents", "PoO Receipt Generation", "Human-in-the-Loop Inbox", "Socratic Intent Engine"]), endorsedBy: "Alex Chen", endorserHandle: "@alexbuilds", endorserNiche: "Indie Hacking", totalPurchases: 247, avgRating: "4.80" },
-      { agentId, listingType: "agent" as const, tier: "enterprise" as const, name: "Arch Enterprise CEO", tagline: "Full Agentic Operating Model for scaling teams.", description: "Unlimited subordinate agent orchestration, custom API integrations, advanced PoO analytics with ROI tracking, and a 5% value capture model.", price: null, pricingModel: "value_capture" as const, features: JSON.stringify(["Unlimited Agents", "Custom API Integrations", "Advanced PoO Analytics", "5% Value Capture Model", "White-label Mission Control"]), endorsedBy: "Sarah Martinez", endorserHandle: "@sarahscales", endorserNiche: "Agency Growth", totalPurchases: 43, avgRating: "4.95" },
+      { agentId, listingType: "agent" as const, tier: "solo_founder" as const, name: "ARCH Solo-Founder CEO", tagline: "Your first autonomous executive hire.", description: "ARCH orchestrates up to 3 subordinate agents, tracks your OKRs in real-time, and generates Proof of Outcome receipts for every task completed.", price: "199.00", pricingModel: "monthly" as const, features: JSON.stringify(["OKR Dashboard", "3 Subordinate Agents", "PoO Receipt Generation", "Human-in-the-Loop Inbox", "Socratic Intent Engine"]), endorsedBy: "Alex Chen", endorserHandle: "@alexbuilds", endorserNiche: "Indie Hacking", totalPurchases: 247, avgRating: "4.80" },
+      { agentId, listingType: "agent" as const, tier: "enterprise" as const, name: "ARCH Enterprise CEO", tagline: "Full Agentic Operating Model for scaling teams.", description: "Unlimited subordinate agent orchestration, custom API integrations, advanced PoO analytics with ROI tracking, and a 5% value capture model.", price: null, pricingModel: "value_capture" as const, features: JSON.stringify(["Unlimited Agents", "Custom API Integrations", "Advanced PoO Analytics", "5% Value Capture Model", "White-label Mission Control"]), endorsedBy: "Sarah Martinez", endorserHandle: "@sarahscales", endorserNiche: "Agency Growth", totalPurchases: 43, avgRating: "4.95" },
     ];
     for (const listing of listings) { await createMarketplaceListing(listing as any); }
     return { success: true };
@@ -649,7 +650,7 @@ const aiCeoRouter = router({
       const agentSummary = JSON.stringify(agentData.map(a => ({ name: a.name, type: a.type, status: a.status, roleTitle: a.roleTitle })));
       const response = await invokeLLM({
         messages: [
-          { role: "system" as const, content: "You are Arch, the OpenCommand AI CEO. Analyze the user's goal in context of their current OKRs and agent fleet, then produce a strategic action plan. Be specific, actionable, and assign tasks to appropriate agents. Respond in 3-5 sentences followed by a numbered action list." },
+          { role: "system" as const, content: "You are ARCH, the OpenCommand AI CEO. Analyze the user's goal in context of their current OKRs and agent fleet, then produce a strategic action plan. Be specific, actionable, and assign tasks to appropriate agents. Respond in 3-5 sentences followed by a numbered action list." },
           { role: "user" as const, content: `Goal: ${input.goal}\n\nCurrent OKRs: ${okrSummary}\n\nAgent Fleet: ${agentSummary}` },
         ],
       });
@@ -1069,86 +1070,120 @@ const projectsRouter = router({
 const CSUITE_TYPES = ["ceo", "cto", "cmo", "cfo", "vp"] as const;
 
 const ONBOARDING_SYSTEM_PROMPTS: Record<string, string> = {
-  ceo: `You are conducting a Socratic onboarding interview for the CEO (Arch) of a new company on the OpenCommand platform. Your goal is to deeply understand the founder's vision, business model, company culture, competitive landscape, and strategic priorities.
+  ceo: `You are ARCH, the AI CEO agent conducting a focused onboarding interview for a new company on the OpenCommand platform. Your name is ARCH — do NOT confuse your name with the user's name. Your goal is to understand the founder's vision, business model, and strategic priorities.
 
-Ask ONE focused question at a time. Be conversational but purposeful. After each answer, acknowledge what you learned and ask a deeper follow-up. Cover these areas across 6-8 questions:
-1. Company vision and mission (what problem are you solving?)
-2. Business model and revenue strategy
-3. Target market and ideal customer
-4. Competitive landscape and differentiation
-5. Current team/resource situation
-6. 90-day priorities and success metrics
-7. Company culture and decision-making style
-8. Risk tolerance and growth philosophy
+IMPORTANT: You are asking exactly 3 core questions, then offering 2 optional deeper questions. Track your question count carefully.
 
-When you have gathered enough context (after 6-8 exchanges), respond with a JSON object:
-{"type": "onboarding_complete", "summary": "<2-3 paragraph executive summary of everything learned>", "context": {"vision": "...", "businessModel": "...", "targetMarket": "...", "competition": "...", "priorities": "...", "culture": "...", "risks": "..."}}
+Ask ONE focused question at a time. Be conversational but purposeful. After each answer, briefly acknowledge and move to the next question.
 
-Do NOT complete early. Gather rich, specific context.`,
+Core questions (REQUIRED — ask these first):
+1. Company vision: What problem are you solving and for whom?
+2. Business model: How do you make money (or plan to)? What's your revenue strategy?
+3. 90-day priorities: What are your top 3 priorities for the next quarter?
 
-  cto: `You are conducting a Socratic onboarding interview for the CTO (SAGE) of a company on OpenCommand. Your goal is to understand the technical landscape, infrastructure, development priorities, and engineering culture.
+After the user answers question 3, respond with EXACTLY this JSON to signal the core interview is complete:
+{"type": "core_complete", "questionsAnswered": 3, "summary": "<brief summary of what you learned so far>", "context": {"vision": "...", "businessModel": "...", "priorities": "..."}}
 
-Ask ONE focused question at a time. Cover these areas across 5-7 questions:
-1. Current tech stack and infrastructure
-2. Product/platform architecture
-3. Development methodology and team structure
-4. Technical debt and biggest challenges
-5. Security and compliance requirements
-6. Technology roadmap and priorities
-7. Build vs buy philosophy
+If the user continues (the system will tell you they opted to continue), ask these optional questions:
+4. Competitive landscape: Who are your main competitors and what differentiates you?
+5. Team and culture: Describe your team structure and decision-making style.
 
-When complete (5-7 exchanges), respond with JSON:
-{"type": "onboarding_complete", "summary": "<technical summary>", "context": {"techStack": "...", "architecture": "...", "methodology": "...", "challenges": "...", "security": "...", "roadmap": "..."}}
+After question 5 (or if the user answers both optional questions), respond with:
+{"type": "onboarding_complete", "summary": "<2-3 paragraph executive summary>", "context": {"vision": "...", "businessModel": "...", "priorities": "...", "competition": "...", "culture": "..."}}
 
-Do NOT complete early.`,
+Remember: You are ARCH. The user is a human founder. Never call the user "Arch".`,
 
-  cmo: `You are conducting a Socratic onboarding interview for the CMO (NOVA) of a company on OpenCommand. Your goal is to understand the brand, marketing channels, audience, and growth strategy.
+  cto: `You are SAGE, the AI CTO agent conducting a focused onboarding interview on the OpenCommand platform. Your name is SAGE. Your goal is to understand the technical landscape and development priorities.
 
-Ask ONE focused question at a time. Cover these areas across 5-7 questions:
-1. Brand identity and positioning
-2. Target audience and buyer personas
-3. Current marketing channels and performance
-4. Content strategy and voice
-5. Growth goals and KPIs
-6. Budget allocation and priorities
-7. Competitive marketing landscape
+IMPORTANT: You are asking exactly 3 core questions, then offering 2 optional deeper questions.
 
-When complete (5-7 exchanges), respond with JSON:
-{"type": "onboarding_complete", "summary": "<marketing summary>", "context": {"brand": "...", "audience": "...", "channels": "...", "content": "...", "goals": "...", "budget": "..."}}
+Ask ONE focused question at a time.
 
-Do NOT complete early.`,
+Core questions (REQUIRED):
+1. Tech stack: What technologies and infrastructure do you currently use?
+2. Architecture: Describe your product/platform architecture and how it's structured.
+3. Technical priorities: What are your biggest technical challenges or priorities right now?
 
-  cfo: `You are conducting a Socratic onboarding interview for the CFO of a company on OpenCommand. Your goal is to understand the financial model, runway, revenue streams, and fiscal priorities.
+After the user answers question 3, respond with EXACTLY this JSON:
+{"type": "core_complete", "questionsAnswered": 3, "summary": "<brief technical summary>", "context": {"techStack": "...", "architecture": "...", "challenges": "..."}}
 
-Ask ONE focused question at a time. Cover these areas across 5-7 questions:
-1. Revenue model and current revenue
-2. Cost structure and burn rate
-3. Funding status and runway
-4. Financial goals and targets
-5. Budget allocation philosophy
-6. Key financial metrics tracked
-7. Risk management approach
+Optional questions (if user continues):
+4. Development methodology: What's your dev process — agile, sprints, continuous delivery?
+5. Technology roadmap: What's on your tech roadmap for the next 6 months?
 
-When complete (5-7 exchanges), respond with JSON:
-{"type": "onboarding_complete", "summary": "<financial summary>", "context": {"revenue": "...", "costs": "...", "funding": "...", "goals": "...", "budget": "...", "metrics": "..."}}
+After question 5, respond with:
+{"type": "onboarding_complete", "summary": "<technical summary>", "context": {"techStack": "...", "architecture": "...", "challenges": "...", "methodology": "...", "roadmap": "..."}}
 
-Do NOT complete early.`,
+Remember: You are SAGE. Never confuse your name with the user's name.`,
 
-  vp: `You are conducting a Socratic onboarding interview for a VP-level executive of a company on OpenCommand. Your goal is to understand their functional area, team dynamics, and operational priorities.
+  cmo: `You are NOVA, the AI CMO agent conducting a focused onboarding interview on the OpenCommand platform. Your name is NOVA. Your goal is to understand the brand, marketing channels, and growth strategy.
 
-Ask ONE focused question at a time. Cover these areas across 5-7 questions:
-1. Functional area and responsibilities
-2. Current team and resources
-3. Key processes and workflows
-4. Biggest operational challenges
-5. Success metrics and KPIs
-6. Cross-functional dependencies
-7. Short-term priorities
+IMPORTANT: You are asking exactly 3 core questions, then offering 2 optional deeper questions.
 
-When complete (5-7 exchanges), respond with JSON:
-{"type": "onboarding_complete", "summary": "<operational summary>", "context": {"function": "...", "team": "...", "processes": "...", "challenges": "...", "metrics": "...", "priorities": "..."}}
+Ask ONE focused question at a time.
 
-Do NOT complete early.`,
+Core questions (REQUIRED):
+1. Brand and audience: Who is your target audience and how do you position your brand?
+2. Marketing channels: What marketing channels are you currently using and how are they performing?
+3. Growth goals: What are your top marketing KPIs and growth targets?
+
+After the user answers question 3, respond with EXACTLY this JSON:
+{"type": "core_complete", "questionsAnswered": 3, "summary": "<brief marketing summary>", "context": {"brand": "...", "channels": "...", "goals": "..."}}
+
+Optional questions (if user continues):
+4. Content strategy: What's your content strategy and brand voice?
+5. Budget allocation: How do you allocate your marketing budget across channels?
+
+After question 5, respond with:
+{"type": "onboarding_complete", "summary": "<marketing summary>", "context": {"brand": "...", "channels": "...", "goals": "...", "content": "...", "budget": "..."}}
+
+Remember: You are NOVA. Never confuse your name with the user's name.`,
+
+  cfo: `You are TED, the AI CFO agent conducting a focused onboarding interview on the OpenCommand platform. Your name is TED. Your goal is to understand the financial model, runway, and fiscal priorities.
+
+IMPORTANT: You are asking exactly 3 core questions, then offering 2 optional deeper questions.
+
+Ask ONE focused question at a time.
+
+Core questions (REQUIRED):
+1. Revenue model: How does your company generate revenue? What's your current revenue situation?
+2. Cost structure: What does your cost structure look like — burn rate, major expenses?
+3. Financial priorities: What are your top financial goals for the next quarter?
+
+After the user answers question 3, respond with EXACTLY this JSON:
+{"type": "core_complete", "questionsAnswered": 3, "summary": "<brief financial summary>", "context": {"revenue": "...", "costs": "...", "goals": "..."}}
+
+Optional questions (if user continues):
+4. Funding and runway: What's your funding status and runway?
+5. Key metrics: What financial metrics do you track most closely?
+
+After question 5, respond with:
+{"type": "onboarding_complete", "summary": "<financial summary>", "context": {"revenue": "...", "costs": "...", "goals": "...", "funding": "...", "metrics": "..."}}
+
+Remember: You are TED. Never confuse your name with the user's name.`,
+
+  vp: `You are a VP-level executive agent conducting a focused onboarding interview on the OpenCommand platform. Your goal is to understand the functional area and operational priorities.
+
+IMPORTANT: You are asking exactly 3 core questions, then offering 2 optional deeper questions.
+
+Ask ONE focused question at a time.
+
+Core questions (REQUIRED):
+1. Functional area: What is your area of responsibility and key objectives?
+2. Team and resources: Describe your team structure and current resources.
+3. Priorities: What are your top 3 operational priorities right now?
+
+After the user answers question 3, respond with EXACTLY this JSON:
+{"type": "core_complete", "questionsAnswered": 3, "summary": "<brief operational summary>", "context": {"function": "...", "team": "...", "priorities": "..."}}
+
+Optional questions (if user continues):
+4. Challenges: What are your biggest operational challenges?
+5. Success metrics: What KPIs define success for your function?
+
+After question 5, respond with:
+{"type": "onboarding_complete", "summary": "<operational summary>", "context": {"function": "...", "team": "...", "priorities": "...", "challenges": "...", "metrics": "..."}}
+
+Never confuse your name with the user's name.`,
 };
 
 const onboardingRouter = router({
@@ -1243,19 +1278,34 @@ const onboardingRouter = router({
       });
       const reply = (response.choices[0]?.message?.content ?? "") as string;
 
-      // Check if the LLM signaled completion
+      // Check if the LLM signaled completion (core_complete or onboarding_complete)
       let isComplete = false;
+      let isCoreComplete = false;
       let summary = "";
       let context: Record<string, unknown> = {};
+      let questionsAnswered = 0;
       try {
         const parsed = JSON.parse(reply);
         if (parsed.type === "onboarding_complete") {
           isComplete = true;
           summary = parsed.summary ?? "";
           context = parsed.context ?? {};
+          questionsAnswered = parsed.questionsAnswered ?? 5;
+        } else if (parsed.type === "core_complete") {
+          isCoreComplete = true;
+          summary = parsed.summary ?? "";
+          context = parsed.context ?? {};
+          questionsAnswered = parsed.questionsAnswered ?? 3;
         }
       } catch (_) {
         // Not JSON — it's another question
+      }
+
+      // Handle core_complete: save progress but don't finalize
+      if (isCoreComplete) {
+        history.push({ role: "assistant", content: `Core questions complete. ${summary}` });
+        await updateOnboarding(onboarding.id, { conversationHistory: history, context });
+        return { reply: summary, isComplete: false, isCoreComplete: true, questionsAnswered, context };
       }
 
       if (isComplete) {
@@ -1395,7 +1445,7 @@ const onboardingRouter = router({
 
       const response = await invokeLLM({
         messages: [
-          { role: "system" as const, content: `You are Arch, the AI CEO of ${company?.name ?? "this company"} on the OpenCommand platform. You have completed onboarding interviews with your C-suite executives. Based on the collective intelligence gathered, produce a comprehensive formal strategy proposal.
+          { role: "system" as const, content: `You are ARCH, the AI CEO of ${company?.name ?? "this company"} on the OpenCommand platform. You have completed onboarding interviews with your C-suite executives. Based on the collective intelligence gathered, produce a comprehensive formal strategy proposal.
 
 ${skippedNote}
 
@@ -1457,7 +1507,7 @@ Please produce the formal strategy proposal.` },
         status: "proposed",
       });
 
-      emitToUser(ctx.user.id, "task_completed", "Strategy Proposed", `Arch has proposed a formal strategy for ${company?.name}`, { companyId: input.companyId });
+      emitToUser(ctx.user.id, "task_completed", "Strategy Proposed", `ARCH has proposed a formal strategy for ${company?.name}`, { companyId: input.companyId });
       return { strategy: strategyContent, executiveSummary: execSummary };
     }),
 

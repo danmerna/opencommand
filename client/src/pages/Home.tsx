@@ -669,7 +669,7 @@ export default function Home() {
             },
             {
               icon: Bot,
-              title: "AI CEO — Arch",
+              title: "AI CEO — ARCH",
               desc: "Your AI CEO deploys agents, tracks OKRs, and makes decisions. Compounds intelligence over time as it learns your business.",
               href: "/ai-ceo",
             },
@@ -738,7 +738,7 @@ export default function Home() {
           <HowItWorksStep
             step="03"
             title="Your workforce executes"
-            desc="Arch, your AI CEO, deploys the right agents, assigns tasks, and orchestrates execution across your entire operation."
+            desc="ARCH, your AI CEO, deploys the right agents, assigns tasks, and orchestrates execution across your entire operation."
             detail="CEO, CTO, CMO, CFO — your full executive suite running in parallel."
             delay={300}
           />
@@ -804,7 +804,7 @@ export default function Home() {
             icon={Users}
             label="Coordination"
             theirs="You connect the dots between agents"
-            ours="Arch (AI CEO) orchestrates all agents autonomously"
+            ours="ARCH (AI CEO) orchestrates all agents autonomously"
           />
           <BlueprintDiffCard
             icon={Lock}
@@ -921,7 +921,7 @@ export default function Home() {
         <p className="text-label mb-4">Personal Intelligence Engine</p>
         <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-5">Deploy your zero-human workforce.</h2>
         <p className="text-muted-foreground text-body mb-10 max-w-lg mx-auto">
-          Connect your tools. State your intent. Arch handles execution. You get a receipt proving what it accomplished.
+          Connect your tools. State your intent. ARCH handles execution. You get a receipt proving what it accomplished.
         </p>
         <div className="flex flex-col items-center gap-4 max-w-md mx-auto w-full">
           {isAuthenticated ? (

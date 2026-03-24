@@ -189,3 +189,9 @@
 - [x] Waitlist: Add mergeEmailUserToOAuth helper to link email-first users to OAuth accounts
 - [x] Waitlist: Update OAuth callback to call mergeEmailUserToOAuth before upsertUser
 - [x] Waitlist: Clean up junk/duplicate users in database
+- [x] Fix agent names: CEO = ARCH (uppercase), CMO = NOVA, CTO = SAGE, CFO = TED
+- [x] Fix CEO agent thinking user's name is "Arch" instead of its own name being ARCH
+- [x] Add progress bar to onboarding showing current executive and question progress
+- [x] Shorten onboarding: 3 required questions per executive, then option to continue or move on
+- [x] Add 2 optional questions (Q4, Q5) per executive with skip/continue option
+- [x] Apply same 3-required + 2-optional pattern to all four executives (ARCH, NOVA, SAGE, TED)

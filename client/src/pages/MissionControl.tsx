@@ -54,7 +54,7 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
   );
   const generateStrategy = trpc.onboarding.generateStrategy.useMutation({
     onSuccess: () => {
-      toast.success("Strategy proposal generated!", { description: "Arch has produced a formal strategic plan." });
+      toast.success("Strategy proposal generated!", { description: "ARCH has produced a formal strategic plan." });
     },
     onError: (err: any) => toast.error("Failed to generate strategy", { description: err.message }),
   });
@@ -120,7 +120,7 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
             <div>
               <p className="text-sm font-medium text-foreground">Continue Building Your Executive Team</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {data.completed} of {data.total} executives contextualized — {data.total - data.completed} remaining to unlock Arch's strategy proposal
+                {data.completed} of {data.total} executives contextualized — {data.total - data.completed} remaining to unlock ARCH's strategy proposal
               </p>
             </div>
           </div>
@@ -240,7 +240,7 @@ export default function MissionControl() {
     onSuccess: (data) => {
       proposalsQ.refetch();
       okrsQ.refetch();
-      toast.success("Strategy accepted!", { description: data.okrsCreated > 0 ? `${data.okrsCreated} OKRs auto-created from Key Metrics.` : "Arch will begin execution." });
+      toast.success("Strategy accepted!", { description: data.okrsCreated > 0 ? `${data.okrsCreated} OKRs auto-created from Key Metrics.` : "ARCH will begin execution." });
     },
     onError: (err: any) => toast.error("Failed to accept strategy", { description: err.message }),
   });
@@ -350,7 +350,7 @@ export default function MissionControl() {
             )}
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-subtle" />
-              <span className="text-label text-[10px]">Arch Online</span>
+              <span className="text-label text-[10px]">ARCH Online</span>
             </div>
           </div>
         </div>
@@ -383,7 +383,7 @@ export default function MissionControl() {
             <Sparkles size={15} className="text-amber-400 shrink-0" />
             <div>
               <p className="text-sm font-medium text-foreground">Combined Strategy available</p>
-              <p className="text-xs text-muted-foreground line-clamp-1">{latestProposal.executiveSummary ?? "Arch has produced a formal strategic plan."}</p>
+              <p className="text-xs text-muted-foreground line-clamp-1">{latestProposal.executiveSummary ?? "ARCH has produced a formal strategic plan."}</p>
             </div>
           </div>
           <Button size="sm" variant="outline" className="text-xs gap-1.5 h-8 shrink-0" onClick={() => setTab("strategy")}>

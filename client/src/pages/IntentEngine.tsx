@@ -154,7 +154,7 @@ export default function IntentEngine() {
         setMessages([...newMessages, { role: "assistant", content: result.response }]);
         if (result.intentObject) setIntentObject(result.intentObject as IntentObject);
       } catch {
-        toast.error("Arch is unavailable. Try again.");
+        toast.error("ARCH is unavailable. Try again.");
       }
       setLivePhase("idle");
     } finally {
@@ -196,7 +196,7 @@ export default function IntentEngine() {
           <div className="mt-4 flex items-center gap-3 p-3 rounded-lg border border-yellow-800/50 bg-yellow-950/20">
             <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
             <p className="text-xs text-yellow-300 flex-1">
-              Connect your tools for smarter, data-informed questions — Arch will reference your actual pipeline, contacts, and deals.
+              Connect your tools for smarter, data-informed questions — ARCH will reference your actual pipeline, contacts, and deals.
             </p>
             <Link href="/integration-hub">
               <Button variant="outline" size="sm" className="text-xs border-yellow-700 text-yellow-400 hover:bg-yellow-950 gap-1.5 flex-shrink-0">
@@ -266,7 +266,7 @@ export default function IntentEngine() {
                     <span className="text-xs font-semibold text-foreground">AI</span>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-foreground">Arch — Self-Contextualizing Engine</div>
+                    <div className="text-sm font-medium text-foreground">ARCH — Self-Contextualizing Engine</div>
                     <div className={`text-[10px] flex items-center gap-1 ${PHASE_CONFIG[livePhase].color}`}>
                       {PHASE_CONFIG[livePhase].icon} {PHASE_CONFIG[livePhase].label}
                     </div>
@@ -286,7 +286,7 @@ export default function IntentEngine() {
                     <Cpu size={28} className="text-muted-foreground mx-auto mb-4 opacity-50" />
                     <div className="text-base font-medium text-muted-foreground mb-2">Describe your goal</div>
                     <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-                      Arch will connect to your tools, read live data, and ask questions that reference your actual pipeline — not generic ones.
+                      ARCH will connect to your tools, read live data, and ask questions that reference your actual pipeline — not generic ones.
                     </p>
                     <div className="mt-6 space-y-2 max-w-md mx-auto">
                       {[
@@ -370,7 +370,7 @@ export default function IntentEngine() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                    placeholder="Describe your goal — Arch will read your live data first..."
+                    placeholder="Describe your goal — ARCH will read your live data first..."
                     className="flex-1 bg-zinc-900 border-border text-foreground text-sm resize-none rounded-lg"
                     rows={2}
                   />
