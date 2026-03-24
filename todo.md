@@ -173,5 +173,19 @@
 - [x] Build sign-up funnel view: build FunnelView component in AdminUsers page
 - [x] Build sign-up funnel view: write vitest tests
 - [x] Fix NaN agentId error on /onboarding/:agentId — safely parse route param before tRPC query
-- [ ] Fix duplicate /mission-control key in DashboardLayout sidebar nav
+- [x] Fix duplicate /mission-control key in DashboardLayout sidebar nav
 - [ ] Fix broken DATE() SQL query in admin activity chart helper
+- [x] Waitlist: Add waitlist columns to users table (waitlistStatus, waitlistPosition, referralCode, referralCount, referredBy)
+- [x] Waitlist: Build DB helpers (findOrCreateUserByEmail, getWaitlistInfo, processReferral, adminApproveUser, adminRejectUser, adminGetWaitlistUsers)
+- [x] Waitlist: Build tRPC procedures (emailSignup, myWaitlistInfo, admin.waitlistUsers, admin.approveUser, admin.rejectUser)
+- [x] Waitlist: Replace hero CTA with email input that flows into OAuth then onboarding
+- [x] Waitlist: Remove 'See How It Works' button from hero
+- [x] Waitlist: Build Waitlist page with position, referral link, share buttons
+- [x] Waitlist: Add access gating in AppLayout — redirect non-approved users to /waitlist
+- [x] Waitlist: Redirect onboarding completion to /waitlist instead of /mission-control
+- [x] Waitlist: Build WaitlistPanel in admin dashboard with approve/reject buttons
+- [x] Waitlist: Migrate all existing users to waitlist pending status
+- [x] Waitlist: Write vitest tests for waitlist system
+- [x] Waitlist: Add mergeEmailUserToOAuth helper to link email-first users to OAuth accounts
+- [x] Waitlist: Update OAuth callback to call mergeEmailUserToOAuth before upsertUser
+- [x] Waitlist: Clean up junk/duplicate users in database

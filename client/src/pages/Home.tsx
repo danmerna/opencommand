@@ -5,6 +5,8 @@ import { ArrowRight, Target, BarChart3, Bot, Cpu, Shield, Package, Check, Zap, M
 import { ContextEngineHero } from "@/components/ContextEngineHero";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
+import { useLocation } from "wouter";
+import { toast } from "sonner";
 
 /* ─── Scroll Reveal Hook ─────────────────────────────────────────────── */
 function useScrollReveal(threshold = 0.15) {
@@ -351,6 +353,73 @@ function EmailCapture({ source = "homepage" }: { source?: string }) {
   );
 }
 
+/* ─── Hero Email Input (Primary CTA) ─────────────────────────────────── */
+function HeroEmailInput() {
+  const [email, setEmail] = useState("");
+  const [, setLocation] = useLocation();
+  const [error, setError] = useState("");
+
+  const emailSignup = trpc.waitlist.emailSignup.useMutation({
+    onSuccess: (data) => {
+      // Store email in sessionStorage so OAuth callback can link accounts
+      sessionStorage.setItem("oc_signup_email", data.email ?? "");
+      // If they already have an OAuth account, send to login
+      if (data.alreadyExists) {
+        toast.info("Welcome back! Sign in to continue.");
+        window.location.href = getLoginUrl("/onboarding/pro");
+      } else {
+        // New user: send to OAuth to create their full account, then onboarding
+        toast.success("Let's get started!");
+        window.location.href = getLoginUrl("/onboarding/pro");
+      }
+    },
+    onError: (err) => {
+      setError(err.message || "Something went wrong. Try again.");
+    },
+  });
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    const trimmed = email.trim();
+    if (!trimmed) { setError("Enter your email to get started."); return; }
+    // Capture referral code from URL if present
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref") || undefined;
+    emailSignup.mutate({ email: trimmed, referralCode: ref });
+  }, [email, emailSignup]);
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full">
+        <div className="flex-1 relative">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="What's your email?"
+            className="w-full px-5 py-4 rounded-lg bg-card border border-border text-foreground text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:border-accent transition-colors"
+            autoComplete="email"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={emailSignup.isPending}
+          className="btn-primary flex items-center justify-center gap-2 px-7 py-4 whitespace-nowrap disabled:opacity-60 shrink-0"
+        >
+          {emailSignup.isPending ? (
+            <RefreshCw size={16} className="animate-spin" />
+          ) : (
+            <>Get Started <ArrowRight size={16} /></>
+          )}
+        </button>
+      </form>
+      {error && <p className="text-xs text-destructive mt-2">{error}</p>}
+      <p className="text-xs text-muted-foreground/50 mt-3">Free during beta. No credit card required.</p>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════════════ */
 /*  HOME PAGE                                                             */
 /* ═══════════════════════════════════════════════════════════════════════ */
@@ -518,25 +587,20 @@ export default function Home() {
             <p className="hero-sub text-muted-foreground text-lg text-body max-w-xl mb-12">
               Open Command connects to your tools, builds its own context, and executes work autonomously — delivering a verified receipt for every outcome. The intent engine that context-engineers itself.
             </p>
-            <div className="hero-cta flex items-center gap-4 flex-wrap">
+            <div className="hero-cta w-full max-w-xl">
               {isAuthenticated ? (
                 hasCompany ? (
-                  <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-7 py-3">
+                  <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-7 py-3 w-fit">
                     Enter Mission Control <ArrowRight size={16} />
                   </Link>
                 ) : (
-                  <Link href="/onboarding/pro" className="btn-primary flex items-center gap-2 px-7 py-3">
-                    Start Executive Onboarding <ArrowRight size={16} />
+                  <Link href="/onboarding/pro" className="btn-primary flex items-center gap-2 px-7 py-3 w-fit">
+                    Continue Onboarding <ArrowRight size={16} />
                   </Link>
                 )
               ) : (
-                <a href={getLoginUrl("/onboarding/pro")} className="btn-primary flex items-center gap-2 px-7 py-3">
-                  Start Free — Build Your Executive Team <ArrowRight size={16} />
-                </a>
+                <HeroEmailInput />
               )}
-              <button onClick={() => scrollToSection("how-it-works")} className="btn-outline px-7 py-3">
-                See How It Works
-              </button>
             </div>
           </div>
 
@@ -830,9 +894,21 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <a href={getLoginUrl("/onboarding/pro")} className="btn-primary text-center text-sm py-3 w-full block">
-            Get Started — It's Free <ArrowRight size={14} className="inline ml-1" />
-          </a>
+          <div className="max-w-md mx-auto">
+            {isAuthenticated ? (
+              hasCompany ? (
+                <Link href="/mission-control" className="btn-primary text-center text-sm py-3 w-full block">
+                  Enter Mission Control <ArrowRight size={14} className="inline ml-1" />
+                </Link>
+              ) : (
+                <Link href="/onboarding/pro" className="btn-primary text-center text-sm py-3 w-full block">
+                  Continue Onboarding <ArrowRight size={14} className="inline ml-1" />
+                </Link>
+              )
+            ) : (
+              <HeroEmailInput />
+            )}
+          </div>
           <p className="text-center text-xs text-muted-foreground/60 mt-4">
             Paid plans will be introduced later. Early users will be grandfathered.
           </p>
@@ -847,25 +923,24 @@ export default function Home() {
         <p className="text-muted-foreground text-body mb-10 max-w-lg mx-auto">
           Connect your tools. State your intent. Arch handles execution. You get a receipt proving what it accomplished.
         </p>
-        <div className="flex flex-col items-center gap-4">
-          <EmailCapture source="homepage-bottom" />
-          <p className="text-xs text-muted-foreground">
-            Free during beta. Full access. No credit card required.
-          </p>
+        <div className="flex flex-col items-center gap-4 max-w-md mx-auto w-full">
           {isAuthenticated ? (
             hasCompany ? (
-              <Link href="/mission-control" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                Go to Mission Control <ArrowRight size={10} className="inline ml-0.5" />
+              <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-7 py-3">
+                Enter Mission Control <ArrowRight size={16} />
               </Link>
             ) : (
-              <Link href="/onboarding/pro" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                Start Executive Onboarding <ArrowRight size={10} className="inline ml-0.5" />
+              <Link href="/onboarding/pro" className="btn-primary flex items-center gap-2 px-7 py-3">
+                Continue Onboarding <ArrowRight size={16} />
               </Link>
             )
           ) : (
-            <a href={getLoginUrl()} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-              Already have an account? Sign in <ArrowRight size={10} className="inline ml-0.5" />
-            </a>
+            <>
+              <HeroEmailInput />
+              <a href={getLoginUrl()} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Already have an account? Sign in <ArrowRight size={10} className="inline ml-0.5" />
+              </a>
+            </>
           )}
         </div>
       </section>

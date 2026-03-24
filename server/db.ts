@@ -1,4 +1,5 @@
-import { eq, desc, and, sql, isNull } from "drizzle-orm";
+import { eq, desc, and, sql, isNull, ne, inArray, asc, count } from "drizzle-orm";
+import crypto from "crypto";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -1074,4 +1075,217 @@ export async function adminGetUserFunnelStage(userId: number): Promise<string> {
   if (Number(hasCompany?.count) > 0) return "created_company";
 
   return "signed_up";
+}
+
+
+// ─── Waitlist System ────────────────────────────────────────────────────────
+
+function generateReferralCode(): string {
+  return crypto.randomBytes(4).toString("hex"); // 8-char hex
+}
+
+export async function findOrCreateUserByEmail(email: string, referralCode?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Check if user already exists
+  const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (existing.length > 0) return existing[0];
+
+  // Get next waitlist position
+  const [maxPos] = await db.select({ max: sql<number>`COALESCE(MAX(waitlistPosition), 0)` }).from(users);
+  const nextPosition = (maxPos?.max ?? 0) + 1;
+
+  // Create new user with email-only (no openId yet — will be linked on OAuth)
+  const tempOpenId = `email_${crypto.randomBytes(8).toString("hex")}`;
+  const newRefCode = generateReferralCode();
+
+  await db.insert(users).values({
+    openId: tempOpenId,
+    email,
+    name: email.split("@")[0],
+    loginMethod: "email",
+    role: "user",
+    waitlistStatus: "pending",
+    waitlistPosition: nextPosition,
+    referralCode: newRefCode,
+    referredBy: referralCode || null,
+    waitlistJoinedAt: new Date(),
+  });
+
+  // If referred, process the referral
+  if (referralCode) {
+    await processReferral(referralCode);
+  }
+
+  const [newUser] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return newUser;
+}
+
+export async function processReferral(referralCode: string) {
+  const db = await getDb();
+  if (!db) return;
+
+  // Increment referral count for the referrer
+  await db.update(users)
+    .set({ referralCount: sql`referralCount + 1` })
+    .where(eq(users.referralCode, referralCode));
+
+  // Move referrer up by 1 position (decrease position number)
+  const [referrer] = await db.select().from(users).where(eq(users.referralCode, referralCode)).limit(1);
+  if (referrer && referrer.waitlistPosition && referrer.waitlistPosition > 1) {
+    const newPos = referrer.waitlistPosition - 1;
+    // Swap with the user currently at that position
+    await db.update(users)
+      .set({ waitlistPosition: referrer.waitlistPosition })
+      .where(and(eq(users.waitlistPosition, newPos), ne(users.id, referrer.id)));
+    await db.update(users)
+      .set({ waitlistPosition: newPos })
+      .where(eq(users.id, referrer.id));
+  }
+}
+
+export async function getWaitlistInfo(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [user] = await db.select({
+    waitlistStatus: users.waitlistStatus,
+    waitlistPosition: users.waitlistPosition,
+    referralCode: users.referralCode,
+    referralCount: users.referralCount,
+    referredBy: users.referredBy,
+  }).from(users).where(eq(users.id, userId)).limit(1);
+
+  const [totalResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(users).where(eq(users.waitlistStatus, "pending"));
+
+  return { ...user, totalWaitlist: totalResult?.count ?? 0 };
+}
+
+export async function adminApproveUser(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({
+    waitlistStatus: "approved",
+    waitlistApprovedAt: new Date(),
+    waitlistPosition: null,
+  }).where(eq(users.id, userId));
+}
+
+export async function adminRejectUser(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({
+    waitlistStatus: "rejected",
+    waitlistPosition: null,
+  }).where(eq(users.id, userId));
+}
+
+export async function adminBulkApproveUsers(userIds: number[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({
+    waitlistStatus: "approved",
+    waitlistApprovedAt: new Date(),
+    waitlistPosition: null,
+  }).where(inArray(users.id, userIds));
+}
+
+export async function adminGetWaitlistStats() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [stats] = await db.select({
+    total: sql<number>`COUNT(*)`,
+    pending: sql<number>`SUM(CASE WHEN waitlistStatus = 'pending' THEN 1 ELSE 0 END)`,
+    approved: sql<number>`SUM(CASE WHEN waitlistStatus = 'approved' THEN 1 ELSE 0 END)`,
+    rejected: sql<number>`SUM(CASE WHEN waitlistStatus = 'rejected' THEN 1 ELSE 0 END)`,
+    totalReferrals: sql<number>`SUM(referralCount)`,
+  }).from(users);
+
+  return stats;
+}
+
+export async function adminGetWaitlistUsers(statusFilter?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const conditions = statusFilter && statusFilter !== "all"
+    ? eq(users.waitlistStatus, statusFilter as "pending" | "approved" | "rejected")
+    : undefined;
+
+  return db.select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+    role: users.role,
+    waitlistStatus: users.waitlistStatus,
+    waitlistPosition: users.waitlistPosition,
+    referralCode: users.referralCode,
+    referralCount: users.referralCount,
+    referredBy: users.referredBy,
+    waitlistJoinedAt: users.waitlistJoinedAt,
+    waitlistApprovedAt: users.waitlistApprovedAt,
+    createdAt: users.createdAt,
+    loginMethod: users.loginMethod,
+  }).from(users)
+    .where(conditions)
+    .orderBy(asc(users.waitlistPosition), desc(users.createdAt));
+}
+
+export async function mergeEmailUserToOAuth(email: string, oauthOpenId: string) {
+  const db = await getDb();
+  if (!db) return;
+
+  // Find any email-first temp user (openId starts with 'email_') with this email
+  const [tempUser] = await db.select().from(users)
+    .where(and(eq(users.email, email), sql`${users.openId} LIKE 'email_%'`))
+    .limit(1);
+
+  if (!tempUser) return; // No email-first user to merge
+
+  // Check if an OAuth user already exists
+  const [oauthUser] = await db.select().from(users)
+    .where(eq(users.openId, oauthOpenId))
+    .limit(1);
+
+  if (oauthUser) {
+    // OAuth user already exists — transfer waitlist fields from temp user if they're better
+    const updates: Record<string, unknown> = {};
+    if (!oauthUser.waitlistPosition && tempUser.waitlistPosition) updates.waitlistPosition = tempUser.waitlistPosition;
+    if (!oauthUser.referralCode && tempUser.referralCode) updates.referralCode = tempUser.referralCode;
+    if (tempUser.referralCount > 0) updates.referralCount = sql`${users.referralCount} + ${tempUser.referralCount}`;
+    if (!oauthUser.referredBy && tempUser.referredBy) updates.referredBy = tempUser.referredBy;
+    if (!oauthUser.waitlistJoinedAt && tempUser.waitlistJoinedAt) updates.waitlistJoinedAt = tempUser.waitlistJoinedAt;
+    if (tempUser.waitlistStatus === "approved") {
+      updates.waitlistStatus = "approved";
+      updates.waitlistApprovedAt = tempUser.waitlistApprovedAt;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await db.update(users).set(updates).where(eq(users.id, oauthUser.id));
+    }
+
+    // Delete the temp user
+    await db.delete(users).where(eq(users.id, tempUser.id));
+  } else {
+    // No OAuth user yet — update the temp user's openId to the real one
+    await db.update(users).set({ openId: oauthOpenId }).where(eq(users.id, tempUser.id));
+  }
+}
+
+export async function ensureWaitlistFields(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+
+  const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) return;
+
+  const updates: Record<string, unknown> = {};
+  if (!user.referralCode) updates.referralCode = generateReferralCode();
+  if (!user.waitlistJoinedAt) updates.waitlistJoinedAt = new Date();
+
+  if (Object.keys(updates).length > 0) {
+    await db.update(users).set(updates).where(eq(users.id, userId));
+  }
 }

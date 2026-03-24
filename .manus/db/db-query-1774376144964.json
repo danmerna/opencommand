@@ -1,0 +1,130 @@
+{
+  "query": "SELECT id, name, email, role, waitlistStatus, waitlistPosition, referralCode, referralCount FROM users ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id, name, email, role, waitlistStatus, waitlistPosition, referralCode, referralCount FROM users ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Dan Merna",
+      "email": "dan@trymagnetic.ai",
+      "role": "admin",
+      "waitlistStatus": "approved",
+      "waitlistPosition": "1",
+      "referralCode": "ab778181",
+      "referralCount": "0"
+    },
+    {
+      "id": "90024",
+      "name": "Dan Merna",
+      "email": "dan@hrvstmarketing.com",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "287",
+      "referralCode": "4254d31a",
+      "referralCount": "0"
+    },
+    {
+      "id": "90330",
+      "name": "Dan Merna",
+      "email": "dan@hrvstmarketing.com",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "593",
+      "referralCode": "397767de",
+      "referralCount": "0"
+    },
+    {
+      "id": "150139",
+      "name": "D M",
+      "email": "danielmerna@gmail.com",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "1940",
+      "referralCode": "64f936f0",
+      "referralCount": "0"
+    },
+    {
+      "id": "150668",
+      "name": "Dan Merna",
+      "email": "dan@trymagnetic.ai",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "2469",
+      "referralCode": "5ed1d25a",
+      "referralCount": "0"
+    },
+    {
+      "id": "360028",
+      "name": "Taylor Egnarski",
+      "email": "egnarskit@gmail.com",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "2632",
+      "referralCode": "b1ed6d8a",
+      "referralCount": "0"
+    },
+    {
+      "id": "360029",
+      "name": "Taylor Gerber",
+      "email": "egnarski9@hotmail.com",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "2633",
+      "referralCode": "78da7c08",
+      "referralCount": "0"
+    },
+    {
+      "id": "390121",
+      "name": "NULL",
+      "email": "NULL",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "NULL",
+      "referralCode": "1a03dfb4",
+      "referralCount": "0"
+    },
+    {
+      "id": "390122",
+      "name": "NULL",
+      "email": "NULL",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "NULL",
+      "referralCode": "e3bb031b",
+      "referralCount": "0"
+    },
+    {
+      "id": "390123",
+      "name": "NULL",
+      "email": "NULL",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "NULL",
+      "referralCode": "54e4e439",
+      "referralCount": "0"
+    },
+    {
+      "id": "390124",
+      "name": "NULL",
+      "email": "NULL",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "NULL",
+      "referralCode": "c5333f6d",
+      "referralCount": "0"
+    },
+    {
+      "id": "390125",
+      "name": "NULL",
+      "email": "NULL",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "NULL",
+      "referralCode": "64a01638",
+      "referralCount": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\twaitlistStatus\twaitlistPosition\treferralCode\treferralCount\n1\tDan Merna\tdan@trymagnetic.ai\tadmin\tapproved\t1\tab778181\t0\n90024\tDan Merna\tdan@hrvstmarketing.com\tuser\tpending\t287\t4254d31a\t0\n90330\tDan Merna\tdan@hrvstmarketing.com\tuser\tpending\t593\t397767de\t0\n150139\tD M\tdanielmerna@gmail.com\tuser\tpending\t1940\t64f936f0\t0\n150668\tDan Merna\tdan@trymagnetic.ai\tuser\tpending\t2469\t5ed1d25a\t0\n360028\tTaylor Egnarski\tegnarskit@gmail.com\tuser\tpending\t2632\tb1ed6d8a\t0\n360029\tTaylor Gerber\tegnarski9@hotmail.com\tuser\tpending\t2633\t78da7c08\t0\n390121\tNULL\tNULL\tuser\tpending\tNULL\t1a03dfb4\t0\n390122\tNULL\tNULL\tuser\tpending\tNULL\te3bb031b\t0\n390123\tNULL\tNULL\tuser\tpending\tNULL\t54e4e439\t0\n390124\tNULL\tNULL\tuser\tpending\tNULL\tc5333f6d\t0\n390125\tNULL\tNULL\tuser\tpending\tNULL\t64a01638\t0\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

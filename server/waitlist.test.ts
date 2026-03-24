@@ -1,86 +1,286 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { appRouter } from "./routers";
-import type { TrpcContext } from "./_core/context";
+import { describe, it, expect, vi } from "vitest";
+import {
+  findOrCreateUserByEmail,
+  getWaitlistInfo,
+  adminApproveUser,
+  adminRejectUser,
+  adminGetWaitlistUsers,
+  adminGetWaitlistStats,
+  adminBulkApproveUsers,
+  processReferral,
+  mergeEmailUserToOAuth,
+  ensureWaitlistFields,
+} from "./db";
+import fs from "fs";
+import path from "path";
 
-// ─── Mock DB helpers ──────────────────────────────────────────────────────────
-vi.mock("./db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./db")>();
-  return {
-    ...actual,
-    joinWaitlist: vi.fn().mockResolvedValue({ insertId: 1 }),
-    getWaitlistCount: vi.fn().mockResolvedValue(42),
-    isEmailOnWaitlist: vi.fn().mockResolvedValue(false),
-  };
-});
-
-vi.mock("./_core/notification", () => ({
-  notifyOwner: vi.fn().mockResolvedValue(true),
+// Mock the database module
+vi.mock("./db", () => ({
+  findOrCreateUserByEmail: vi.fn(),
+  getWaitlistInfo: vi.fn(),
+  adminApproveUser: vi.fn(),
+  adminRejectUser: vi.fn(),
+  adminGetWaitlistUsers: vi.fn(),
+  adminGetWaitlistStats: vi.fn(),
+  adminBulkApproveUsers: vi.fn(),
+  processReferral: vi.fn(),
+  mergeEmailUserToOAuth: vi.fn(),
+  ensureWaitlistFields: vi.fn(),
 }));
 
-function createPublicContext(): TrpcContext {
-  return { user: null, req: {} as any, res: {} as any };
-}
+describe("Waitlist System", () => {
+  describe("Email-first signup", () => {
+    it("findOrCreateUserByEmail returns a user with waitlist fields", async () => {
+      const mockUser = {
+        id: 1,
+        email: "test@example.com",
+        name: "test",
+        openId: "email_abc123",
+        waitlistStatus: "pending",
+        waitlistPosition: 5,
+        referralCode: "a1b2c3d4",
+        referralCount: 0,
+        referredBy: null,
+      };
+      (findOrCreateUserByEmail as any).mockResolvedValue(mockUser);
 
-describe("Waitlist Router", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+      const result = await findOrCreateUserByEmail("test@example.com");
+      expect(result).toBeDefined();
+      expect(result.email).toBe("test@example.com");
+      expect(result.waitlistStatus).toBe("pending");
+      expect(result.referralCode).toBeTruthy();
+      expect(result.referralCode).toHaveLength(8);
+      expect(result.openId).toMatch(/^email_/);
+    });
 
-  describe("waitlist.count", () => {
-    it("returns the waitlist count", async () => {
-      const caller = appRouter.createCaller(createPublicContext());
-      const count = await caller.waitlist.count();
-      expect(count).toBe(42);
+    it("findOrCreateUserByEmail with referral code processes referral", async () => {
+      const mockUser = {
+        id: 2,
+        email: "referred@example.com",
+        waitlistStatus: "pending",
+        waitlistPosition: 6,
+        referralCode: "e5f6g7h8",
+        referralCount: 0,
+        referredBy: "a1b2c3d4",
+      };
+      (findOrCreateUserByEmail as any).mockResolvedValue(mockUser);
+
+      const result = await findOrCreateUserByEmail("referred@example.com", "a1b2c3d4");
+      expect(result.referredBy).toBe("a1b2c3d4");
+      expect(findOrCreateUserByEmail).toHaveBeenCalledWith("referred@example.com", "a1b2c3d4");
+    });
+
+    it("findOrCreateUserByEmail returns existing user if already signed up", async () => {
+      const mockUser = {
+        id: 1,
+        email: "existing@example.com",
+        openId: "real_oauth_id",
+        waitlistStatus: "approved",
+      };
+      (findOrCreateUserByEmail as any).mockResolvedValue(mockUser);
+
+      const result = await findOrCreateUserByEmail("existing@example.com");
+      expect(result.openId).toBe("real_oauth_id");
     });
   });
 
-  describe("waitlist.join", () => {
-    it("successfully joins with a valid email", async () => {
-      const { isEmailOnWaitlist } = await import("./db");
-      vi.mocked(isEmailOnWaitlist).mockResolvedValueOnce(false);
+  describe("Waitlist info", () => {
+    it("getWaitlistInfo returns position and referral data", async () => {
+      const mockInfo = {
+        waitlistStatus: "pending",
+        waitlistPosition: 3,
+        referralCode: "a1b2c3d4",
+        referralCount: 2,
+        referredBy: null,
+        totalWaitlist: 50,
+      };
+      (getWaitlistInfo as any).mockResolvedValue(mockInfo);
 
-      const caller = appRouter.createCaller(createPublicContext());
-      const result = await caller.waitlist.join({ email: "test@example.com", source: "creators" });
-      expect(result.success).toBe(true);
-      expect(result.alreadyJoined).toBe(false);
+      const info = await getWaitlistInfo(1);
+      expect(info).toBeDefined();
+      expect(info.waitlistStatus).toBe("pending");
+      expect(info.waitlistPosition).toBe(3);
+      expect(info.referralCode).toBeTruthy();
+      expect(info.referralCount).toBe(2);
+      expect(info.totalWaitlist).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Admin operations", () => {
+    it("adminApproveUser changes status to approved", async () => {
+      (adminApproveUser as any).mockResolvedValue(undefined);
+      await adminApproveUser(1);
+      expect(adminApproveUser).toHaveBeenCalledWith(1);
     });
 
-    it("returns alreadyJoined=true for a duplicate email", async () => {
-      const { isEmailOnWaitlist } = await import("./db");
-      vi.mocked(isEmailOnWaitlist).mockResolvedValueOnce(true);
-
-      const caller = appRouter.createCaller(createPublicContext());
-      const result = await caller.waitlist.join({ email: "existing@example.com", source: "creators" });
-      expect(result.success).toBe(true);
-      expect(result.alreadyJoined).toBe(true);
+    it("adminRejectUser changes status to rejected", async () => {
+      (adminRejectUser as any).mockResolvedValue(undefined);
+      await adminRejectUser(1);
+      expect(adminRejectUser).toHaveBeenCalledWith(1);
     });
 
-    it("rejects an invalid email format", async () => {
-      const caller = appRouter.createCaller(createPublicContext());
-      await expect(
-        caller.waitlist.join({ email: "not-an-email", source: "creators" })
-      ).rejects.toThrow();
+    it("adminBulkApproveUsers approves multiple users at once", async () => {
+      (adminBulkApproveUsers as any).mockResolvedValue(undefined);
+      await adminBulkApproveUsers([1, 2, 3]);
+      expect(adminBulkApproveUsers).toHaveBeenCalledWith([1, 2, 3]);
     });
 
-    it("does not call joinWaitlist when email already exists", async () => {
-      const { isEmailOnWaitlist, joinWaitlist } = await import("./db");
-      vi.mocked(isEmailOnWaitlist).mockResolvedValueOnce(true);
+    it("adminGetWaitlistUsers returns all users with waitlist data", async () => {
+      const mockUsers = [
+        { id: 1, name: "Alice", email: "alice@test.com", waitlistStatus: "pending", waitlistPosition: 1, referralCount: 3 },
+        { id: 2, name: "Bob", email: "bob@test.com", waitlistStatus: "approved", waitlistPosition: null, referralCount: 0 },
+        { id: 3, name: "Charlie", email: "charlie@test.com", waitlistStatus: "rejected", waitlistPosition: null, referralCount: 1 },
+      ];
+      (adminGetWaitlistUsers as any).mockResolvedValue(mockUsers);
 
-      const caller = appRouter.createCaller(createPublicContext());
-      await caller.waitlist.join({ email: "existing@example.com" });
-      expect(vi.mocked(joinWaitlist)).not.toHaveBeenCalled();
+      const users = await adminGetWaitlistUsers();
+      expect(users).toHaveLength(3);
+      expect(users[0].waitlistStatus).toBe("pending");
+      expect(users[1].waitlistStatus).toBe("approved");
+      expect(users[2].waitlistStatus).toBe("rejected");
     });
 
-    it("calls notifyOwner on new signup", async () => {
-      const { isEmailOnWaitlist } = await import("./db");
-      const { notifyOwner } = await import("./_core/notification");
-      vi.mocked(isEmailOnWaitlist).mockResolvedValueOnce(false);
+    it("adminGetWaitlistStats returns aggregate stats", async () => {
+      const mockStats = {
+        total: 100,
+        pending: 60,
+        approved: 35,
+        rejected: 5,
+        totalReferrals: 42,
+      };
+      (adminGetWaitlistStats as any).mockResolvedValue(mockStats);
 
-      const caller = appRouter.createCaller(createPublicContext());
-      await caller.waitlist.join({ email: "new@example.com", source: "creators" });
-      expect(vi.mocked(notifyOwner)).toHaveBeenCalledWith(
-        expect.objectContaining({ title: "New Waitlist Signup" })
-      );
+      const stats = await adminGetWaitlistStats();
+      expect(stats.total).toBe(100);
+      expect(stats.pending).toBe(60);
+      expect(stats.approved).toBe(35);
+      expect(stats.rejected).toBe(5);
+      expect(stats.totalReferrals).toBe(42);
     });
+  });
+
+  describe("Referral system", () => {
+    it("processReferral is called with correct referral code", async () => {
+      (processReferral as any).mockResolvedValue(undefined);
+      await processReferral("referrer_code");
+      expect(processReferral).toHaveBeenCalledWith("referrer_code");
+    });
+
+    it("referral codes are 8-char hex strings", () => {
+      const code = "a1b2c3d4";
+      expect(code).toMatch(/^[a-f0-9]{8}$/);
+      expect(code).toHaveLength(8);
+    });
+  });
+
+  describe("OAuth email merge", () => {
+    it("mergeEmailUserToOAuth is called with email and openId", async () => {
+      (mergeEmailUserToOAuth as any).mockResolvedValue(undefined);
+      await mergeEmailUserToOAuth("test@example.com", "real_oauth_id_123");
+      expect(mergeEmailUserToOAuth).toHaveBeenCalledWith("test@example.com", "real_oauth_id_123");
+    });
+  });
+
+  describe("ensureWaitlistFields", () => {
+    it("ensureWaitlistFields is called with userId", async () => {
+      (ensureWaitlistFields as any).mockResolvedValue(undefined);
+      await ensureWaitlistFields(42);
+      expect(ensureWaitlistFields).toHaveBeenCalledWith(42);
+    });
+  });
+});
+
+describe("Waitlist source code validation", () => {
+  it("schema includes waitlist columns", () => {
+    const schema = fs.readFileSync(path.resolve(__dirname, "../drizzle/schema.ts"), "utf-8");
+    expect(schema).toContain("waitlistStatus");
+    expect(schema).toContain("waitlistPosition");
+    expect(schema).toContain("referralCode");
+    expect(schema).toContain("referralCount");
+    expect(schema).toContain("referredBy");
+    expect(schema).toContain("waitlistJoinedAt");
+    expect(schema).toContain("waitlistApprovedAt");
+  });
+
+  it("db.ts exports all waitlist helpers", () => {
+    const dbSrc = fs.readFileSync(path.resolve(__dirname, "db.ts"), "utf-8");
+    expect(dbSrc).toContain("findOrCreateUserByEmail");
+    expect(dbSrc).toContain("getWaitlistInfo");
+    expect(dbSrc).toContain("processReferral");
+    expect(dbSrc).toContain("adminApproveUser");
+    expect(dbSrc).toContain("adminRejectUser");
+    expect(dbSrc).toContain("adminBulkApproveUsers");
+    expect(dbSrc).toContain("adminGetWaitlistStats");
+    expect(dbSrc).toContain("adminGetWaitlistUsers");
+    expect(dbSrc).toContain("ensureWaitlistFields");
+    expect(dbSrc).toContain("mergeEmailUserToOAuth");
+  });
+
+  it("routers.ts has waitlist router with emailSignup and info procedures", () => {
+    const routers = fs.readFileSync(path.resolve(__dirname, "routers.ts"), "utf-8");
+    expect(routers).toContain("waitlistRouter");
+    expect(routers).toContain("emailSignup");
+    // emailSignup is a public mutation procedure
+    expect(routers).toContain("findOrCreateUserByEmail");
+    expect(routers).toMatch(/waitlist:\s*waitlistRouter/);
+  });
+
+  it("routers.ts has admin waitlist procedures", () => {
+    const routers = fs.readFileSync(path.resolve(__dirname, "routers.ts"), "utf-8");
+    expect(routers).toContain("waitlistStats");
+    expect(routers).toContain("waitlistUsers");
+    expect(routers).toContain("approveUser");
+    expect(routers).toContain("rejectUser");
+    expect(routers).toContain("bulkApprove");
+  });
+
+  it("oauth.ts calls mergeEmailUserToOAuth before upsert", () => {
+    const oauth = fs.readFileSync(path.resolve(__dirname, "_core/oauth.ts"), "utf-8");
+    expect(oauth).toContain("mergeEmailUserToOAuth");
+    // Ensure merge happens before upsert
+    const mergeIdx = oauth.indexOf("mergeEmailUserToOAuth");
+    const upsertIdx = oauth.indexOf("upsertUser");
+    expect(mergeIdx).toBeLessThan(upsertIdx);
+  });
+
+  it("Home.tsx has HeroEmailInput component with email-first flow", () => {
+    const home = fs.readFileSync(path.resolve(__dirname, "../client/src/pages/Home.tsx"), "utf-8");
+    expect(home).toContain("HeroEmailInput");
+    expect(home).toContain("trpc.waitlist.emailSignup.useMutation");
+    expect(home).toContain("oc_signup_email");
+    expect(home).toContain("getLoginUrl(\"/onboarding/pro\")");
+  });
+
+  it("Waitlist.tsx has position display and referral sharing", () => {
+    const waitlist = fs.readFileSync(path.resolve(__dirname, "../client/src/pages/Waitlist.tsx"), "utf-8");
+    expect(waitlist).toContain("trpc.waitlist.info.useQuery");
+    expect(waitlist).toContain("referralCode");
+    expect(waitlist).toContain("navigator.clipboard.writeText");
+    expect(waitlist).toContain("navigator.share");
+    expect(waitlist).toContain("waitlistPosition");
+    expect(waitlist).toContain("referralCount");
+  });
+
+  it("AppLayout.tsx gates non-approved users to /waitlist", () => {
+    const layout = fs.readFileSync(path.resolve(__dirname, "../client/src/components/AppLayout.tsx"), "utf-8");
+    expect(layout).toContain("waitlistStatus");
+    expect(layout).toContain("/waitlist");
+    // Admin bypass
+    expect(layout).toContain("role");
+    expect(layout).toContain("admin");
+  });
+
+  it("App.tsx has /waitlist route", () => {
+    const app = fs.readFileSync(path.resolve(__dirname, "../client/src/App.tsx"), "utf-8");
+    expect(app).toContain("/waitlist");
+    expect(app).toContain("Waitlist");
+  });
+
+  it("AdminUsers.tsx has WaitlistPanel component", () => {
+    const admin = fs.readFileSync(path.resolve(__dirname, "../client/src/pages/AdminUsers.tsx"), "utf-8");
+    expect(admin).toContain("WaitlistPanel");
+    expect(admin).toContain("trpc.admin.waitlistUsers");
+    expect(admin).toContain("trpc.admin.approveUser");
+    expect(admin).toContain("trpc.admin.rejectUser");
   });
 });

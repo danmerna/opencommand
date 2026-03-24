@@ -1,0 +1,8 @@
+{
+  "query": "\nUPDATE users SET waitlist_status = 'pending' WHERE waitlist_status IS NULL;\nUPDATE users SET referral_code = CONCAT(LOWER(SUBSTRING(MD5(RAND()), 1, 12))) WHERE referral_code IS NULL;\nUPDATE users u JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY created_at ASC) AS pos FROM users) ranked ON u.id = ranked.id SET u.waitlist_position = ranked.pos WHERE u.waitlist_position IS NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \nUPDATE users SET waitlist_status = 'pending' WHERE waitlist_status IS NULL;\nUPDATE users SET referral_code = CONCAT(LOWER(SUBSTRING(MD5(RAND()), 1, 12))) WHERE referral_code IS NULL;\nUPDATE users u JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY created_at ASC) AS pos FROM users) ranked ON u.id = ranked.id SET u.waitlist_position = ranked.pos WHERE u.waitlist_position IS NULL;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'waitlist_status' in 'where clause'"
+  ]
+}

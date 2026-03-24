@@ -416,7 +416,7 @@ export default function ProOnboarding() {
   function handleLaunch() {
     track("onboarding", "completed", { companyId, agentCount: createdAgents.length, skippedCount: skippedAgents.size });
     setStep("complete");
-    setTimeout(() => navigate("/mission-control"), 1200);
+    setTimeout(() => navigate("/waitlist"), 1200);
   }
 
   const currentExecIndex = ONBOARDING_ORDER.indexOf(step);

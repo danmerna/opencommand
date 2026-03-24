@@ -51,6 +51,8 @@ import {
   upsertUserSession, getSessionsByUser,
   adminGetAllUsers, adminGetUserKpis, adminGetUserTimeline, adminGetDailyActivity,
   adminGetFunnelStats, adminGetUserFunnelStage,
+  findOrCreateUserByEmail, getWaitlistInfo, adminApproveUser, adminRejectUser,
+  adminBulkApproveUsers, adminGetWaitlistStats, adminGetWaitlistUsers, ensureWaitlistFields,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -1560,6 +1562,27 @@ Please produce the formal strategy proposal.` },
 
 // ─── Waitlist Router ────────────────────────────────────────────────────────
 const waitlistRouter = router({
+  // Email-first signup: creates user record with email, returns user info
+  emailSignup: publicProcedure
+    .input(z.object({ email: z.string().email(), referralCode: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const user = await findOrCreateUserByEmail(input.email, input.referralCode);
+      try {
+        await notifyOwner({
+          title: "New Email Signup",
+          content: `${input.email} signed up via email CTA. Waitlist position: ${user.waitlistPosition ?? 'N/A'}.`,
+        });
+      } catch {}
+      return { success: true, email: user.email, alreadyExists: !!user.openId && !user.openId.startsWith('email_') };
+    }),
+
+  // Get waitlist info for the current user
+  info: protectedProcedure.query(async ({ ctx }) => {
+    await ensureWaitlistFields(ctx.user.id);
+    return getWaitlistInfo(ctx.user.id);
+  }),
+
+  // Legacy: keep old join/count for backwards compatibility
   join: publicProcedure
     .input(z.object({ email: z.string().email(), source: z.string().optional() }))
     .mutation(async ({ input }) => {
@@ -1660,6 +1683,29 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 
 const adminRouter = router({
   users: adminProcedure.query(() => adminGetAllUsers()),
+  // Waitlist management
+  waitlistStats: adminProcedure.query(() => adminGetWaitlistStats()),
+  waitlistUsers: adminProcedure
+    .input(z.object({ status: z.string().optional() }).optional())
+    .query(({ input }) => adminGetWaitlistUsers(input?.status)),
+  approveUser: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .mutation(async ({ input }) => {
+      await adminApproveUser(input.userId);
+      return { success: true };
+    }),
+  rejectUser: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .mutation(async ({ input }) => {
+      await adminRejectUser(input.userId);
+      return { success: true };
+    }),
+  bulkApprove: adminProcedure
+    .input(z.object({ userIds: z.array(z.number()) }))
+    .mutation(async ({ input }) => {
+      await adminBulkApproveUsers(input.userIds);
+      return { success: true };
+    }),
   userKpis: adminProcedure
     .input(z.object({ userId: z.number() }))
     .query(({ input }) => adminGetUserKpis(input.userId)),

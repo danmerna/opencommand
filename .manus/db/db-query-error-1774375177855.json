@@ -1,0 +1,8 @@
+{
+  "query": "\nUPDATE users SET waitlistStatus = 'pending' WHERE waitlistStatus IS NULL OR waitlistStatus = '';\nUPDATE users SET referralCode = LOWER(SUBSTRING(MD5(CONCAT(id, RAND())), 1, 12)) WHERE referralCode IS NULL;\nUPDATE users u JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY created_at ASC) AS pos FROM users) ranked ON u.id = ranked.id SET u.waitlistPosition = ranked.pos WHERE u.waitlistPosition IS NULL;\nUPDATE users SET waitlistJoinedAt = created_at WHERE waitlistJoinedAt IS NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \nUPDATE users SET waitlistStatus = 'pending' WHERE waitlistStatus IS NULL OR waitlistStatus = '';\nUPDATE users SET referralCode = LOWER(SUBSTRING(MD5(CONCAT(id, RAND())), 1, 12)) WHERE referralCode IS NULL;\nUPDATE users u JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY created_at ASC) AS pos FROM users) ranked ON u.id = ranked.id SET u.waitlistPosition = ranked.pos WHERE u.waitlistPosition IS NULL;\nUPDATE users SET waitlistJoinedAt = created_at WHERE waitlistJoinedAt IS NULL;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 4: Unknown column 'created_at' in 'window order by'"
+  ]
+}

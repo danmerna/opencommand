@@ -1,0 +1,9 @@
+{
+  "query": "\nUPDATE users u JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY createdAt ASC) AS pos FROM users) ranked ON u.id = ranked.id SET u.waitlistPosition = ranked.pos WHERE u.waitlistPosition IS NULL;\nUPDATE users SET waitlistJoinedAt = createdAt WHERE waitlistJoinedAt IS NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \nUPDATE users u JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY createdAt ASC) AS pos FROM users) ranked ON u.id = ranked.id SET u.waitlistPosition = ranked.pos WHERE u.waitlistPosition IS NULL;\nUPDATE users SET waitlistJoinedAt = createdAt WHERE waitlistJoinedAt IS NULL;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 102
+}

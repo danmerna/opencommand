@@ -136,6 +136,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  // Waitlist gating: non-approved users get redirected to /waitlist
+  // Admin users bypass the waitlist
+  if (user?.role !== "admin" && (user as any)?.waitlistStatus !== "approved") {
+    navigate("/waitlist");
+    return null;
+  }
+
   const activeCompany = companies.find(c => c.id === activeCompanyId);
 
   return (

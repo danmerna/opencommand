@@ -23,6 +23,13 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   emailUnsubscribeToken: varchar("emailUnsubscribeToken", { length: 64 }),
   emailUnsubscribed: boolean("emailUnsubscribed").default(false).notNull(),
+  waitlistStatus: mysqlEnum("waitlistStatus", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  waitlistPosition: int("waitlistPosition"),
+  referralCode: varchar("referralCode", { length: 32 }).unique(),
+  referralCount: int("referralCount").default(0).notNull(),
+  referredBy: varchar("referredBy", { length: 32 }),
+  waitlistJoinedAt: timestamp("waitlistJoinedAt"),
+  waitlistApprovedAt: timestamp("waitlistApprovedAt"),
 });
 
 export type User = typeof users.$inferSelect;

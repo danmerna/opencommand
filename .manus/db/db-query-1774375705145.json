@@ -1,0 +1,17 @@
+{
+  "query": "SELECT waitlistStatus, COUNT(*) as cnt FROM users GROUP BY waitlistStatus; SELECT COUNT(*) as total FROM users WHERE name IS NOT NULL AND email IS NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT waitlistStatus, COUNT(*) as cnt FROM users GROUP BY waitlistStatus; SELECT COUNT(*) as total FROM users WHERE name IS NOT NULL AND email IS NOT NULL;",
+  "rows": [
+    {
+      "waitlistStatus": "pending",
+      "cnt": "2968"
+    }
+  ],
+  "messages": [
+    "total",
+    "7"
+  ],
+  "stdout": "waitlistStatus\tcnt\npending\t2968\ntotal\n7\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

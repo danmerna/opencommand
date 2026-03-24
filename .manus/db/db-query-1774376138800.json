@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE users SET referralCode = CONCAT(SUBSTRING(MD5(RAND()), 1, 8)) WHERE referralCode IS NULL; UPDATE users SET waitlistJoinedAt = createdAt WHERE waitlistJoinedAt IS NULL; UPDATE users SET waitlistStatus = 'approved' WHERE role = 'admin' AND waitlistStatus != 'approved';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute UPDATE users SET referralCode = CONCAT(SUBSTRING(MD5(RAND()), 1, 8)) WHERE referralCode IS NULL; UPDATE users SET waitlistJoinedAt = createdAt WHERE waitlistJoinedAt IS NULL; UPDATE users SET waitlistStatus = 'approved' WHERE role = 'admin' AND waitlistStatus != 'approved';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 95
+}

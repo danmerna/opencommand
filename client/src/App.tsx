@@ -34,6 +34,7 @@ import Analytics from "./pages/Analytics";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
 import WhatsNew from "./pages/WhatsNew";
 import AdminUsers from "./pages/AdminUsers";
+import Waitlist from "./pages/Waitlist";
 import { usePageTracking } from "./hooks/usePageTracking";
 
 function Router() {
@@ -41,6 +42,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/waitlist" component={Waitlist} />
       <Route path="/mission-control">
         <AppLayout><MissionControl /></AppLayout>
       </Route>

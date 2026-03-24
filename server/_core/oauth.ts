@@ -28,6 +28,11 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      // Merge email-first waitlist user if they signed up with email before OAuth
+      if (userInfo.email) {
+        await db.mergeEmailUserToOAuth(userInfo.email, userInfo.openId);
+      }
+
       await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,

@@ -267,11 +267,128 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Waitlist Admin Panel ────────────────────────────────────────────────────
+function WaitlistPanel() {
+  const utils = trpc.useUtils();
+  const { data: waitlistUsers = [], isLoading } = trpc.admin.waitlistUsers.useQuery();
+  const approveMut = trpc.admin.approveUser.useMutation({
+    onSuccess: () => {
+      utils.admin.waitlistUsers.invalidate();
+      utils.admin.users.invalidate();
+    },
+  });
+  const rejectMut = trpc.admin.rejectUser.useMutation({
+    onSuccess: () => {
+      utils.admin.waitlistUsers.invalidate();
+      utils.admin.users.invalidate();
+    },
+  });
+
+  const pending = (waitlistUsers as any[]).filter((u: any) => u.waitlistStatus === "pending");
+  const approved = (waitlistUsers as any[]).filter((u: any) => u.waitlistStatus === "approved");
+  const rejected = (waitlistUsers as any[]).filter((u: any) => u.waitlistStatus === "rejected");
+
+  return (
+    <div className="space-y-6">
+      {/* Waitlist KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard label="Total Waitlist" value={waitlistUsers.length} icon={Users} color="bg-blue-400/10 text-blue-400" />
+        <KpiCard label="Pending" value={pending.length} icon={Clock} color="bg-amber-400/10 text-amber-400" />
+        <KpiCard label="Approved" value={approved.length} icon={CheckCircle} color="bg-emerald-400/10 text-emerald-400" />
+        <KpiCard label="Rejected" value={rejected.length} icon={AlertCircle} color="bg-red-400/10 text-red-400" />
+      </div>
+
+      {/* Pending Users Table */}
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 bg-muted/20 border-b border-border">
+          <h3 className="text-sm font-medium text-foreground">Pending Approval ({pending.length})</h3>
+        </div>
+        {isLoading ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">Loading waitlist…</div>
+        ) : pending.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">No pending users</div>
+        ) : (
+          <div className="divide-y divide-border/50">
+            {pending.map((u: any) => (
+              <div key={u.id} className="grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-muted/20 transition-colors">
+                <div className="col-span-3 flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-foreground shrink-0">
+                    {u.name ? u.name.charAt(0).toUpperCase() : "?"}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{u.name || "—"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{u.email || "—"}</p>
+                  </div>
+                </div>
+                <div className="col-span-2 text-xs text-muted-foreground">{fmtDate(u.createdAt)}</div>
+                <div className="col-span-2 text-xs text-muted-foreground">#{u.waitlistPosition ?? "—"}</div>
+                <div className="col-span-2 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <Users size={11} />
+                    {u.referralCount ?? 0} referrals
+                  </span>
+                </div>
+                <div className="col-span-3 flex items-center gap-2 justify-end">
+                  <button
+                    onClick={() => approveMut.mutate({ userId: u.id })}
+                    disabled={approveMut.isPending}
+                    className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => rejectMut.mutate({ userId: u.id })}
+                    disabled={rejectMut.isPending}
+                    className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-xs font-medium hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Approved Users */}
+      {approved.length > 0 && (
+        <div className="border border-border rounded-xl overflow-hidden">
+          <div className="px-4 py-3 bg-muted/20 border-b border-border">
+            <h3 className="text-sm font-medium text-foreground">Approved ({approved.length})</h3>
+          </div>
+          <div className="divide-y divide-border/50">
+            {approved.map((u: any) => (
+              <div key={u.id} className="grid grid-cols-12 gap-4 px-4 py-3 items-center">
+                <div className="col-span-4 flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-xs font-medium text-emerald-400 shrink-0">
+                    {u.name ? u.name.charAt(0).toUpperCase() : "?"}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{u.name || "—"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{u.email || "—"}</p>
+                  </div>
+                </div>
+                <div className="col-span-3 text-xs text-muted-foreground">{fmtDate(u.createdAt)}</div>
+                <div className="col-span-2 text-xs text-muted-foreground">{u.referralCount ?? 0} referrals</div>
+                <div className="col-span-3 flex items-center justify-end">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-md text-xs">
+                    <CheckCircle size={11} /> Approved
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminUsers() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [mainView, setMainView] = useState<"users" | "funnel">("users");
+  const [mainView, setMainView] = useState<"users" | "funnel" | "waitlist">("users");
 
   const { data: allUsers = [], isLoading } = trpc.admin.users.useQuery(undefined, {
     enabled: user?.role === "admin",
@@ -335,6 +452,15 @@ export default function AdminUsers() {
                   <TrendingUp size={12} />
                   Funnel
                 </button>
+                <button
+                  onClick={() => setMainView("waitlist")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    mainView === "waitlist" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <List size={12} />
+                  Waitlist
+                </button>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 border border-border rounded-lg px-3 py-2">
                 <Users size={13} />
@@ -380,6 +506,9 @@ export default function AdminUsers() {
             <FunnelView />
           </div>
         )}
+
+        {/* Waitlist View */}
+        {mainView === "waitlist" && <WaitlistPanel />}
 
         {mainView === "users" && (
         <>{/* Search */}

@@ -1,0 +1,64 @@
+{
+  "query": "SELECT id, name, email, role, waitlistStatus, waitlistPosition, referralCode FROM users ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id, name, email, role, waitlistStatus, waitlistPosition, referralCode FROM users ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Dan Merna",
+      "email": "dan@trymagnetic.ai",
+      "role": "admin",
+      "waitlistStatus": "approved",
+      "waitlistPosition": "1",
+      "referralCode": "ab778181"
+    },
+    {
+      "id": "90024",
+      "name": "Dan Merna",
+      "email": "dan@hrvstmarketing.com",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "287",
+      "referralCode": "4254d31a"
+    },
+    {
+      "id": "90330",
+      "name": "Dan Merna",
+      "email": "dan@hrvstmarketing.com",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "593",
+      "referralCode": "397767de"
+    },
+    {
+      "id": "150139",
+      "name": "D M",
+      "email": "danielmerna@gmail.com",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "1940",
+      "referralCode": "64f936f0"
+    },
+    {
+      "id": "360028",
+      "name": "Taylor Egnarski",
+      "email": "egnarskit@gmail.com",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "2632",
+      "referralCode": "b1ed6d8a"
+    },
+    {
+      "id": "360029",
+      "name": "Taylor Gerber",
+      "email": "egnarski9@hotmail.com",
+      "role": "user",
+      "waitlistStatus": "pending",
+      "waitlistPosition": "2633",
+      "referralCode": "78da7c08"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\twaitlistStatus\twaitlistPosition\treferralCode\n1\tDan Merna\tdan@trymagnetic.ai\tadmin\tapproved\t1\tab778181\n90024\tDan Merna\tdan@hrvstmarketing.com\tuser\tpending\t287\t4254d31a\n90330\tDan Merna\tdan@hrvstmarketing.com\tuser\tpending\t593\t397767de\n150139\tD M\tdanielmerna@gmail.com\tuser\tpending\t1940\t64f936f0\n360028\tTaylor Egnarski\tegnarskit@gmail.com\tuser\tpending\t2632\tb1ed6d8a\n360029\tTaylor Gerber\tegnarski9@hotmail.com\tuser\tpending\t2633\t78da7c08\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

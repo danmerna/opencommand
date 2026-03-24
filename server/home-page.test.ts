@@ -307,11 +307,11 @@ describe("Home Page Redesign - Structure Validation", () => {
     });
 
     it("includes free during beta text", () => {
-      expect(homeSource).toContain("Free during beta. Full access. No credit card required.");
+      expect(homeSource).toContain("Free during beta");
     });
 
-    it("uses waitlist.join mutation", () => {
-      expect(homeSource).toContain("trpc.waitlist.join.useMutation");
+    it("uses waitlist.emailSignup mutation", () => {
+      expect(homeSource).toContain("trpc.waitlist.emailSignup.useMutation");
     });
   });
 
@@ -359,8 +359,8 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("Build Your Team");
     });
 
-    it("shows Start Executive Onboarding CTA in hero for users without company", () => {
-      expect(homeSource).toContain("Start Executive Onboarding");
+    it("shows Get Started CTA in hero email input", () => {
+      expect(homeSource).toContain("Get Started");
     });
 
     it("routes to /onboarding/pro for users without company", () => {

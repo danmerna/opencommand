@@ -1,0 +1,52 @@
+{
+  "query": "SELECT id, name, email, role FROM users WHERE name IS NOT NULL AND email IS NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id, name, email, role FROM users WHERE name IS NOT NULL AND email IS NOT NULL;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Dan Merna",
+      "email": "dan@trymagnetic.ai",
+      "role": "admin"
+    },
+    {
+      "id": "90024",
+      "name": "Dan Merna",
+      "email": "dan@hrvstmarketing.com",
+      "role": "user"
+    },
+    {
+      "id": "90330",
+      "name": "Dan Merna",
+      "email": "dan@hrvstmarketing.com",
+      "role": "user"
+    },
+    {
+      "id": "150139",
+      "name": "D M",
+      "email": "danielmerna@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "150668",
+      "name": "Dan Merna",
+      "email": "dan@trymagnetic.ai",
+      "role": "user"
+    },
+    {
+      "id": "360028",
+      "name": "Taylor Egnarski",
+      "email": "egnarskit@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "360029",
+      "name": "Taylor Gerber",
+      "email": "egnarski9@hotmail.com",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n1\tDan Merna\tdan@trymagnetic.ai\tadmin\n90024\tDan Merna\tdan@hrvstmarketing.com\tuser\n90330\tDan Merna\tdan@hrvstmarketing.com\tuser\n150139\tD M\tdanielmerna@gmail.com\tuser\n150668\tDan Merna\tdan@trymagnetic.ai\tuser\n360028\tTaylor Egnarski\tegnarskit@gmail.com\tuser\n360029\tTaylor Gerber\tegnarski9@hotmail.com\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}
