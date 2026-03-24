@@ -199,4 +199,5 @@
 - [x] Build waitlist approval notification email: send formatted email when admin approves a user
 - [x] Create visual mockup of the approval email for user review
 - [x] Fix: tRPC mutation on /onboarding/30006 returns HTML instead of JSON (API route not matching)
-- [ ] Fix: Onboarding progress counter shows 0/4 after ARCH completion (should show 1/4)
+- [x] Fix: Onboarding progress counter shows 0/4 after ARCH completion (was caused by timeout preventing completeOnboarding DB call)
+- [x] Fix: Onboarding resume returns conversation history so in-progress interviews can be continued

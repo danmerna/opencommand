@@ -343,7 +343,10 @@ export default function ProOnboarding() {
       setOnboardingId(data.onboardingId);
       if (data.resumed && (data as any).conversationHistory?.length) {
         // Resume existing conversation
-        const history = (data as any).conversationHistory as { role: string; content: string }[];
+        const history = ((data as any).conversationHistory as { role: string; content: string }[]).map(m => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
         setMessages(history);
         // Count user messages to set question count
         const userMsgCount = history.filter((m: any) => m.role === "user").length;
