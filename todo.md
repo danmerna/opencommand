@@ -214,3 +214,6 @@
 - [x] Restore Socratic onboarding interview style: 3 deep questions per agent, no JSON signals, conversational flow
 - [x] Improve live integration data injection: liveContextSummary stored in onboarding.context and re-injected on every LLM call
 - [x] Update onboarding tests to reflect new Socratic prompt structure
+- [x] Add professional manual interview completion button to ProOnboarding UI (count-based two-button card after 3rd answer)
+- [x] Test demo user onboarding flow end-to-end (demo login verified, mission control shows correct onboarding state)
+- [x] Show two-button choice UI after 3rd user answer: "Continue the conversation" vs "Next: [executive name]" (count-based, no JSON)

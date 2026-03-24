@@ -363,39 +363,37 @@ export default function ProOnboarding() {
     if (!input.trim() || !onboardingId || isSending) return;
     const userMsg = input.trim();
     setInput("");
-    setMessages(prev => [...prev, { role: "user", content: userMsg }]);
+    const newMessages = [...messages, { role: "user" as const, content: userMsg }];
+    setMessages(newMessages);
     setIsSending(true);
-    setQuestionCount(prev => prev + 1);
+    const newUserAnswerCount = newMessages.filter(m => m.role === "user").length;
+    setQuestionCount(newUserAnswerCount);
     try {
       const data = await respondMut.mutateAsync({ onboardingId, answer: userMsg });
-      if ((data as any).isCoreComplete) {
-        if (coreOnlyMode) {
-          // Auto-skip optional questions in core-only mode
-          setQuestionCount((data as any).questionsAnswered ?? 3);
-          setIsCoreComplete(false);
-          // Immediately finalize
-          const finalData = await respondMut.mutateAsync({
-            onboardingId,
-            answer: "That's enough for now. Please finalize the onboarding with what you have.",
-          });
-          setIsOnboardingComplete(true);
-          if ((finalData as any).suggestedIntegrations?.length) {
-            setSuggestedIntegrations((finalData as any).suggestedIntegrations);
-          }
-        } else {
-          // Core 3 questions done — show continue/skip choice
-          setIsCoreComplete(true);
-          setQuestionCount((data as any).questionsAnswered ?? 3);
-        }
-      } else {
-        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
-      }
       if (data.isComplete) {
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
         setIsOnboardingComplete(true);
-        setQuestionCount((data as any).questionsAnswered ?? 5);
+        setQuestionCount(newUserAnswerCount);
         if ((data as any).suggestedIntegrations?.length) {
           setSuggestedIntegrations((data as any).suggestedIntegrations);
         }
+      } else if (newUserAnswerCount >= 3 && !coreOnlyMode) {
+        // After 3rd answer: show the agent reply, then surface the choice card
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+        setIsCoreComplete(true);
+      } else if (newUserAnswerCount >= 3 && coreOnlyMode) {
+        // Core-only mode: auto-finalize after 3rd answer
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+        const finalData = await respondMut.mutateAsync({
+          onboardingId,
+          answer: "I've shared everything relevant — please conclude this interview.",
+        });
+        setIsOnboardingComplete(true);
+        if ((finalData as any).suggestedIntegrations?.length) {
+          setSuggestedIntegrations((finalData as any).suggestedIntegrations);
+        }
+      } else {
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
       }
     } catch (err: any) {
       toast.error("Failed to send response", { description: err.message });
@@ -1095,27 +1093,26 @@ export default function ProOnboarding() {
               </div>
             </div>
           ))}
-          {/* Core complete card — 3 required questions done, offer optional */}
+          {/* Choice card — shown after 3rd user answer */}
           {isCoreComplete && !isOnboardingComplete && (
             <div className="flex flex-col items-center gap-4 py-6">
-              <div className="w-full max-w-md rounded-xl border border-emerald-800/40 bg-emerald-950/10 p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 size={18} className="text-emerald-400" />
-                  <p className="text-sm font-medium text-foreground">Core questions complete</p>
-                </div>
-                <p className="text-xs text-muted-foreground mb-4">
-                  {currentExec.name.split("\u2014")[0].trim()} has enough context to get started. You can answer 2 more optional questions for deeper personalization, or move on.
+              <div className="w-full max-w-md rounded-xl border border-border bg-card/60 p-5">
+                <p className="text-sm font-medium text-foreground mb-1">
+                  {currentExec.name.split("—")[0].trim()} has what it needs to get started.
+                </p>
+                <p className="text-xs text-muted-foreground mb-5">
+                  You can continue for a more detailed briefing, or move on to the next executive.
                 </p>
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 gap-1.5 text-xs h-9"
+                    className="flex-1 text-xs h-9"
                     onClick={handleContinueOptional}
                     disabled={isSending}
                   >
-                    {isSending ? <Loader2 size={12} className="animate-spin" /> : <ArrowRight size={12} />}
-                    Answer 2 More
+                    {isSending ? <Loader2 size={12} className="animate-spin" /> : null}
+                    Continue the conversation
                   </Button>
                   <Button
                     size="sm"
@@ -1124,7 +1121,7 @@ export default function ProOnboarding() {
                     disabled={isSending}
                   >
                     {completedCount < EXEC_AGENTS.length - 1
-                      ? <>Next: {EXEC_AGENTS[completedCount + 1]?.name.split("\u2014")[0].trim()} <ChevronRight size={12} /></>
+                      ? <>{"Next: "}{EXEC_AGENTS[completedCount + 1]?.name.split("—")[0].trim()} <ChevronRight size={12} /></>
                       : <>Generate Strategy <Sparkles size={12} /></>
                     }
                   </Button>
@@ -1233,6 +1230,7 @@ export default function ProOnboarding() {
                   {isSending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                 </Button>
               </div>
+
             </div>
           </div>
         )}

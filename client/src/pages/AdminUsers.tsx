@@ -384,6 +384,24 @@ function WaitlistPanel() {
   );
 }
 
+function DemoLoginButton() {
+  const { data } = trpc.admin.getDemoLoginUrl.useQuery(
+    { origin: window.location.origin },
+    { enabled: true }
+  );
+  return (
+    <a
+      href={data?.url ?? "#"}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-2 bg-muted/40 hover:bg-muted/60 border border-border text-sm text-foreground px-4 py-2.5 rounded-xl transition-colors"
+    >
+      <Eye size={14} />
+      Open Demo Session in New Tab
+    </a>
+  );
+}
+
 export default function AdminUsers() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
@@ -615,15 +633,7 @@ export default function AdminUsers() {
             {/* Quick login link */}
             <div className="mt-4 pt-4 border-t border-border">
               <p className="text-xs font-medium text-foreground mb-2">Quick Demo Access</p>
-              <a
-                href={`/api/demo-login?secret=nMv8cHWhCnqYEgYG&returnTo=/`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-muted/40 hover:bg-muted/60 border border-border text-sm text-foreground px-4 py-2.5 rounded-xl transition-colors"
-              >
-                <Eye size={14} />
-                Open Demo Session in New Tab
-              </a>
+              <DemoLoginButton />
               <p className="text-xs text-muted-foreground text-center mt-2">
                 Logs in as <span className="font-mono">demo@opencommand.co</span> — Meridian Software
               </p>

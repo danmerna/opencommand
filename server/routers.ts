@@ -1813,6 +1813,13 @@ const adminRouter = router({
     const userId = await getDemoUserId();
     return { userId, email: DEMO_EMAIL, exists: userId !== null };
   }),
+  getDemoLoginUrl: adminProcedure
+    .input(z.object({ origin: z.string() }))
+    .query(({ input }) => {
+      const secret = (process.env.JWT_SECRET ?? "").slice(0, 16);
+      const url = `${input.origin}/api/demo-login?secret=${encodeURIComponent(secret)}&returnTo=/mission-control`;
+      return { url };
+    }),
 });
 
 export const appRouter = router({
