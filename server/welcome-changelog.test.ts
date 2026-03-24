@@ -96,7 +96,7 @@ describe("Welcome Email Router Integration", () => {
 
   it("checks if welcome email was already sent before sending", () => {
     expect(routerSource).toContain("alreadySent = await hasWelcomeEmailBeenSent");
-    expect(routerSource).toContain("if (!alreadySent && ctx.user.email)");
+    expect(routerSource).toContain("!alreadySent && bgUserEmail");
   });
 
   it("marks welcome email as sent after successful send", () => {
@@ -104,7 +104,7 @@ describe("Welcome Email Router Integration", () => {
   });
 
   it("handles welcome email errors non-fatally", () => {
-    expect(routerSource).toContain("[WelcomeEmail] Non-fatal error:");
+    expect(routerSource).toContain("[WelcomeEmail] Background non-fatal error:");
   });
 });
 

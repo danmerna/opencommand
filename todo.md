@@ -198,3 +198,4 @@
 - [x] Add "Skip all optional" button to onboarding so power users can blast through all executives with only required questions
 - [x] Build waitlist approval notification email: send formatted email when admin approves a user
 - [x] Create visual mockup of the approval email for user review
+- [x] Fix: tRPC mutation on /onboarding/30006 returns HTML instead of JSON (API route not matching)

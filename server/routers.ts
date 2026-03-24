@@ -1312,69 +1312,79 @@ const onboardingRouter = router({
       if (isComplete) {
         history.push({ role: "assistant", content: `Onboarding complete. ${summary}` });
 
-        // Detect data gaps and suggest integrations based on the conversation
-        let suggestedIntegrations: { slug: string; name: string; reason: string }[] = [];
-        try {
-          const conversationText = history.map(h => `${h.role}: ${h.content}`).join("\n");
-          const connectedTools = await getUserConnectionsByUserId(onboarding.userId);
-          const connectedSlugs = new Set<string>();
-          // Get provider slugs for connected tools
-          const allProviders = await getAllToolProviders();
-          for (const conn of connectedTools.filter(c => c.status === "connected")) {
-            const provider = allProviders.find(p => p.id === conn.providerId);
-            if (provider) connectedSlugs.add(provider.slug);
-          }
-
-          const gapResponse = await invokeLLM({
-            messages: [
-              { role: "system" as const, content: `You are an integration advisor for an AI executive onboarding system. Analyze the conversation between a user and an AI ${onboarding.agentType.toUpperCase()} agent. Identify data gaps — topics discussed where the user mentioned metrics, tools, or data sources they use but don't have connected. Return a JSON array of suggested integrations.\n\nAvailable integrations: hubspot (CRM/pipeline), salesforce (CRM/pipeline), meta_ads (Facebook/Instagram ads), google_ads (Search/display ads), tiktok_ads (TikTok video ads), ga4 (Google Analytics/traffic), mailchimp (Email marketing), slack (Team communication), stripe_connect (Payments).\n\nAlready connected: ${Array.from(connectedSlugs).join(", ") || "none"}\n\nReturn ONLY a JSON array like: [{"slug": "meta_ads", "name": "Meta Ads", "reason": "You mentioned Facebook ad spend but don't have Meta Ads connected"}]. Return [] if no gaps detected. Do NOT suggest already-connected tools.` },
-              { role: "user" as const, content: conversationText },
-            ],
-          });
-          const gapText = (gapResponse.choices[0]?.message?.content ?? "[]") as string;
-          const jsonMatch = gapText.match(/\[[\s\S]*\]/);
-          if (jsonMatch) {
-            suggestedIntegrations = JSON.parse(jsonMatch[0]);
-          }
-        } catch (gapErr) {
-          console.error("[Onboarding] Gap detection failed (non-fatal):", gapErr);
-        }
-
-        // Store suggested integrations in the context
-        const enrichedContext = { ...context, suggestedIntegrations };
-        await completeOnboarding(onboarding.id, summary, enrichedContext);
+        // Complete onboarding immediately — return fast to avoid proxy timeout
+        await completeOnboarding(onboarding.id, summary, context);
         await updateOnboarding(onboarding.id, { conversationHistory: history });
 
-        // Check if all executives are now complete → send welcome email
-        try {
-          if (onboarding.companyId) {
-            const allOnboardings = await getOnboardingsByCompanyId(onboarding.companyId);
-            const completedCount = allOnboardings.filter(o => o.status === "completed").length;
-            const EXEC_TOTAL = 4;
-            if (completedCount >= EXEC_TOTAL) {
-              const alreadySent = await hasWelcomeEmailBeenSent(ctx.user.id);
-              if (!alreadySent && ctx.user.email) {
-                const company = await getCompanyById(onboarding.companyId);
-                const completedAgents = await getAgentsByCompanyId(onboarding.companyId);
-                const agentList = completedAgents.slice(0, EXEC_TOTAL).map(a => ({ role: a.roleTitle ?? a.type ?? "Executive", name: a.name }));
-                const origin = (ctx.req as any).headers?.origin ?? "https://opencommand.co";
-                await sendWelcomeEmail({
-                  to: ctx.user.email,
-                  name: ctx.user.name ?? "there",
-                  companyName: company?.name ?? "your company",
-                  agents: agentList,
-                  strategyUrl: `${origin}/mission-control`,
-                });
-                await markWelcomeEmailSent(ctx.user.id, onboarding.companyId);
-                console.log(`[WelcomeEmail] Sent to ${ctx.user.email} for company ${onboarding.companyId}`);
+        // Fire-and-forget: gap detection + welcome email (non-blocking)
+        const bgOnboardingId = onboarding.id;
+        const bgUserId = onboarding.userId;
+        const bgCompanyId = onboarding.companyId;
+        const bgAgentType = onboarding.agentType;
+        const bgUserEmail = ctx.user.email;
+        const bgUserName = ctx.user.name;
+        const bgOrigin = (ctx.req as any).headers?.origin ?? "https://opencommand.co";
+        const bgHistory = [...history];
+
+        setImmediate(async () => {
+          try {
+            // Gap detection
+            const conversationText = bgHistory.map(h => `${h.role}: ${h.content}`).join("\n");
+            const connectedTools = await getUserConnectionsByUserId(bgUserId);
+            const connectedSlugs = new Set<string>();
+            const allProviders = await getAllToolProviders();
+            for (const conn of connectedTools.filter(c => c.status === "connected")) {
+              const provider = allProviders.find(p => p.id === conn.providerId);
+              if (provider) connectedSlugs.add(provider.slug);
+            }
+            const gapResponse = await invokeLLM({
+              messages: [
+                { role: "system" as const, content: `You are an integration advisor for an AI executive onboarding system. Analyze the conversation between a user and an AI ${bgAgentType.toUpperCase()} agent. Identify data gaps — topics discussed where the user mentioned metrics, tools, or data sources they use but don't have connected. Return a JSON array of suggested integrations.\n\nAvailable integrations: hubspot (CRM/pipeline), salesforce (CRM/pipeline), meta_ads (Facebook/Instagram ads), google_ads (Search/display ads), tiktok_ads (TikTok video ads), ga4 (Google Analytics/traffic), mailchimp (Email marketing), slack (Team communication), stripe_connect (Payments).\n\nAlready connected: ${Array.from(connectedSlugs).join(", ") || "none"}\n\nReturn ONLY a JSON array like: [{"slug": "meta_ads", "name": "Meta Ads", "reason": "You mentioned Facebook ad spend but don't have Meta Ads connected"}]. Return [] if no gaps detected. Do NOT suggest already-connected tools.` },
+                { role: "user" as const, content: conversationText },
+              ],
+            });
+            const gapText = (gapResponse.choices[0]?.message?.content ?? "[]") as string;
+            const jsonMatch = gapText.match(/\[[\s\S]*\]/);
+            let suggestedIntegrations: { slug: string; name: string; reason: string }[] = [];
+            if (jsonMatch) suggestedIntegrations = JSON.parse(jsonMatch[0]);
+            // Update onboarding with gap results
+            const enrichedContext = { ...context, suggestedIntegrations };
+            await updateOnboarding(bgOnboardingId, { context: enrichedContext });
+            console.log(`[Onboarding] Background gap detection completed for onboarding ${bgOnboardingId}`);
+          } catch (gapErr) {
+            console.error("[Onboarding] Background gap detection failed (non-fatal):", gapErr);
+          }
+
+          // Welcome email check
+          try {
+            if (bgCompanyId) {
+              const allOnboardings = await getOnboardingsByCompanyId(bgCompanyId);
+              const completedCount = allOnboardings.filter(o => o.status === "completed").length;
+              const EXEC_TOTAL = 4;
+              if (completedCount >= EXEC_TOTAL) {
+                const alreadySent = await hasWelcomeEmailBeenSent(bgUserId);
+                if (!alreadySent && bgUserEmail) {
+                  const company = await getCompanyById(bgCompanyId);
+                  const completedAgents = await getAgentsByCompanyId(bgCompanyId);
+                  const agentList = completedAgents.slice(0, EXEC_TOTAL).map(a => ({ role: a.roleTitle ?? a.type ?? "Executive", name: a.name }));
+                  await sendWelcomeEmail({
+                    to: bgUserEmail,
+                    name: bgUserName ?? "there",
+                    companyName: company?.name ?? "your company",
+                    agents: agentList,
+                    strategyUrl: `${bgOrigin}/mission-control`,
+                  });
+                  await markWelcomeEmailSent(bgUserId, bgCompanyId);
+                  console.log(`[WelcomeEmail] Sent to ${bgUserEmail} for company ${bgCompanyId}`);
+                }
               }
             }
+          } catch (emailErr) {
+            console.error("[WelcomeEmail] Background non-fatal error:", emailErr);
           }
-        } catch (emailErr) {
-          console.error("[WelcomeEmail] Non-fatal error:", emailErr);
-        }
+        });
 
-        return { reply: summary, isComplete: true, context: enrichedContext, suggestedIntegrations };
+        return { reply: summary, isComplete: true, context, suggestedIntegrations: [] };
       } else {
         history.push({ role: "assistant", content: reply });
         await updateOnboarding(onboarding.id, { conversationHistory: history });
