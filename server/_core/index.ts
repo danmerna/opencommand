@@ -16,6 +16,10 @@ import { registerNangoRoutes } from "../nangoIntegration";
 import { startBriefingScheduler } from "../briefingScheduler";
 import { startOnboardingReminderScheduler } from "../onboardingReminderScheduler";
 import { unsubscribeUserByToken, seedChangelogIfEmpty } from "../db";
+import { sdk } from "./sdk";
+import { DEMO_OPEN_ID, DEMO_NAME } from "../demoUser";
+import { getSessionCookieOptions } from "./cookies";
+import { ONE_YEAR_MS } from "@shared/const";
 
 // Global Socket.IO instance for emitting events from routers
 export let io: SocketIOServer;
@@ -95,6 +99,28 @@ async function startServer() {
       createContext,
     })
   );
+  // ─── Demo Login (admin-only shortcut to log in as demo user) ───────────────
+  app.get("/api/demo-login", async (req, res) => {
+    const secret = req.query.secret as string | undefined;
+    // Require a simple shared secret to prevent public abuse
+    if (!secret || secret !== ENV.cookieSecret.slice(0, 16)) {
+      return res.status(403).send("Forbidden");
+    }
+    try {
+      const sessionToken = await sdk.createSessionToken(DEMO_OPEN_ID, {
+        name: DEMO_NAME,
+        expiresInMs: ONE_YEAR_MS,
+      });
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie("manus_session", sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      const returnTo = (req.query.returnTo as string) || "/";
+      return res.redirect(returnTo);
+    } catch (err: any) {
+      console.error("[DemoLogin] Error:", err.message);
+      return res.status(500).send("Demo login failed");
+    }
+  });
+
   // ─── Email Unsubscribe (one-click, no auth required) ────────────────────────
   app.get("/api/unsubscribe", async (req, res) => {
     const token = req.query.token as string | undefined;

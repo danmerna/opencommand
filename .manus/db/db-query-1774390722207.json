@@ -1,0 +1,136 @@
+{
+  "query": "SELECT id, slug, name, categoryId FROM tool_providers ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id, slug, name, categoryId FROM tool_providers ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "slug": "hubspot",
+      "name": "HubSpot",
+      "categoryId": "1"
+    },
+    {
+      "id": "2",
+      "slug": "salesforce",
+      "name": "Salesforce",
+      "categoryId": "1"
+    },
+    {
+      "id": "3",
+      "slug": "pipedrive",
+      "name": "Pipedrive",
+      "categoryId": "1"
+    },
+    {
+      "id": "4",
+      "slug": "close",
+      "name": "Close",
+      "categoryId": "1"
+    },
+    {
+      "id": "5",
+      "slug": "mailchimp",
+      "name": "Mailchimp",
+      "categoryId": "2"
+    },
+    {
+      "id": "6",
+      "slug": "klaviyo",
+      "name": "Klaviyo",
+      "categoryId": "2"
+    },
+    {
+      "id": "7",
+      "slug": "convertkit",
+      "name": "ConvertKit",
+      "categoryId": "2"
+    },
+    {
+      "id": "8",
+      "slug": "google_analytics",
+      "name": "Google Analytics",
+      "categoryId": "3"
+    },
+    {
+      "id": "9",
+      "slug": "mixpanel",
+      "name": "Mixpanel",
+      "categoryId": "3"
+    },
+    {
+      "id": "10",
+      "slug": "amplitude",
+      "name": "Amplitude",
+      "categoryId": "3"
+    },
+    {
+      "id": "11",
+      "slug": "notion",
+      "name": "Notion",
+      "categoryId": "4"
+    },
+    {
+      "id": "12",
+      "slug": "asana",
+      "name": "Asana",
+      "categoryId": "4"
+    },
+    {
+      "id": "13",
+      "slug": "linear",
+      "name": "Linear",
+      "categoryId": "4"
+    },
+    {
+      "id": "14",
+      "slug": "stripe",
+      "name": "Stripe",
+      "categoryId": "5"
+    },
+    {
+      "id": "15",
+      "slug": "square",
+      "name": "Square",
+      "categoryId": "5"
+    },
+    {
+      "id": "16",
+      "slug": "slack",
+      "name": "Slack",
+      "categoryId": "6"
+    },
+    {
+      "id": "17",
+      "slug": "discord",
+      "name": "Discord",
+      "categoryId": "6"
+    },
+    {
+      "id": "18",
+      "slug": "gmail",
+      "name": "Gmail",
+      "categoryId": "7"
+    },
+    {
+      "id": "19",
+      "slug": "outlook",
+      "name": "Outlook",
+      "categoryId": "7"
+    },
+    {
+      "id": "20",
+      "slug": "shopify",
+      "name": "Shopify",
+      "categoryId": "8"
+    },
+    {
+      "id": "21",
+      "slug": "woocommerce",
+      "name": "WooCommerce",
+      "categoryId": "8"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tslug\tname\tcategoryId\n1\thubspot\tHubSpot\t1\n2\tsalesforce\tSalesforce\t1\n3\tpipedrive\tPipedrive\t1\n4\tclose\tClose\t1\n5\tmailchimp\tMailchimp\t2\n6\tklaviyo\tKlaviyo\t2\n7\tconvertkit\tConvertKit\t2\n8\tgoogle_analytics\tGoogle Analytics\t3\n9\tmixpanel\tMixpanel\t3\n10\tamplitude\tAmplitude\t3\n11\tnotion\tNotion\t4\n12\tasana\tAsana\t4\n13\tlinear\tLinear\t4\n14\tstripe\tStripe\t5\n15\tsquare\tSquare\t5\n16\tslack\tSlack\t6\n17\tdiscord\tDiscord\t6\n18\tgmail\tGmail\t7\n19\toutlook\tOutlook\t7\n20\tshopify\tShopify\t8\n21\twoocommerce\tWooCommerce\t8\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

@@ -532,6 +532,7 @@ export async function seedToolCategories() {
     { slug: "communication", name: "Communication", description: "Team messaging, channels, and notifications", icon: "MessageSquare", abstractActions: JSON.parse('["send_message","get_channel_history","create_channel","list_channels","search_messages","get_unread_count"]') as any },
     { slug: "personal_email", name: "Personal Email", description: "Email inbox management — send, search, and organize", icon: "Inbox", abstractActions: JSON.parse('["send_email","search_inbox","get_recent_threads","get_unread","create_draft","add_label"]') as any },
     { slug: "ecommerce", name: "E-commerce", description: "Online store management — orders, inventory, and products", icon: "ShoppingCart", abstractActions: JSON.parse('["get_orders","get_inventory","get_top_products","update_listing","get_revenue_by_product","get_abandoned_carts"]') as any },
+    { slug: "paid_ads", name: "Paid Advertising", description: "Paid ad campaigns — spend, performance, and audience insights", icon: "TrendingUp", abstractActions: JSON.parse('["get_campaigns","get_spend","get_conversions","get_audience","get_roas","get_top_ads"]') as any },
   ];
   await db.insert(toolCategories).values(categories);
   return db.select().from(toolCategories);
@@ -569,8 +570,12 @@ export async function seedToolProviders(categories: { id: number; slug: string }
     { categoryId: catMap["email_marketing"], slug: "klaviyo", name: "Klaviyo", description: "E-commerce email marketing", authType: "api_key", baseApiUrl: "https://a.klaviyo.com" },
     { categoryId: catMap["email_marketing"], slug: "convertkit", name: "ConvertKit", description: "Creator email marketing", authType: "api_key", baseApiUrl: "https://api.convertkit.com" },
     { categoryId: catMap["analytics"], slug: "google_analytics", name: "Google Analytics", description: "Web analytics by Google", authType: "oauth2", baseApiUrl: "https://analyticsdata.googleapis.com" },
+    { categoryId: catMap["analytics"], slug: "ga4", name: "Google Analytics 4", description: "GA4 web analytics", authType: "oauth2", baseApiUrl: "https://analyticsdata.googleapis.com" },
     { categoryId: catMap["analytics"], slug: "mixpanel", name: "Mixpanel", description: "Product analytics", authType: "api_key", baseApiUrl: "https://mixpanel.com/api" },
     { categoryId: catMap["analytics"], slug: "amplitude", name: "Amplitude", description: "Digital analytics platform", authType: "api_key", baseApiUrl: "https://amplitude.com/api" },
+    { categoryId: catMap["paid_ads"], slug: "meta_ads", name: "Meta Ads", description: "Facebook & Instagram advertising", authType: "oauth2", baseApiUrl: "https://graph.facebook.com" },
+    { categoryId: catMap["paid_ads"], slug: "google_ads", name: "Google Ads", description: "Google search and display advertising", authType: "oauth2", baseApiUrl: "https://googleads.googleapis.com" },
+    { categoryId: catMap["paid_ads"], slug: "tiktok_ads", name: "TikTok Ads", description: "TikTok advertising platform", authType: "oauth2", baseApiUrl: "https://business-api.tiktok.com" },
     { categoryId: catMap["project_mgmt"], slug: "notion", name: "Notion", description: "All-in-one workspace", authType: "oauth2", baseApiUrl: "https://api.notion.com" },
     { categoryId: catMap["project_mgmt"], slug: "asana", name: "Asana", description: "Work management platform", authType: "oauth2", baseApiUrl: "https://app.asana.com/api" },
     { categoryId: catMap["project_mgmt"], slug: "linear", name: "Linear", description: "Issue tracking for teams", authType: "oauth2", baseApiUrl: "https://api.linear.app" },

@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO users (openId, name, email, loginMethod, role, waitlistStatus, waitlistApprovedAt, waitlistJoinedAt, referralCode) VALUES ('demo_user_opencommand_2026', 'Demo User (Meridian Software)', 'demo@opencommand.co', 'demo', 'user', 'approved', NOW(), NOW(), 'DEMO2026') ON DUPLICATE KEY UPDATE name='Demo User (Meridian Software)', email='demo@opencommand.co', waitlistStatus='approved', waitlistApprovedAt=NOW();",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute INSERT INTO users (openId, name, email, loginMethod, role, waitlistStatus, waitlistApprovedAt, waitlistJoinedAt, referralCode) VALUES ('demo_user_opencommand_2026', 'Demo User (Meridian Software)', 'demo@opencommand.co', 'demo', 'user', 'approved', NOW(), NOW(), 'DEMO2026') ON DUPLICATE KEY UPDATE name='Demo User (Meridian Software)', email='demo@opencommand.co', waitlistStatus='approved', waitlistApprovedAt=NOW();",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 87
+}

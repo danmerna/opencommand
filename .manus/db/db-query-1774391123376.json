@@ -1,0 +1,40 @@
+{
+  "query": "SELECT uc.id, tp.slug, uc.status, uc.accountName FROM user_connections uc JOIN tool_providers tp ON tp.id = uc.providerId WHERE uc.userId = 450248;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT uc.id, tp.slug, uc.status, uc.accountName FROM user_connections uc JOIN tool_providers tp ON tp.id = uc.providerId WHERE uc.userId = 450248;",
+  "rows": [
+    {
+      "id": "60002",
+      "slug": "hubspot",
+      "status": "connected",
+      "accountName": "Meridian Software (HubSpot)"
+    },
+    {
+      "id": "60003",
+      "slug": "salesforce",
+      "status": "connected",
+      "accountName": "Meridian Software (Salesforce)"
+    },
+    {
+      "id": "60004",
+      "slug": "meta_ads",
+      "status": "connected",
+      "accountName": "Meridian Software (Meta Ads)"
+    },
+    {
+      "id": "60005",
+      "slug": "google_ads",
+      "status": "connected",
+      "accountName": "Meridian Software (Google Ads)"
+    },
+    {
+      "id": "60006",
+      "slug": "ga4",
+      "status": "connected",
+      "accountName": "Meridian Software (GA4)"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tslug\tstatus\taccountName\n60002\thubspot\tconnected\tMeridian Software (HubSpot)\n60003\tsalesforce\tconnected\tMeridian Software (Salesforce)\n60004\tmeta_ads\tconnected\tMeridian Software (Meta Ads)\n60005\tgoogle_ads\tconnected\tMeridian Software (Google Ads)\n60006\tga4\tconnected\tMeridian Software (GA4)\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

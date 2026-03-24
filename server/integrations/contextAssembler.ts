@@ -26,6 +26,14 @@ import { getGoogleAdsSnapshot, type GoogleAdsSnapshot } from "./googleAds";
 import { getTikTokAdsSnapshot, type TikTokAdsSnapshot } from "./tiktokAds";
 import { getGA4Snapshot, type GA4Snapshot } from "./ga4";
 import type { UserConnection } from "../../drizzle/schema";
+import {
+  isDemoConnection,
+  DEMO_SALESFORCE,
+  DEMO_HUBSPOT,
+  DEMO_META_ADS,
+  DEMO_GOOGLE_ADS,
+  DEMO_GA4,
+} from "./demoMockData";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -110,6 +118,16 @@ async function fetchLiveData(
     if (conn.status !== "connected") continue;
 
     try {
+      // Demo mode: return mock data instead of hitting real APIs
+      if (isDemoConnection(conn.accessToken)) {
+        if (conn.providerSlug === "hubspot") liveState.hubspot = DEMO_HUBSPOT;
+        else if (conn.providerSlug === "salesforce") liveState.salesforce = DEMO_SALESFORCE;
+        else if (conn.providerSlug === "meta_ads") liveState.meta_ads = DEMO_META_ADS;
+        else if (conn.providerSlug === "google_ads") liveState.google_ads = DEMO_GOOGLE_ADS;
+        else if (conn.providerSlug === "ga4") liveState.ga4 = DEMO_GA4;
+        continue;
+      }
+
       if (conn.providerSlug === "hubspot") {
         const snapshot: HubSpotSnapshot = await getHubSpotSnapshot(conn);
         liveState.hubspot = snapshot;

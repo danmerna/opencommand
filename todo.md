@@ -206,3 +206,8 @@
 - [ ] Set up Google Cloud project for GA4 + Google Ads OAuth (submit for review)
 - [ ] Set up Meta developer app for Meta Ads OAuth (submit for review)
 - [ ] Test all configured integrations end-to-end
+- [x] Create demo user system: add isDemoUser flag and mock integration data to context assembler
+- [x] Seed demo user in DB with pre-connected Salesforce, Meta Ads, Google Ads, GA4 mock connections
+- [x] Add mock data module with realistic business metrics for all four integrations (Meridian Software)
+- [x] Add admin UI button to create/reset demo user (Admin > Demo tab)
+- [x] Write vitest tests for demo mode data (demoUser.test.ts)

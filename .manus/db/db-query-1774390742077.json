@@ -1,0 +1,51 @@
+{
+  "query": "SELECT id, slug, name, categoryId FROM tool_providers WHERE slug IN ('meta_ads', 'google_ads', 'ga4', 'tiktok_ads', 'salesforce', 'hubspot'); SELECT id, slug FROM tool_categories WHERE slug IN ('paid_ads', 'analytics', 'crm');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id, slug, name, categoryId FROM tool_providers WHERE slug IN ('meta_ads', 'google_ads', 'ga4', 'tiktok_ads', 'salesforce', 'hubspot'); SELECT id, slug FROM tool_categories WHERE slug IN ('paid_ads', 'analytics', 'crm');",
+  "rows": [
+    {
+      "id": "30001",
+      "slug": "meta_ads",
+      "name": "Meta Ads",
+      "categoryId": "30001"
+    },
+    {
+      "id": "30002",
+      "slug": "google_ads",
+      "name": "Google Ads",
+      "categoryId": "30001"
+    },
+    {
+      "id": "30004",
+      "slug": "ga4",
+      "name": "Google Analytics 4",
+      "categoryId": "3"
+    },
+    {
+      "id": "30003",
+      "slug": "tiktok_ads",
+      "name": "TikTok Ads",
+      "categoryId": "30001"
+    },
+    {
+      "id": "2",
+      "slug": "salesforce",
+      "name": "Salesforce",
+      "categoryId": "1"
+    },
+    {
+      "id": "1",
+      "slug": "hubspot",
+      "name": "HubSpot",
+      "categoryId": "1"
+    }
+  ],
+  "messages": [
+    "id\tslug",
+    "30001\tpaid_ads",
+    "3\tanalytics",
+    "1\tcrm"
+  ],
+  "stdout": "id\tslug\tname\tcategoryId\n30001\tmeta_ads\tMeta Ads\t30001\n30002\tgoogle_ads\tGoogle Ads\t30001\n30004\tga4\tGoogle Analytics 4\t3\n30003\ttiktok_ads\tTikTok Ads\t30001\n2\tsalesforce\tSalesforce\t1\n1\thubspot\tHubSpot\t1\nid\tslug\n30001\tpaid_ads\n3\tanalytics\n1\tcrm\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

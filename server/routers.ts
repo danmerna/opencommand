@@ -57,6 +57,7 @@ import {
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
+import { seedDemoUser, getDemoUserId, DEMO_EMAIL } from "./demoUser";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
 import { emitToUser } from "./socketEmit";
 import { sendWelcomeEmail, sendWaitlistApprovalEmail } from "./email";
@@ -1807,6 +1808,15 @@ const adminRouter = router({
   userFunnelStage: adminProcedure
     .input(z.object({ userId: z.number() }))
     .query(({ input }) => adminGetUserFunnelStage(input.userId)),
+  // Demo user management
+  seedDemoUser: adminProcedure.mutation(async () => {
+    const result = await seedDemoUser();
+    return result;
+  }),
+  getDemoUserInfo: adminProcedure.query(async () => {
+    const userId = await getDemoUserId();
+    return { userId, email: DEMO_EMAIL, exists: userId !== null };
+  }),
 });
 
 export const appRouter = router({

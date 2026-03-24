@@ -388,7 +388,24 @@ export default function AdminUsers() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [mainView, setMainView] = useState<"users" | "funnel" | "waitlist">("users");
+  const [mainView, setMainView] = useState<"users" | "funnel" | "waitlist" | "demo">("users");
+  const [demoSeedStatus, setDemoSeedStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [demoSeedMessage, setDemoSeedMessage] = useState("");
+
+  const { data: demoInfo, refetch: refetchDemoInfo } = trpc.admin.getDemoUserInfo.useQuery(undefined, {
+    enabled: user?.role === "admin",
+  });
+  const seedDemoUserMutation = trpc.admin.seedDemoUser.useMutation({
+    onSuccess: (result) => {
+      setDemoSeedStatus("success");
+      setDemoSeedMessage(result.message);
+      refetchDemoInfo();
+    },
+    onError: (err) => {
+      setDemoSeedStatus("error");
+      setDemoSeedMessage(err.message);
+    },
+  });
 
   const { data: allUsers = [], isLoading } = trpc.admin.users.useQuery(undefined, {
     enabled: user?.role === "admin",
@@ -461,6 +478,15 @@ export default function AdminUsers() {
                   <List size={12} />
                   Waitlist
                 </button>
+                <button
+                  onClick={() => setMainView("demo")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    mainView === "demo" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Zap size={12} />
+                  Demo
+                </button>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 border border-border rounded-lg px-3 py-2">
                 <Users size={13} />
@@ -509,6 +535,101 @@ export default function AdminUsers() {
 
         {/* Waitlist View */}
         {mainView === "waitlist" && <WaitlistPanel />}
+
+        {/* Demo User Panel */}
+        {mainView === "demo" && (
+          <div className="bg-card border border-border rounded-2xl p-6 max-w-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-emerald-400/10 flex items-center justify-center">
+                <Zap size={18} className="text-emerald-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Demo User</h2>
+                <p className="text-sm text-muted-foreground">Seed a test account with realistic mock data for all integrations</p>
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="bg-muted/30 border border-border rounded-xl p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">demo@opencommand.co</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Meridian Software — B2B SaaS demo account</p>
+                </div>
+                <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+                  demoInfo?.exists ? "bg-emerald-400/10 text-emerald-400" : "bg-muted text-muted-foreground"
+                }`}>
+                  {demoInfo?.exists ? <><CheckCircle size={11} /> Active</> : <><AlertCircle size={11} /> Not seeded</>}
+                </div>
+              </div>
+              {demoInfo?.exists && demoInfo.userId && (
+                <p className="text-xs text-muted-foreground mt-2">User ID: {demoInfo.userId}</p>
+              )}
+            </div>
+
+            {/* Mock data summary */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {[
+                { label: "Salesforce", detail: "63 open opps · $847K pipeline", color: "text-blue-400" },
+                { label: "HubSpot", detail: "47 open deals · $612K pipeline", color: "text-orange-400" },
+                { label: "Meta Ads", detail: "4 campaigns · $11.3K spend/30d", color: "text-purple-400" },
+                { label: "Google Ads", detail: "5 campaigns · $17.1K spend/30d", color: "text-yellow-400" },
+                { label: "GA4", detail: "28.4K users · 2.72% conv rate", color: "text-emerald-400" },
+              ].map(item => (
+                <div key={item.label} className="bg-muted/20 border border-border rounded-lg p-3">
+                  <p className={`text-xs font-semibold ${item.color} mb-0.5`}>{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Seed button */}
+            {demoSeedStatus === "success" && (
+              <div className="flex items-center gap-2 text-sm text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-lg px-4 py-3 mb-4">
+                <CheckCircle size={15} />
+                <span>{demoSeedMessage}</span>
+              </div>
+            )}
+            {demoSeedStatus === "error" && (
+              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3 mb-4">
+                <AlertCircle size={15} />
+                <span>{demoSeedMessage}</span>
+              </div>
+            )}
+            <button
+              onClick={() => {
+                setDemoSeedStatus("loading");
+                setDemoSeedMessage("");
+                seedDemoUserMutation.mutate();
+              }}
+              disabled={demoSeedStatus === "loading"}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-sm font-medium px-4 py-3 rounded-xl transition-colors"
+            >
+              <Zap size={15} />
+              {demoSeedStatus === "loading" ? "Seeding…" : demoInfo?.exists ? "Reset Demo User" : "Seed Demo User"}
+            </button>
+            <p className="text-xs text-muted-foreground text-center mt-3">
+              This creates/resets the demo account with all mock connections.
+            </p>
+
+            {/* Quick login link */}
+            <div className="mt-4 pt-4 border-t border-border">
+              <p className="text-xs font-medium text-foreground mb-2">Quick Demo Access</p>
+              <a
+                href={`/api/demo-login?secret=nMv8cHWhCnqYEgYG&returnTo=/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-muted/40 hover:bg-muted/60 border border-border text-sm text-foreground px-4 py-2.5 rounded-xl transition-colors"
+              >
+                <Eye size={14} />
+                Open Demo Session in New Tab
+              </a>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Logs in as <span className="font-mono">demo@opencommand.co</span> — Meridian Software
+              </p>
+            </div>
+          </div>
+        )}
 
         {mainView === "users" && (
         <>{/* Search */}

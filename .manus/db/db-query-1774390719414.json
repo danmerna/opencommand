@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, slug, name FROM tool_categories ORDER BY id LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id, slug, name FROM tool_categories ORDER BY id LIMIT 20;",
+  "rows": [
+    {
+      "id": "1",
+      "slug": "crm",
+      "name": "CRM"
+    },
+    {
+      "id": "2",
+      "slug": "email_marketing",
+      "name": "Email Marketing"
+    },
+    {
+      "id": "3",
+      "slug": "analytics",
+      "name": "Analytics"
+    },
+    {
+      "id": "4",
+      "slug": "project_mgmt",
+      "name": "Project Management"
+    },
+    {
+      "id": "5",
+      "slug": "payments",
+      "name": "Payments"
+    },
+    {
+      "id": "6",
+      "slug": "communication",
+      "name": "Communication"
+    },
+    {
+      "id": "7",
+      "slug": "personal_email",
+      "name": "Personal Email"
+    },
+    {
+      "id": "8",
+      "slug": "ecommerce",
+      "name": "E-commerce"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tslug\tname\n1\tcrm\tCRM\n2\temail_marketing\tEmail Marketing\n3\tanalytics\tAnalytics\n4\tproject_mgmt\tProject Management\n5\tpayments\tPayments\n6\tcommunication\tCommunication\n7\tpersonal_email\tPersonal Email\n8\tecommerce\tE-commerce\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

@@ -1,0 +1,13 @@
+{
+  "query": "SELECT id FROM users WHERE openId = 'demo_user_opencommand_2026' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id FROM users WHERE openId = 'demo_user_opencommand_2026' LIMIT 1;",
+  "rows": [
+    {
+      "id": "450248"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\n450248\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}
