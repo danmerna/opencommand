@@ -332,3 +332,109 @@ export async function sendWelcomeEmail(opts: WelcomeEmailOptions): Promise<boole
     return false;
   }
 }
+
+export interface WaitlistApprovalEmailOptions {
+  to: string;
+  name: string;
+  position: number;
+  loginUrl: string;
+}
+
+/**
+ * Send a waitlist approval notification email.
+ * Returns true on success, false on failure (non-throwing).
+ */
+export async function sendWaitlistApprovalEmail(opts: WaitlistApprovalEmailOptions): Promise<boolean> {
+  try {
+    const { to, name, position, loginUrl } = opts;
+    const displayName = name || "there";
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You're In — Welcome to OpenCommand</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e5e5e5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#111111;border:1px solid #222;border-radius:12px;overflow:hidden;max-width:600px;width:100%;">
+          <!-- Header -->
+          <tr>
+            <td style="padding:28px 36px 20px;border-bottom:1px solid #222;background:linear-gradient(135deg,#0f170f 0%,#111 100%);">
+              <p style="margin:0 0 4px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#22c55e;">OpenCommand &mdash; Personal Intelligence Engine</p>
+              <p style="margin:0;font-size:11px;color:#555;">Waitlist Approved</p>
+            </td>
+          </tr>
+          <!-- Hero -->
+          <tr>
+            <td style="padding:32px 36px 24px;">
+              <div style="display:inline-block;background:#0f2010;border:1px solid #22c55e33;border-radius:8px;padding:6px 14px;margin:0 0 20px;font-size:11px;color:#22c55e;letter-spacing:0.08em;text-transform:uppercase;">
+                &#10003; Access Granted
+              </div>
+              <h1 style="margin:0 0 16px;font-size:24px;font-weight:300;color:#ffffff;letter-spacing:-0.02em;line-height:1.3;">
+                You're in, ${displayName}.
+              </h1>
+              <p style="margin:0 0 24px;font-size:14px;color:#aaa;line-height:1.7;">
+                You were #${position} on the waitlist and your access has been approved. You can now log in and start building your AI executive team.
+              </p>
+
+              <!-- What you get -->
+              <div style="background:#0f1a0f;border:1px solid #1a3a1a;border-radius:10px;padding:20px 24px;margin:0 0 28px;">
+                <p style="margin:0 0 12px;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#22c55e;">What's waiting for you</p>
+                <p style="margin:0 0 10px;font-size:13px;color:#aaa;line-height:1.6;">
+                  &rarr; <strong style="color:#ddd;">ARCH</strong> &mdash; Your AI CEO, ready to learn your business in a 5-minute interview
+                </p>
+                <p style="margin:0 0 10px;font-size:13px;color:#aaa;line-height:1.6;">
+                  &rarr; <strong style="color:#ddd;">Full C-Suite</strong> &mdash; NOVA (CMO), SAGE (CTO), and TED (CFO) standing by
+                </p>
+                <p style="margin:0;font-size:13px;color:#aaa;line-height:1.6;">
+                  &rarr; <strong style="color:#ddd;">Self-Contextualization</strong> &mdash; Connect your tools and let your agents build their own context
+                </p>
+              </div>
+
+              <!-- CTA -->
+              <a href="${loginUrl}" style="display:inline-block;background:#22c55e;color:#000;font-weight:600;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;letter-spacing:0.01em;">
+                Start Building Your Team &rarr;
+              </a>
+
+              <p style="margin:20px 0 0;font-size:12px;color:#555;line-height:1.5;">
+                The onboarding takes about 5 minutes. Your AI workforce will be ready to execute autonomously once all executives are contextualized.
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 36px 28px;border-top:1px solid #222;">
+              <p style="margin:0;font-size:11px;color:#555;line-height:1.6;">
+                You're receiving this because you signed up for the OpenCommand beta waitlist.<br/>
+                <a href="${loginUrl}" style="color:#888;text-decoration:underline;">Log in to OpenCommand</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `You're in — your OpenCommand access has been approved`,
+      html,
+    });
+
+    if (error) {
+      console.error("[WaitlistApproval] Resend error:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[WaitlistApproval] Unexpected error:", err);
+    return false;
+  }
+}

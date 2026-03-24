@@ -78,6 +78,18 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserByIdForApproval(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+    waitlistPosition: users.waitlistPosition,
+  }).from(users).where(eq(users.id, userId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
 export async function getUserByUnsubscribeToken(token: string) {
   const db = await getDb(); if (!db) return undefined;
   const r = await db.select().from(users).where(eq(users.emailUnsubscribeToken, token)).limit(1);

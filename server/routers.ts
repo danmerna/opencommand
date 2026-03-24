@@ -53,12 +53,13 @@ import {
   adminGetFunnelStats, adminGetUserFunnelStage,
   findOrCreateUserByEmail, getWaitlistInfo, adminApproveUser, adminRejectUser,
   adminBulkApproveUsers, adminGetWaitlistStats, adminGetWaitlistUsers, ensureWaitlistFields,
+  getUserByIdForApproval,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
 import { emitToUser } from "./socketEmit";
-import { sendWelcomeEmail } from "./email";
+import { sendWelcomeEmail, sendWaitlistApprovalEmail } from "./email";
 
 // ─── Companies Router ────────────────────────────────────────────────────────
 const companiesRouter = router({
@@ -1741,7 +1742,19 @@ const adminRouter = router({
   approveUser: adminProcedure
     .input(z.object({ userId: z.number() }))
     .mutation(async ({ input }) => {
+      // Fetch user info before approving (need email and position for notification)
+      const userInfo = await getUserByIdForApproval(input.userId);
       await adminApproveUser(input.userId);
+      // Send approval email if user has an email address
+      if (userInfo?.email) {
+        const loginUrl = "https://opencommand.co";
+        sendWaitlistApprovalEmail({
+          to: userInfo.email,
+          name: userInfo.name ?? "",
+          position: userInfo.waitlistPosition ?? 0,
+          loginUrl,
+        }).catch(err => console.error("[WaitlistApproval] Failed to send email:", err));
+      }
       return { success: true };
     }),
   rejectUser: adminProcedure

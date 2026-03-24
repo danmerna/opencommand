@@ -195,3 +195,6 @@
 - [x] Shorten onboarding: 3 required questions per executive, then option to continue or move on
 - [x] Add 2 optional questions (Q4, Q5) per executive with skip/continue option
 - [x] Apply same 3-required + 2-optional pattern to all four executives (ARCH, NOVA, SAGE, TED)
+- [x] Add "Skip all optional" button to onboarding so power users can blast through all executives with only required questions
+- [x] Build waitlist approval notification email: send formatted email when admin approves a user
+- [x] Create visual mockup of the approval email for user review

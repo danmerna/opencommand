@@ -115,6 +115,7 @@ export default function ProOnboarding() {
   const [agentContextLoading, setAgentContextLoading] = useState(false);
   const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
   const [suggestedIntegrations, setSuggestedIntegrations] = useState<{ slug: string; name: string; reason: string }[]>([]);
+  const [coreOnlyMode, setCoreOnlyMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuth();
@@ -358,10 +359,24 @@ export default function ProOnboarding() {
     try {
       const data = await respondMut.mutateAsync({ onboardingId, answer: userMsg });
       if ((data as any).isCoreComplete) {
-        // Core 3 questions done — show continue/skip choice
-        setIsCoreComplete(true);
-        setQuestionCount((data as any).questionsAnswered ?? 3);
-        // Don't add the summary as a message — we'll show a UI card instead
+        if (coreOnlyMode) {
+          // Auto-skip optional questions in core-only mode
+          setQuestionCount((data as any).questionsAnswered ?? 3);
+          setIsCoreComplete(false);
+          // Immediately finalize
+          const finalData = await respondMut.mutateAsync({
+            onboardingId,
+            answer: "That's enough for now. Please finalize the onboarding with what you have.",
+          });
+          setIsOnboardingComplete(true);
+          if ((finalData as any).suggestedIntegrations?.length) {
+            setSuggestedIntegrations((finalData as any).suggestedIntegrations);
+          }
+        } else {
+          // Core 3 questions done — show continue/skip choice
+          setIsCoreComplete(true);
+          setQuestionCount((data as any).questionsAnswered ?? 3);
+        }
       } else {
         setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
       }
@@ -905,10 +920,11 @@ export default function ProOnboarding() {
   if (ONBOARDING_ORDER.includes(step) && currentExec) {
     const completedCount = ONBOARDING_ORDER.indexOf(step);
     const isSkippable = currentExec.skippable;
-    const totalQuestions = 5;
+    const maxQuestions = coreOnlyMode ? 3 : 5;
+    const totalQuestions = 5; // always show 5 dots
     const userAnswerCount = messages.filter(m => m.role === "user").length;
-    const displayQuestionCount = isCoreComplete ? 3 : isOnboardingComplete ? totalQuestions : Math.min(userAnswerCount, totalQuestions);
-    const progressPercent = Math.round(((completedCount * totalQuestions + displayQuestionCount) / (EXEC_AGENTS.length * totalQuestions)) * 100);
+    const displayQuestionCount = isCoreComplete ? 3 : isOnboardingComplete ? maxQuestions : Math.min(userAnswerCount, maxQuestions);
+    const progressPercent = Math.round(((completedCount * maxQuestions + displayQuestionCount) / (EXEC_AGENTS.length * maxQuestions)) * 100);
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -920,12 +936,28 @@ export default function ProOnboarding() {
               <div>
                 <p className={`text-sm font-medium ${currentExec.color}`}>{currentExec.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  Question {displayQuestionCount} of {totalQuestions}
-                  {displayQuestionCount <= 3 ? " (required)" : " (optional)"}
+                  Question {displayQuestionCount} of {coreOnlyMode ? 3 : totalQuestions}
+                  {coreOnlyMode ? " (speed mode)" : displayQuestionCount <= 3 ? " (required)" : " (optional)"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {!isOnboardingComplete && !isCoreComplete && (
+                <Button
+                  variant={coreOnlyMode ? "secondary" : "ghost"}
+                  size="sm"
+                  className={`gap-1.5 text-xs h-8 ${coreOnlyMode ? "text-amber-400 border-amber-400/30" : "text-muted-foreground hover:text-foreground"}`}
+                  onClick={() => {
+                    setCoreOnlyMode(prev => !prev);
+                    toast.info(coreOnlyMode ? "Optional questions re-enabled" : "Speed mode: only required questions", {
+                      description: coreOnlyMode ? "You'll be asked about optional deep-dives after each executive." : "Each executive will auto-complete after 3 core questions.",
+                    });
+                  }}
+                >
+                  <Zap size={12} />
+                  {coreOnlyMode ? "Speed Mode ON" : "Speed Mode"}
+                </Button>
+              )}
               {isSkippable && !isOnboardingComplete && !isCoreComplete && messages.length > 0 && (
                 <Button
                   variant="ghost"
@@ -961,7 +993,7 @@ export default function ProOnboarding() {
           </div>
           {/* Question dots for current executive */}
           <div className="px-6 py-2 flex items-center gap-1.5">
-            {Array.from({ length: totalQuestions }).map((_, i) => (
+            {Array.from({ length: coreOnlyMode ? 3 : totalQuestions }).map((_, i) => (
               <div
                 key={i}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
@@ -976,7 +1008,12 @@ export default function ProOnboarding() {
               />
             ))}
             <span className="text-[10px] text-muted-foreground/50 ml-2">
-              {displayQuestionCount <= 3 ? `${3 - displayQuestionCount} required left` : `${totalQuestions - displayQuestionCount} optional left`}
+              {coreOnlyMode
+                ? `${Math.max(0, 3 - displayQuestionCount)} required left`
+                : displayQuestionCount <= 3
+                  ? `${3 - displayQuestionCount} required left`
+                  : `${totalQuestions - displayQuestionCount} optional left`
+              }
             </span>
           </div>
         </div>

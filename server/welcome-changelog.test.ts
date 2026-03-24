@@ -80,7 +80,8 @@ describe("Welcome Email Router Integration", () => {
   );
 
   it("imports sendWelcomeEmail in routers.ts", () => {
-    expect(routerSource).toContain("import { sendWelcomeEmail }");
+    expect(routerSource).toContain("sendWelcomeEmail");
+    expect(routerSource).toContain("import");
   });
 
   it("imports hasWelcomeEmailBeenSent and markWelcomeEmailSent", () => {

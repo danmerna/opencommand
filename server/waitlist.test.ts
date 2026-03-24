@@ -283,4 +283,36 @@ describe("Waitlist source code validation", () => {
     expect(admin).toContain("trpc.admin.approveUser");
     expect(admin).toContain("trpc.admin.rejectUser");
   });
+
+  it("email.ts exports sendWaitlistApprovalEmail function", () => {
+    const email = fs.readFileSync(path.resolve(__dirname, "email.ts"), "utf-8");
+    expect(email).toContain("sendWaitlistApprovalEmail");
+    expect(email).toContain("WaitlistApprovalEmailOptions");
+    expect(email).toContain("Access Granted");
+    expect(email).toContain("You're in,");
+    expect(email).toContain("ARCH");
+    expect(email).toContain("NOVA");
+    expect(email).toContain("SAGE");
+    expect(email).toContain("TED");
+    expect(email).toContain("Start Building Your Team");
+  });
+
+  it("routers.ts approveUser sends approval email", () => {
+    const routers = fs.readFileSync(path.resolve(__dirname, "routers.ts"), "utf-8");
+    expect(routers).toContain("sendWaitlistApprovalEmail");
+    expect(routers).toContain("getUserByIdForApproval");
+  });
+
+  it("db.ts exports getUserByIdForApproval", () => {
+    const db = fs.readFileSync(path.resolve(__dirname, "db.ts"), "utf-8");
+    expect(db).toContain("getUserByIdForApproval");
+    expect(db).toContain("waitlistPosition");
+  });
+
+  it("ProOnboarding.tsx has Speed Mode (core-only) toggle", () => {
+    const onboarding = fs.readFileSync(path.resolve(__dirname, "../client/src/pages/ProOnboarding.tsx"), "utf-8");
+    expect(onboarding).toContain("coreOnlyMode");
+    expect(onboarding).toContain("Speed Mode");
+    expect(onboarding).toContain("setCoreOnlyMode");
+  });
 });
