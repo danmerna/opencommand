@@ -37,6 +37,9 @@ import {
   changelogEntries,
   pageViews, InsertPageView,
   userSessions, InsertUserSession,
+  agentAutonomySettings, InsertAgentAutonomySetting,
+  ralfExecutionLogs, InsertRalfExecutionLog,
+  subAgentRecommendations, InsertSubAgentRecommendation,
 } from "../drizzle/schema";
 import type { InsertChangelogEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -1289,6 +1292,78 @@ export async function mergeEmailUserToOAuth(email: string, oauthOpenId: string) 
     // No OAuth user yet — update the temp user's openId to the real one
     await db.update(users).set({ openId: oauthOpenId }).where(eq(users.id, tempUser.id));
   }
+}
+
+// ─── Agent Autonomy Settings ────────────────────────────────────────────────
+export async function getAutonomySettings(agentId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [settings] = await db.select().from(agentAutonomySettings).where(eq(agentAutonomySettings.agentId, agentId)).limit(1);
+  return settings ?? null;
+}
+
+export async function upsertAutonomySettings(agentId: number, data: Partial<InsertAgentAutonomySetting>) {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await getAutonomySettings(agentId);
+  if (existing) {
+    await db.update(agentAutonomySettings).set(data).where(eq(agentAutonomySettings.agentId, agentId));
+  } else {
+    await db.insert(agentAutonomySettings).values({ agentId, ...data } as InsertAgentAutonomySetting);
+  }
+}
+
+// ─── RALF Execution Logs ────────────────────────────────────────────────────
+export async function createRalfLog(data: InsertRalfExecutionLog) {
+  const db = await getDb();
+  if (!db) return;
+  return db.insert(ralfExecutionLogs).values(data);
+}
+
+export async function getRalfLogsByTask(taskId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(ralfExecutionLogs).where(eq(ralfExecutionLogs.taskId, taskId)).orderBy(ralfExecutionLogs.createdAt);
+}
+
+export async function getRalfLogsByAgent(agentId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(ralfExecutionLogs).where(eq(ralfExecutionLogs.agentId, agentId)).orderBy(desc(ralfExecutionLogs.createdAt)).limit(limit);
+}
+
+export async function updateRalfLogStatus(id: number, status: string, output?: string, confidence?: string) {
+  const db = await getDb();
+  if (!db) return;
+  const data: Record<string, unknown> = { status };
+  if (output !== undefined) data.output = output;
+  if (confidence !== undefined) data.confidence = confidence;
+  await db.update(ralfExecutionLogs).set(data).where(eq(ralfExecutionLogs.id, id));
+}
+
+// ─── Sub-Agent Recommendations ──────────────────────────────────────────────
+export async function createSubAgentRecommendation(data: InsertSubAgentRecommendation) {
+  const db = await getDb();
+  if (!db) return;
+  return db.insert(subAgentRecommendations).values(data);
+}
+
+export async function getSubAgentRecommendations(companyId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(subAgentRecommendations).where(eq(subAgentRecommendations.companyId, companyId)).orderBy(desc(subAgentRecommendations.createdAt));
+}
+
+export async function getSubAgentRecommendationsByExecutive(executiveAgentId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(subAgentRecommendations).where(eq(subAgentRecommendations.executiveAgentId, executiveAgentId)).orderBy(desc(subAgentRecommendations.createdAt));
+}
+
+export async function updateSubAgentRecommendationStatus(id: number, status: "suggested" | "approved" | "deployed" | "dismissed") {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(subAgentRecommendations).set({ status }).where(eq(subAgentRecommendations.id, id));
 }
 
 export async function ensureWaitlistFields(userId: number) {

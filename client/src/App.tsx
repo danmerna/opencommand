@@ -30,6 +30,8 @@ import Pricing from "./pages/Pricing";
 import Creators from "./pages/Creators";
 import ProOnboarding from "./pages/ProOnboarding";
 import Briefings from "./pages/Briefings";
+import ExecutiveBoard from "./pages/ExecutiveBoard";
+import ExecutionDashboard from "./pages/ExecutionDashboard";
 import Analytics from "./pages/Analytics";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
 import WhatsNew from "./pages/WhatsNew";
@@ -51,6 +53,9 @@ function Router() {
       </Route>
       <Route path="/ai-ceo">
         <AppLayout><AICeo /></AppLayout>
+      </Route>
+      <Route path="/executive-board">
+        <AppLayout><ExecutiveBoard /></AppLayout>
       </Route>
       <Route path="/blueprints">
         <AppLayout><Blueprints /></AppLayout>
@@ -82,6 +87,9 @@ function Router() {
       </Route>
       <Route path="/agents/:id">
         <AppLayout><AgentDetail /></AppLayout>
+      </Route>
+      <Route path="/execution">
+        <AppLayout><ExecutionDashboard /></AppLayout>
       </Route>
       <Route path="/briefings" component={Briefings} />
       <Route path="/analytics">

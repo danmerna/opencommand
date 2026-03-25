@@ -230,7 +230,7 @@
 - [x] Redesign Context Engine Demo: replace onboarding terminal with Socratic intent engine UI (user request → live data → cross-source insights → numbered strategic questions)
 - [x] Reorder agent demo tabs: CEO first, CMO second, CTO third, CFO fourth
 - [x] Fix Socratic demo data source cards: always 2x2 grid on all screen sizes (not stacking on mobile)
-- [ ] Add Execute button to each Socratic question in the landing page demo
+- [x] Add Execute button to each Socratic question in the landing page demo (moved to app instead)
 - [x] Phase 1: Add structured types to shared/types.ts (DataSourceCard, CrossSourceInsight, SocraticQuestion, SocraticEngineResponse)
 - [x] Phase 1: Add getDisplayMetrics() to HubSpot adapter
 - [x] Phase 1: Add getDisplayMetrics() to Salesforce adapter
@@ -239,3 +239,14 @@
 - [x] Phase 1: Restructure contextAssembler.ts to return structured output instead of freeform text
 - [x] Phase 1: Update contextEngineRouter tRPC procedures to use new structured types
 - [x] Phase 1: Write tests for restructured assembler and adapters
+- [x] Phase 2: Rebuild AICeo.tsx as Executive Board with 4 tabs (Board / Individual / Direct LLM / Decision Log)
+- [x] Phase 2: Board tab — multi-executive Socratic query with 2x2 data cards, insights, questions
+- [x] Phase 2: Individual tab — pick one executive for focused 1:1 chat
+- [x] Phase 2: Direct LLM tab — raw AI chat without executive persona
+- [x] Phase 3: Add Execute buttons to each Socratic question in the app
+- [x] Phase 3: Wire Execute → task creation → agent routing
+- [x] Phase 4: Sub-agent recommendation engine based on connected tools
+- [x] Phase 5: RALF loop execution + cross-model verification
+- [x] Phase 5: Autonomy controls UI on Agent Detail page
+- [x] Phase 6: Morning briefing with approve buttons in briefingScheduler
+- [x] Phase 7: Execution dashboard showing real-time agent activity

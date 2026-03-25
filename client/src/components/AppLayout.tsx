@@ -25,8 +25,10 @@ const coreNavItems = [
   { href: "/mission-control", label: "Mission Control", icon: LayoutDashboard },
   { href: "/intent-engine",   label: "Intent Engine",   icon: Cpu },
   { href: "/ai-ceo",          label: "AI CEO",           icon: Bot },
+  { href: "/executive-board", label: "Executive Board",  icon: Users },
   { href: "/blueprints",      label: "Blueprints",       icon: FileStack },
   // Marketplace & Creators hidden — will be re-added later
+  { href: "/execution",       label: "Execution",        icon: CheckSquare },
   { href: "/governance",      label: "Governance",       icon: Shield },
   { href: "/integration-hub", label: "Integrations",     icon: Plug },
   // Blueprint Dashboard & Compatibility hidden — will be re-added later

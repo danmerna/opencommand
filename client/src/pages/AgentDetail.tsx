@@ -14,13 +14,14 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
-type Tab = "overview" | "capabilities" | "heartbeat" | "budget" | "settings";
+type Tab = "overview" | "capabilities" | "heartbeat" | "budget" | "autonomy" | "settings";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "overview",     label: "Overview",      icon: BarChart3 },
   { id: "capabilities", label: "Capabilities",  icon: Zap },
   { id: "heartbeat",    label: "Heartbeat",     icon: Heart },
   { id: "budget",       label: "Budget",        icon: DollarSign },
+  { id: "autonomy",     label: "Autonomy",      icon: Shield },
   { id: "settings",     label: "Settings",      icon: Settings },
 ];
 
@@ -530,7 +531,10 @@ export default function AgentDetail() {
           </div>
         )}
 
-        {/* ── Settings ────────────────────────────────────────────────── */}
+        {/* ── Autonomy & RALF ─────────────────────────────────────────────── */}
+        {activeTab === "autonomy" && <AutonomyTab agentId={agentId} agentName={agent.name} />}
+
+        {/* ── Settings ──────────────────────────────────────────────────────── */}
         {activeTab === "settings" && (
           <div className="max-w-2xl space-y-6">
             <h2 className="text-sm font-semibold text-foreground">Agent Settings</h2>
@@ -644,6 +648,186 @@ export default function AgentDetail() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ─── Autonomy & RALF Tab ──────────────────────────────────────────────── */
+const AUTONOMY_LEVELS = [
+  { value: "full_auto", label: "Full Auto", desc: "Agent acts independently, no approvals needed", color: "text-emerald-400" },
+  { value: "supervised", label: "Supervised", desc: "Agent acts but logs everything for review", color: "text-blue-400" },
+  { value: "approval_required", label: "Approval Required", desc: "Agent proposes, human approves before execution", color: "text-amber-400" },
+  { value: "manual_only", label: "Manual Only", desc: "Agent only responds when directly asked", color: "text-red-400" },
+] as const;
+
+function AutonomyTab({ agentId, agentName }: { agentId: number; agentName: string }) {
+  const utils = trpc.useUtils();
+  const { data: settings, isLoading } = trpc.autonomy.get.useQuery({ agentId });
+  const { data: ralfLogs = [] } = trpc.ralf.logsByAgent.useQuery({ agentId, limit: 20 });
+
+  const updateMutation = trpc.autonomy.update.useMutation({
+    onSuccess: () => {
+      utils.autonomy.get.invalidate({ agentId });
+      toast.success("Autonomy settings updated");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  if (isLoading || !settings) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <Loader2 size={20} className="animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const currentLevel = AUTONOMY_LEVELS.find(l => l.value === settings.autonomyLevel) ?? AUTONOMY_LEVELS[1];
+
+  return (
+    <div className="max-w-3xl space-y-8">
+      {/* Autonomy Level Selector */}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-1">Autonomy Level</h2>
+        <p className="text-xs text-muted-foreground mb-4">Controls how independently {agentName} can act</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {AUTONOMY_LEVELS.map(level => {
+            const isActive = settings.autonomyLevel === level.value;
+            return (
+              <button
+                key={level.value}
+                onClick={() => updateMutation.mutate({ agentId, autonomyLevel: level.value })}
+                className={`text-left rounded-xl border p-4 transition-all ${
+                  isActive
+                    ? "border-white/20 bg-white/[0.06]"
+                    : "border-border bg-white/[0.02] hover:bg-white/[0.04]"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`w-2 h-2 rounded-full ${isActive ? "bg-current" : "bg-zinc-600"} ${level.color}`} />
+                  <span className={`text-sm font-medium ${isActive ? level.color : "text-foreground"}`}>{level.label}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">{level.desc}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Guardrails */}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-4">Guardrails</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-border bg-white/[0.02] p-4">
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 block">Max Spend Per Task ($)</label>
+            <Input
+              type="number"
+              defaultValue={Number(settings.maxSpendPerTask ?? 50)}
+              onBlur={e => {
+                const val = Number(e.target.value);
+                if (!isNaN(val) && val >= 0) updateMutation.mutate({ agentId, maxSpendPerTask: val });
+              }}
+              className="h-8"
+            />
+          </div>
+          <div className="rounded-xl border border-border bg-white/[0.02] p-4">
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 block">Max Tasks Per Day</label>
+            <Input
+              type="number"
+              defaultValue={settings.maxTasksPerDay ?? 10}
+              onBlur={e => {
+                const val = Number(e.target.value);
+                if (!isNaN(val) && val >= 0) updateMutation.mutate({ agentId, maxTasksPerDay: val });
+              }}
+              className="h-8"
+            />
+          </div>
+          <div className="rounded-xl border border-border bg-white/[0.02] p-4">
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 block">Require Approval Above ($)</label>
+            <Input
+              type="number"
+              defaultValue={Number(settings.requireApprovalAbove ?? 100)}
+              onBlur={e => {
+                const val = Number(e.target.value);
+                if (!isNaN(val) && val >= 0) updateMutation.mutate({ agentId, requireApprovalAbove: val });
+              }}
+              className="h-8"
+            />
+          </div>
+          <div className="rounded-xl border border-border bg-white/[0.02] p-4 flex items-center justify-between">
+            <div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Cross-Model Verification</div>
+              <div className="text-[11px] text-muted-foreground">Second AI validates outputs</div>
+            </div>
+            <button
+              onClick={() => updateMutation.mutate({ agentId, crossModelVerification: !settings.crossModelVerification })}
+              className={`relative w-10 h-5 rounded-full transition-colors ${
+                settings.crossModelVerification ? "bg-emerald-500" : "bg-zinc-700"
+              }`}
+            >
+              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                settings.crossModelVerification ? "left-5" : "left-0.5"
+              }`} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* RALF Toggle */}
+      <div className="rounded-xl border border-border bg-white/[0.02] p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground mb-0.5">RALF Loop Execution</h2>
+            <p className="text-[11px] text-muted-foreground">Reason → Act → Learn → Feedback cycle for every task</p>
+          </div>
+          <button
+            onClick={() => updateMutation.mutate({ agentId, ralfEnabled: !settings.ralfEnabled })}
+            className={`relative w-10 h-5 rounded-full transition-colors ${
+              settings.ralfEnabled ? "bg-emerald-500" : "bg-zinc-700"
+            }`}
+          >
+            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+              settings.ralfEnabled ? "left-5" : "left-0.5"
+            }`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Recent RALF Execution History */}
+      {ralfLogs.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-foreground mb-3">Recent RALF Executions</h2>
+          <div className="space-y-2">
+            {ralfLogs.slice(0, 10).map((log: any) => {
+              const phaseColors: Record<string, string> = {
+                reason: "text-blue-400 bg-blue-400/10 border-blue-400/20",
+                act: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+                learn: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+                feedback: "text-purple-400 bg-purple-400/10 border-purple-400/20",
+              };
+              const statusIcons: Record<string, React.ElementType> = {
+                completed: CheckCircle2,
+                failed: XCircle,
+                running: Loader2,
+                pending: Clock,
+              };
+              const StatusIcon = statusIcons[log.status] ?? Clock;
+              return (
+                <div key={log.id} className="flex items-center gap-3 rounded-lg border border-border bg-white/[0.02] px-4 py-2.5">
+                  <Badge variant="outline" className={`text-[10px] uppercase ${phaseColors[log.phase] ?? ""}`}>
+                    {log.phase}
+                  </Badge>
+                  <span className="flex-1 text-xs text-muted-foreground truncate">{log.output?.slice(0, 80) ?? "—"}</span>
+                  <StatusIcon size={13} className={log.status === "completed" ? "text-emerald-400" : log.status === "failed" ? "text-red-400" : "text-muted-foreground"} />
+                  <span className="text-[10px] text-muted-foreground">
+                    {log.confidence ? `${(Number(log.confidence) * 100).toFixed(0)}%` : "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

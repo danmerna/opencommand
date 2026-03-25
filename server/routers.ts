@@ -54,6 +54,9 @@ import {
   findOrCreateUserByEmail, getWaitlistInfo, adminApproveUser, adminRejectUser,
   adminBulkApproveUsers, adminGetWaitlistStats, adminGetWaitlistUsers, ensureWaitlistFields,
   getUserByIdForApproval,
+  getAutonomySettings, upsertAutonomySettings,
+  createRalfLog, getRalfLogsByTask, getRalfLogsByAgent, updateRalfLogStatus,
+  createSubAgentRecommendation, getSubAgentRecommendations, getSubAgentRecommendationsByExecutive, updateSubAgentRecommendationStatus,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -625,6 +628,29 @@ const creatorsRouter = router({
 });
 
 // ─── AI CEO Router ───────────────────────────────────────────────────────────
+const EXECUTIVE_PERSONAS: Record<string, { name: string; title: string; systemPrompt: string }> = {
+  ceo: {
+    name: "ARCH",
+    title: "Chief Executive Officer",
+    systemPrompt: `You are ARCH, the AI Chief Executive Officer in OpenCommand. You think in terms of overall business strategy, revenue growth, competitive positioning, and cross-functional alignment. You pull insights from sales pipelines, financial data, and operational metrics to make executive decisions. When analyzing data, always reference specific numbers. Frame strategic questions as "Should we..." proposals with estimated impact.`,
+  },
+  cmo: {
+    name: "NOVA",
+    title: "Chief Marketing Officer",
+    systemPrompt: `You are NOVA, the AI Chief Marketing Officer in OpenCommand. You think in terms of demand generation, brand positioning, customer acquisition costs, channel optimization, and campaign performance. You pull insights from ad platforms, analytics, CRM engagement data, and content performance. When analyzing data, always reference specific numbers. Frame strategic questions as "Should we..." proposals with estimated impact.`,
+  },
+  cto: {
+    name: "SAGE",
+    title: "Chief Technology Officer",
+    systemPrompt: `You are SAGE, the AI Chief Technology Officer in OpenCommand. You think in terms of engineering velocity, system reliability, technical debt, infrastructure costs, and team productivity. You pull insights from development tools, monitoring systems, and project management data. When analyzing data, always reference specific numbers. Frame strategic questions as "Should we..." proposals with estimated impact.`,
+  },
+  cfo: {
+    name: "TED",
+    title: "Chief Financial Officer",
+    systemPrompt: `You are TED, the AI Chief Financial Officer in OpenCommand. You think in terms of unit economics, cash flow, burn rate, runway, revenue recognition, and financial modeling. You pull insights from payment processors, accounting systems, CRM pipeline data, and payroll. When analyzing data, always reference specific numbers. Frame strategic questions as "Should we..." proposals with estimated impact.`,
+  },
+};
+
 const aiCeoRouter = router({
   socratiqueQuestion: protectedProcedure
     .input(z.object({ userInput: z.string().min(1), conversationHistory: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).optional() }))
@@ -662,6 +688,277 @@ const aiCeoRouter = router({
     }),
 
   decisionLog: protectedProcedure.query(({ ctx }) => getDecisionLogByUserId(ctx.user.id)),
+
+  // ─── Executive Board: Multi-executive Socratic query ───────────────────────
+  // Runs the context assembler and then has each executive persona interpret the results
+  boardQuery: protectedProcedure
+    .input(z.object({ requestText: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Run the Socratic engine to get live data + structured output
+      const contextResult = await assembleContext(input.requestText, ctx.user.id);
+      const socratic = contextResult.socratic;
+
+      // 2. Build executive responses in parallel — each executive interprets the same data
+      const executiveTypes = ["ceo", "cmo", "cto", "cfo"] as const;
+      const dataSummary = JSON.stringify({
+        dataCards: socratic.dataCards,
+        insights: socratic.insights,
+        questions: socratic.questions,
+        contextSummary: socratic.contextSummary,
+      });
+
+      const executiveResponses = await Promise.all(
+        executiveTypes.map(async (execType) => {
+          const persona = EXECUTIVE_PERSONAS[execType];
+          if (!persona) return null;
+          try {
+            const response = await invokeLLM({
+              messages: [
+                {
+                  role: "system",
+                  content: `${persona.systemPrompt}\n\nYou have been given live business data from the user's connected tools. Analyze it from your perspective as ${persona.title}. Provide:\n1. Your top strategic observation (1-2 sentences)\n2. One "Should we..." strategic question with rationale and estimated impact\n\nBe specific, reference actual numbers from the data. Keep your response under 150 words.`,
+                },
+                {
+                  role: "user",
+                  content: `User's request: "${input.requestText}"\n\nLive business data:\n${dataSummary}`,
+                },
+              ],
+              response_format: {
+                type: "json_schema",
+                json_schema: {
+                  name: "executive_response",
+                  strict: true,
+                  schema: {
+                    type: "object",
+                    properties: {
+                      observation: { type: "string" },
+                      question: { type: "string" },
+                      rationale: { type: "string" },
+                      estimatedImpact: { type: "string" },
+                    },
+                    required: ["observation", "question", "rationale", "estimatedImpact"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            });
+            const parsed = JSON.parse(response.choices[0].message.content as string);
+            return {
+              type: execType,
+              name: persona.name,
+              title: persona.title,
+              ...parsed,
+            };
+          } catch (err) {
+            console.error(`[BoardQuery] ${persona.name} failed:`, err);
+            return {
+              type: execType,
+              name: persona.name,
+              title: persona.title,
+              observation: "Unable to generate analysis at this time.",
+              question: "Should we retry this analysis?",
+              rationale: "Executive analysis temporarily unavailable.",
+              estimatedImpact: "N/A",
+            };
+          }
+        })
+      );
+
+      // 3. Log the board query as a decision
+      await createDecisionLogEntry({
+        userId: ctx.user.id,
+        decisionType: "board_query",
+        context: input.requestText,
+        decision: `Executive Board analyzed: "${input.requestText}" with ${socratic.sourceCount} data sources`,
+        rationale: "Multi-executive Socratic analysis",
+      });
+
+      return {
+        socratic,
+        executives: executiveResponses.filter(Boolean),
+        contextId: socratic.contextId,
+      };
+    }),
+
+  // ─── Executive Chat: 1:1 conversation with a specific executive ────────────
+  executiveChat: protectedProcedure
+    .input(z.object({
+      executiveType: z.enum(["ceo", "cmo", "cto", "cfo"]),
+      userInput: z.string().min(1),
+      conversationHistory: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).optional(),
+      contextSummary: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const persona = EXECUTIVE_PERSONAS[input.executiveType];
+      if (!persona) throw new Error("Unknown executive type");
+
+      const history = input.conversationHistory ?? [];
+
+      // Get user's connected tools for context
+      const connections = await getUserConnectionsByUserId(ctx.user.id);
+      const connectedTools = connections.filter(c => c.status === "connected").map(c => c.accountName).filter(Boolean);
+
+      const systemContent = `${persona.systemPrompt}\n\nYou are in a 1:1 conversation with the user. Be direct, strategic, and reference their business context. Connected tools: ${connectedTools.join(", ") || "none"}.${input.contextSummary ? `\n\nRecent context: ${input.contextSummary}` : ""}\n\nRespond conversationally but always tie back to actionable strategy. When you identify an action item, clearly state it as a "Should we..." question.`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemContent },
+          ...history.map(h => ({ role: h.role as "user" | "assistant", content: h.content as string })),
+          { role: "user", content: input.userInput },
+        ],
+      });
+
+      const content = (response.choices[0]?.message?.content ?? "") as string;
+      return { response: content, executiveType: input.executiveType, executiveName: persona.name };
+    }),
+
+  // ─── Direct LLM Chat: Raw AI without executive persona ─────────────────────
+  directChat: protectedProcedure
+    .input(z.object({
+      userInput: z.string().min(1),
+      conversationHistory: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const history = input.conversationHistory ?? [];
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: "You are a helpful AI assistant for OpenCommand, a business intelligence platform. Answer questions directly and helpfully. You can discuss strategy, data analysis, business operations, or any other topic. Be concise and actionable." },
+          ...history.map(h => ({ role: h.role as "user" | "assistant", content: h.content as string })),
+          { role: "user", content: input.userInput },
+        ],
+      });
+      const content = (response.choices[0]?.message?.content ?? "") as string;
+      return { response: content };
+    }),
+
+  // ─── Execute Question: Decompose a strategic question into tasks ────────────
+  executeQuestion: protectedProcedure
+    .input(z.object({
+      questionId: z.string(),
+      question: z.string(),
+      rationale: z.string().optional(),
+      estimatedImpact: z.string().optional(),
+      executiveType: z.string().optional(),
+      companyId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Get user's agents for task routing
+      const agents = await getAgentsByUserId(ctx.user.id);
+      const agentSummary = agents.map(a => ({ id: a.id, name: a.name, type: a.type, roleTitle: a.roleTitle, status: a.status }));
+
+      // Use LLM to decompose the strategic question into executable tasks
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `You are the OpenCommand task decomposition engine. Given a strategic question that has been approved for execution, break it down into 2-5 concrete, executable tasks. Each task should be specific enough for an AI agent to execute autonomously.\n\nAvailable agents: ${JSON.stringify(agentSummary)}\n\nReturn JSON with tasks array.`,
+          },
+          {
+            role: "user",
+            content: `Strategic question: "${input.question}"\nRationale: ${input.rationale ?? "N/A"}\nEstimated impact: ${input.estimatedImpact ?? "N/A"}`,
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "task_decomposition",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                strategyTitle: { type: "string" },
+                tasks: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string" },
+                      description: { type: "string" },
+                      priority: { type: "string", enum: ["low", "medium", "high", "critical"] },
+                      suggestedAgentType: { type: "string" },
+                      estimatedHours: { type: "number" },
+                    },
+                    required: ["title", "description", "priority", "suggestedAgentType", "estimatedHours"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["strategyTitle", "tasks"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      const parsed = JSON.parse(response.choices[0].message.content as string);
+
+      // Create tasks in the database and route to appropriate agents
+      const createdTasks: Array<{ taskId: number; title: string; agentId: number | null; agentName: string | null }> = [];
+
+      for (const taskDef of parsed.tasks) {
+        // Find the best matching agent
+        const matchingAgent = agents.find(a => a.type === taskDef.suggestedAgentType && a.status !== "terminated")
+          ?? agents.find(a => a.type === "ceo" && a.status !== "terminated")
+          ?? null;
+
+        const result = await createTask({
+          userId: ctx.user.id,
+          companyId: input.companyId,
+          agentId: matchingAgent?.id,
+          title: taskDef.title,
+          description: taskDef.description,
+          priority: taskDef.priority as "low" | "medium" | "high" | "critical",
+          routingMode: "ai",
+          status: "pending",
+          estimatedHours: String(taskDef.estimatedHours),
+        });
+
+        const taskId = Number((result as any)[0]?.insertId ?? 0);
+        createdTasks.push({
+          taskId,
+          title: taskDef.title,
+          agentId: matchingAgent?.id ?? null,
+          agentName: matchingAgent?.name ?? null,
+        });
+      }
+
+      // Log the decision
+      await createDecisionLogEntry({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        decisionType: "strategy_execution",
+        context: input.question,
+        decision: `Approved and decomposed into ${createdTasks.length} tasks: ${parsed.strategyTitle}`,
+        rationale: input.rationale ?? "Executive board recommendation",
+      });
+
+      // Notify via inbox
+      await createInboxItem({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        type: "strategy_review",
+        title: `Strategy Approved: ${parsed.strategyTitle}`,
+        body: `${createdTasks.length} tasks created and routed to agents. Estimated impact: ${input.estimatedImpact ?? "TBD"}`,
+        priority: "high",
+      });
+
+      emitToUser(ctx.user.id, "task_completed", `Strategy Approved`, `${createdTasks.length} tasks created from: ${parsed.strategyTitle}`, { taskCount: createdTasks.length });
+
+      return {
+        strategyTitle: parsed.strategyTitle,
+        tasks: createdTasks,
+        totalTasks: createdTasks.length,
+      };
+    }),
+
+  // ─── Get executive personas (for frontend) ─────────────────────────────────
+  getPersonas: publicProcedure.query(() => {
+    return Object.entries(EXECUTIVE_PERSONAS).map(([type, persona]) => ({
+      type,
+      name: persona.name,
+      title: persona.title,
+    }));
+  }),
 });
 
 // ─── App Router ──────────────────────────────────────────────────────────────
@@ -1729,6 +2026,263 @@ const waitlistRouter = router({
   count: publicProcedure.query(() => getWaitlistCount()),
 });
 
+// ─── Autonomy Settings Router ────────────────────────────────────────────────
+const autonomyRouter = router({
+  get: protectedProcedure
+    .input(z.object({ agentId: z.number() }))
+    .query(async ({ input }) => {
+      const settings = await getAutonomySettings(input.agentId);
+      return settings ?? {
+        agentId: input.agentId,
+        autonomyLevel: "supervised" as const,
+        maxSpendPerTask: "50",
+        maxTasksPerDay: 10,
+        allowedActions: null,
+        blockedActions: null,
+        requireApprovalAbove: "100",
+        crossModelVerification: false,
+        ralfEnabled: true,
+      };
+    }),
+  update: protectedProcedure
+    .input(z.object({
+      agentId: z.number(),
+      autonomyLevel: z.enum(["full_auto", "supervised", "approval_required", "manual_only"]).optional(),
+      maxSpendPerTask: z.number().optional(),
+      maxTasksPerDay: z.number().optional(),
+      requireApprovalAbove: z.number().optional(),
+      crossModelVerification: z.boolean().optional(),
+      ralfEnabled: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { agentId, ...data } = input;
+      const mapped: Record<string, unknown> = {};
+      if (data.autonomyLevel !== undefined) mapped.autonomyLevel = data.autonomyLevel;
+      if (data.maxSpendPerTask !== undefined) mapped.maxSpendPerTask = String(data.maxSpendPerTask);
+      if (data.maxTasksPerDay !== undefined) mapped.maxTasksPerDay = data.maxTasksPerDay;
+      if (data.requireApprovalAbove !== undefined) mapped.requireApprovalAbove = String(data.requireApprovalAbove);
+      if (data.crossModelVerification !== undefined) mapped.crossModelVerification = data.crossModelVerification;
+      if (data.ralfEnabled !== undefined) mapped.ralfEnabled = data.ralfEnabled;
+      await upsertAutonomySettings(agentId, mapped);
+      return { success: true };
+    }),
+});
+
+// ─── RALF Execution Router ──────────────────────────────────────────────────
+const ralfRouter = router({
+  logsByTask: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .query(({ input }) => getRalfLogsByTask(input.taskId)),
+  logsByAgent: protectedProcedure
+    .input(z.object({ agentId: z.number(), limit: z.number().optional() }))
+    .query(({ input }) => getRalfLogsByAgent(input.agentId, input.limit)),
+  execute: protectedProcedure
+    .input(z.object({
+      taskId: z.number(),
+      agentId: z.number(),
+      companyId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const task = await getTaskById(input.taskId);
+      if (!task) throw new Error("Task not found");
+
+      const agent = await getAgentById(input.agentId);
+      if (!agent) throw new Error("Agent not found");
+
+      const autonomy = await getAutonomySettings(input.agentId);
+      const ralfEnabled = autonomy?.ralfEnabled ?? true;
+      const crossModel = autonomy?.crossModelVerification ?? false;
+
+      if (!ralfEnabled) {
+        return { message: "RALF is disabled for this agent", phases: [] };
+      }
+
+      const phases = ["reason", "act", "learn", "feedback"] as const;
+      const results: Array<{ phase: string; output: string; confidence: string; status: string }> = [];
+
+      let previousOutput = "";
+
+      for (const phase of phases) {
+        // Create the log entry
+        const logResult = await createRalfLog({
+          taskId: input.taskId,
+          agentId: input.agentId,
+          companyId: input.companyId,
+          phase,
+          input: phase === "reason" ? task.description ?? task.title : previousOutput,
+          status: "running",
+        });
+        const logId = Number((logResult as any)?.[0]?.insertId ?? 0);
+
+        try {
+          const phasePrompts: Record<string, string> = {
+            reason: `You are ${agent.name} (${agent.roleTitle ?? agent.type}). REASON phase: Analyze this task and determine the best approach. Task: "${task.title}" — ${task.description ?? ""}. Output your reasoning in 2-3 sentences. Include what data you need and what approach you'll take.`,
+            act: `You are ${agent.name}. ACT phase: Based on this reasoning: "${previousOutput}", describe the specific actions you would take to execute this task. Be concrete and specific. List 2-4 action steps.`,
+            learn: `You are ${agent.name}. LEARN phase: Based on the actions taken: "${previousOutput}", what did you learn? What patterns or insights emerged? How would you improve next time? 2-3 sentences.`,
+            feedback: `You are ${agent.name}. FEEDBACK phase: Based on the full execution cycle, provide a confidence score (0.0-1.0) and a brief summary of outcomes and recommendations. Previous learning: "${previousOutput}"`,
+          };
+
+          const response = await invokeLLM({
+            messages: [
+              { role: "system", content: phasePrompts[phase] ?? "" },
+              { role: "user", content: `Execute the ${phase} phase for task: ${task.title}` },
+            ],
+          });
+
+          const output = (response.choices[0]?.message?.content ?? "") as string;
+          let confidence = "0.75";
+
+          // Extract confidence from feedback phase
+          if (phase === "feedback") {
+            const match = output.match(/(\d\.\d+)/);
+            if (match) confidence = match[1];
+          }
+
+          // Cross-model verification if enabled
+          let verificationResult = null;
+          if (crossModel && (phase === "act" || phase === "feedback")) {
+            try {
+              const verifyResponse = await invokeLLM({
+                messages: [
+                  { role: "system", content: `You are a verification agent. Review this AI agent's output for accuracy, safety, and alignment with the task goal. Rate confidence 0.0-1.0 and flag any concerns.` },
+                  { role: "user", content: `Task: ${task.title}\nAgent output (${phase} phase): ${output}` },
+                ],
+              });
+              verificationResult = (verifyResponse.choices[0]?.message?.content ?? "") as string;
+            } catch {
+              verificationResult = "Verification unavailable";
+            }
+          }
+
+          await updateRalfLogStatus(logId, "completed", output, confidence);
+          previousOutput = output;
+          results.push({ phase, output, confidence, status: "completed" });
+        } catch (err) {
+          await updateRalfLogStatus(logId, "failed", String(err));
+          results.push({ phase, output: String(err), confidence: "0", status: "failed" });
+          break; // Stop the loop on failure
+        }
+      }
+
+      // Update task status based on RALF completion
+      const allCompleted = results.every(r => r.status === "completed");
+      if (allCompleted) {
+        await updateTask(input.taskId, { status: "completed" });
+      }
+
+      return { phases: results, completed: allCompleted };
+    }),
+});
+
+// ─── Sub-Agent Recommendations Router ───────────────────────────────────────
+const subAgentRouter = router({
+  list: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(({ input }) => getSubAgentRecommendations(input.companyId)),
+  byExecutive: protectedProcedure
+    .input(z.object({ executiveAgentId: z.number() }))
+    .query(({ input }) => getSubAgentRecommendationsByExecutive(input.executiveAgentId)),
+  generate: protectedProcedure
+    .input(z.object({ companyId: z.number(), executiveAgentId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const agent = await getAgentById(input.executiveAgentId);
+      if (!agent) throw new Error("Executive agent not found");
+
+      const company = await getCompanyById(input.companyId);
+      const connections = await getUserConnectionsByUserId(ctx.user.id);
+      const connectedTools = connections.filter(c => c.status === "connected").map(c => c.accountName ?? String(c.providerId)).filter(Boolean);
+      const existingAgents = await getAgentsByCompanyId(input.companyId);
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `You are ${agent.name}, the ${agent.roleTitle ?? agent.type} at ${company?.name ?? "the company"}. Based on the company's connected tools and existing team, recommend 2-3 sub-agents that would maximize autonomous work completion under your department.\n\nConnected tools: ${connectedTools.join(", ") || "none"}\nExisting agents: ${existingAgents.map(a => `${a.name} (${a.roleTitle ?? a.type})`).join(", ")}\n\nFor each recommendation, specify the agent's name, role, justification, required tools, and estimated business impact.`,
+          },
+          { role: "user", content: "Recommend sub-agents for your department." },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "sub_agent_recommendations",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                recommendations: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      type: { type: "string" },
+                      roleTitle: { type: "string" },
+                      justification: { type: "string" },
+                      requiredTools: { type: "array", items: { type: "string" } },
+                      estimatedImpact: { type: "string" },
+                    },
+                    required: ["name", "type", "roleTitle", "justification", "requiredTools", "estimatedImpact"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["recommendations"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      const parsed = JSON.parse(response.choices[0].message.content as string);
+
+      for (const rec of parsed.recommendations) {
+        await createSubAgentRecommendation({
+          companyId: input.companyId,
+          executiveAgentId: input.executiveAgentId,
+          recommendedName: rec.name,
+          recommendedType: rec.type,
+          roleTitle: rec.roleTitle,
+          justification: rec.justification,
+          requiredTools: rec.requiredTools,
+          estimatedImpact: rec.estimatedImpact,
+        });
+      }
+
+      return { recommendations: parsed.recommendations, count: parsed.recommendations.length };
+    }),
+  updateStatus: protectedProcedure
+    .input(z.object({ id: z.number(), status: z.enum(["suggested", "approved", "deployed", "dismissed"]) }))
+    .mutation(async ({ input }) => {
+      await updateSubAgentRecommendationStatus(input.id, input.status);
+      return { success: true };
+    }),
+  deploy: protectedProcedure
+    .input(z.object({ id: z.number(), companyId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      // Get the recommendation
+      const recs = await getSubAgentRecommendations(input.companyId);
+      const rec = recs.find(r => r.id === input.id);
+      if (!rec) throw new Error("Recommendation not found");
+
+      // Create the actual agent
+      const result = await createAgent({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        parentAgentId: rec.executiveAgentId,
+        name: rec.recommendedName,
+        type: "specialist" as any,
+        roleTitle: rec.roleTitle,
+        description: rec.justification,
+        tools: rec.requiredTools as string[],
+        status: "idle",
+      });
+
+      await updateSubAgentRecommendationStatus(input.id, "deployed");
+
+      return { success: true, agentId: Number((result as any)[0]?.insertId ?? 0) };
+    }),
+});
+
 // ─── Briefings Router ────────────────────────────────────────────────────────────────────────────────
 const briefingsRouter = router({
   list: protectedProcedure
@@ -1736,6 +2290,69 @@ const briefingsRouter = router({
     .query(async ({ ctx, input }) => {
       if (input.companyId) return getBriefingLogsByCompanyId(input.companyId);
       return getBriefingLogsByUserId(ctx.user.id);
+    }),
+  generateNow: protectedProcedure
+    .input(z.object({ companyId: z.number(), frequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).default("daily") }))
+    .mutation(async ({ ctx, input }) => {
+      // Get company context
+      const company = await getCompanyById(input.companyId);
+      if (!company) throw new Error("Company not found");
+
+      const agents = await getAgentsByCompanyId(input.companyId);
+      const tasks = await getTasksByCompanyId(input.companyId);
+      const okrs = await getOkrsByCompanyId(input.companyId);
+
+      const pendingTasks = tasks.filter(t => t.status === "pending" || t.status === "awaiting_human");
+      const completedTasks = tasks.filter(t => t.status === "completed");
+      const activeAgents = agents.filter(a => a.status === "active");
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `You are the AI CEO briefing engine for ${company.name}. Generate a concise ${input.frequency} executive briefing.\n\nCompany: ${company.name} (${company.industry ?? ""})\nActive agents: ${activeAgents.length}\nPending tasks: ${pendingTasks.length}\nCompleted tasks (recent): ${completedTasks.slice(0, 10).map(t => t.title).join(", ")}\nOKRs: ${okrs.slice(0, 5).map(o => `${o.objective} (${o.status})`).join(", ")}\n\nInclude:\n1. Key metrics summary\n2. Top priorities requiring attention\n3. Agent performance highlights\n4. Strategic recommendations\n5. Items requiring human approval (mark with [ACTION REQUIRED])`,
+          },
+          { role: "user", content: `Generate the ${input.frequency} briefing for ${company.name}.` },
+        ],
+      });
+
+      const content = (response.choices[0]?.message?.content ?? "") as string;
+      const title = `${input.frequency.charAt(0).toUpperCase() + input.frequency.slice(1)} Briefing — ${new Date().toLocaleDateString()}`;
+
+      await createBriefingLog({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        frequency: input.frequency,
+        title,
+        content,
+      });
+
+      return { title, content };
+    }),
+  approveAction: protectedProcedure
+    .input(z.object({ briefingId: z.number(), actionText: z.string(), companyId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      // Create a task from the approved action
+      const result = await createTask({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        title: input.actionText.slice(0, 256),
+        description: `Approved from briefing #${input.briefingId}: ${input.actionText}`,
+        status: "pending",
+        priority: "high",
+      });
+
+      // Create inbox notification
+      await createInboxItem({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        type: "alert",
+        title: "Briefing action approved",
+        body: input.actionText.slice(0, 500),
+        priority: "high",
+      });
+
+      return { success: true, taskId: Number((result as any)[0]?.insertId ?? 0) };
     }),
 });
 
@@ -1928,6 +2545,9 @@ export const appRouter = router({
   changelog: changelogRouter,
   tracking: trackingRouter,
   admin: adminRouter,
+  autonomy: autonomyRouter,
+  ralf: ralfRouter,
+  subAgents: subAgentRouter,
 });
 
 export type AppRouter = typeof appRouter;

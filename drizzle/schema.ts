@@ -756,3 +756,57 @@ export const userSessions = mysqlTable("user_sessions", {
 });
 export type UserSession = typeof userSessions.$inferSelect;
 export type InsertUserSession = typeof userSessions.$inferInsert;
+
+// ─── Agent Autonomy Settings ────────────────────────────────────────────────
+export const agentAutonomySettings = mysqlTable("agent_autonomy_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  agentId: int("agentId").notNull(),
+  autonomyLevel: mysqlEnum("autonomyLevel", ["full_auto", "supervised", "approval_required", "manual_only"]).default("supervised").notNull(),
+  maxSpendPerTask: decimal("maxSpendPerTask", { precision: 10, scale: 2 }).default("50"),
+  maxTasksPerDay: int("maxTasksPerDay").default(10),
+  allowedActions: json("allowedActions").$type<string[]>(),
+  blockedActions: json("blockedActions").$type<string[]>(),
+  requireApprovalAbove: decimal("requireApprovalAbove", { precision: 10, scale: 2 }).default("100"),
+  crossModelVerification: boolean("crossModelVerification").default(false).notNull(),
+  ralfEnabled: boolean("ralfEnabled").default(true).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AgentAutonomySetting = typeof agentAutonomySettings.$inferSelect;
+export type InsertAgentAutonomySetting = typeof agentAutonomySettings.$inferInsert;
+
+// ─── RALF Execution Logs (Reason → Act → Learn → Feedback) ─────────────────
+export const ralfExecutionLogs = mysqlTable("ralf_execution_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  taskId: int("taskId").notNull(),
+  agentId: int("agentId").notNull(),
+  companyId: int("companyId"),
+  phase: mysqlEnum("phase", ["reason", "act", "learn", "feedback"]).notNull(),
+  input: text("input"),
+  output: text("output"),
+  confidence: decimal("confidence", { precision: 3, scale: 2 }),
+  crossModelVerified: boolean("crossModelVerified").default(false).notNull(),
+  verificationResult: text("verificationResult"),
+  durationMs: int("durationMs"),
+  tokenCost: decimal("tokenCost", { precision: 10, scale: 4 }).default("0"),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed", "skipped"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type RalfExecutionLog = typeof ralfExecutionLogs.$inferSelect;
+export type InsertRalfExecutionLog = typeof ralfExecutionLogs.$inferInsert;
+
+// ─── Sub-Agent Recommendations ──────────────────────────────────────────────
+export const subAgentRecommendations = mysqlTable("sub_agent_recommendations", {
+  id: int("id").autoincrement().primaryKey(),
+  companyId: int("companyId").notNull(),
+  executiveAgentId: int("executiveAgentId").notNull(),
+  recommendedName: varchar("recommendedName", { length: 128 }).notNull(),
+  recommendedType: varchar("recommendedType", { length: 64 }).notNull(),
+  roleTitle: varchar("roleTitle", { length: 128 }),
+  justification: text("justification"),
+  requiredTools: json("requiredTools").$type<string[]>(),
+  estimatedImpact: varchar("estimatedImpact", { length: 256 }),
+  status: mysqlEnum("status", ["suggested", "approved", "deployed", "dismissed"]).default("suggested").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SubAgentRecommendation = typeof subAgentRecommendations.$inferSelect;
+export type InsertSubAgentRecommendation = typeof subAgentRecommendations.$inferInsert;
