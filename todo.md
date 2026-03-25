@@ -227,3 +227,5 @@
 - [x] Landing page: revert primary CTA to email collection (remove "Mission Control" CTA)
 - [x] Landing page: replace nav with hamburger menu containing Login option only
 - [x] Change agent demo toggle tabs to show only job titles (CEO, CMO, CTO, CFO) — no agent names
+- [x] Redesign Context Engine Demo: replace onboarding terminal with Socratic intent engine UI (user request → live data → cross-source insights → numbered strategic questions)
+- [x] Reorder agent demo tabs: CEO first, CMO second, CTO third, CFO fourth

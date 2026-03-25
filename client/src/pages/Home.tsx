@@ -29,130 +29,271 @@ function useScrollReveal(threshold = 0.15) {
   return ref;
 }
 
-/* ─── Typewriter Hook ─────────────────────────────────────────────────── */
-function useTypewriter(text: string, speed = 45, startDelay = 0) {
-  const [displayed, setDisplayed] = useState("");
-  const [started, setStarted] = useState(false);
-  const [done, setDone] = useState(false);
 
-  useEffect(() => {
-    const delayTimer = setTimeout(() => setStarted(true), startDelay);
-    return () => clearTimeout(delayTimer);
-  }, [startDelay]);
 
-  useEffect(() => {
-    if (!started) return;
-    let i = 0;
-    setDisplayed("");
-    const interval = setInterval(() => {
-      i++;
-      setDisplayed(text.slice(0, i));
-      if (i >= text.length) {
-        clearInterval(interval);
-        setDone(true);
-      }
-    }, speed);
-    return () => clearInterval(interval);
-  }, [started, text, speed]);
-
-  return { displayed, done, started };
-}
-
-/* ─── Agent Demo Data ────────────────────────────────────────────────── */
+/* ─── Socratic Intent Engine Demo Data ───────────────────────────────── */
 const AGENT_DEMOS = {
-  cmo: {
-    label: "CMO",
-    name: "NOVA",
-    color: "text-purple-400",
-    title: "Onboarding NOVA — CMO Agent",
-    steps: [
-      "Connecting to Meta Ads...",
-      "Pulling campaign data: 14 active campaigns, $12.4K monthly spend",
-      "Connecting to Google Ads...",
-      "Reading search campaigns: 847 keywords, $8.2K spend, 3.1% CTR",
-      "Connecting to Google Analytics...",
-      "Analyzing traffic: 42K sessions, 2.8% conversion rate, top channel: paid search",
-      "Cross-referencing ad spend → conversions → revenue attribution...",
-      "Context assembled from 3 sources in 4.7s",
-    ],
-    cards: [
-      { color: "bg-blue-400", source: "Meta Ads", data: "14 campaigns · $12.4K/mo spend · 2.1x ROAS · Top: Lookalike Audiences" },
-      { color: "bg-yellow-400", source: "Google Ads", data: "847 keywords · $8.2K/mo spend · 3.1% CTR · Top: branded search" },
-      { color: "bg-orange-400", source: "Google Analytics", data: "42K sessions · 2.8% CVR · Top channel: paid search (38%)" },
-    ],
-    response: 'I\'ve analyzed your full ad stack. <b>Google Ads drives 38% of traffic at 3.1% CTR</b>, but Meta\'s Lookalike campaigns convert at <b>2.1x ROAS vs. 1.4x on search</b>. Recommended action: shift $2K/mo from underperforming search keywords to scale the top 3 Meta audiences. I can draft the reallocation plan and execute the budget shift today.',
-  },
   ceo: {
     label: "CEO",
     name: "ARCH",
     color: "text-emerald-400",
-    title: "Onboarding ARCH — CEO Agent",
-    steps: [
-      "Connecting to HubSpot CRM...",
-      "Reading pipeline: 47 open deals, $1.2M weighted value",
-      "Connecting to Stripe...",
-      "Pulling revenue: $204K MRR, 12% MoM growth, 94.2% retention",
-      "Connecting to Google Analytics...",
-      "Analyzing acquisition: 18K monthly visitors, 3.4% trial conversion",
-      "Cross-referencing pipeline → revenue → acquisition funnel...",
-      "Context assembled from 3 sources in 3.9s",
+    badge: { sources: 4, time: "3.4s" },
+    title: "Full sales intelligence cross-reference",
+    userRequest: "Close more deals this quarter",
+    dataSources: [
+      {
+        color: "bg-orange-400",
+        source: "HubSpot CRM",
+        metrics: [
+          ["Open deals", "34 · $612K"],
+          ["Won Q1", "9 · $187K"],
+          ["Lost Q1", "14 · $294K"],
+          ["Stalled >14d", "11 · $196K"],
+        ],
+      },
+      {
+        color: "bg-red-400",
+        source: "Gmail",
+        metrics: [
+          ["Threads (30d)", "67"],
+          ["Ghosted >7d", "18"],
+          ["Follow-ups sent", "23 of 67"],
+          ["Proposals opened", "8 of 12"],
+        ],
+      },
+      {
+        color: "bg-blue-400",
+        source: "Calendly",
+        metrics: [
+          ["Meetings Q1", "41"],
+          ["No-shows", "7 (17%)"],
+          ["Meeting → deal", "56%"],
+          ["Avg to close", "2.3 meetings"],
+        ],
+      },
+      {
+        color: "bg-purple-400",
+        source: "Stripe",
+        metrics: [
+          ["Q1 revenue", "$187K"],
+          ["Avg payment", "$20,780"],
+          ["Failed payments", "2 · $38K"],
+          ["Unpaid closed", "3 · $64K"],
+        ],
+      },
     ],
-    cards: [
-      { color: "bg-orange-400", source: "HubSpot CRM", data: "47 open deals · $1.2M weighted pipeline · Avg close: 34 days" },
-      { color: "bg-purple-400", source: "Stripe", data: "$204K MRR · 12% MoM growth · 94.2% net retention" },
-      { color: "bg-blue-400", source: "Google Analytics", data: "18K visitors · 3.4% trial CVR · Top: organic search (41%)" },
+    insights: [
+      '<b>Win rate 39%</b> — but 2+ meeting deals close at <b>68%</b> vs 22% for single-meeting. 19 open deals have only 1 meeting.',
+      '<b>8 of 11 stalled deals</b> have zero Gmail activity in 10 days — going cold with no follow-up.',
+      '<b>$64K in closed deals sitting unpaid</b> in Stripe — all past the 11-day payment average.',
+      '5 of 7 <b>Calendly no-shows</b> had no confirmation email in the 24h before the meeting.',
     ],
-    response: 'Your pipeline is strong at <b>$1.2M weighted</b>, but trial-to-paid conversion is the bottleneck — <b>3.4% is below the 5% SaaS benchmark</b>. With 12% MoM revenue growth and 94.2% retention, the unit economics support aggressive acquisition. Recommended action: deploy NOVA to run a 30-day conversion optimization sprint on the trial onboarding flow while I reallocate $15K from low-ROI channels to high-intent organic.',
+    insightColors: ["border-emerald-500", "border-amber-500", "border-red-500", "border-blue-500"],
+    socraticIntro: "Your Q1 close rate was 39% on $481K in pipeline activity. Four levers for Q2:",
+    socraticQuestions: [
+      'Deals with a <b>second meeting close at 68%</b> vs 22% for single-meeting. 19 of 34 open deals have had only one. Should we prioritize second meetings — shifting $340K from 22% to 68% probability?',
+      '<b>8 deals worth $196K going cold</b> — stalled in CRM with zero email in 10 days. Should I build a re-engagement sequence for stalled deals and a follow-up cadence for the 44 untouched threads?',
+      '<b>$64K in closed deals sitting unpaid</b> in Stripe. Should I draft payment reminders? That\'s revenue earned but not collected.',
+      '<b>$140K–$210K in recoverable revenue</b> from deals already in your system — before a single new lead. Pipeline recovery before lead gen?',
+    ],
+  },
+  cmo: {
+    label: "CMO",
+    name: "NOVA",
+    color: "text-purple-400",
+    badge: { sources: 4, time: "3.6s" },
+    title: "Outbound sales optimization",
+    userRequest: "Build me an outbound campaign for Q2",
+    dataSources: [
+      {
+        color: "bg-orange-400",
+        source: "HubSpot CRM",
+        metrics: [
+          ["Contacts (non-customer)", "2,340"],
+          ["Engaged last 90d", "187"],
+          ["Top source (closed-won)", "LinkedIn (42%)"],
+          ["Avg deal cycle", "38 days"],
+        ],
+      },
+      {
+        color: "bg-red-400",
+        source: "Gmail",
+        metrics: [
+          ["Cold emails sent Q1", "420"],
+          ["Open rate", "34%"],
+          ["Reply rate", "4.2%"],
+          ["Best subject line type", "Question format (47% open)"],
+        ],
+      },
+      {
+        color: "bg-blue-400",
+        source: "LinkedIn Sales Nav",
+        metrics: [
+          ["Saved leads", "890"],
+          ["Connection requests sent Q1", "210"],
+          ["Accept rate", "31%"],
+          ["InMail response rate", "8.7%"],
+        ],
+      },
+      {
+        color: "bg-cyan-400",
+        source: "Calendly",
+        metrics: [
+          ["Discovery calls Q1", "28"],
+          ["Source: LinkedIn", "16 (57%)"],
+          ["Source: Cold email", "8 (29%)"],
+          ["Call → deal rate", "43%"],
+        ],
+      },
+    ],
+    insights: [
+      '<b>LinkedIn produces 57% of discovery calls</b> and 42% of closed deals — but you only sent 210 connection requests in Q1. That\'s ~3/day. The channel is underinvested relative to its conversion rate.',
+      'Cold email reply rate is <b>4.2% overall</b>, but question-format subject lines hit <b>47% open rate</b> — 38% higher than declarative subjects. The format of the email matters more than the volume.',
+      'You have <b>187 contacts who engaged in the last 90 days</b> but are NOT customers and NOT in an active deal. These are warm leads sitting in your CRM with zero outbound sequencing.',
+      'Your <b>call → deal rate is 43%</b> — nearly 1 in 2 calls convert. The bottleneck isn\'t closing, it\'s generating enough calls. At current rate you need 23 more discovery calls to hit a $100K Q2 target.',
+    ],
+    insightColors: ["border-emerald-500", "border-amber-500", "border-purple-500", "border-blue-500"],
+    socraticIntro: "Your Q1 outbound data shows a clear pattern: high conversion rates but low volume. Here's where to focus for Q2:",
+    socraticQuestions: [
+      'LinkedIn drives <b>57% of your discovery calls with a 43% close rate</b>, but you\'re only sending 3 connection requests/day. Should we 3x that to 10/day with an ICP-filtered target list? At current rates, that alone adds ~8 discovery calls/month.',
+      'You have <b>187 warm contacts who engaged in 90 days</b> but aren\'t in a deal or sequence. Should I build a re-engagement email campaign for those? At your 4.2% reply rate, that\'s ~8 replies. At 43% call → deal, that\'s 3-4 new deals from contacts you already have.',
+      'Question-format subject lines get <b>47% open rate vs ~34% overall</b>. Should we A/B test switching ALL cold outreach to question-format subjects and measure the impact over 4 weeks?',
+      'At <b>43% call → deal conversion, you need 23 more discovery calls</b> in Q2 to hit $100K. With LinkedIn + warm re-engagement + optimized cold email, the math says we can generate 30-35. Should I build the full multichannel sequence?',
+    ],
   },
   cto: {
     label: "CTO",
     name: "SAGE",
     color: "text-cyan-400",
-    title: "Onboarding SAGE — CTO Agent",
-    steps: [
-      "Connecting to GitHub...",
-      "Scanning repos: 23 active, 847 open issues, 12 critical",
-      "Connecting to Datadog...",
-      "Reading infrastructure: 99.94% uptime, P95 latency 340ms, 3 alerts",
-      "Connecting to Jira...",
-      "Analyzing sprint velocity: 42 pts/sprint avg, 78% completion rate",
-      "Cross-referencing tech debt → performance → delivery velocity...",
-      "Context assembled from 3 sources in 5.1s",
+    badge: { sources: 4, time: "4.1s" },
+    title: "Engineering velocity & reliability audit",
+    userRequest: "Why is our release velocity slowing down?",
+    dataSources: [
+      {
+        color: "bg-gray-400",
+        source: "GitHub",
+        metrics: [
+          ["PRs merged (30d)", "47"],
+          ["Avg review time", "18.4 hours"],
+          ["PRs with 0 reviewers >24h", "12"],
+          ["Revert commits (30d)", "6"],
+        ],
+      },
+      {
+        color: "bg-purple-400",
+        source: "Datadog",
+        metrics: [
+          ["P95 latency", "340ms (SLA: 200ms)"],
+          ["Error rate (7d)", "0.8% → 2.1%"],
+          ["Active alerts", "3 (payments svc)"],
+          ["Deploy rollbacks (30d)", "4"],
+        ],
+      },
+      {
+        color: "bg-blue-400",
+        source: "Jira",
+        metrics: [
+          ["Sprint velocity", "42 → 31 pts (last 3)"],
+          ["Carryover tickets", "8 per sprint avg"],
+          ["Bug tickets (30d)", "23 (up 64%)"],
+          ["Blocked tickets", "5 (waiting: infra)"],
+        ],
+      },
+      {
+        color: "bg-orange-400",
+        source: "PagerDuty",
+        metrics: [
+          ["Incidents (30d)", "11"],
+          ["MTTR", "47 min → 1.8 hrs"],
+          ["After-hours pages", "6"],
+          ["Repeat incidents", "3 (same root cause)"],
+        ],
+      },
     ],
-    cards: [
-      { color: "bg-gray-400", source: "GitHub", data: "23 repos · 847 open issues · 12 critical · 3.2 PRs/day avg" },
-      { color: "bg-purple-400", source: "Datadog", data: "99.94% uptime · P95: 340ms · 3 active alerts · API error rate: 0.8%" },
-      { color: "bg-blue-400", source: "Jira", data: "42 pts/sprint · 78% completion · 14 days avg cycle time" },
+    insights: [
+      '<b>Sprint velocity dropped 26%</b> (42 → 31 pts) over 3 sprints, and carryover tickets doubled. The team isn\'t slowing down — they\'re being pulled into unplanned work.',
+      '<b>6 revert commits and 4 deploy rollbacks</b> in 30 days. That\'s 10 failed deployments — each one burns 2-4 hours of engineering time on cleanup instead of features.',
+      '<b>3 PagerDuty incidents share the same root cause</b> (connection pooling in payments service). Each incident takes 1.8 hours MTTR. That\'s 5.4 hours of repeat firefighting that a single fix would eliminate.',
+      '<b>12 PRs sat with zero reviewers for 24+ hours</b>. Average review time is 18.4 hours. The bottleneck isn\'t writing code — it\'s getting code reviewed and shipped.',
     ],
-    response: 'Your <b>P95 latency at 340ms is 2x your SLA target</b>, and it correlates with the 3 active Datadog alerts on the payments microservice. The 12 critical GitHub issues include 4 related to database connection pooling — fixing those would likely resolve both the latency spike and the 0.8% API error rate. Recommended action: I\'ll prioritize a hotfix sprint targeting the connection pooling issues and deploy the fix by EOD Thursday.',
+    insightColors: ["border-amber-500", "border-red-500", "border-red-500", "border-blue-500"],
+    socraticIntro: "Your release velocity isn't a capacity problem — it's a quality and review bottleneck. Three root causes, four fixes:",
+    socraticQuestions: [
+      '<b>3 repeat incidents from the same connection pooling bug</b> are consuming 5.4 hours of MTTR and triggering after-hours pages. Should I prioritize a hotfix sprint this week? One fix eliminates 27% of your monthly incidents.',
+      '<b>12 PRs blocked on review for 24+ hours</b> — that\'s 25% of all PRs. Should we implement a review SLA (4-hour first response) and auto-assign reviewers based on code ownership? The 18.4-hour average is killing your deploy frequency.',
+      '<b>10 failed deployments in 30 days</b> (6 reverts + 4 rollbacks). Should we gate deploys with a staging canary that catches the error rate spike before production? Your error rate tripled from 0.8% to 2.1% this month.',
+      'Bug tickets are <b>up 64% with 5 blocked on infra</b>. The team is spending sprint capacity on bug fixes instead of features. Should we dedicate 20% of next sprint to tech debt — specifically the infra blockers — to stop the bleed?',
+    ],
   },
   cfo: {
     label: "CFO",
     name: "TED",
     color: "text-amber-400",
-    title: "Onboarding TED — CFO Agent",
-    steps: [
-      "Connecting to Stripe...",
-      "Pulling revenue: $204K MRR, $2.4M ARR, 8.3% churn",
-      "Connecting to QuickBooks...",
-      "Reading expenses: $167K/mo burn, 18 months runway at current rate",
-      "Connecting to HubSpot CRM...",
-      "Analyzing pipeline: $1.2M weighted, $340K expected to close this quarter",
-      "Cross-referencing burn rate → pipeline → revenue forecast...",
-      "Context assembled from 3 sources in 4.2s",
+    badge: { sources: 4, time: "3.8s" },
+    title: "Cash flow & unit economics analysis",
+    userRequest: "Are we on track to hit profitability this year?",
+    dataSources: [
+      {
+        color: "bg-purple-400",
+        source: "Stripe",
+        metrics: [
+          ["MRR", "$204K"],
+          ["MoM growth", "12%"],
+          ["Net retention", "94.2%"],
+          ["Failed charges (30d)", "$18K (7 accounts)"],
+        ],
+      },
+      {
+        color: "bg-green-400",
+        source: "QuickBooks",
+        metrics: [
+          ["Monthly burn", "$167K"],
+          ["Runway", "18 months"],
+          ["Engineering % of spend", "62%"],
+          ["G&A % of spend", "24%"],
+        ],
+      },
+      {
+        color: "bg-orange-400",
+        source: "HubSpot CRM",
+        metrics: [
+          ["Pipeline (weighted)", "$1.2M"],
+          ["Expected close Q1", "$340K"],
+          ["Avg deal size", "$24K"],
+          ["Sales cycle", "34 days"],
+        ],
+      },
+      {
+        color: "bg-blue-400",
+        source: "Gusto",
+        metrics: [
+          ["Headcount", "23"],
+          ["Payroll (monthly)", "$98K"],
+          ["Open roles", "4"],
+          ["Projected payroll +4", "$115K"],
+        ],
+      },
     ],
-    cards: [
-      { color: "bg-purple-400", source: "Stripe", data: "$204K MRR · $2.4M ARR · 8.3% annual churn · LTV:CAC 4.2x" },
-      { color: "bg-green-400", source: "QuickBooks", data: "$167K/mo burn · 18mo runway · Top cost: engineering (62%)" },
-      { color: "bg-orange-400", source: "HubSpot CRM", data: "$1.2M pipeline · $340K closing Q1 · Avg deal: $24K" },
+    insights: [
+      'At <b>$204K MRR with 12% MoM growth</b>, you\'ll cross $300K MRR by month 5. But burn is $167K/mo — breakeven requires $167K in gross margin, which at 78% margin means <b>$214K MRR to break even</b>. You\'re $10K/mo away.',
+      '<b>Engineering is 62% of total spend</b> ($103K/mo) — well above the 45-50% benchmark for your stage. The 4 open roles would push payroll from $98K to $115K, adding $17K/mo to burn and shortening runway to 14 months.',
+      '<b>$18K in failed Stripe charges</b> from 7 accounts in the last 30 days. At $204K MRR, that\'s 8.8% of monthly revenue at risk from involuntary churn. Industry average is 2-3%.',
+      '<b>Net retention at 94.2%</b> means you\'re losing 5.8% of revenue annually to contraction/churn. Each 1% improvement in retention adds ~$24K ARR — equivalent to closing one new deal.',
     ],
-    response: 'Your <b>burn rate of $167K/mo gives you 18 months of runway</b>, but engineering costs at 62% of spend are above the 50% benchmark for your stage. With <b>$340K expected to close this quarter</b> against $204K MRR, you\'re on track to hit $3M ARR by Q3. Recommended action: I\'ll model three scenarios — current trajectory, aggressive hiring, and lean mode — and present a board-ready financial forecast by Friday with specific recommendations on headcount timing.',
+    insightColors: ["border-emerald-500", "border-amber-500", "border-red-500", "border-blue-500"],
+    socraticIntro: "You're $10K MRR from breakeven with 18 months of runway. Here's how the numbers break down:",
+    socraticQuestions: [
+      'You\'re <b>$10K MRR from breakeven</b> at current margins. At 12% MoM growth, you\'ll cross it in ~6 weeks. But the 4 open roles add $17K/mo to burn, pushing breakeven to $231K MRR. Should we phase the hires — 2 now, 2 after breakeven — to protect the timeline?',
+      '<b>$18K in failed charges (8.8% of MRR)</b> vs the 2-3% industry benchmark. Should I set up a dunning sequence with automated retry logic? Recovering even half would add $9K/mo — nearly closing the breakeven gap alone.',
+      '<b>Net retention at 94.2%</b> is costing you ~$24K ARR per point. Should we analyze the 5.8% contraction to find the root cause? If it\'s usage-based downgrades, a customer success intervention could recover $50-100K ARR.',
+      'Engineering at <b>62% of spend vs 45-50% benchmark</b>. Before hiring 4 more, should I model the ROI of each role against revenue impact? Two of the four roles may not be needed if we fix the deployment bottleneck SAGE identified.',
+    ],
   },
 } as const;
 
 type AgentKey = keyof typeof AGENT_DEMOS;
 
-/* ─── Context Engine Demo ─────────────────────────────────────────────── */
+/* ─── Socratic Intent Engine Demo ────────────────────────────────────── */
 function ContextEngineDemo() {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
@@ -169,7 +310,7 @@ function ContextEngineDemo() {
           observer.disconnect();
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -178,12 +319,13 @@ function ContextEngineDemo() {
   const switchAgent = useCallback((key: AgentKey) => {
     setActiveAgent(key);
     setAnimKey(k => k + 1);
+    setInView(true);
   }, []);
 
   const demo = AGENT_DEMOS[activeAgent];
 
   return (
-    <div ref={ref} className="max-w-3xl mx-auto">
+    <div ref={ref} className="max-w-4xl mx-auto">
       {/* Agent toggle tabs */}
       <div className="flex justify-center gap-2 mb-6">
         {(Object.keys(AGENT_DEMOS) as AgentKey[]).map((key) => {
@@ -205,54 +347,63 @@ function ContextEngineDemo() {
         })}
       </div>
 
-      {/* Terminal-style container */}
+      {/* Main card */}
       <div key={animKey} className="rounded-xl border border-border bg-card overflow-hidden">
-        {/* Terminal header */}
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-black/40">
-          <div className="w-2 h-2 rounded-full bg-red-500/60" />
-          <div className="w-2 h-2 rounded-full bg-yellow-500/60" />
-          <div className="w-2 h-2 rounded-full bg-green-500/60" />
-          <span className="ml-3 text-[11px] text-muted-foreground font-mono">intent-engine</span>
+        {/* Header bar */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-black/40">
+          <div className="flex items-center gap-3">
+            <span className="text-accent font-mono text-sm font-bold">&gt;_</span>
+            <span className="text-[12px] text-foreground font-mono font-medium">OPEN COMMAND</span>
+            <span className="text-[11px] text-muted-foreground font-mono">| Self-contextualizing intent engine</span>
+          </div>
         </div>
 
-        <div className="p-5 md:p-6 space-y-3">
-          {/* Typewriter title */}
-          <AgentTypewriter key={`tw-${animKey}`} text={demo.title} inView={inView} />
+        <div className="p-5 md:p-6">
+          {/* Badge + title row */}
+          <div className="flex items-center gap-3 mb-4">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-mono font-medium">
+              {demo.badge.sources} sources · {demo.badge.time}
+            </span>
+            <span className="text-sm font-semibold text-foreground">{demo.title}</span>
+          </div>
 
-          {/* Status lines */}
-          {inView && demo.steps.map((text, i) => (
-            <DemoStatusLine key={`${animKey}-${i}`} text={text} delay={400 + i * 600} />
-          ))}
+          {/* User request */}
+          <div className="mb-5">
+            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-2">User Request</p>
+            <div className="rounded-lg border border-border bg-black/20 px-4 py-3">
+              <p className="text-sm text-foreground font-medium">"{demo.userRequest}"</p>
+            </div>
+          </div>
 
-          {/* Context cards */}
-          {inView && <DemoContextCards key={`cc-${animKey}`} cards={demo.cards} delay={400 + demo.steps.length * 600} />}
+          {/* Live data pulled */}
+          {inView && <SocraticDataGrid key={`dg-${animKey}`} sources={demo.dataSources} delay={300} />}
 
-          {/* AI response */}
-          {inView && <DemoAIResponse key={`ar-${animKey}`} name={demo.name} label={demo.label} color={demo.color} html={demo.response} delay={400 + demo.steps.length * 600 + 800} />}
+          {/* Cross-source insights */}
+          {inView && <SocraticInsights key={`ins-${animKey}`} insights={demo.insights} colors={demo.insightColors} delay={800} />}
+
+          {/* Socratic engine response */}
+          {inView && <SocraticResponse key={`sr-${animKey}`} demo={demo} delay={1400} />}
+        </div>
+
+        {/* Footer bar */}
+        <div className="flex items-center justify-between px-5 py-2.5 border-t border-border bg-black/20">
+          <span className="text-[10px] text-muted-foreground/50 font-mono">Context: CTX-2026-{String(Math.floor(Math.random() * 9000) + 1000)}</span>
+          <span className="text-[10px] text-muted-foreground/50 font-mono">
+            Sources: {demo.dataSources.map(s => s.source).join(' + ')}
+          </span>
+          <span className="text-[10px] text-muted-foreground/50 font-mono">opencommand.co</span>
         </div>
       </div>
 
       <p className="text-center mt-6 text-xs italic" style={{ color: "oklch(0.78 0.06 80)" }}>
-        Three data sources. One unified context. Zero manual setup.
+        Multiple data sources. One unified context. Zero manual setup.
       </p>
     </div>
   );
 }
 
-function AgentTypewriter({ text, inView }: { text: string; inView: boolean }) {
-  const tw = useTypewriter(text, 35, inView ? 200 : 99999);
-  return (
-    <div className="flex items-start gap-3">
-      <span className="text-accent font-mono text-sm mt-0.5 shrink-0">&gt;_</span>
-      <div className="font-mono text-sm text-foreground">
-        {tw.displayed}
-        {!tw.done && tw.started && <span className="animate-blink text-accent">|</span>}
-      </div>
-    </div>
-  );
-}
-
-function DemoStatusLine({ text, delay }: { text: string; delay: number }) {
+/* ─── Socratic Demo Sub-Components ───────────────────────────────────── */
+function SocraticDataGrid({ sources, delay }: { sources: readonly { color: string; source: string; metrics: readonly (readonly [string, string])[] }[]; delay: number }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), delay);
@@ -260,36 +411,31 @@ function DemoStatusLine({ text, delay }: { text: string; delay: number }) {
   }, [delay]);
   if (!visible) return null;
   return (
-    <div className="flex items-center gap-2 pl-7 animate-fade-in">
-      <span className="text-emerald-400 text-xs">→</span>
-      <span className="font-mono text-[11px] text-muted-foreground">{text}</span>
-    </div>
-  );
-}
-
-function DemoContextCards({ cards, delay }: { cards: readonly { color: string; source: string; data: string }[]; delay: number }) {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), delay);
-    return () => clearTimeout(t);
-  }, [delay]);
-  if (!visible) return null;
-  return (
-    <div className="ml-7 animate-fade-in space-y-2">
-      {cards.map((c, i) => (
-        <div key={i} className="rounded-lg border border-border bg-black/30 px-4 py-3">
-          <div className="flex items-center gap-2 mb-1">
-            <div className={`w-1.5 h-1.5 rounded-full ${c.color}`} />
-            <span className="text-[11px] font-medium text-foreground">{c.source}</span>
+    <div className="mb-5 animate-fade-in">
+      <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-3">Live Data Pulled</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {sources.map((src, i) => (
+          <div key={i} className="rounded-lg border border-border bg-black/30 px-4 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-2 h-2 rounded-full ${src.color}`} />
+              <span className="text-[12px] font-semibold text-foreground">{src.source}</span>
+            </div>
+            <div className="space-y-1">
+              {src.metrics.map(([label, value], j) => (
+                <div key={j} className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground font-mono">{label}</span>
+                  <span className="text-[11px] text-foreground font-mono font-medium">{value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <p className="text-[11px] text-muted-foreground font-mono">{c.data}</p>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
 
-function DemoAIResponse({ name, label, color, html, delay }: { name: string; label: string; color: string; html: string; delay: number }) {
+function SocraticInsights({ insights, colors, delay }: { insights: readonly string[]; colors: readonly string[]; delay: number }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), delay);
@@ -297,12 +443,42 @@ function DemoAIResponse({ name, label, color, html, delay }: { name: string; lab
   }, [delay]);
   if (!visible) return null;
   return (
-    <div className="ml-7 animate-fade-in">
-      <div className="flex items-center gap-2 mb-2">
-        <Bot size={14} className={color} />
-        <span className={`text-xs font-medium ${color}`}>{name} — {label} Agent</span>
+    <div className="mb-5 animate-fade-in">
+      <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-3">Cross-Source Insights</p>
+      <div className="space-y-2.5">
+        {insights.map((html, i) => (
+          <div key={i} className={`border-l-2 ${colors[i] || 'border-muted'} pl-4 py-1`}>
+            <p className="text-[12px] text-foreground/80 leading-relaxed" dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
+        ))}
       </div>
-      <p className="text-[13px] text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: html }} />
+    </div>
+  );
+}
+
+function SocraticResponse({ demo, delay }: { demo: typeof AGENT_DEMOS[AgentKey]; delay: number }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  if (!visible) return null;
+  return (
+    <div className="animate-fade-in rounded-lg border-l-2 border-emerald-500 bg-emerald-500/5 p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-accent font-mono text-xs font-bold">&gt;_</span>
+        <span className="text-[11px] text-foreground font-mono font-medium">OPEN COMMAND</span>
+        <span className="text-[11px] text-muted-foreground font-mono">· Socratic intent engine · {demo.badge.sources} tools · {demo.socraticQuestions.length} insights</span>
+      </div>
+      <p className="text-[12px] text-foreground/80 mb-4 leading-relaxed">{demo.socraticIntro}</p>
+      <div className="space-y-3">
+        {demo.socraticQuestions.map((html, i) => (
+          <div key={i} className="flex gap-3">
+            <span className="text-emerald-400 text-[12px] font-bold font-mono shrink-0 mt-0.5">{i + 1}.</span>
+            <p className="text-[12px] text-foreground/80 leading-relaxed" dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

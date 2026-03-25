@@ -73,8 +73,8 @@ describe("Home Page Redesign - Structure Validation", () => {
     });
   });
 
-  // ─── Section 3: Context Engine Demo — 4 Agent Toggle ──────────────
-  describe("Context Engine Demo - 4 Executive Agents", () => {
+  // ─── Section 3: Socratic Intent Engine Demo ──────────────────────
+  describe("Socratic Intent Engine Demo - 4 Executive Agents", () => {
     it("includes the ContextEngineDemo component", () => {
       expect(homeSource).toContain("ContextEngineDemo");
     });
@@ -83,92 +83,136 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("Introducing Self-Contextualization");
     });
 
-    it("defines AGENT_DEMOS data for all 4 executives", () => {
+    it("defines AGENT_DEMOS data for all 4 executives in correct order (CEO first)", () => {
       expect(homeSource).toContain("AGENT_DEMOS");
-      expect(homeSource).toContain("cmo:");
-      expect(homeSource).toContain("ceo:");
-      expect(homeSource).toContain("cto:");
-      expect(homeSource).toContain("cfo:");
+      const ceoIdx = homeSource.indexOf("ceo:");
+      const cmoIdx = homeSource.indexOf("cmo:");
+      const ctoIdx = homeSource.indexOf("cto:");
+      const cfoIdx = homeSource.indexOf("cfo:");
+      expect(ceoIdx).toBeLessThan(cmoIdx);
+      expect(cmoIdx).toBeLessThan(ctoIdx);
+      expect(ctoIdx).toBeLessThan(cfoIdx);
     });
 
     it("has toggle tabs showing only job titles (no agent names)", () => {
-      // Tabs render {d.label} which is "CMO", "CEO", "CTO", "CFO"
       expect(homeSource).toContain("{d.label}");
-      // Should NOT render agent names in tabs
       expect(homeSource).not.toContain("{d.name} — {d.label}");
     });
 
-    // CMO (NOVA) demo
-    it("CMO demo pulls from 3 data sources: Meta Ads, Google Ads, Google Analytics", () => {
-      expect(homeSource).toContain("Connecting to Meta Ads");
-      expect(homeSource).toContain("Connecting to Google Ads");
-      expect(homeSource).toContain("Connecting to Google Analytics");
+    it("uses Socratic UI pattern: user request, data sources, insights, questions", () => {
+      expect(homeSource).toContain("SocraticDataGrid");
+      expect(homeSource).toContain("SocraticInsights");
+      expect(homeSource).toContain("SocraticResponse");
+      expect(homeSource).toContain("User Request");
+      expect(homeSource).toContain("Live Data Pulled");
+      expect(homeSource).toContain("Cross-Source Insights");
     });
 
-    it("CMO demo shows specific data from each source", () => {
-      expect(homeSource).toContain("14 active campaigns");
-      expect(homeSource).toContain("847 keywords");
-      expect(homeSource).toContain("42K sessions");
+    it("shows the Open Command header with self-contextualizing label", () => {
+      expect(homeSource).toContain("OPEN COMMAND");
+      expect(homeSource).toContain("Self-contextualizing intent engine");
     });
 
-    it("CMO demo includes actionable recommendation", () => {
-      expect(homeSource).toContain("shift $2K/mo from underperforming search keywords");
+    it("shows Socratic intent engine branding in response section", () => {
+      expect(homeSource).toContain("Socratic intent engine");
     });
 
-    // CEO (ARCH) demo
-    it("CEO demo pulls from 3 data sources: HubSpot CRM, Stripe, Google Analytics", () => {
-      expect(homeSource).toContain("Connecting to HubSpot CRM");
-      expect(homeSource).toContain("Connecting to Stripe");
+    // CEO demo — "Close more deals this quarter"
+    it("CEO demo has user request about closing deals", () => {
+      expect(homeSource).toContain("Close more deals this quarter");
     });
 
-    it("CEO demo shows pipeline and revenue data", () => {
-      expect(homeSource).toContain("47 open deals");
-      expect(homeSource).toContain("$204K MRR");
+    it("CEO demo pulls from 4 data sources: HubSpot CRM, Gmail, Calendly, Stripe", () => {
+      // Check data source cards within the CEO demo
+      expect(homeSource).toContain('"HubSpot CRM"');
+      expect(homeSource).toContain('"Gmail"');
+      expect(homeSource).toContain('"Calendly"');
+      expect(homeSource).toContain('"Stripe"');
     });
 
-    it("CEO demo includes actionable recommendation", () => {
-      expect(homeSource).toContain("deploy NOVA to run a 30-day conversion optimization sprint");
+    it("CEO demo shows cross-source insights with bold metrics", () => {
+      expect(homeSource).toContain("Win rate 39%");
+      expect(homeSource).toContain("8 of 11 stalled deals");
+      expect(homeSource).toContain("$64K in closed deals sitting unpaid");
     });
 
-    // CTO (SAGE) demo
-    it("CTO demo pulls from 3 data sources: GitHub, Datadog, Jira", () => {
-      expect(homeSource).toContain("Connecting to GitHub");
-      expect(homeSource).toContain("Connecting to Datadog");
-      expect(homeSource).toContain("Connecting to Jira");
+    it("CEO demo has numbered Socratic questions with 'Should we' format", () => {
+      expect(homeSource).toContain("second meeting close at 68%");
+      expect(homeSource).toContain("Should we prioritize second meetings");
+      expect(homeSource).toContain("$140K\u2013$210K in recoverable revenue");
     });
 
-    it("CTO demo shows tech metrics", () => {
-      expect(homeSource).toContain("23 active");
-      expect(homeSource).toContain("99.94% uptime");
-      expect(homeSource).toContain("42 pts/sprint");
+    // CMO demo — "Build me an outbound campaign for Q2"
+    it("CMO demo has user request about outbound campaign", () => {
+      expect(homeSource).toContain("Build me an outbound campaign for Q2");
     });
 
-    it("CTO demo includes actionable recommendation", () => {
-      expect(homeSource).toContain("hotfix sprint targeting the connection pooling issues");
+    it("CMO demo pulls from HubSpot CRM, Gmail, LinkedIn Sales Nav, Calendly", () => {
+      expect(homeSource).toContain('"LinkedIn Sales Nav"');
     });
 
-    // CFO (TED) demo
-    it("CFO demo pulls from 3 data sources: Stripe, QuickBooks, HubSpot CRM", () => {
-      expect(homeSource).toContain("Connecting to QuickBooks");
+    it("CMO demo shows cross-source insights about LinkedIn and cold email", () => {
+      expect(homeSource).toContain("LinkedIn produces 57% of discovery calls");
+      expect(homeSource).toContain("47% open rate");
+      expect(homeSource).toContain("187 contacts who engaged");
     });
 
-    it("CFO demo shows financial data", () => {
-      expect(homeSource).toContain("$2.4M ARR");
-      expect(homeSource).toContain("$167K/mo burn");
-      expect(homeSource).toContain("18 months runway");
+    it("CMO demo has Socratic questions about scaling outbound", () => {
+      expect(homeSource).toContain("Should we 3x that to 10/day");
+      expect(homeSource).toContain("Should I build the full multichannel sequence");
     });
 
-    it("CFO demo includes actionable recommendation", () => {
-      expect(homeSource).toContain("board-ready financial forecast by Friday");
+    // CTO demo — "Why is our release velocity slowing down?"
+    it("CTO demo has user request about release velocity", () => {
+      expect(homeSource).toContain("Why is our release velocity slowing down");
     });
 
-    it("all demos include cross-referencing and context assembly steps", () => {
-      expect(homeSource).toContain("Cross-referencing");
-      expect(homeSource).toContain("Context assembled from 3 sources");
+    it("CTO demo pulls from GitHub, Datadog, Jira, PagerDuty", () => {
+      expect(homeSource).toContain('"GitHub"');
+      expect(homeSource).toContain('"Datadog"');
+      expect(homeSource).toContain('"Jira"');
+      expect(homeSource).toContain('"PagerDuty"');
     });
 
-    it("has the tagline about three data sources", () => {
-      expect(homeSource).toContain("Three data sources. One unified context. Zero manual setup.");
+    it("CTO demo shows engineering velocity insights", () => {
+      expect(homeSource).toContain("Sprint velocity dropped 26%");
+      expect(homeSource).toContain("6 revert commits and 4 deploy rollbacks");
+      expect(homeSource).toContain("3 PagerDuty incidents share the same root cause");
+    });
+
+    it("CTO demo has Socratic questions about fixing root causes", () => {
+      expect(homeSource).toContain("Should I prioritize a hotfix sprint this week");
+      expect(homeSource).toContain("Should we implement a review SLA");
+    });
+
+    // CFO demo — "Are we on track to hit profitability this year?"
+    it("CFO demo has user request about profitability", () => {
+      expect(homeSource).toContain("Are we on track to hit profitability this year");
+    });
+
+    it("CFO demo pulls from Stripe, QuickBooks, HubSpot CRM, Gusto", () => {
+      expect(homeSource).toContain('"QuickBooks"');
+      expect(homeSource).toContain('"Gusto"');
+    });
+
+    it("CFO demo shows financial insights about breakeven and burn", () => {
+      expect(homeSource).toContain("$204K MRR with 12% MoM growth");
+      expect(homeSource).toContain("Engineering is 62% of total spend");
+      expect(homeSource).toContain("$18K in failed Stripe charges");
+    });
+
+    it("CFO demo has Socratic questions about hiring and dunning", () => {
+      expect(homeSource).toContain("Should we phase the hires");
+      expect(homeSource).toContain("Should I set up a dunning sequence");
+    });
+
+    it("has the tagline about multiple data sources", () => {
+      expect(homeSource).toContain("Multiple data sources. One unified context. Zero manual setup.");
+    });
+
+    it("shows footer with context ID, sources list, and domain", () => {
+      expect(homeSource).toContain("Context: CTX-2026-");
+      expect(homeSource).toContain("opencommand.co");
     });
   });
 
