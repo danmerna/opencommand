@@ -58,10 +58,106 @@ function useTypewriter(text: string, speed = 45, startDelay = 0) {
   return { displayed, done, started };
 }
 
+/* ─── Agent Demo Data ────────────────────────────────────────────────── */
+const AGENT_DEMOS = {
+  cmo: {
+    label: "CMO",
+    name: "NOVA",
+    color: "text-purple-400",
+    title: "Onboarding NOVA — CMO Agent",
+    steps: [
+      "Connecting to Meta Ads...",
+      "Pulling campaign data: 14 active campaigns, $12.4K monthly spend",
+      "Connecting to Google Ads...",
+      "Reading search campaigns: 847 keywords, $8.2K spend, 3.1% CTR",
+      "Connecting to Google Analytics...",
+      "Analyzing traffic: 42K sessions, 2.8% conversion rate, top channel: paid search",
+      "Cross-referencing ad spend → conversions → revenue attribution...",
+      "Context assembled from 3 sources in 4.7s",
+    ],
+    cards: [
+      { color: "bg-blue-400", source: "Meta Ads", data: "14 campaigns · $12.4K/mo spend · 2.1x ROAS · Top: Lookalike Audiences" },
+      { color: "bg-yellow-400", source: "Google Ads", data: "847 keywords · $8.2K/mo spend · 3.1% CTR · Top: branded search" },
+      { color: "bg-orange-400", source: "Google Analytics", data: "42K sessions · 2.8% CVR · Top channel: paid search (38%)" },
+    ],
+    response: 'I\'ve analyzed your full ad stack. <b>Google Ads drives 38% of traffic at 3.1% CTR</b>, but Meta\'s Lookalike campaigns convert at <b>2.1x ROAS vs. 1.4x on search</b>. Recommended action: shift $2K/mo from underperforming search keywords to scale the top 3 Meta audiences. I can draft the reallocation plan and execute the budget shift today.',
+  },
+  ceo: {
+    label: "CEO",
+    name: "ARCH",
+    color: "text-emerald-400",
+    title: "Onboarding ARCH — CEO Agent",
+    steps: [
+      "Connecting to HubSpot CRM...",
+      "Reading pipeline: 47 open deals, $1.2M weighted value",
+      "Connecting to Stripe...",
+      "Pulling revenue: $204K MRR, 12% MoM growth, 94.2% retention",
+      "Connecting to Google Analytics...",
+      "Analyzing acquisition: 18K monthly visitors, 3.4% trial conversion",
+      "Cross-referencing pipeline → revenue → acquisition funnel...",
+      "Context assembled from 3 sources in 3.9s",
+    ],
+    cards: [
+      { color: "bg-orange-400", source: "HubSpot CRM", data: "47 open deals · $1.2M weighted pipeline · Avg close: 34 days" },
+      { color: "bg-purple-400", source: "Stripe", data: "$204K MRR · 12% MoM growth · 94.2% net retention" },
+      { color: "bg-blue-400", source: "Google Analytics", data: "18K visitors · 3.4% trial CVR · Top: organic search (41%)" },
+    ],
+    response: 'Your pipeline is strong at <b>$1.2M weighted</b>, but trial-to-paid conversion is the bottleneck — <b>3.4% is below the 5% SaaS benchmark</b>. With 12% MoM revenue growth and 94.2% retention, the unit economics support aggressive acquisition. Recommended action: deploy NOVA to run a 30-day conversion optimization sprint on the trial onboarding flow while I reallocate $15K from low-ROI channels to high-intent organic.',
+  },
+  cto: {
+    label: "CTO",
+    name: "SAGE",
+    color: "text-cyan-400",
+    title: "Onboarding SAGE — CTO Agent",
+    steps: [
+      "Connecting to GitHub...",
+      "Scanning repos: 23 active, 847 open issues, 12 critical",
+      "Connecting to Datadog...",
+      "Reading infrastructure: 99.94% uptime, P95 latency 340ms, 3 alerts",
+      "Connecting to Jira...",
+      "Analyzing sprint velocity: 42 pts/sprint avg, 78% completion rate",
+      "Cross-referencing tech debt → performance → delivery velocity...",
+      "Context assembled from 3 sources in 5.1s",
+    ],
+    cards: [
+      { color: "bg-gray-400", source: "GitHub", data: "23 repos · 847 open issues · 12 critical · 3.2 PRs/day avg" },
+      { color: "bg-purple-400", source: "Datadog", data: "99.94% uptime · P95: 340ms · 3 active alerts · API error rate: 0.8%" },
+      { color: "bg-blue-400", source: "Jira", data: "42 pts/sprint · 78% completion · 14 days avg cycle time" },
+    ],
+    response: 'Your <b>P95 latency at 340ms is 2x your SLA target</b>, and it correlates with the 3 active Datadog alerts on the payments microservice. The 12 critical GitHub issues include 4 related to database connection pooling — fixing those would likely resolve both the latency spike and the 0.8% API error rate. Recommended action: I\'ll prioritize a hotfix sprint targeting the connection pooling issues and deploy the fix by EOD Thursday.',
+  },
+  cfo: {
+    label: "CFO",
+    name: "TED",
+    color: "text-amber-400",
+    title: "Onboarding TED — CFO Agent",
+    steps: [
+      "Connecting to Stripe...",
+      "Pulling revenue: $204K MRR, $2.4M ARR, 8.3% churn",
+      "Connecting to QuickBooks...",
+      "Reading expenses: $167K/mo burn, 18 months runway at current rate",
+      "Connecting to HubSpot CRM...",
+      "Analyzing pipeline: $1.2M weighted, $340K expected to close this quarter",
+      "Cross-referencing burn rate → pipeline → revenue forecast...",
+      "Context assembled from 3 sources in 4.2s",
+    ],
+    cards: [
+      { color: "bg-purple-400", source: "Stripe", data: "$204K MRR · $2.4M ARR · 8.3% annual churn · LTV:CAC 4.2x" },
+      { color: "bg-green-400", source: "QuickBooks", data: "$167K/mo burn · 18mo runway · Top cost: engineering (62%)" },
+      { color: "bg-orange-400", source: "HubSpot CRM", data: "$1.2M pipeline · $340K closing Q1 · Avg deal: $24K" },
+    ],
+    response: 'Your <b>burn rate of $167K/mo gives you 18 months of runway</b>, but engineering costs at 62% of spend are above the 50% benchmark for your stage. With <b>$340K expected to close this quarter</b> against $204K MRR, you\'re on track to hit $3M ARR by Q3. Recommended action: I\'ll model three scenarios — current trajectory, aggressive hiring, and lean mode — and present a board-ready financial forecast by Friday with specific recommendations on headcount timing.',
+  },
+} as const;
+
+type AgentKey = keyof typeof AGENT_DEMOS;
+
 /* ─── Context Engine Demo ─────────────────────────────────────────────── */
 function ContextEngineDemo() {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
+  const [activeAgent, setActiveAgent] = useState<AgentKey>("ceo");
+  const [animKey, setAnimKey] = useState(0);
 
   useEffect(() => {
     const el = ref.current;
@@ -73,74 +169,90 @@ function ContextEngineDemo() {
           observer.disconnect();
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.2 }
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  const typewriter = useTypewriter("Onboarding NOVA — CMO Agent", 45, inView ? 400 : 99999);
+  const switchAgent = useCallback((key: AgentKey) => {
+    setActiveAgent(key);
+    setAnimKey(k => k + 1);
+  }, []);
 
-  const steps = [
-    { text: "Connecting to Meta Ads...", delay: 1600 },
-    { text: "Pulling campaign data: 14 active campaigns, $12.4K monthly spend", delay: 2400 },
-    { text: "Connecting to Google Ads...", delay: 3200 },
-    { text: "Reading search campaigns: 847 keywords, $8.2K spend, 3.1% CTR", delay: 4000 },
-    { text: "Connecting to Google Analytics...", delay: 4800 },
-    { text: "Analyzing traffic: 42K sessions, 2.8% conversion rate, top channel: paid search", delay: 5600 },
-    { text: "Cross-referencing ad spend → conversions → revenue attribution...", delay: 6400 },
-    { text: "Context assembled from 3 sources in 4.7s", delay: 7200 },
-  ];
-
-  const contextCardDelay = 8000;
-  const responseDelay = 9000;
+  const demo = AGENT_DEMOS[activeAgent];
 
   return (
     <div ref={ref} className="max-w-3xl mx-auto">
+      {/* Agent toggle tabs */}
+      <div className="flex justify-center gap-2 mb-6">
+        {(Object.keys(AGENT_DEMOS) as AgentKey[]).map((key) => {
+          const d = AGENT_DEMOS[key];
+          const isActive = key === activeAgent;
+          return (
+            <button
+              key={key}
+              onClick={() => switchAgent(key)}
+              className={`px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 border ${
+                isActive
+                  ? "border-accent bg-accent/10 text-foreground"
+                  : "border-border bg-card/50 text-muted-foreground hover:text-foreground hover:border-foreground/20"
+              }`}
+            >
+              {d.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Terminal-style container */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div key={animKey} className="rounded-xl border border-border bg-card overflow-hidden">
         {/* Terminal header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-black/40">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-          <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-          <span className="ml-3 text-xs text-muted-foreground font-mono">intent-engine</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-black/40">
+          <div className="w-2 h-2 rounded-full bg-red-500/60" />
+          <div className="w-2 h-2 rounded-full bg-yellow-500/60" />
+          <div className="w-2 h-2 rounded-full bg-green-500/60" />
+          <span className="ml-3 text-[11px] text-muted-foreground font-mono">intent-engine</span>
         </div>
 
-        <div className="p-6 md:p-8 space-y-5">
-          {/* Step 1: User input */}
-          <div className="flex items-start gap-3">
-            <span className="text-accent font-mono text-sm mt-0.5 shrink-0">&gt;_</span>
-            <div className="font-mono text-sm text-foreground">
-              {typewriter.displayed}
-              {!typewriter.done && typewriter.started && (
-                <span className="animate-blink text-accent">|</span>
-              )}
-            </div>
-          </div>
+        <div className="p-5 md:p-6 space-y-3">
+          {/* Typewriter title */}
+          <AgentTypewriter key={`tw-${animKey}`} text={demo.title} inView={inView} />
 
-          {/* Step 2: Status indicators */}
-          {inView && steps.map((step, i) => (
-            <StatusLine key={i} text={step.text} delay={step.delay} />
+          {/* Status lines */}
+          {inView && demo.steps.map((text, i) => (
+            <DemoStatusLine key={`${animKey}-${i}`} text={text} delay={400 + i * 600} />
           ))}
 
-          {/* Step 3: Context card */}
-          {inView && <ContextCard delay={contextCardDelay} />}
+          {/* Context cards */}
+          {inView && <DemoContextCards key={`cc-${animKey}`} cards={demo.cards} delay={400 + demo.steps.length * 600} />}
 
-          {/* Step 4: AI response */}
-          {inView && <AIResponse delay={responseDelay} />}
+          {/* AI response */}
+          {inView && <DemoAIResponse key={`ar-${animKey}`} name={demo.name} label={demo.label} color={demo.color} html={demo.response} delay={400 + demo.steps.length * 600 + 800} />}
         </div>
       </div>
 
-      {/* Tagline below demo */}
-      <p className="text-center mt-8 text-sm italic" style={{ color: "oklch(0.78 0.06 80)" }}>
+      <p className="text-center mt-6 text-xs italic" style={{ color: "oklch(0.78 0.06 80)" }}>
         Three data sources. One unified context. Zero manual setup.
       </p>
     </div>
   );
 }
 
-function StatusLine({ text, delay }: { text: string; delay: number }) {
+function AgentTypewriter({ text, inView }: { text: string; inView: boolean }) {
+  const tw = useTypewriter(text, 35, inView ? 200 : 99999);
+  return (
+    <div className="flex items-start gap-3">
+      <span className="text-accent font-mono text-sm mt-0.5 shrink-0">&gt;_</span>
+      <div className="font-mono text-sm text-foreground">
+        {tw.displayed}
+        {!tw.done && tw.started && <span className="animate-blink text-accent">|</span>}
+      </div>
+    </div>
+  );
+}
+
+function DemoStatusLine({ text, delay }: { text: string; delay: number }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), delay);
@@ -150,12 +262,12 @@ function StatusLine({ text, delay }: { text: string; delay: number }) {
   return (
     <div className="flex items-center gap-2 pl-7 animate-fade-in">
       <span className="text-emerald-400 text-xs">→</span>
-      <span className="font-mono text-xs text-muted-foreground">{text}</span>
+      <span className="font-mono text-[11px] text-muted-foreground">{text}</span>
     </div>
   );
 }
 
-function ContextCard({ delay }: { delay: number }) {
+function DemoContextCards({ cards, delay }: { cards: readonly { color: string; source: string; data: string }[]; delay: number }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), delay);
@@ -163,39 +275,21 @@ function ContextCard({ delay }: { delay: number }) {
   }, [delay]);
   if (!visible) return null;
   return (
-    <div className="ml-7 animate-fade-in space-y-3">
-      <div className="rounded-lg border border-border bg-black/30 p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-          <span className="text-xs font-medium text-foreground">Context from Meta Ads</span>
+    <div className="ml-7 animate-fade-in space-y-2">
+      {cards.map((c, i) => (
+        <div key={i} className="rounded-lg border border-border bg-black/30 px-4 py-3">
+          <div className="flex items-center gap-2 mb-1">
+            <div className={`w-1.5 h-1.5 rounded-full ${c.color}`} />
+            <span className="text-[11px] font-medium text-foreground">{c.source}</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground font-mono">{c.data}</p>
         </div>
-        <p className="text-xs text-muted-foreground font-mono">
-          14 campaigns · $12.4K/mo spend · 2.1x ROAS · Top: Lookalike Audiences
-        </p>
-      </div>
-      <div className="rounded-lg border border-border bg-black/30 p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
-          <span className="text-xs font-medium text-foreground">Context from Google Ads</span>
-        </div>
-        <p className="text-xs text-muted-foreground font-mono">
-          847 keywords · $8.2K/mo spend · 3.1% CTR · Top: branded search
-        </p>
-      </div>
-      <div className="rounded-lg border border-border bg-black/30 p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-          <span className="text-xs font-medium text-foreground">Context from Google Analytics</span>
-        </div>
-        <p className="text-xs text-muted-foreground font-mono">
-          42K sessions · 2.8% CVR · Top channel: paid search (38%) · Avg order: $127
-        </p>
-      </div>
+      ))}
     </div>
   );
 }
 
-function AIResponse({ delay }: { delay: number }) {
+function DemoAIResponse({ name, label, color, html, delay }: { name: string; label: string; color: string; html: string; delay: number }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), delay);
@@ -205,12 +299,10 @@ function AIResponse({ delay }: { delay: number }) {
   return (
     <div className="ml-7 animate-fade-in">
       <div className="flex items-center gap-2 mb-2">
-        <Bot size={14} className="text-purple-400" />
-        <span className="text-xs font-medium text-purple-400">NOVA — CMO Agent</span>
+        <Bot size={14} className={color} />
+        <span className={`text-xs font-medium ${color}`}>{name} — {label} Agent</span>
       </div>
-      <p className="text-sm text-foreground/90 leading-relaxed">
-        I've analyzed your full ad stack. <span className="text-foreground font-medium">Google Ads drives 38% of traffic at 3.1% CTR</span>, but Meta's Lookalike campaigns convert at <span className="text-foreground font-medium">2.1x ROAS vs. 1.4x on search</span>. I'd recommend shifting $2K/mo from underperforming search keywords to scale the top 3 Meta audiences. Want me to draft the reallocation plan?
-      </p>
+      <p className="text-[13px] text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   );
 }
@@ -503,37 +595,9 @@ export default function Home() {
             <span className="text-[9px] font-medium tracking-wider uppercase px-1.5 py-0.5 rounded-full border border-emerald-400/40 text-emerald-400">Beta</span>
           </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-8">
-            <button onClick={() => scrollToSection("how-it-works")} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
-              How It Works
-            </button>
-            <Link href="/blueprints" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
-              Blueprints
-            </Link>
-            <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
-              Creators
-            </Link>
-            {isAuthenticated ? (
-              hasCompany ? (
-                <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2">
-                  Mission Control
-                </Link>
-              ) : (
-                <Link href="/onboarding/pro" className="btn-primary text-[13px] px-5 py-2">
-                  Build Your Team
-                </Link>
-              )
-            ) : (
-              <a href={getLoginUrl("/onboarding/pro")} className="btn-primary text-[13px] px-5 py-2">
-                Start Free
-              </a>
-            )}
-          </div>
-
-          {/* Mobile hamburger */}
+          {/* Hamburger menu button — all screen sizes */}
           <button
-            className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -541,9 +605,9 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Mobile dropdown */}
+        {/* Dropdown menu */}
         {mobileMenuOpen && (
-          <div className="mobile-menu-enter md:hidden mt-4 pb-4 border-t border-border pt-4 flex flex-col gap-4">
+          <div className="mobile-menu-enter mt-4 pb-4 border-t border-border pt-4 flex flex-col gap-4">
             <button onClick={() => scrollToSection("how-it-works")} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors text-left">
               How It Works
             </button>
@@ -553,7 +617,7 @@ export default function Home() {
             <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
               Creators
             </Link>
-            <div className="pt-2">
+            <div className="pt-2 border-t border-border">
               {isAuthenticated ? (
                 hasCompany ? (
                   <Link href="/mission-control" className="btn-primary text-[13px] px-5 py-2 inline-block" onClick={() => setMobileMenuOpen(false)}>
@@ -561,12 +625,12 @@ export default function Home() {
                   </Link>
                 ) : (
                   <Link href="/onboarding/pro" className="btn-primary text-[13px] px-5 py-2 inline-block" onClick={() => setMobileMenuOpen(false)}>
-                    Build Your Team
+                    Continue Onboarding
                   </Link>
                 )
               ) : (
-                <a href={getLoginUrl("/onboarding/pro")} className="btn-primary text-[13px] px-5 py-2">
-                  Start Free
+                <a href={getLoginUrl("/onboarding/pro")} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                  Login
                 </a>
               )}
             </div>
@@ -588,19 +652,7 @@ export default function Home() {
               Open Command connects to your tools, builds its own context, and executes work autonomously — delivering a verified receipt for every outcome. The intent engine that context-engineers itself.
             </p>
             <div className="hero-cta w-full max-w-xl">
-              {isAuthenticated ? (
-                hasCompany ? (
-                  <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-7 py-3 w-fit">
-                    Enter Mission Control <ArrowRight size={16} />
-                  </Link>
-                ) : (
-                  <Link href="/onboarding/pro" className="btn-primary flex items-center gap-2 px-7 py-3 w-fit">
-                    Continue Onboarding <ArrowRight size={16} />
-                  </Link>
-                )
-              ) : (
-                <HeroEmailInput />
-              )}
+              <HeroEmailInput />
             </div>
           </div>
 
@@ -845,9 +897,7 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-6 flex-wrap">
-          <a href={getLoginUrl("/onboarding/pro")} className="btn-primary flex items-center gap-2 px-6 py-2.5 text-sm">
-            Join the Waitlist <ArrowRight size={14} />
-          </a>
+          <EmailCapture source="blueprints" />
           <Link href="/creators" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             Build Blueprints as a Creator <ArrowRight size={14} />
           </Link>
@@ -895,19 +945,7 @@ export default function Home() {
             ))}
           </div>
           <div className="max-w-md mx-auto">
-            {isAuthenticated ? (
-              hasCompany ? (
-                <Link href="/mission-control" className="btn-primary text-center text-sm py-3 w-full block">
-                  Enter Mission Control <ArrowRight size={14} className="inline ml-1" />
-                </Link>
-              ) : (
-                <Link href="/onboarding/pro" className="btn-primary text-center text-sm py-3 w-full block">
-                  Continue Onboarding <ArrowRight size={14} className="inline ml-1" />
-                </Link>
-              )
-            ) : (
-              <HeroEmailInput />
-            )}
+            <HeroEmailInput />
           </div>
           <p className="text-center text-xs text-muted-foreground/60 mt-4">
             Paid plans will be introduced later. Early users will be grandfathered.
@@ -924,24 +962,10 @@ export default function Home() {
           Connect your tools. State your intent. ARCH handles execution. You get a receipt proving what it accomplished.
         </p>
         <div className="flex flex-col items-center gap-4 max-w-md mx-auto w-full">
-          {isAuthenticated ? (
-            hasCompany ? (
-              <Link href="/mission-control" className="btn-primary flex items-center gap-2 px-7 py-3">
-                Enter Mission Control <ArrowRight size={16} />
-              </Link>
-            ) : (
-              <Link href="/onboarding/pro" className="btn-primary flex items-center gap-2 px-7 py-3">
-                Continue Onboarding <ArrowRight size={16} />
-              </Link>
-            )
-          ) : (
-            <>
-              <HeroEmailInput />
-              <a href={getLoginUrl()} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                Already have an account? Sign in <ArrowRight size={10} className="inline ml-0.5" />
-              </a>
-            </>
-          )}
+          <HeroEmailInput />
+          <a href={getLoginUrl()} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Already have an account? Sign in <ArrowRight size={10} className="inline ml-0.5" />
+          </a>
         </div>
       </section>
 

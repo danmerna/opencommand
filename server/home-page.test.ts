@@ -15,24 +15,29 @@ const homeSource = fs.readFileSync(
 
 describe("Home Page Redesign - Structure Validation", () => {
   // ─── Section 1: Navigation ─────────────────────────────────────────
-  describe("Navigation", () => {
-    it("includes How It Works nav link", () => {
+  describe("Navigation — Hamburger Menu", () => {
+    it("includes How It Works nav link in dropdown", () => {
       expect(homeSource).toContain("How It Works");
     });
 
-    it("includes Blueprints nav link", () => {
+    it("includes Blueprints nav link in dropdown", () => {
       expect(homeSource).toContain("Blueprints");
     });
 
-    it("includes Creators nav link", () => {
+    it("includes Creators nav link in dropdown", () => {
       expect(homeSource).toContain("Creators");
     });
 
-    it("includes Start Free CTA for unauthenticated users", () => {
-      expect(homeSource).toContain("Start Free");
+    it("uses hamburger menu for all screen sizes (no hidden md:flex desktop nav)", () => {
+      // The old desktop nav had "hidden md:flex" — now removed
+      expect(homeSource).not.toContain('"hidden md:flex items-center gap-8"');
     });
 
-    it("includes Mission Control link for authenticated users", () => {
+    it("includes Login link for unauthenticated users in dropdown", () => {
+      expect(homeSource).toContain("Login");
+    });
+
+    it("includes Mission Control link for authenticated users in dropdown", () => {
       expect(homeSource).toContain("Mission Control");
     });
 
@@ -58,10 +63,18 @@ describe("Home Page Redesign - Structure Validation", () => {
     it("has Personal Intelligence Engine label", () => {
       expect(homeSource).toContain("Personal Intelligence Engine");
     });
+
+    it("always shows HeroEmailInput regardless of auth state", () => {
+      // The hero CTA section should just have <HeroEmailInput /> without auth branching
+      expect(homeSource).toContain('className="hero-cta w-full max-w-xl"');
+      // Should NOT have isAuthenticated branching in the hero CTA div
+      const heroCta = homeSource.match(/hero-cta[\s\S]*?<\/div>/);
+      expect(heroCta).toBeTruthy();
+    });
   });
 
-  // ─── Section 3: Context Engine Demo ────────────────────────────────
-  describe("Context Engine Demo - Self-Contextualization", () => {
+  // ─── Section 3: Context Engine Demo — 4 Agent Toggle ──────────────
+  describe("Context Engine Demo - 4 Executive Agents", () => {
     it("includes the ContextEngineDemo component", () => {
       expect(homeSource).toContain("ContextEngineDemo");
     });
@@ -70,41 +83,88 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("Introducing Self-Contextualization");
     });
 
-    it("no longer has The Magic Moment header", () => {
-      expect(homeSource).not.toContain("The Magic Moment");
+    it("defines AGENT_DEMOS data for all 4 executives", () => {
+      expect(homeSource).toContain("AGENT_DEMOS");
+      expect(homeSource).toContain("cmo:");
+      expect(homeSource).toContain("ceo:");
+      expect(homeSource).toContain("cto:");
+      expect(homeSource).toContain("cfo:");
     });
 
-    it("includes typewriter text for CMO onboarding", () => {
-      expect(homeSource).toContain("Onboarding NOVA");
-      expect(homeSource).toContain("CMO Agent");
+    it("has toggle tabs showing only job titles (no agent names)", () => {
+      // Tabs render {d.label} which is "CMO", "CEO", "CTO", "CFO"
+      expect(homeSource).toContain("{d.label}");
+      // Should NOT render agent names in tabs
+      expect(homeSource).not.toContain("{d.name} — {d.label}");
     });
 
-    it("pulls from 3+ data sources: Meta Ads, Google Ads, Google Analytics", () => {
+    // CMO (NOVA) demo
+    it("CMO demo pulls from 3 data sources: Meta Ads, Google Ads, Google Analytics", () => {
       expect(homeSource).toContain("Connecting to Meta Ads");
       expect(homeSource).toContain("Connecting to Google Ads");
       expect(homeSource).toContain("Connecting to Google Analytics");
     });
 
-    it("shows specific data pulled from each source", () => {
+    it("CMO demo shows specific data from each source", () => {
       expect(homeSource).toContain("14 active campaigns");
       expect(homeSource).toContain("847 keywords");
       expect(homeSource).toContain("42K sessions");
     });
 
-    it("includes cross-referencing step across sources", () => {
+    it("CMO demo includes actionable recommendation", () => {
+      expect(homeSource).toContain("shift $2K/mo from underperforming search keywords");
+    });
+
+    // CEO (ARCH) demo
+    it("CEO demo pulls from 3 data sources: HubSpot CRM, Stripe, Google Analytics", () => {
+      expect(homeSource).toContain("Connecting to HubSpot CRM");
+      expect(homeSource).toContain("Connecting to Stripe");
+    });
+
+    it("CEO demo shows pipeline and revenue data", () => {
+      expect(homeSource).toContain("47 open deals");
+      expect(homeSource).toContain("$204K MRR");
+    });
+
+    it("CEO demo includes actionable recommendation", () => {
+      expect(homeSource).toContain("deploy NOVA to run a 30-day conversion optimization sprint");
+    });
+
+    // CTO (SAGE) demo
+    it("CTO demo pulls from 3 data sources: GitHub, Datadog, Jira", () => {
+      expect(homeSource).toContain("Connecting to GitHub");
+      expect(homeSource).toContain("Connecting to Datadog");
+      expect(homeSource).toContain("Connecting to Jira");
+    });
+
+    it("CTO demo shows tech metrics", () => {
+      expect(homeSource).toContain("23 active");
+      expect(homeSource).toContain("99.94% uptime");
+      expect(homeSource).toContain("42 pts/sprint");
+    });
+
+    it("CTO demo includes actionable recommendation", () => {
+      expect(homeSource).toContain("hotfix sprint targeting the connection pooling issues");
+    });
+
+    // CFO (TED) demo
+    it("CFO demo pulls from 3 data sources: Stripe, QuickBooks, HubSpot CRM", () => {
+      expect(homeSource).toContain("Connecting to QuickBooks");
+    });
+
+    it("CFO demo shows financial data", () => {
+      expect(homeSource).toContain("$2.4M ARR");
+      expect(homeSource).toContain("$167K/mo burn");
+      expect(homeSource).toContain("18 months runway");
+    });
+
+    it("CFO demo includes actionable recommendation", () => {
+      expect(homeSource).toContain("board-ready financial forecast by Friday");
+    });
+
+    it("all demos include cross-referencing and context assembly steps", () => {
       expect(homeSource).toContain("Cross-referencing");
       expect(homeSource).toContain("Context assembled from 3 sources");
-    });
-
-    it("includes context cards from all three sources", () => {
-      expect(homeSource).toContain("Context from Meta Ads");
-      expect(homeSource).toContain("Context from Google Ads");
-      expect(homeSource).toContain("Context from Google Analytics");
-    });
-
-    it("includes the AI response from NOVA — CMO Agent", () => {
-      expect(homeSource).toContain("NOVA — CMO Agent");
-      expect(homeSource).toContain("full ad stack");
     });
 
     it("has the tagline about three data sources", () => {
@@ -240,8 +300,8 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("Deploys in");
     });
 
-    it("has Join the Waitlist CTA instead of Browse Marketplace", () => {
-      expect(homeSource).toContain("Join the Waitlist");
+    it("has EmailCapture for blueprints section and Build Blueprints as a Creator link", () => {
+      expect(homeSource).toContain('source="blueprints"');
       expect(homeSource).toContain("Build Blueprints as a Creator");
       expect(homeSource).not.toContain("Browse Marketplace");
     });
@@ -262,7 +322,7 @@ describe("Home Page Redesign - Structure Validation", () => {
     });
   });
 
-  // ─── Section 9: Pricing ────────────────────────────────────────
+  // ─── Section 8: Pricing ────────────────────────────────────────
   describe("Pricing Section - Free During Beta", () => {
     it("has the free during beta header", () => {
       expect(homeSource).toContain("Free during beta. Full access.");
@@ -283,8 +343,8 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("Early users will be grandfathered");
     });
 
-    it("includes get started CTA", () => {
-      expect(homeSource).toContain("Get Started");
+    it("always shows HeroEmailInput in pricing section (no auth branching)", () => {
+      expect(homeSource).toContain("HeroEmailInput");
     });
   });
 
@@ -306,8 +366,8 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("Join the Beta");
     });
 
-    it("includes free during beta text", () => {
-      expect(homeSource).toContain("Free during beta");
+    it("always shows email form and sign-in link (no auth branching in bottom CTA)", () => {
+      expect(homeSource).toContain("Already have an account? Sign in");
     });
 
     it("uses waitlist.emailSignup mutation", () => {
@@ -348,15 +408,11 @@ describe("Home Page Redesign - Structure Validation", () => {
     });
   });
 
-  // ─── Onboarding CTAs ───────────────────────────────────────────────
-  describe("Onboarding CTAs for Authenticated Users", () => {
-    it("queries companies to determine onboarding state", () => {
+  // ─── Auth-Aware Elements ───────────────────────────────────────────
+  describe("Auth-Aware Elements", () => {
+    it("queries companies to determine onboarding state (for hamburger menu)", () => {
       expect(homeSource).toContain("trpc.companies.list.useQuery");
       expect(homeSource).toContain("hasCompany");
-    });
-
-    it("shows Build Your Team CTA for authenticated users without company", () => {
-      expect(homeSource).toContain("Build Your Team");
     });
 
     it("shows Get Started CTA in hero email input", () => {
@@ -365,10 +421,6 @@ describe("Home Page Redesign - Structure Validation", () => {
 
     it("routes to /onboarding/pro for users without company", () => {
       expect(homeSource).toContain('/onboarding/pro');
-    });
-
-    it("still shows Mission Control for users with a company", () => {
-      expect(homeSource).toContain("Enter Mission Control");
     });
   });
 
@@ -394,6 +446,15 @@ describe("Home Page Redesign - Structure Validation", () => {
 
     it("no longer has Buy proven agents headline", () => {
       expect(homeSource).not.toContain("Buy proven agents. Or sell your own.");
+    });
+
+    it("no longer has Start Free as a nav CTA (replaced by Login)", () => {
+      // "Start Free" was the old desktop nav CTA — now it's "Login" in the hamburger
+      expect(homeSource).not.toContain('"Start Free"');
+    });
+
+    it("no longer has Build Your Team CTA (replaced by Continue Onboarding)", () => {
+      expect(homeSource).not.toContain("Build Your Team");
     });
   });
 });

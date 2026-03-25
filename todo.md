@@ -222,3 +222,8 @@
 - [x] Tune completion phrase detection: expanded to 35+ natural closing phrases across 4 categories
 - [x] Fix: LLM still emitting raw JSON in onboarding chat — sanitize legacy JSON from history + strip JSON from reply before returning to frontend
 - [x] Fix: Two-button choice card not appearing on resume — initialize isCoreComplete=true when loading history with 3+ user messages
+- [x] Landing page: compact terminal demo section (less vertical height)
+- [x] Landing page: add CEO/CTO/CFO agent examples alongside CMO with 4-way toggle
+- [x] Landing page: revert primary CTA to email collection (remove "Mission Control" CTA)
+- [x] Landing page: replace nav with hamburger menu containing Login option only
+- [x] Change agent demo toggle tabs to show only job titles (CEO, CMO, CTO, CFO) — no agent names
