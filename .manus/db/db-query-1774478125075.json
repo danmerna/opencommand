@@ -1,0 +1,73 @@
+{
+  "query": "\nSELECT id, name, email, loginMethod, waitlistStatus, createdAt, lastSignedIn\nFROM users\nORDER BY id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \nSELECT id, name, email, loginMethod, waitlistStatus, createdAt, lastSignedIn\nFROM users\nORDER BY id;\n",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Dan Merna",
+      "email": "dan@trymagnetic.ai",
+      "loginMethod": "google",
+      "waitlistStatus": "approved",
+      "createdAt": "2026-03-23 08:13:16",
+      "lastSignedIn": "2026-03-23 09:42:41"
+    },
+    {
+      "id": "90024",
+      "name": "Dan Merna",
+      "email": "dan@hrvstmarketing.com",
+      "loginMethod": "google",
+      "waitlistStatus": "pending",
+      "createdAt": "2026-03-23 13:57:04",
+      "lastSignedIn": "2026-03-23 13:57:05"
+    },
+    {
+      "id": "150139",
+      "name": "D M",
+      "email": "danielmerna@gmail.com",
+      "loginMethod": "google",
+      "waitlistStatus": "pending",
+      "createdAt": "2026-03-23 19:05:26",
+      "lastSignedIn": "2026-03-23 19:05:26"
+    },
+    {
+      "id": "360028",
+      "name": "Taylor Egnarski",
+      "email": "egnarskit@gmail.com",
+      "loginMethod": "google",
+      "waitlistStatus": "pending",
+      "createdAt": "2026-03-24 15:30:16",
+      "lastSignedIn": "2026-03-24 15:30:16"
+    },
+    {
+      "id": "360029",
+      "name": "Taylor Gerber",
+      "email": "egnarski9@hotmail.com",
+      "loginMethod": "NULL",
+      "waitlistStatus": "pending",
+      "createdAt": "2026-03-24 15:30:46",
+      "lastSignedIn": "2026-03-24 15:30:47"
+    },
+    {
+      "id": "450248",
+      "name": "Demo User (Meridian Software)",
+      "email": "demo@opencommand.co",
+      "loginMethod": "demo",
+      "waitlistStatus": "approved",
+      "createdAt": "2026-03-24 22:25:04",
+      "lastSignedIn": "2026-03-24 22:25:04"
+    },
+    {
+      "id": "600007",
+      "name": "taylorg",
+      "email": "taylorg@johnsontractor.com",
+      "loginMethod": "email",
+      "waitlistStatus": "pending",
+      "createdAt": "2026-03-25 15:12:18",
+      "lastSignedIn": "2026-03-25 15:12:18"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tloginMethod\twaitlistStatus\tcreatedAt\tlastSignedIn\n1\tDan Merna\tdan@trymagnetic.ai\tgoogle\tapproved\t2026-03-23 08:13:16\t2026-03-23 09:42:41\n90024\tDan Merna\tdan@hrvstmarketing.com\tgoogle\tpending\t2026-03-23 13:57:04\t2026-03-23 13:57:05\n150139\tD M\tdanielmerna@gmail.com\tgoogle\tpending\t2026-03-23 19:05:26\t2026-03-23 19:05:26\n360028\tTaylor Egnarski\tegnarskit@gmail.com\tgoogle\tpending\t2026-03-24 15:30:16\t2026-03-24 15:30:16\n360029\tTaylor Gerber\tegnarski9@hotmail.com\tNULL\tpending\t2026-03-24 15:30:46\t2026-03-24 15:30:47\n450248\tDemo User (Meridian Software)\tdemo@opencommand.co\tdemo\tapproved\t2026-03-24 22:25:04\t2026-03-24 22:25:04\n600007\ttaylorg\ttaylorg@johnsontractor.com\temail\tpending\t2026-03-25 15:12:18\t2026-03-25 15:12:18\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

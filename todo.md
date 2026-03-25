@@ -174,7 +174,7 @@
 - [x] Build sign-up funnel view: write vitest tests
 - [x] Fix NaN agentId error on /onboarding/:agentId — safely parse route param before tRPC query
 - [x] Fix duplicate /mission-control key in DashboardLayout sidebar nav
-- [ ] Fix broken DATE() SQL query in admin activity chart helper
+- [x] Fix broken DATE() SQL query in admin activity chart helper
 - [x] Waitlist: Add waitlist columns to users table (waitlistStatus, waitlistPosition, referralCode, referralCount, referredBy)
 - [x] Waitlist: Build DB helpers (findOrCreateUserByEmail, getWaitlistInfo, processReferral, adminApproveUser, adminRejectUser, adminGetWaitlistUsers)
 - [x] Waitlist: Build tRPC procedures (emailSignup, myWaitlistInfo, admin.waitlistUsers, admin.approveUser, admin.rejectUser)
@@ -258,3 +258,5 @@
 - [x] QA: Diagnose and fix login/OAuth issue reported by user
 - [x] QA: Full site flow test (landing, onboarding, executive board, briefings)
 - [x] Fix mobile login: add same-origin relay page after OAuth callback so iOS Safari persists session cookie
+- [x] Fix analytics overcounting: deduplicate page views, fix session counting, fix user KPIs
+- [x] Fix DATE() SQL bug in admin activity chart timeline

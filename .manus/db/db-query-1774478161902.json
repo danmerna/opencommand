@@ -1,0 +1,27 @@
+{
+  "query": "\nSELECT openId, COUNT(*) as cnt, GROUP_CONCAT(id) as ids\nFROM users\nWHERE openId IS NOT NULL\nGROUP BY openId\nHAVING COUNT(*) > 1;\n\nSELECT id, openId, name, email FROM users ORDER BY id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \nSELECT openId, COUNT(*) as cnt, GROUP_CONCAT(id) as ids\nFROM users\nWHERE openId IS NOT NULL\nGROUP BY openId\nHAVING COUNT(*) > 1;\n\nSELECT id, openId, name, email FROM users ORDER BY id;\n",
+  "rows": [
+    {
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "cnt": "4",
+      "ids": "1,690216,690217,690218"
+    }
+  ],
+  "messages": [
+    "id\topenId\tname\temail",
+    "1\t7f4zooCvyB5Z85ar7WMjMS\tDan Merna\tdan@trymagnetic.ai",
+    "90024\tA9G8VyhRtTrREa8uEuKkZB\tDan Merna\tdan@hrvstmarketing.com",
+    "150139\t2NojMvLisjMuzTmmWXpAef\tD M\tdanielmerna@gmail.com",
+    "360028\tXM7EiQRgtHGJtFZBLH8Gzk\tTaylor Egnarski\tegnarskit@gmail.com",
+    "360029\tkcu3Le9zQQRw285zohZNh3\tTaylor Gerber\tegnarski9@hotmail.com",
+    "450248\tdemo_user_opencommand_2026\tDemo User (Meridian Software)\tdemo@opencommand.co",
+    "600007\temail_c568aba9f64027c7\ttaylorg\ttaylorg@johnsontractor.com",
+    "690216\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL",
+    "690217\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL",
+    "690218\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL"
+  ],
+  "stdout": "openId\tcnt\tids\n7f4zooCvyB5Z85ar7WMjMS\t4\t1,690216,690217,690218\nid\topenId\tname\temail\n1\t7f4zooCvyB5Z85ar7WMjMS\tDan Merna\tdan@trymagnetic.ai\n90024\tA9G8VyhRtTrREa8uEuKkZB\tDan Merna\tdan@hrvstmarketing.com\n150139\t2NojMvLisjMuzTmmWXpAef\tD M\tdanielmerna@gmail.com\n360028\tXM7EiQRgtHGJtFZBLH8Gzk\tTaylor Egnarski\tegnarskit@gmail.com\n360029\tkcu3Le9zQQRw285zohZNh3\tTaylor Gerber\tegnarski9@hotmail.com\n450248\tdemo_user_opencommand_2026\tDemo User (Meridian Software)\tdemo@opencommand.co\n600007\temail_c568aba9f64027c7\ttaylorg\ttaylorg@johnsontractor.com\n690216\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\n690217\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\n690218\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}

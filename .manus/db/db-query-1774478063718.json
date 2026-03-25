@@ -1,0 +1,32 @@
+{
+  "query": "\nSELECT email, COUNT(*) as count, GROUP_CONCAT(id ORDER BY id) as ids\nFROM users\nWHERE email IS NOT NULL\nGROUP BY email\nHAVING COUNT(*) > 1\nORDER BY count DESC\nLIMIT 20;\n\nSELECT COUNT(*) as null_email_users FROM users WHERE email IS NULL;\nSELECT COUNT(*) as total_users FROM users;\nSELECT COUNT(*) as real_users FROM users WHERE email IS NOT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \nSELECT email, COUNT(*) as count, GROUP_CONCAT(id ORDER BY id) as ids\nFROM users\nWHERE email IS NOT NULL\nGROUP BY email\nHAVING COUNT(*) > 1\nORDER BY count DESC\nLIMIT 20;\n\nSELECT COUNT(*) as null_email_users FROM users WHERE email IS NULL;\nSELECT COUNT(*) as total_users FROM users;\nSELECT COUNT(*) as real_users FROM users WHERE email IS NOT NULL;\n",
+  "rows": [
+    {
+      "email": "dan@trymagnetic.ai",
+      "count": "11",
+      "ids": "1,390528,450384,540001,540002,540003,540004,540005,540006,690008,690048"
+    },
+    {
+      "email": "danielmerna@gmail.com",
+      "count": "2",
+      "ids": "150139,540031"
+    },
+    {
+      "email": "egnarski9@hotmail.com",
+      "count": "2",
+      "ids": "360029,630001"
+    }
+  ],
+  "messages": [
+    "null_email_users",
+    "1840",
+    "total_users",
+    "1859",
+    "real_users",
+    "19"
+  ],
+  "stdout": "email\tcount\tids\ndan@trymagnetic.ai\t11\t1,390528,450384,540001,540002,540003,540004,540005,540006,690008,690048\ndanielmerna@gmail.com\t2\t150139,540031\negnarski9@hotmail.com\t2\t360029,630001\nnull_email_users\n1840\ntotal_users\n1859\nreal_users\n19\n",
+  "stderr": "",
+  "execution_time_ms": 74
+}

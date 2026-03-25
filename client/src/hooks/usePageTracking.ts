@@ -13,6 +13,9 @@ function getSessionId(): string {
   return id;
 }
 
+// Paths that should not be tracked (relay pages, OAuth callbacks)
+const EXCLUDED_PATHS = new Set(["/auth/relay", "/auth/callback"]);
+
 export function usePageTracking() {
   const [location] = useLocation();
   const trackMutation = trpc.tracking.pageView.useMutation();
@@ -22,6 +25,12 @@ export function usePageTracking() {
   useEffect(() => {
     const sessionId = getSessionId();
     const currentPath = location;
+
+    // Skip tracking for relay/callback paths to avoid noise
+    if (EXCLUDED_PATHS.has(currentPath)) {
+      return;
+    }
+
     const duration = prevPath.current !== null ? Date.now() - enteredAt.current : undefined;
 
     // Fire beacon for the new page (duration = time spent on previous page)

@@ -1,0 +1,31 @@
+{
+  "query": "\n-- Count ghost users first to confirm scope\nSELECT COUNT(*) as ghost_count \nFROM users \nWHERE email IS NULL AND openId IS NULL;\n\n-- Delete ghost users with no email AND no openId (truly empty rows from failed OAuth)\nDELETE FROM users \nWHERE email IS NULL AND openId IS NULL;\n\n-- Verify remaining user count\nSELECT COUNT(*) as remaining_users FROM users;\nSELECT COUNT(*) as users_with_email FROM users WHERE email IS NOT NULL;\nSELECT COUNT(*) as users_with_openid FROM users WHERE openId IS NOT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \n-- Count ghost users first to confirm scope\nSELECT COUNT(*) as ghost_count \nFROM users \nWHERE email IS NULL AND openId IS NULL;\n\n-- Delete ghost users with no email AND no openId (truly empty rows from failed OAuth)\nDELETE FROM users \nWHERE email IS NULL AND openId IS NULL;\n\n-- Verify remaining user count\nSELECT COUNT(*) as remaining_users FROM users;\nSELECT COUNT(*) as users_with_email FROM users WHERE email IS NOT NULL;\nSELECT COUNT(*) as users_with_openid FROM users WHERE openId IS NOT NULL;\n",
+  "rows": [
+    {
+      "ghost_count": "0"
+    },
+    {
+      "ghost_count": "remaining_users"
+    },
+    {
+      "ghost_count": "1851"
+    },
+    {
+      "ghost_count": "users_with_email"
+    },
+    {
+      "ghost_count": "9"
+    },
+    {
+      "ghost_count": "users_with_openid"
+    },
+    {
+      "ghost_count": "1851"
+    }
+  ],
+  "messages": [],
+  "stdout": "ghost_count\n0\nremaining_users\n1851\nusers_with_email\n9\nusers_with_openid\n1851\n",
+  "stderr": "",
+  "execution_time_ms": 82
+}

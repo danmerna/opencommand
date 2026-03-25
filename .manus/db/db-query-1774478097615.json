@@ -1,0 +1,213 @@
+{
+  "query": "\n-- Sample the users with openId but no email to understand what they are\nSELECT id, openId, name, email, loginMethod, createdAt, lastSignedIn, waitlistStatus\nFROM users\nWHERE openId IS NOT NULL AND email IS NULL\nORDER BY createdAt DESC\nLIMIT 20;\n\n-- Check how many have a waitlistStatus set (real waitlist signups)\nSELECT waitlistStatus, COUNT(*) as count\nFROM users\nWHERE openId IS NOT NULL AND email IS NULL\nGROUP BY waitlistStatus;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \n-- Sample the users with openId but no email to understand what they are\nSELECT id, openId, name, email, loginMethod, createdAt, lastSignedIn, waitlistStatus\nFROM users\nWHERE openId IS NOT NULL AND email IS NULL\nORDER BY createdAt DESC\nLIMIT 20;\n\n-- Check how many have a waitlistStatus set (real waitlist signups)\nSELECT waitlistStatus, COUNT(*) as count\nFROM users\nWHERE openId IS NOT NULL AND email IS NULL\nGROUP BY waitlistStatus;\n",
+  "rows": [
+    {
+      "id": "690214",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:34:50",
+      "lastSignedIn": "2026-03-25 22:34:51",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690213",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:34:48",
+      "lastSignedIn": "2026-03-25 22:34:49",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690212",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:32:43",
+      "lastSignedIn": "2026-03-25 22:32:44",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690211",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:32:03",
+      "lastSignedIn": "2026-03-25 22:32:04",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690210",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:32:02",
+      "lastSignedIn": "2026-03-25 22:32:03",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690208",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:32:01",
+      "lastSignedIn": "2026-03-25 22:32:02",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690209",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:32:01",
+      "lastSignedIn": "2026-03-25 22:32:02",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690206",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:32:01",
+      "lastSignedIn": "2026-03-25 22:32:01",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690207",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:32:01",
+      "lastSignedIn": "2026-03-25 22:32:01",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690204",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:59",
+      "lastSignedIn": "2026-03-25 22:32:00",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690203",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:59",
+      "lastSignedIn": "2026-03-25 22:32:00",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690200",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:59",
+      "lastSignedIn": "2026-03-25 22:31:59",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690202",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:59",
+      "lastSignedIn": "2026-03-25 22:32:00",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690201",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:59",
+      "lastSignedIn": "2026-03-25 22:31:59",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690205",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:59",
+      "lastSignedIn": "2026-03-25 22:32:00",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690199",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:58",
+      "lastSignedIn": "2026-03-25 22:31:59",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690198",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:57",
+      "lastSignedIn": "2026-03-25 22:31:58",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690197",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:56",
+      "lastSignedIn": "2026-03-25 22:31:56",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690196",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:56",
+      "lastSignedIn": "2026-03-25 22:31:56",
+      "waitlistStatus": "pending"
+    },
+    {
+      "id": "690195",
+      "openId": "7f4zooCvyB5Z85ar7WMjMS",
+      "name": "NULL",
+      "email": "NULL",
+      "loginMethod": "NULL",
+      "createdAt": "2026-03-25 22:31:56",
+      "lastSignedIn": "2026-03-25 22:31:56",
+      "waitlistStatus": "pending"
+    }
+  ],
+  "messages": [
+    "waitlistStatus\tcount",
+    "pending\t1842"
+  ],
+  "stdout": "id\topenId\tname\temail\tloginMethod\tcreatedAt\tlastSignedIn\twaitlistStatus\n690214\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:34:50\t2026-03-25 22:34:51\tpending\n690213\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:34:48\t2026-03-25 22:34:49\tpending\n690212\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:32:43\t2026-03-25 22:32:44\tpending\n690211\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:32:03\t2026-03-25 22:32:04\tpending\n690210\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:32:02\t2026-03-25 22:32:03\tpending\n690208\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:32:01\t2026-03-25 22:32:02\tpending\n690209\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:32:01\t2026-03-25 22:32:02\tpending\n690206\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:32:01\t2026-03-25 22:32:01\tpending\n690207\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:32:01\t2026-03-25 22:32:01\tpending\n690204\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:59\t2026-03-25 22:32:00\tpending\n690203\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:59\t2026-03-25 22:32:00\tpending\n690200\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:59\t2026-03-25 22:31:59\tpending\n690202\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:59\t2026-03-25 22:32:00\tpending\n690201\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:59\t2026-03-25 22:31:59\tpending\n690205\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:59\t2026-03-25 22:32:00\tpending\n690199\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:58\t2026-03-25 22:31:59\tpending\n690198\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:57\t2026-03-25 22:31:58\tpending\n690197\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:56\t2026-03-25 22:31:56\tpending\n690196\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:56\t2026-03-25 22:31:56\tpending\n690195\t7f4zooCvyB5Z85ar7WMjMS\tNULL\tNULL\tNULL\t2026-03-25 22:31:56\t2026-03-25 22:31:56\tpending\nwaitlistStatus\tcount\npending\t1842\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

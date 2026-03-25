@@ -1041,7 +1041,8 @@ export async function adminGetDailyActivity(userId: number) {
 export async function adminGetFunnelStats() {
   const db = await getDb(); if (!db) return null;
 
-  const [signedUp] = await db.select({ count: sql<number>`count(*)` }).from(users);
+  // Count only real users (those with an email — excludes ghost rows from failed OAuth)
+  const [signedUp] = await db.select({ count: sql<number>`count(*)` }).from(users).where(sql`${users.email} IS NOT NULL`);
   const [createdCompany] = await db.select({ count: sql<number>`count(distinct ${companies.userId})` }).from(companies);
   const [startedOnboarding] = await db.select({ count: sql<number>`count(distinct ${agentOnboardings.userId})` }).from(agentOnboardings);
   const [completedCeo] = await db.select({ count: sql<number>`count(distinct ${agentOnboardings.userId})` }).from(agentOnboardings).where(and(eq(agentOnboardings.agentType, "ceo"), eq(agentOnboardings.status, "completed")));

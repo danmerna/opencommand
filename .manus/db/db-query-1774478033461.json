@@ -1,0 +1,18 @@
+{
+  "query": "\nSELECT \n  feature, \n  action, \n  COUNT(*) as total_events,\n  COUNT(DISTINCT userId) as unique_users,\n  MIN(createdAt) as first_seen,\n  MAX(createdAt) as last_seen\nFROM feature_events\nGROUP BY feature, action\nORDER BY total_events DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \nSELECT \n  feature, \n  action, \n  COUNT(*) as total_events,\n  COUNT(DISTINCT userId) as unique_users,\n  MIN(createdAt) as first_seen,\n  MAX(createdAt) as last_seen\nFROM feature_events\nGROUP BY feature, action\nORDER BY total_events DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "feature": "intent_engine",
+      "action": "context_query",
+      "total_events": "2",
+      "unique_users": "1",
+      "first_seen": "2026-03-25 22:18:41",
+      "last_seen": "2026-03-25 22:19:40"
+    }
+  ],
+  "messages": [],
+  "stdout": "feature\taction\ttotal_events\tunique_users\tfirst_seen\tlast_seen\nintent_engine\tcontext_query\t2\t1\t2026-03-25 22:18:41\t2026-03-25 22:19:40\n",
+  "stderr": "",
+  "execution_time_ms": 101
+}

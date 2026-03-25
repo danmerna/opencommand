@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Reassign all page_views from duplicate dan accounts to id=1\nUPDATE page_views \nSET userId = 1 \nWHERE userId IN (390528,450384,540001,540002,540003,540004,540005,540006,690008,690048);\n\n-- Reassign all user_sessions from duplicate dan accounts to id=1\nUPDATE user_sessions \nSET userId = 1 \nWHERE userId IN (390528,450384,540001,540002,540003,540004,540005,540006,690008,690048);\n\n-- Reassign all feature_events from duplicate dan accounts to id=1\nUPDATE feature_events \nSET userId = 1 \nWHERE userId IN (390528,450384,540001,540002,540003,540004,540005,540006,690008,690048);\n\n-- Delete the duplicate ghost rows (keep id=1 as canonical)\nDELETE FROM users \nWHERE id IN (390528,450384,540001,540002,540003,540004,540005,540006,690008,690048);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \n-- Reassign all page_views from duplicate dan accounts to id=1\nUPDATE page_views \nSET userId = 1 \nWHERE userId IN (390528,450384,540001,540002,540003,540004,540005,540006,690008,690048);\n\n-- Reassign all user_sessions from duplicate dan accounts to id=1\nUPDATE user_sessions \nSET userId = 1 \nWHERE userId IN (390528,450384,540001,540002,540003,540004,540005,540006,690008,690048);\n\n-- Reassign all feature_events from duplicate dan accounts to id=1\nUPDATE feature_events \nSET userId = 1 \nWHERE userId IN (390528,450384,540001,540002,540003,540004,540005,540006,690008,690048);\n\n-- Delete the duplicate ghost rows (keep id=1 as canonical)\nDELETE FROM users \nWHERE id IN (390528,450384,540001,540002,540003,540004,540005,540006,690008,690048);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 78
+}

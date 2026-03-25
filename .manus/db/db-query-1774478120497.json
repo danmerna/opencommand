@@ -1,0 +1,25 @@
+{
+  "query": "\n-- Delete all duplicate user rows keeping only the minimum id per openId\nDELETE FROM users\nWHERE openId IS NOT NULL\nAND id NOT IN (\n  SELECT min_id FROM (\n    SELECT MIN(id) as min_id\n    FROM users\n    WHERE openId IS NOT NULL\n    GROUP BY openId\n  ) as canonical\n);\n\n-- Verify final counts\nSELECT COUNT(*) as total_users FROM users;\nSELECT COUNT(DISTINCT openId) as distinct_openids FROM users WHERE openId IS NOT NULL;\nSELECT COUNT(*) as users_with_email FROM users WHERE email IS NOT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \n-- Delete all duplicate user rows keeping only the minimum id per openId\nDELETE FROM users\nWHERE openId IS NOT NULL\nAND id NOT IN (\n  SELECT min_id FROM (\n    SELECT MIN(id) as min_id\n    FROM users\n    WHERE openId IS NOT NULL\n    GROUP BY openId\n  ) as canonical\n);\n\n-- Verify final counts\nSELECT COUNT(*) as total_users FROM users;\nSELECT COUNT(DISTINCT openId) as distinct_openids FROM users WHERE openId IS NOT NULL;\nSELECT COUNT(*) as users_with_email FROM users WHERE email IS NOT NULL;\n",
+  "rows": [
+    {
+      "total_users": "7"
+    },
+    {
+      "total_users": "distinct_openids"
+    },
+    {
+      "total_users": "7"
+    },
+    {
+      "total_users": "users_with_email"
+    },
+    {
+      "total_users": "7"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_users\n7\ndistinct_openids\n7\nusers_with_email\n7\n",
+  "stderr": "",
+  "execution_time_ms": 97
+}

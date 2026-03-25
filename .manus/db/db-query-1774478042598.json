@@ -1,0 +1,37 @@
+{
+  "query": "\nSELECT \n  COUNT(*) as total_page_views,\n  COUNT(DISTINCT userId) as unique_users,\n  COUNT(DISTINCT sessionId) as unique_sessions,\n  COUNT(DISTINCT path) as unique_paths\nFROM page_views;\n\nSELECT path, COUNT(*) as views, COUNT(DISTINCT userId) as unique_users\nFROM page_views\nGROUP BY path\nORDER BY views DESC\nLIMIT 15;\n\nSELECT COUNT(*) as total_users FROM users;\nSELECT COUNT(*) as total_sessions FROM user_sessions;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \nSELECT \n  COUNT(*) as total_page_views,\n  COUNT(DISTINCT userId) as unique_users,\n  COUNT(DISTINCT sessionId) as unique_sessions,\n  COUNT(DISTINCT path) as unique_paths\nFROM page_views;\n\nSELECT path, COUNT(*) as views, COUNT(DISTINCT userId) as unique_users\nFROM page_views\nGROUP BY path\nORDER BY views DESC\nLIMIT 15;\n\nSELECT COUNT(*) as total_users FROM users;\nSELECT COUNT(*) as total_sessions FROM user_sessions;\n",
+  "rows": [
+    {
+      "total_page_views": "970",
+      "unique_users": "3",
+      "unique_sessions": "178",
+      "unique_paths": "47"
+    }
+  ],
+  "messages": [
+    "path\tviews\tunique_users",
+    "/\t512\t3",
+    "/onboarding/pro\t97\t3",
+    "/mission-control\t96\t2",
+    "/intent-engine\t24\t1",
+    "/integration-hub\t22\t2",
+    "/admin/users\t20\t1",
+    "/ai-ceo\t19\t1",
+    "/agents/30005\t19\t1",
+    "/blueprints\t14\t1",
+    "/creators\t11\t1",
+    "/onboarding/30006\t10\t1",
+    "/executive-board\t10\t1",
+    "/analytics\t9\t1",
+    "/whats-new\t8\t1",
+    "/agents/30008\t8\t1",
+    "total_users",
+    "1859",
+    "total_sessions",
+    "84"
+  ],
+  "stdout": "total_page_views\tunique_users\tunique_sessions\tunique_paths\n970\t3\t178\t47\npath\tviews\tunique_users\n/\t512\t3\n/onboarding/pro\t97\t3\n/mission-control\t96\t2\n/intent-engine\t24\t1\n/integration-hub\t22\t2\n/admin/users\t20\t1\n/ai-ceo\t19\t1\n/agents/30005\t19\t1\n/blueprints\t14\t1\n/creators\t11\t1\n/onboarding/30006\t10\t1\n/executive-board\t10\t1\n/analytics\t9\t1\n/whats-new\t8\t1\n/agents/30008\t8\t1\ntotal_users\n1859\ntotal_sessions\n84\n",
+  "stderr": "",
+  "execution_time_ms": 82
+}
