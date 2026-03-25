@@ -293,6 +293,25 @@ export interface HubSpotSnapshot {
   velocity: DealVelocity;
 }
 
+// ─── Display Metrics for Socratic Engine ─────────────────────────────────────
+
+import type { DataSourceCard } from "../../shared/types";
+
+export function getHubSpotDisplayMetrics(snapshot: HubSpotSnapshot): DataSourceCard {
+  const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(0)}K` : `$${n.toLocaleString()}`;
+  return {
+    sourceId: "hubspot_crm",
+    sourceName: "HubSpot CRM",
+    sourceColor: "#ff7a59",
+    metrics: [
+      { label: "Open deals", value: `${snapshot.pipeline.totalOpenDeals} · ${fmt(snapshot.pipeline.totalPipelineValue)}` },
+      { label: "Won (30d)", value: `${snapshot.closedWon30d.length} · ${fmt(snapshot.closedWon30d.reduce((s, d) => s + d.amount, 0))}` },
+      { label: "Stalled deals", value: `${snapshot.velocity.stalledCount} · ${fmt(snapshot.velocity.totalStalledValue)}` },
+      { label: "Avg deal size", value: fmt(snapshot.pipeline.averageDealSize) },
+    ],
+  };
+}
+
 export async function getHubSpotSnapshot(connection: UserConnection): Promise<HubSpotSnapshot> {
   const accessToken = await refreshTokenIfNeeded(connection);
 

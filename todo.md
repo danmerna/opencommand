@@ -231,3 +231,11 @@
 - [x] Reorder agent demo tabs: CEO first, CMO second, CTO third, CFO fourth
 - [x] Fix Socratic demo data source cards: always 2x2 grid on all screen sizes (not stacking on mobile)
 - [ ] Add Execute button to each Socratic question in the landing page demo
+- [x] Phase 1: Add structured types to shared/types.ts (DataSourceCard, CrossSourceInsight, SocraticQuestion, SocraticEngineResponse)
+- [x] Phase 1: Add getDisplayMetrics() to HubSpot adapter
+- [x] Phase 1: Add getDisplayMetrics() to Salesforce adapter
+- [x] Phase 1: Add getDisplayMetrics() to Meta Ads adapter
+- [x] Phase 1: Add getDisplayMetrics() to Google Ads adapter
+- [x] Phase 1: Restructure contextAssembler.ts to return structured output instead of freeform text
+- [x] Phase 1: Update contextEngineRouter tRPC procedures to use new structured types
+- [x] Phase 1: Write tests for restructured assembler and adapters

@@ -265,6 +265,24 @@ export interface GA4Snapshot {
   conversions: GA4ConversionSummary;
 }
 
+// ─── Display Metrics for Socratic Engine ─────────────────────────────────────
+
+import type { DataSourceCard } from "../../shared/types";
+
+export function getGA4DisplayMetrics(snapshot: GA4Snapshot): DataSourceCard {
+  return {
+    sourceId: "google_analytics",
+    sourceName: "Google Analytics",
+    sourceColor: "#e37400",
+    metrics: [
+      { label: "Users (30d)", value: snapshot.traffic.totalUsers30d.toLocaleString() },
+      { label: "Sessions (30d)", value: snapshot.traffic.totalSessions30d.toLocaleString() },
+      { label: "Bounce rate", value: `${snapshot.traffic.bounceRate.toFixed(1)}%` },
+      { label: "Conversions", value: `${snapshot.conversions.totalConversions30d}` },
+    ],
+  };
+}
+
 export async function getGA4Snapshot(connection: UserConnection): Promise<GA4Snapshot> {
   const accessToken = await refreshGA4Token(connection);
   const propertyId = (connection.metadata as any)?.propertyId ?? connection.accountId ?? "";

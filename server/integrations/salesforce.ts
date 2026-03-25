@@ -270,6 +270,25 @@ export interface SalesforceSnapshot {
   velocity: SFVelocity;
 }
 
+// ─── Display Metrics for Socratic Engine ─────────────────────────────────────
+
+import type { DataSourceCard } from "../../shared/types";
+
+export function getSalesforceDisplayMetrics(snapshot: SalesforceSnapshot): DataSourceCard {
+  const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(0)}K` : `$${n.toLocaleString()}`;
+  return {
+    sourceId: "salesforce_crm",
+    sourceName: "Salesforce CRM",
+    sourceColor: "#00a1e0",
+    metrics: [
+      { label: "Open opportunities", value: `${snapshot.pipeline.totalOpenOpportunities} · ${fmt(snapshot.pipeline.totalPipelineValue)}` },
+      { label: "Won (30d)", value: `${snapshot.closedWon30d.length} · ${fmt(snapshot.closedWon30d.reduce((s, d) => s + d.amount, 0))}` },
+      { label: "Stalled opps", value: `${snapshot.velocity.stalledCount} · ${fmt(snapshot.velocity.totalStalledValue)}` },
+      { label: "Avg deal size", value: fmt(snapshot.pipeline.averageDealSize) },
+    ],
+  };
+}
+
 export async function getSalesforceSnapshot(connection: UserConnection): Promise<SalesforceSnapshot> {
   const { accessToken, instanceUrl } = await refreshSalesforceToken(connection);
 

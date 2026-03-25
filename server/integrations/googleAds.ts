@@ -280,6 +280,25 @@ export interface GoogleAdsSnapshot {
   spend: GoogleAdsSpendSummary;
 }
 
+// ─── Display Metrics for Socratic Engine ─────────────────────────────────────
+
+import type { DataSourceCard } from "../../shared/types";
+
+export function getGoogleAdsDisplayMetrics(snapshot: GoogleAdsSnapshot): DataSourceCard {
+  const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(0)}K` : `$${n.toFixed(0)}`;
+  return {
+    sourceId: "google_ads",
+    sourceName: "Google Ads",
+    sourceColor: "#4285f4",
+    metrics: [
+      { label: "Active campaigns", value: `${snapshot.account.activeCampaigns}` },
+      { label: "Spend (30d)", value: fmt(snapshot.spend.totalSpend30d) },
+      { label: "Clicks (30d)", value: snapshot.spend.totalClicks30d.toLocaleString() },
+      { label: "Conversions", value: `${snapshot.spend.totalConversions30d.toFixed(0)}` },
+    ],
+  };
+}
+
 export async function getGoogleAdsSnapshot(connection: UserConnection): Promise<GoogleAdsSnapshot> {
   const accessToken = await refreshGoogleToken(connection);
   const customerId = (connection.metadata as any)?.customerId ?? connection.accountId ?? "";

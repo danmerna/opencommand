@@ -264,6 +264,25 @@ export interface TikTokAdsSnapshot {
   spend: TikTokSpendSummary;
 }
 
+// ─── Display Metrics for Socratic Engine ─────────────────────────────────────
+
+import type { DataSourceCard } from "../../shared/types";
+
+export function getTikTokAdsDisplayMetrics(snapshot: TikTokAdsSnapshot): DataSourceCard {
+  const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(0)}K` : `$${n.toFixed(0)}`;
+  return {
+    sourceId: "tiktok_ads",
+    sourceName: "TikTok Ads",
+    sourceColor: "#010101",
+    metrics: [
+      { label: "Active campaigns", value: `${snapshot.campaigns.filter(c => c.status === "CAMPAIGN_STATUS_ENABLE").length}` },
+      { label: "Spend (30d)", value: fmt(snapshot.spend.totalSpend30d) },
+      { label: "Clicks (30d)", value: snapshot.spend.totalClicks30d.toLocaleString() },
+      { label: "Conversions", value: `${snapshot.spend.totalConversions30d.toFixed(0)}` },
+    ],
+  };
+}
+
 export async function getTikTokAdsSnapshot(connection: UserConnection): Promise<TikTokAdsSnapshot> {
   const accessToken = await refreshTikTokToken(connection);
   const advertiserId = (connection.metadata as any)?.advertiserId ?? connection.accountId ?? "";

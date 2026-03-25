@@ -895,11 +895,20 @@ const contextEngineRouter = router({
     return { success: true, liveState, historyCount: recentHistory.length };
   }),
   // Live data-informed contextualization — replaces the 3-step interpret/gather/contextualize pipeline
+  // Returns both backward-compatible fields and the new structured SocraticEngineResponse
   liveContextualize: protectedProcedure.input(z.object({
     requestText: z.string().min(1),
   })).mutation(async ({ ctx, input }) => {
     const result = await assembleContext(input.requestText, ctx.user.id);
     return result;
+  }),
+
+  // New structured endpoint — returns only the SocraticEngineResponse
+  socraticQuery: protectedProcedure.input(z.object({
+    requestText: z.string().min(1),
+  })).mutation(async ({ ctx, input }) => {
+    const result = await assembleContext(input.requestText, ctx.user.id);
+    return result.socratic;
   }),
 
   contextualize: protectedProcedure.input(z.object({

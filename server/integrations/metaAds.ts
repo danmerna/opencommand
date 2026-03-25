@@ -240,6 +240,29 @@ export interface MetaAdsSnapshot {
   audience: MetaAudienceInsight;
 }
 
+// ─── Display Metrics for Socratic Engine ─────────────────────────────────────
+
+import type { DataSourceCard } from "../../shared/types";
+
+export function getMetaAdsDisplayMetrics(snapshot: MetaAdsSnapshot): DataSourceCard {
+  const totalSpend = snapshot.campaigns.reduce((s, c) => s + c.spend, 0);
+  const totalClicks = snapshot.campaigns.reduce((s, c) => s + c.clicks, 0);
+  const totalConversions = snapshot.campaigns.reduce((s, c) => s + c.conversions, 0);
+  const activeCampaigns = snapshot.accounts.reduce((s, a) => s + a.activeCampaigns, 0);
+  const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(0)}K` : `$${n.toFixed(0)}`;
+  return {
+    sourceId: "meta_ads",
+    sourceName: "Meta Ads",
+    sourceColor: "#1877f2",
+    metrics: [
+      { label: "Active campaigns", value: `${activeCampaigns}` },
+      { label: "Spend (30d)", value: fmt(totalSpend) },
+      { label: "Clicks (30d)", value: totalClicks.toLocaleString() },
+      { label: "Conversions", value: `${totalConversions}` },
+    ],
+  };
+}
+
 export async function getMetaAdsSnapshot(connection: UserConnection): Promise<MetaAdsSnapshot> {
   const accessToken = await refreshMetaToken(connection);
 
