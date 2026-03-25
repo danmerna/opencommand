@@ -50,17 +50,26 @@ export function registerOAuthRoutes(app: Express) {
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
       // Parse returnPath from state if present (JSON-encoded payload)
-      let redirectTo = "/";
+      let finalDestination = "/";
       try {
         const decoded = Buffer.from(state, "base64").toString("utf-8");
         const parsed = JSON.parse(decoded);
         if (parsed.returnPath && typeof parsed.returnPath === "string") {
-          redirectTo = parsed.returnPath;
+          finalDestination = parsed.returnPath;
         }
       } catch {
         // state was plain base64 URI string — no returnPath, stay at "/"
       }
-      res.redirect(302, redirectTo);
+
+      // Redirect to the same-origin relay page instead of directly to the
+      // final destination. This fixes iOS Safari / ITP cookie-dropping:
+      // the OAuth portal (api.manus.im) is a different domain, so the browser
+      // sees the callback as a cross-site redirect and may drop SameSite:None
+      // cookies on the very next same-origin request. By bouncing through
+      // /auth/relay (same origin), we give the browser a chance to fully
+      // commit the cookie before any API calls fire.
+      const relayUrl = `/auth/relay?to=${encodeURIComponent(finalDestination)}`;
+      res.redirect(302, relayUrl);
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });

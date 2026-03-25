@@ -257,3 +257,4 @@
 - [x] Produce official shipped features audit report
 - [x] QA: Diagnose and fix login/OAuth issue reported by user
 - [x] QA: Full site flow test (landing, onboarding, executive board, briefings)
+- [x] Fix mobile login: add same-origin relay page after OAuth callback so iOS Safari persists session cookie
