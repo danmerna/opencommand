@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, email, openId FROM users WHERE email = 'demo@opencommand.co' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id, name, email, openId FROM users WHERE email = 'demo@opencommand.co' LIMIT 1;",
+  "rows": [
+    {
+      "id": "450248",
+      "name": "Demo User (Meridian Software)",
+      "email": "demo@opencommand.co",
+      "openId": "demo_user_opencommand_2026"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\topenId\n450248\tDemo User (Meridian Software)\tdemo@opencommand.co\tdemo_user_opencommand_2026\n",
+  "stderr": "",
+  "execution_time_ms": 98
+}

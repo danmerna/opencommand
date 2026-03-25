@@ -1240,7 +1240,21 @@ IMPORTANT: You have access to the above live data. Use it throughout the convers
       if (!onboarding) throw new Error("Onboarding not found");
       if (onboarding.status === "completed") throw new Error("Onboarding already completed");
 
-      const history: { role: string; content: string }[] = (onboarding.conversationHistory as any) ?? [];
+      const rawHistory: { role: string; content: string }[] = (onboarding.conversationHistory as any) ?? [];
+      // Sanitize legacy JSON messages from history before passing to LLM
+      // This prevents the LLM from continuing the old JSON pattern when resuming old sessions
+      const history = rawHistory.map(h => {
+        if (h.role === "assistant") {
+          try {
+            const parsed = JSON.parse(h.content);
+            if (parsed.type === "onboarding_complete" || parsed.type === "core_complete") {
+              // Replace JSON block with a natural-sounding summary
+              return { ...h, content: parsed.summary ?? "I have what I need to build your strategic context." };
+            }
+          } catch (_) { /* not JSON */ }
+        }
+        return h;
+      });
       history.push({ role: "user", content: input.answer });
 
       // Re-inject live context data on every respond() call so the agent stays data-aware
@@ -1258,7 +1272,16 @@ IMPORTANT: You have access to the above live data. Use it throughout the convers
           ...history.map(h => ({ role: h.role as "user" | "assistant", content: h.content })),
         ],
       });
-      const reply = (response.choices[0]?.message?.content ?? "") as string;
+      let reply = (response.choices[0]?.message?.content ?? "") as string;
+
+      // Strip any JSON blocks from the reply before showing to the user
+      // This handles edge cases where the LLM reverts to old JSON patterns
+      try {
+        const parsed = JSON.parse(reply);
+        if (parsed.type === "onboarding_complete" || parsed.type === "core_complete") {
+          reply = parsed.summary ?? "I have what I need to build your strategic context. Thank you for sharing all of this.";
+        }
+      } catch (_) { /* not JSON — good */ }
 
       // Detect natural completion: the agent says it has what it needs (no JSON required)
       let isComplete = false;

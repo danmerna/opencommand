@@ -1,0 +1,8 @@
+{
+  "query": "DELETE FROM agent_onboardings WHERE user_id = 450248;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute DELETE FROM agent_onboardings WHERE user_id = 450248;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'user_id' in 'where clause'"
+  ]
+}

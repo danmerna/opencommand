@@ -351,6 +351,10 @@ export default function ProOnboarding() {
         // Count user messages to set question count
         const userMsgCount = history.filter((m: any) => m.role === "user").length;
         setQuestionCount(userMsgCount);
+        // If resuming with 3+ answers already given, show the choice card
+        if (userMsgCount >= 3 && !coreOnlyMode) {
+          setIsCoreComplete(true);
+        }
       } else if (data.firstQuestion) {
         setMessages([{ role: "assistant", content: data.firstQuestion }]);
       }

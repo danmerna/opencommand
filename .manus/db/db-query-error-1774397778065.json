@@ -1,0 +1,8 @@
+{
+  "query": "\n-- Reset all onboarding records for the demo user (id=450248) so they start fresh\nDELETE FROM onboardings WHERE user_id = 450248;\n-- Verify\nSELECT COUNT(*) as remaining FROM onboardings WHERE user_id = 450248;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute \n-- Reset all onboarding records for the demo user (id=450248) so they start fresh\nDELETE FROM onboardings WHERE user_id = 450248;\n-- Verify\nSELECT COUNT(*) as remaining FROM onboardings WHERE user_id = 450248;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 3: Table 'wp82cnz6c5sdwcuyfyptjq.onboardings' doesn't exist"
+  ]
+}

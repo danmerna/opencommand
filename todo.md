@@ -220,3 +220,5 @@
 - [x] Refine two-button choice card copy in onboarding interview: "Go deeper" vs "Advance to [Name]"
 - [x] Add Demo Mode banner in app header when logged in as demo user (amber pulsing indicator, sticky)
 - [x] Tune completion phrase detection: expanded to 35+ natural closing phrases across 4 categories
+- [x] Fix: LLM still emitting raw JSON in onboarding chat — sanitize legacy JSON from history + strip JSON from reply before returning to frontend
+- [x] Fix: Two-button choice card not appearing on resume — initialize isCoreComplete=true when loading history with 3+ user messages
