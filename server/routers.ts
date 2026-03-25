@@ -1099,6 +1099,22 @@ const integrationHubRouter = router({
     await createAbstractionMapping(input as any);
     return { success: true };
   }),
+  requestIntegration: protectedProcedure.input(z.object({
+    providerName: z.string(),
+    email: z.string().optional(),
+    note: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const { getDb } = await import("./db");
+    const { integrationRequests } = await import("../drizzle/schema");
+    const db = await getDb();
+    await db!.insert(integrationRequests).values({
+      userId: ctx.user.id,
+      providerName: input.providerName,
+      email: input.email ?? null,
+      note: input.note ?? null,
+    });
+    return { success: true };
+  }),
   executeAbstractAction: protectedProcedure.input(z.object({
     categorySlug: z.string(),
     action: z.string(),

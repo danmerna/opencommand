@@ -260,3 +260,6 @@
 - [x] Fix mobile login: add same-origin relay page after OAuth callback so iOS Safari persists session cookie
 - [x] Fix analytics overcounting: deduplicate page views, fix session counting, fix user KPIs
 - [x] Fix DATE() SQL bug in admin activity chart timeline
+- [x] Audit Integration Hub: identify which integrations work, which are broken, and which need OAuth review
+- [x] Fix broken integrations or clearly mark them as "coming soon" with smooth UX
+- [x] Improve Integration Hub overall UX (smoother connect flow, better error states, status indicators)

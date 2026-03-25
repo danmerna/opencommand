@@ -810,3 +810,15 @@ export const subAgentRecommendations = mysqlTable("sub_agent_recommendations", {
 });
 export type SubAgentRecommendation = typeof subAgentRecommendations.$inferSelect;
 export type InsertSubAgentRecommendation = typeof subAgentRecommendations.$inferInsert;
+
+// ─── Integration Requests (user interest tracking for coming soon/planned) ──
+export const integrationRequests = mysqlTable("integration_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  providerName: varchar("providerName", { length: 128 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  note: text("note"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IntegrationRequest = typeof integrationRequests.$inferSelect;
+export type InsertIntegrationRequest = typeof integrationRequests.$inferInsert;
