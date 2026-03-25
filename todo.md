@@ -229,3 +229,5 @@
 - [x] Change agent demo toggle tabs to show only job titles (CEO, CMO, CTO, CFO) — no agent names
 - [x] Redesign Context Engine Demo: replace onboarding terminal with Socratic intent engine UI (user request → live data → cross-source insights → numbered strategic questions)
 - [x] Reorder agent demo tabs: CEO first, CMO second, CTO third, CFO fourth
+- [x] Fix Socratic demo data source cards: always 2x2 grid on all screen sizes (not stacking on mobile)
+- [ ] Add Execute button to each Socratic question in the landing page demo

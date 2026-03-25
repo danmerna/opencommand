@@ -413,18 +413,18 @@ function SocraticDataGrid({ sources, delay }: { sources: readonly { color: strin
   return (
     <div className="mb-5 animate-fade-in">
       <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-3">Live Data Pulled</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
         {sources.map((src, i) => (
-          <div key={i} className="rounded-lg border border-border bg-black/30 px-4 py-3">
-            <div className="flex items-center gap-2 mb-2">
+          <div key={i} className="rounded-lg border border-border bg-black/30 px-3 py-2.5">
+            <div className="flex items-center gap-1.5 mb-1.5">
               <div className={`w-2 h-2 rounded-full ${src.color}`} />
-              <span className="text-[12px] font-semibold text-foreground">{src.source}</span>
+              <span className="text-[11px] font-semibold text-foreground">{src.source}</span>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {src.metrics.map(([label, value], j) => (
-                <div key={j} className="flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground font-mono">{label}</span>
-                  <span className="text-[11px] text-foreground font-mono font-medium">{value}</span>
+                <div key={j} className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] text-muted-foreground font-mono leading-tight">{label}</span>
+                  <span className="text-[10px] text-foreground font-mono font-medium leading-tight whitespace-nowrap">{value}</span>
                 </div>
               ))}
             </div>
