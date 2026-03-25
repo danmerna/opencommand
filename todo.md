@@ -250,3 +250,10 @@
 - [x] Phase 5: Autonomy controls UI on Agent Detail page
 - [x] Phase 6: Morning briefing with approve buttons in briefingScheduler
 - [x] Phase 7: Execution dashboard showing real-time agent activity
+- [x] Generate formal PoO receipt for Phases 2-7 delivery and log to PoO Ledger
+- [x] Create 5-4-3-2-1 Temporal Cascade one-sheet document
+- [x] Generate mockup images of morning briefing task approval flow
+- [x] Update one-sheet with executives-as-design-language reframe (internal)
+- [x] Produce official shipped features audit report
+- [x] QA: Diagnose and fix login/OAuth issue reported by user
+- [x] QA: Full site flow test (landing, onboarding, executive board, briefings)
