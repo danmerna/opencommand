@@ -271,3 +271,4 @@
 - [x] Redirect AI CEO to Executive Board with ARCH pre-selected
 - [x] Add Settings gear icon to sidebar nav
 - [x] Write tests for Settings page and navigation changes
+- [x] Move Projects section above Agents section in sidebar navigation

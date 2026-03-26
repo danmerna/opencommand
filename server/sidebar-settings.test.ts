@@ -58,6 +58,14 @@ describe("Streamlined Sidebar (AppLayout)", () => {
     expect(src).toContain(">Agents</");
     expect(src).toContain(">Projects</");
   });
+
+  it("renders Projects section before Agents section", () => {
+    const projectsIdx = src.indexOf("{/* Projects section */}");
+    const agentsIdx = src.indexOf("{/* Agents section */}");
+    expect(projectsIdx).toBeGreaterThan(-1);
+    expect(agentsIdx).toBeGreaterThan(-1);
+    expect(projectsIdx).toBeLessThan(agentsIdx);
+  });
 });
 
 // ─── Settings Page ────────────────────────────────────────────────────────────

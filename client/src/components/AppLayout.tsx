@@ -258,6 +258,56 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               );
             })()}
 
+            {/* Projects section */}
+            <div className="pt-3 pb-1">
+              <div className="flex items-center justify-between px-3 mb-1">
+                <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Projects</span>
+                <Link href="/projects" onClick={closeMobile}>
+                  <button
+                    title="New project"
+                    className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Plus size={11} />
+                  </button>
+                </Link>
+              </div>
+
+              {visibleProjects.length === 0 ? (
+                <Link href="/projects" onClick={closeMobile}>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer">
+                    <FolderOpen size={11} />
+                    <span>No projects yet</span>
+                  </div>
+                </Link>
+              ) : (
+                visibleProjects.slice(0, 8).map(project => {
+                  const isActive = location === `/projects/${project.id}` || location.startsWith(`/projects/${project.id}/`);
+                  return (
+                    <Link key={project.id} href={`/projects/${project.id}`} onClick={closeMobile}>
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all ${
+                        isActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                      }`}>
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: project.color ?? "#6366f1" }}
+                        />
+                        <span className="truncate font-medium">{project.name}</span>
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+
+              {visibleProjects.length > 8 && (
+                <Link href="/projects" onClick={closeMobile}>
+                  <div className="flex items-center gap-1.5 px-3 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                    <ChevronRight size={10} />
+                    <span>{visibleProjects.length - 8} more</span>
+                  </div>
+                </Link>
+              )}
+            </div>
+
             {/* Agents section */}
             <div className="pt-3 pb-1">
               <div className="flex items-center justify-between px-3 mb-1">
@@ -305,56 +355,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   <div className="flex items-center gap-1.5 px-3 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
                     <ChevronRight size={10} />
                     <span>{visibleAgents.length - 8} more</span>
-                  </div>
-                </Link>
-              )}
-            </div>
-
-            {/* Projects section */}
-            <div className="pt-3 pb-1">
-              <div className="flex items-center justify-between px-3 mb-1">
-                <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Projects</span>
-                <Link href="/projects" onClick={closeMobile}>
-                  <button
-                    title="New project"
-                    className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Plus size={11} />
-                  </button>
-                </Link>
-              </div>
-
-              {visibleProjects.length === 0 ? (
-                <Link href="/projects" onClick={closeMobile}>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer">
-                    <FolderOpen size={11} />
-                    <span>No projects yet</span>
-                  </div>
-                </Link>
-              ) : (
-                visibleProjects.slice(0, 8).map(project => {
-                  const isActive = location === `/projects/${project.id}` || location.startsWith(`/projects/${project.id}/`);
-                  return (
-                    <Link key={project.id} href={`/projects/${project.id}`} onClick={closeMobile}>
-                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all ${
-                        isActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                      }`}>
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: project.color ?? "#6366f1" }}
-                        />
-                        <span className="truncate font-medium">{project.name}</span>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-
-              {visibleProjects.length > 8 && (
-                <Link href="/projects" onClick={closeMobile}>
-                  <div className="flex items-center gap-1.5 px-3 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-                    <ChevronRight size={10} />
-                    <span>{visibleProjects.length - 8} more</span>
                   </div>
                 </Link>
               )}
