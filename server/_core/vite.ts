@@ -60,6 +60,14 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
+  // Explicit route for Johnson Tractor demo
+  app.get("/johnson-demo", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "johnson-demo", "index.html"));
+  });
+  app.get("/johnson-demo/", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "johnson-demo", "index.html"));
+  });
+
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
