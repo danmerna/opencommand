@@ -263,3 +263,11 @@
 - [x] Audit Integration Hub: identify which integrations work, which are broken, and which need OAuth review
 - [x] Fix broken integrations or clearly mark them as "coming soon" with smooth UX
 - [x] Improve Integration Hub overall UX (smoother connect flow, better error states, status indicators)
+- [ ] Move Meta Ads from Coming Soon to Live tier (OAuth approved)
+- [x] Streamline sidebar: reduce from 15 items to 6 primary + Settings gear
+- [x] Create Settings page with tabs: Account, Connections, Governance, History, About
+- [x] Move Governance, Integrations, Context History, Payments, Pricing, What's New into Settings
+- [x] Move Feedback to profile dropdown (floating widget already exists)
+- [x] Redirect AI CEO to Executive Board with ARCH pre-selected
+- [x] Add Settings gear icon to sidebar nav
+- [x] Write tests for Settings page and navigation changes

@@ -4,9 +4,10 @@ import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { ReactNode, useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
 import {
-  LayoutDashboard, Cpu, ShoppingBag, Users, Bot, Menu, X, LogOut,
-  FileStack, Shield, BarChart3, Wifi, WifiOff, Plug, CheckSquare, History,
-  CreditCard, FolderOpen, Plus, Building2, ChevronRight, MessageSquare, Activity, Megaphone,
+  LayoutDashboard, Cpu, Users, Bot, Menu, X, LogOut,
+  FileStack, BarChart3, Wifi, WifiOff, CheckSquare,
+  FolderOpen, Plus, Building2, ChevronRight, Activity, Settings,
+  MessageSquare,
 } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { toast } from "sonner";
@@ -20,26 +21,17 @@ interface CompanyContextValue {
 const CompanyContext = createContext<CompanyContextValue>({ activeCompanyId: null, setActiveCompanyId: () => {} });
 export function useActiveCompany() { return useContext(CompanyContext); }
 
-// ─── Nav items (company-scoped) ───────────────────────────────────────────────
+// ─── Nav items (streamlined — 6 primary + Settings) ─────────────────────────
 const coreNavItems = [
   { href: "/mission-control", label: "Mission Control", icon: LayoutDashboard },
   { href: "/intent-engine",   label: "Intent Engine",   icon: Cpu },
-  { href: "/ai-ceo",          label: "AI CEO",           icon: Bot },
   { href: "/executive-board", label: "Executive Board",  icon: Users },
   { href: "/blueprints",      label: "Blueprints",       icon: FileStack },
-  // Marketplace & Creators hidden — will be re-added later
   { href: "/execution",       label: "Execution",        icon: CheckSquare },
-  { href: "/governance",      label: "Governance",       icon: Shield },
-  { href: "/integration-hub", label: "Integrations",     icon: Plug },
-  // Blueprint Dashboard & Compatibility hidden — will be re-added later
-  { href: "/context-history", label: "Context History",  icon: History },
   { href: "/analytics",       label: "Analytics",        icon: Activity },
-  { href: "/feedback-admin",   label: "Feedback",         icon: MessageSquare },
-  { href: "/whats-new",        label: "What's New",        icon: Megaphone },
-  { href: "/payments",         label: "Payments",         icon: CreditCard },
 ];
 
-const pricingNavItem = { href: "/pricing", label: "Pricing", icon: BarChart3 };
+const settingsNavItem = { href: "/settings", label: "Settings", icon: Settings };
 
 // ─── Colour palette for company avatars ──────────────────────────────────────
 const COMPANY_COLORS = [
@@ -147,6 +139,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const activeCompany = companies.find(c => c.id === activeCompanyId);
 
+  // Check if current location matches settings or any settings sub-paths
+  const isSettingsActive = location === "/settings" || location.startsWith("/settings?") ||
+    location === "/governance" || location === "/integration-hub" ||
+    location === "/context-history" || location === "/payments" ||
+    location === "/pricing" || location === "/whats-new" ||
+    location === "/feedback-admin";
+
   return (
     <CompanyContext.Provider value={{ activeCompanyId, setActiveCompanyId }}>
       <div className="min-h-screen bg-background flex">
@@ -225,7 +224,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {/* Nav */}
           <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto scrollbar-none">
 
-            {/* Core nav */}
+            {/* Core nav — 6 primary items */}
             {coreNavItems.map(item => {
               const isActive = location === item.href || location.startsWith(item.href + "/");
               return (
@@ -245,16 +244,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               );
             })}
 
-            {/* Pricing nav item */}
+            {/* Settings nav item */}
             {(() => {
-              const isPricingActive = location === pricingNavItem.href;
               return (
-                <Link href={pricingNavItem.href} onClick={closeMobile}>
+                <Link href={settingsNavItem.href} onClick={closeMobile}>
                   <div className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] transition-all ${
-                    isPricingActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                    isSettingsActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                   }`}>
-                    <pricingNavItem.icon size={13} strokeWidth={isPricingActive ? 2 : 1.5} />
-                    <span className="font-medium">{pricingNavItem.label}</span>
+                    <settingsNavItem.icon size={13} strokeWidth={isSettingsActive ? 2 : 1.5} />
+                    <span className="font-medium">{settingsNavItem.label}</span>
                   </div>
                 </Link>
               );
@@ -376,6 +374,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <div className="text-[10px] text-muted-foreground truncate">{user?.email ?? ""}</div>
               </div>
             </div>
+            {/* Feedback link in footer */}
+            <Link href="/feedback-admin" onClick={closeMobile}>
+              <div className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors">
+                <MessageSquare size={12} />
+                <span className="text-[11px] font-medium">Feedback</span>
+              </div>
+            </Link>
             <button
               onClick={() => logout()}
               className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors"

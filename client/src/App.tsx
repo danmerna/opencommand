@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -10,23 +10,17 @@ import IntentEngine from "./pages/IntentEngine";
 // Marketplace hidden — will be re-added later
 // import Marketplace from "./pages/Marketplace";
 // import CreatorProgram from "./pages/CreatorProgram";
-import AICeo from "./pages/AICeo";
 import Blueprints from "./pages/Blueprints";
-import Governance from "./pages/Governance";
 // import BlueprintDashboard from "./pages/BlueprintDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
-import IntegrationHub from "./pages/IntegrationHub";
 // import CompatibilityChecker from "./pages/CompatibilityChecker";
-import ContextHistory from "./pages/ContextHistory";
-import PaymentHistory from "./pages/PaymentHistory";
 import ReceiptViewer from "./pages/ReceiptViewer";
 import AppLayout from "./components/AppLayout";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import AgentOnboarding from "./pages/AgentOnboarding";
 import AgentDetail from "./pages/AgentDetail";
-import Pricing from "./pages/Pricing";
 import Creators from "./pages/Creators";
 import ProOnboarding from "./pages/ProOnboarding";
 import Briefings from "./pages/Briefings";
@@ -34,7 +28,7 @@ import ExecutiveBoard from "./pages/ExecutiveBoard";
 import ExecutionDashboard from "./pages/ExecutionDashboard";
 import Analytics from "./pages/Analytics";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
-import WhatsNew from "./pages/WhatsNew";
+import Settings from "./pages/Settings";
 import AdminUsers from "./pages/AdminUsers";
 import Waitlist from "./pages/Waitlist";
 import AuthRelay from "./pages/AuthRelay";
@@ -53,8 +47,9 @@ function Router() {
       <Route path="/intent-engine">
         <AppLayout><IntentEngine /></AppLayout>
       </Route>
+      {/* AI CEO redirects to Executive Board (ARCH is there now) */}
       <Route path="/ai-ceo">
-        <AppLayout><AICeo /></AppLayout>
+        <Redirect to="/executive-board?exec=ceo" />
       </Route>
       <Route path="/executive-board">
         <AppLayout><ExecutiveBoard /></AppLayout>
@@ -63,24 +58,35 @@ function Router() {
         <AppLayout><Blueprints /></AppLayout>
       </Route>
       {/* Blueprint Dashboard hidden — will be re-added later */}
+
+      {/* Settings page — consolidates Governance, Integrations, Context History, Payments, Pricing, What's New */}
+      <Route path="/settings">
+        <AppLayout><Settings /></AppLayout>
+      </Route>
+
+      {/* Legacy deep-link redirects → Settings tabs */}
       <Route path="/governance">
-        <AppLayout><Governance /></AppLayout>
+        <Redirect to="/settings?tab=governance" />
       </Route>
       <Route path="/integration-hub">
-        <AppLayout><IntegrationHub /></AppLayout>
+        <Redirect to="/settings?tab=connections" />
       </Route>
-      {/* Compatibility hidden — will be re-added later */}
       <Route path="/context-history">
-        <AppLayout><ContextHistory /></AppLayout>
+        <Redirect to="/settings?tab=history" />
       </Route>
-      <Route path="/creators" component={Creators} />
-      {/* Marketplace & Creator Program hidden — will be re-added later */}
       <Route path="/payments">
-        <AppLayout><PaymentHistory /></AppLayout>
+        <Redirect to="/settings?tab=account" />
       </Route>
       <Route path="/pricing">
-        <AppLayout><Pricing /></AppLayout>
+        <Redirect to="/settings?tab=account" />
       </Route>
+      <Route path="/whats-new">
+        <Redirect to="/settings?tab=about" />
+      </Route>
+
+      {/* Compatibility hidden — will be re-added later */}
+      <Route path="/creators" component={Creators} />
+      {/* Marketplace & Creator Program hidden — will be re-added later */}
       <Route path="/projects">
         <AppLayout><Projects /></AppLayout>
       </Route>
@@ -101,7 +107,6 @@ function Router() {
         <AppLayout><FeedbackAdmin /></AppLayout>
       </Route>
       <Route path="/admin/users" component={AdminUsers} />
-      <Route path="/whats-new" component={WhatsNew} />
       <Route path="/onboarding/pro" component={ProOnboarding} />
       <Route path="/onboarding/:agentId">
         <AppLayout><AgentOnboarding /></AppLayout>

@@ -215,19 +215,28 @@ describe("What's New Page", () => {
 });
 
 // ─── AppLayout Nav Tests ──────────────────────────────────────────────────────
-describe("AppLayout What's New Nav Link", () => {
+describe("AppLayout Settings Nav (What's New moved to Settings page)", () => {
   const layoutSource = fs.readFileSync(
     path.resolve(__dirname, "../client/src/components/AppLayout.tsx"),
     "utf-8"
   );
+  const settingsSource = fs.readFileSync(
+    path.resolve(__dirname, "../client/src/pages/Settings.tsx"),
+    "utf-8"
+  );
 
-  it("includes a What's New nav item", () => {
-    expect(layoutSource).toContain("/whats-new");
-    expect(layoutSource).toContain("What's New");
+  it("includes a Settings nav item in the sidebar", () => {
+    expect(layoutSource).toContain("/settings");
+    expect(layoutSource).toContain("Settings");
   });
 
-  it("uses Megaphone icon for the What's New nav item", () => {
-    expect(layoutSource).toContain("Megaphone");
+  it("Settings page contains What's New tab", () => {
+    expect(settingsSource).toContain("What's New");
+    expect(settingsSource).toContain("Megaphone");
+  });
+
+  it("Settings page embeds WhatsNew component", () => {
+    expect(settingsSource).toContain("<WhatsNew");
   });
 });
 

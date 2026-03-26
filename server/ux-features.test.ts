@@ -219,6 +219,6 @@ describe("data-tour attribute in AppLayout", () => {
   const src = readComponent("components/AppLayout.tsx");
 
   it("adds data-tour='intent-engine' to the Intent Engine nav item", () => {
-    expect(src).toContain('data-tour={item.href === "/intent-engine" ? "intent-engine"');
+    expect(src).toContain('data-tour={item.href === "/intent-engine" ? "intent-engine" : undefined}');
   });
 });
