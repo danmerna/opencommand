@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Command — Johnson Tractor Demo</title>
+<meta property="og:title" content="Good Morning, Taylor." />
+<meta property="og:description" content="4 overnight changes detected · 3 strategies ready for today — Open Command" />
+<meta property="og:image" content="https://opencommand.co/johnson-demo/johnson-tractor-og-final.png" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://opencommand.co/johnson-demo" />
+<meta property="og:image:width" content="2752" />
+<meta property="og:image:height" content="1536" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://opencommand.co/johnson-demo/johnson-tractor-og-final.png" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#08090a;--s:#0f1012;--s2:#161719;--s3:#1c1d20;--b:#25262a;--bl:#35363b;
+  --t:#f4f4f5;--t2:#9ca3af;--t3:#6b7280;--a:#10b981;--ad:rgba(16,185,129,.15);
+  --w:#f59e0b;--wd:rgba(245,158,11,.1);--cr:#ef4444;--cd:rgba(239,68,68,.1);
+  --i:#3b82f6;--id:rgba(59,130,246,.1);--sf:#0ea5e9;--th:#f97316;--qb:#2dd4bf;
+  --gm:#a78bfa;--inv:#f472b6;--ceo:#f59e0b;--cmo:#3b82f6;--cto:#a78bfa;--cfo:#10b981;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;line-height:1.6}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--b);border-radius:3px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.mono{font-family:'JetBrains Mono',monospace}
+.container{max-width:1120px;margin:0 auto;padding:28px 24px}
+
+/* Nav */
+.topbar{border-bottom:1px solid var(--b);position:sticky;top:0;background:var(--bg);z-index:100}
+.topbar-logo{padding:12px 24px 0;display:flex;align-items:center;gap:10px}
+.topbar-tabs{display:flex;gap:0;padding:8px 24px 0;overflow-x:auto}
+.tab{font-family:‘JetBrains Mono’,monospace;font-size:11px;font-weight:400;padding:8px 14px;background:none;border:none;cursor:pointer;white-space:nowrap;color:var(--t3);border-bottom:2px solid transparent;transition:.15s}
+.tab:hover{color:var(--t2)}
+.tab.active{color:var(--a);border-bottom-color:var(--a);font-weight:600}
+
+/* Cards */
+.card{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden;margin-bottom:10px}
+.card-top{position:absolute;top:0;left:0;right:0;height:2px}
+.badge{font-family:‘JetBrains Mono’,monospace;font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;display:inline-flex;align-items:center;gap:4px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot-pulse{animation:pulse 2s infinite}
+.btn{font-family:‘JetBrains Mono’,monospace;font-size:11px;font-weight:600;padding:7px 14px;border-radius:6px;cursor:pointer;border:1px solid var(--b);background:transparent;color:var(--t3);transition:.15s}
+.btn:hover{border-color:var(--bl);color:var(--t2)}
+.btn-primary{background:var(--a);color:#000;border:none}
+.btn-primary:hover{background:#34d399}
+.btn-red{background:#c4161c;color:#fff;border:none;font-size:13px;font-weight:700;padding:12px 32px;border-radius:8px}
+.section-label{font-family:‘JetBrains Mono’,monospace;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--t3);margin:24px 0 14px}
+.metric-row{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;padding:3px 0}
+.metric-label{color:var(--t2)}
+.metric-value{font-family:‘JetBrains Mono’,monospace;font-size:12px;font-weight:500;text-align:right}
+
+/* Views */
+.view{display:none}.view.active{display:block}
+
+/* Insight cards */
+.insight{border:1px solid var(--b);border-radius:8px;padding:14px 18px;margin-bottom:8px;border-left:3px solid transparent;font-size:13.5px;line-height:1.65;color:var(--t2)}
+.insight strong{color:var(--t);font-weight:600}
+.insight.warn{border-left-color:var(--w);background:linear-gradient(90deg,var(--wd),transparent 40%)}
+.insight.crit{border-left-color:var(--cr);background:linear-gradient(90deg,var(--cd),transparent 40%)}
+.insight.info{border-left-color:var(--i);background:linear-gradient(90deg,var(--id),transparent 40%)}
+.insight.good{border-left-color:var(--a);background:linear-gradient(90deg,var(--ad),transparent 40%)}
+
+/* Question cards */
+.q-card{padding:16px 0;border-bottom:1px solid var(--b)}
+.q-card:last-child{border-bottom:none}
+.q-num{font-family:‘JetBrains Mono’,monospace;font-size:12px;font-weight:700;color:var(--a);background:var(--ad);border:1px solid var(--a);border-radius:6px;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:10px}
+.q-title{font-size:14px;font-weight:600;line-height:1.5}
+.q-detail{font-size:13px;color:var(--t2);line-height:1.65;margin:8px 0 12px 34px}
+.q-actions{display:flex;align-items:center;gap:8px;margin-left:34px;flex-wrap:wrap}
+
+/* Exec grid */
+.exec-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:768px){.exec-grid{grid-template-columns:1fr}}
+.exec-avatar{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:‘JetBrains Mono’,monospace;font-size:12px;font-weight:700;flex-shrink:0}
+.verdict-box{background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:10px 12px;margin:12px 0 10px}
+.verdict-label{font-family:‘JetBrains Mono’,monospace;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.verdict-text{font-size:12.5px;font-weight:500;line-height:1.5}
+
+/* Alert cards */
+.alert-card{display:flex;gap:12px;align-items:flex-start}
+.alert-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+
+/* Strategy items */
+.impact-row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px}
+.impact-item span:first-child{font-family:‘JetBrains Mono’,monospace;font-size:10px;color:var(--t3);display:block}
+.impact-item span:last-child{font-family:‘JetBrains Mono’,monospace;font-size:12px;font-weight:600;display:block}
+
+/* Agent page */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:center}
+@media(max-width:600px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-val{font-family:‘JetBrains Mono’,monospace;font-size:20px;font-weight:700;display:block}
+.stat-lbl{font-size:11px;color:var(--t3)}
+.dial-track{display:flex;margin-bottom:16px}
+.dial-seg{flex:1;padding:12px 8px;text-align:center;border:1px solid var(--b);font-family:‘JetBrains Mono’,monospace;cursor:pointer;color:var(--t3);background:var(--s2)}
+.dial-seg:first-child{border-radius:8px 0 0 8px}.dial-seg:last-child{border-radius:0 8px 8px 0}
+.dial-seg.active{background:var(--ad);border-color:var(--a);color:var(--a);font-weight:700}
+.dial-level{font-size:14px;font-weight:700;display:block}
+.dial-sub{font-size:9px;display:block;margin-top:1px}
+
+.activity-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--b)}
+.activity-row:last-child{border-bottom:none}
+
+.source-pill{font-family:‘JetBrains Mono’,monospace;font-size:9px;background:var(--s3);border-radius:4px;padding:2px 7px;color:var(--t3);display:inline-block;margin:2px}
+
+/* Footer */
+.footer{border-top:1px solid var(--b);padding:16px 24px;display:flex;justify-content:space-between;font-family:‘JetBrains Mono’,monospace;font-size:11px;color:var(--t3)}
+</style>
+
+</head>
+<body>
+
+<!-- NAV -->
+
+<div class="topbar">
+  <div class="topbar-logo">
+    <span class="mono" style="color:var(--a);font-weight:700;font-size:15px">&gt;_</span>
+    <span class="mono" style="font-weight:600;font-size:14px">OPEN COMMAND</span>
+    <span style="color:var(--t3);margin:0 2px">|</span>
+    <span style="color:var(--t2);font-size:12px">Johnson Tractor</span>
+  </div>
+  <div class="topbar-tabs">
+    <button class="tab active" onclick="showView('briefing')">Morning Briefing</button>
+    <button class="tab" onclick="showView('socratic')">Socratic Engine</button>
+    <button class="tab" onclick="showView('board')">Executive Board</button>
+    <button class="tab" onclick="showView('agent')">Agent Detail</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+
+<!-- MORNING BRIEFING -->
+
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="view active" id="view-briefing">
+<div class="container" style="max-width:680px">
+  <div style="text-align:center;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--b)">
+    <div style="font-size:22px;font-weight:600;letter-spacing:-0.03em;margin-bottom:6px">Good morning, Taylor.</div>
+    <div class="mono" style="font-size:12px;color:var(--t3)">Tuesday, June 16, 2026 · 6:47 AM CDT · 4 overnight changes detected</div>
+  </div>
+
+  <div class="section-label">Overnight Changes</div>
+
+  <div class="card alert-card"><div class="alert-icon" style="background:rgba(239,68,68,.1);border:1px solid var(--cr)">🔴</div><div><div style="font-size:13px;font-weight:600;margin-bottom:2px">3 TractorHouse inquiries overnight — no auto-reply active</div><div style="font-size:12px;color:var(--t2);line-height:1.5">Two for the 2023 Case IH 8250 at Janesville ($289K) and one for the 6150 at Rochelle ($198K). Sitting since 10:30 PM, 1:15 AM, and 3:42 AM.</div><div class="mono" style="font-size:10px;color:var(--t3);margin-top:4px">Source: Gmail · TractorHouse lead notifications</div></div></div>
+
+  <div class="card alert-card"><div class="alert-icon" style="background:rgba(245,158,11,.1);border:1px solid var(--w)">🟡</div><div><div style="font-size:13px;font-weight:600;margin-bottom:2px">Birkey's Farm Store dropped 4 combine prices by 5-8%</div><div style="font-size:12px;color:var(--t2);line-height:1.5">Birkey's (62 miles from Rochelle) repriced their 8250, two 7250s, and a 6150 yesterday evening. Your equivalent units are now 11.3% above theirs.</div><div class="mono" style="font-size:10px;color:var(--t3);margin-top:4px">Source: TractorHouse competitive scrape · 5:30 AM</div></div></div>
+
+  <div class="card alert-card"><div class="alert-icon" style="background:rgba(59,130,246,.1);border:1px solid var(--i)">🔵</div><div><div style="font-size:13px;font-weight:600;margin-bottom:2px">Trade-in eval completed: 2018 Case IH 7240 appraised at $196K</div><div style="font-size:12px;color:var(--t2);line-height:1.5">Entered in Anvil Pro by Juda location at 4:12 PM. Iron Comps market: $205K. Your appraisal is 4.4% below market — strong buy.</div><div class="mono" style="font-size:10px;color:var(--t3);margin-top:4px">Source: Anvil Pro · Iron Comps</div></div></div>
+
+  <div class="card alert-card"><div class="alert-icon" style="background:rgba(16,185,129,.1);border:1px solid var(--a)">🟢</div><div><div style="font-size:13px;font-weight:600;margin-bottom:2px">Osseo location sold a 2022 Case IH 8250 yesterday — $312K</div><div style="font-size:12px;color:var(--t2);line-height:1.5">Closed in 34 days from first contact. Service contract attached ($18,200/yr). This was a featured TractorHouse listing.</div><div class="mono" style="font-size:10px;color:var(--t3);margin-top:4px">Source: Anvil Pro · QuickBooks</div></div></div>
+
+  <div class="section-label">Today's Strategy</div>
+  <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">Based on overnight changes and your pipeline across all 11 locations, here are the 3 highest-leverage moves for today.</div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span class="mono" style="font-size:11px;font-weight:700;color:var(--a);background:var(--ad);border:1px solid var(--a);border-radius:5px;padding:2px 7px">1</span>
+      <span class="badge" style="color:var(--cmo);border:1px solid var(--cmo)">CMO</span>
+      <span class="badge" style="color:var(--cto);border:1px solid var(--cto)">CTO</span>
+    </div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Respond to 3 overnight leads + deploy auto-reply across all locations</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:14px">Three buyers waiting. Draft personalized responses from each location with Calendly links. Simultaneously deploy a unified SMS auto-reply for all future TractorHouse leads.</div>
+    <div class="impact-row">
+      <div class="impact-item"><span>Pipeline at stake</span><span style="color:var(--a)">$487K (3 units)</span></div>
+      <div class="impact-item"><span>Tasks generated</span><span>5 (3 emails, 1 Twilio, 1 Calendly)</span></div>
+      <div class="impact-item"><span>Autonomy</span><span>Level 1 — drafts for review</span></div>
+    </div>
+    <div style="display:flex;gap:8px"><button class="btn btn-primary">✓ Approve</button><button class="btn">Modify</button><button class="btn">Later</button></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span class="mono" style="font-size:11px;font-weight:700;color:var(--a);background:var(--ad);border:1px solid var(--a);border-radius:5px;padding:2px 7px">2</span>
+      <span class="badge" style="color:var(--cfo);border:1px solid var(--cfo)">CFO</span>
+      <span class="badge" style="color:var(--cmo);border:1px solid var(--cmo)">CMO</span>
+    </div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Counter Birkey's price drop on 4 competing units</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:14px">Birkey's undercut you overnight. Your Rochelle/Harvard units are most exposed. Recommend repricing 4 comparable units to market-match. At 17.2% used margin, you'd still clear $32K+ gross per unit.</div>
+    <div class="impact-row">
+      <div class="impact-item"><span>Price reduction</span><span style="color:var(--cr)">-$8K-$14K per unit</span></div>
+      <div class="impact-item"><span>Margin impact</span><span style="color:var(--a)">Still $32K+ gross + $16.8K service</span></div>
+      <div class="impact-item"><span>Floor plan saved</span><span style="color:var(--a)">$17,200/mo if sold</span></div>
+    </div>
+    <div style="display:flex;gap:8px"><button class="btn btn-primary">✓ Approve</button><button class="btn">Modify</button><button class="btn">Later</button></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span class="mono" style="font-size:11px;font-weight:700;color:var(--a);background:var(--ad);border:1px solid var(--a);border-radius:5px;padding:2px 7px">3</span>
+      <span class="badge" style="color:var(--ceo);border:1px solid var(--ceo)">CEO</span>
+      <span class="badge" style="color:var(--cfo);border:1px solid var(--cfo)">CFO</span>
+    </div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Accept the Case IH 7240 trade-in at $196K</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:14px">Used combines generate 2.6x more first-year value than new. The 7240 appraisal is 4.4% below market — strong margin. Plus the selling customer may be in-market for new.</div>
+    <div class="impact-row">
+      <div class="impact-item"><span>Acquisition cost</span><span>$196K (4.4% below market)</span></div>
+      <div class="impact-item"><span>Est. first-year value</span><span style="color:var(--a)">$62K (margin + service)</span></div>
+      <div class="impact-item"><span>Cross-sell</span><span style="color:var(--a)">Seller may buy new unit</span></div>
+    </div>
+    <div style="display:flex;gap:8px"><button class="btn btn-primary">✓ Approve</button><button class="btn">Modify</button><button class="btn">Later</button></div>
+  </div>
+
+  <div class="card" style="margin-top:20px;border-color:var(--a);text-align:center;position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--a)"></div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:14px"><strong style="color:var(--t)">3 strategies</strong> ready · 6 agents on standby · estimated <strong style="color:var(--t)">14 tasks</strong> across 11 locations</div>
+    <button class="btn-red">▶ Approve All & Start Execution</button>
+    <div class="mono" style="font-size:11px;color:var(--t3);margin-top:10px">Your workforce will execute throughout the day. Check back tonight for results.</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+
+<!-- SOCRATIC ENGINE -->
+
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="view" id="view-socratic">
+<div class="container">
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+    <span class="mono" style="font-size:12px;font-weight:500;color:var(--a);background:var(--ad);border:1px solid var(--a);border-radius:6px;padding:4px 12px;display:flex;align-items:center;gap:6px"><span class="dot dot-pulse" style="background:var(--a)"></span> 5 sources · 4.8s</span>
+    <span style="font-size:15px;font-weight:600">Combine sales acceleration</span>
+  </div>
+
+  <div class="card" style="margin-bottom:24px">
+    <div class="mono" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:8px">User Request</div>
+    <div style="font-size:19px;font-weight:600;letter-spacing:-0.02em">"How do I move more combines before harvest season?"</div>
+  </div>
+
+  <div class="section-label">Live Data Pulled</div>
+
+  <div class="card" style="margin-bottom:10px"><div class="card-top" style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--sf)"></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="dot" style="background:var(--sf)"></span><span class="mono" style="font-size:12px;font-weight:600">Anvil Pro (Salesforce)</span></div><div class="metric-row"><span class="metric-label">Combine leads (active)</span><span class="metric-value">42</span></div><div class="metric-row"><span class="metric-label">Combine quotes open</span><span class="metric-value">11 · $4.2M</span></div><div class="metric-row"><span class="metric-label">Combines sold YTD</span><span class="metric-value">9</span></div><div class="metric-row"><span class="metric-label">Avg combine deal size</span><span class="metric-value">$342K</span></div><div class="metric-row"><span class="metric-label">Win rate (combines)</span><span class="metric-value">18%</span></div><div class="metric-row"><span class="metric-label">Avg days to close</span><span class="metric-value">71 days</span></div></div>
+
+  <div class="card" style="margin-bottom:10px"><div class="card-top" style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--inv)"></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="dot" style="background:var(--inv)"></span><span class="mono" style="font-size:12px;font-weight:600">Inventory (Anvil + Sandhills)</span></div><div class="metric-row"><span class="metric-label">Combines on lot</span><span class="metric-value">16 (7 new, 9 used)</span></div><div class="metric-row"><span class="metric-label">Avg days on lot</span><span class="metric-value">118 days</span></div><div class="metric-row"><span class="metric-label">Aged > 180 days</span><span class="metric-value">5 units · $1.4M floor</span></div><div class="metric-row"><span class="metric-label">Floor plan interest</span><span class="metric-value">$17,200/mo</span></div><div class="metric-row"><span class="metric-label">Headers in stock</span><span class="metric-value">11 corn / 6 draper / 3 bean</span></div><div class="metric-row"><span class="metric-label">Trade-ins pending eval</span><span class="metric-value">4 combines · $820K</span></div></div>
+
+  <div class="card" style="margin-bottom:10px"><div class="card-top" style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--th)"></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="dot" style="background:var(--th)"></span><span class="mono" style="font-size:12px;font-weight:600">TractorHouse / WebStats</span></div><div class="metric-row"><span class="metric-label">Your combine listings</span><span class="metric-value">14 (across 11 locations)</span></div><div class="metric-row"><span class="metric-label">Detail page views (30d)</span><span class="metric-value">3,240</span></div><div class="metric-row"><span class="metric-label">Contact clicks</span><span class="metric-value">22</span></div><div class="metric-row"><span class="metric-label">Your price vs market</span><span class="metric-value">+6.1% above avg</span></div><div class="metric-row"><span class="metric-label">Featured listing spend</span><span class="metric-value">$1,800/mo (5 units)</span></div><div class="metric-row"><span class="metric-label">Featured vs standard CTR</span><span class="metric-value">3.9% vs 0.7%</span></div><div class="metric-row"><span class="metric-label">Competing dealers (75mi)</span><span class="metric-value">8 Case IH dealers</span></div><div class="metric-row"><span class="metric-label">Market demand trend</span><span class="metric-value">Combine searches +28% MoM</span></div></div>
+
+  <div class="card" style="margin-bottom:10px"><div class="card-top" style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gm)"></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="dot" style="background:var(--gm)"></span><span class="mono" style="font-size:12px;font-weight:600">Gmail / SMS (Twilio)</span></div><div class="metric-row"><span class="metric-label">Combine inquiries (30d)</span><span class="metric-value">26</span></div><div class="metric-row"><span class="metric-label">Avg response time</span><span class="metric-value">4.8 hours</span></div><div class="metric-row"><span class="metric-label">Responded < 10 min</span><span class="metric-value">5 of 26 (19%)</span></div><div class="metric-row"><span class="metric-label">No response</span><span class="metric-value">6 inquiries</span></div><div class="metric-row"><span class="metric-label">Source: TractorHouse</span><span class="metric-value">14 of 26 (54%)</span></div><div class="metric-row"><span class="metric-label">Past buyers (combine > 5yr)</span><span class="metric-value">31 in CRM</span></div></div>
+
+  <div class="card" style="margin-bottom:28px"><div class="card-top" style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--qb)"></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="dot" style="background:var(--qb)"></span><span class="mono" style="font-size:12px;font-weight:600">QuickBooks Online</span></div><div style="display:flex;gap:28px;flex-wrap:wrap"><div><span style="font-size:11px;color:var(--t3);display:block">Combine margin (new)</span><span class="mono" style="font-size:13px;font-weight:600">5.9%</span></div><div><span style="font-size:11px;color:var(--t3);display:block">Combine margin (used)</span><span class="mono" style="font-size:13px;font-weight:600">17.2%</span></div><div><span style="font-size:11px;color:var(--t3);display:block">Floor cost (YTD)</span><span class="mono" style="font-size:13px;font-weight:600">$84K</span></div><div><span style="font-size:11px;color:var(--t3);display:block">Parts/service attach</span><span class="mono" style="font-size:13px;font-weight:600">68% of sales</span></div><div><span style="font-size:11px;color:var(--t3);display:block">Avg service rev/unit</span><span class="mono" style="font-size:13px;font-weight:600">$16,800/yr</span></div></div></div>
+
+  <div class="section-label">Cross-Source Insights</div>
+  <div class="insight warn"><strong>Combine searches up 28% MoM</strong> — harvest buying season is starting across WI and northern IL. But your 14 listings across 11 locations are priced <strong>6.1% above market</strong> with 8 competing Case IH dealers within 75 miles.</div>
+  <div class="insight crit"><strong>6 combine inquiries got zero response</strong> and your avg is 4.8 hours across locations. On a $342K avg deal, each lost lead costs <span class="mono" style="color:var(--cr);font-weight:600">~$62K</span> in expected revenue. Those 6 missed leads represent <span class="mono" style="color:var(--cr);font-weight:600">~$369K in lost pipeline</span>.</div>
+  <div class="insight info"><strong>5 featured listings get 3.9% CTR vs 0.7% standard</strong> — 5.6x higher click-through. Your 5 aged units (180+ days) are all running standard. <strong>Featuring those 5 would cost ~$2,000/mo but could generate 8-12 additional leads</strong> — each worth ~$62K in pipeline.</div>
+  <div class="insight info"><strong>31 past buyers in your CRM own combines older than 5 years</strong> across all 11 locations. A coordinated "upgrade before harvest" campaign could <strong>generate 5-8 qualified trade-up conversations</strong>.</div>
+  <div class="insight good"><strong>Used combines earn 17.2% margin vs 5.9% new</strong>, plus 68% attach a service contract worth $16,800/yr. Used is <span class="mono" style="color:var(--a);font-weight:600">2.6x more profitable</span> per unit.</div>
+
+  <div class="card" style="margin-top:28px;padding:24px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--a),var(--sf),var(--th),var(--qb))"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <span class="mono" style="color:var(--a);font-weight:700;font-size:14px">&gt;_</span>
+      <span class="mono" style="font-size:13px;font-weight:600">OPEN COMMAND</span>
+      <span class="mono" style="font-size:11px;color:var(--t3)">· Socratic intent engine · 5 tools · 5 insights</span>
+    </div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:20px">You have 16 combines across 11 locations, $4.2M in open quotes, and harvest buying ramping up 28%. Here's where the leverage is:</div>
+
+
+<div class="q-card"><div style="display:flex;align-items:flex-start"><span class="q-num">1</span><span class="q-title">Your combines are <strong>priced 6.1% above market with 8 Case IH competitors within 75 miles</strong>.</span></div><div class="q-detail">Should we reprice the 5 aged units (180+ days, $17.2K/month in floor plan) to match market and run them as "pre-harvest specials" on TractorHouse?</div><div class="q-actions"><button class="btn btn-primary">▶ Execute</button><button class="btn">Skip</button><span class="badge" style="color:var(--cmo);border:1px solid var(--cmo)">CMO</span><span class="badge" style="color:var(--cfo);border:1px solid var(--cfo)">CFO</span></div></div>
+
+<div class="q-card"><div style="display:flex;align-items:flex-start"><span class="q-num">2</span><span class="q-title">Your featured listings get <strong>5.6x higher click-through (3.9% vs 0.7%)</strong> but your 5 aged units are all standard.</span></div><div class="q-detail">Featuring them costs ~$2,000/mo but could generate 8-12 additional leads worth ~$62K each. Should we upgrade all 5 to featured immediately?</div><div class="q-actions"><button class="btn btn-primary">▶ Execute</button><button class="btn">Skip</button><span class="badge" style="color:var(--cmo);border:1px solid var(--cmo)">CMO</span></div></div>
+
+<div class="q-card"><div style="display:flex;align-items:flex-start"><span class="q-num">3</span><span class="q-title">You have <strong>31 past buyers with combines older than 5 years</strong> across all locations.</span></div><div class="q-detail">Should I draft a coordinated SMS campaign across all 11 locations offering trade-in valuations + first look at your 9 used units?</div><div class="q-actions"><button class="btn btn-primary">▶ Execute</button><button class="btn">Skip</button><span class="badge" style="color:var(--cmo);border:1px solid var(--cmo)">CMO</span><span class="badge" style="color:var(--ceo);border:1px solid var(--ceo)">CEO</span></div></div>
+
+<div class="q-card"><div style="display:flex;align-items:flex-start"><span class="q-num">4</span><span class="q-title"><strong>6 combine inquiries got zero response</strong> — that's ~$369K in lost pipeline.</span></div><div class="q-detail">Should we deploy instant SMS auto-replies for all TractorHouse and website combine inquiries across all locations?</div><div class="q-actions"><button class="btn btn-primary">▶ Execute</button><button class="btn">Skip</button><span class="badge" style="color:var(--cto);border:1px solid var(--cto)">CTO</span><span class="badge" style="color:var(--cmo);border:1px solid var(--cmo)">CMO</span></div></div>
+
+<div class="q-card"><div style="display:flex;align-items:flex-start"><span class="q-num">5</span><span class="q-title">Used combines are <strong>2.6x more profitable than new</strong> ($62K vs $24K first-year value).</span></div><div class="q-detail">You have 4 trade-in evals pending worth $820K. Should we fast-track those appraisals and prioritize used combine sales?</div><div class="q-actions"><button class="btn btn-primary">▶ Execute</button><button class="btn">Skip</button><span class="badge" style="color:var(--cfo);border:1px solid var(--cfo)">CFO</span><span class="badge" style="color:var(--ceo);border:1px solid var(--ceo)">CEO</span></div></div>
+
+
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+
+<!-- EXECUTIVE BOARD -->
+
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="view" id="view-board">
+<div class="container">
+  <div class="card" style="margin-bottom:24px">
+    <div class="mono" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:8px">Board Question</div>
+    <div style="font-size:17px;font-weight:600;letter-spacing:-0.02em">"Should we run a coordinated pre-harvest pricing campaign across all 11 locations?"</div>
+    <div style="display:flex;gap:16px;margin-top:10px"><span class="mono" style="font-size:11px;color:var(--t3)">4 executives responding</span><span class="mono" style="font-size:11px;color:var(--t3)">Context: CTX-2026-0891</span></div>
+  </div>
+
+  <div class="exec-grid">
+
+
+<div class="card" style="position:relative;overflow:hidden"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--ceo)"></div><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div class="exec-avatar" style="background:rgba(245,158,11,.1);border:1px solid var(--ceo);color:var(--ceo)">CEO</div><div><div class="mono" style="font-size:12px;font-weight:600">Chief Executive Officer</div><div style="font-size:11px;color:var(--t3)">Strategic position & multi-location coordination</div></div></div><div style="margin:8px 0 12px"><span class="source-pill">Anvil Pro</span><span class="source-pill">All Locations</span><span class="source-pill">Market Data</span></div><div style="font-size:12.5px;line-height:1.7;color:var(--t2);margin-bottom:14px"><strong>Yes — but use it to strengthen the Johnson Tractor brand across the region.</strong> With 11 locations, you have a competitive advantage no single-location dealer can match: <span class="mono" style="font-weight:600;color:var(--ceo)">regional coverage</span>. Frame it as "Pre-Harvest Ready — certified, inspected, and available at any Johnson Tractor location."</div><div class="verdict-box"><div class="verdict-label" style="color:var(--ceo)">Recommendation</div><div class="verdict-text">Unified campaign with consistent pricing, messaging, and delivery-ready certification across all 11 stores.</div></div><div class="metric-row" style="font-size:11.5px"><span style="color:var(--t3)">Confidence</span><span class="mono" style="font-size:10.5px;color:var(--t2)">High — seasonal + regional advantage</span></div></div>
+
+<div class="card" style="position:relative;overflow:hidden"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--cmo)"></div><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div class="exec-avatar" style="background:rgba(59,130,246,.1);border:1px solid var(--cmo);color:var(--cmo)">CMO</div><div><div class="mono" style="font-size:12px;font-weight:600">Chief Marketing Officer</div><div style="font-size:11px;color:var(--t3)">Demand generation across locations</div></div></div><div style="margin:8px 0 12px"><span class="source-pill">WebStats</span><span class="source-pill">TractorHouse</span><span class="source-pill">Gmail</span></div><div style="font-size:12.5px;line-height:1.7;color:var(--t2);margin-bottom:14px"><strong>Run the campaign on TractorHouse but stagger by location to avoid self-cannibalization.</strong> Group by geography: WI stores target WI/MN buyers, IL stores target IL/IN buyers. <span class="mono" style="font-weight:600;color:var(--cmo)">Feature all 5 aged units</span> and add email blasts from each location's contact list.</div><div class="verdict-box"><div class="verdict-label" style="color:var(--cmo)">Recommendation</div><div class="verdict-text">Geo-targeted campaign: WI and IL stores run parallel but non-overlapping TractorHouse promotions.</div></div><div class="metric-row" style="font-size:11.5px"><span style="color:var(--t3)">Expected leads</span><span class="mono" style="font-size:10.5px;color:var(--t2)">8-12 additional from featuring</span></div></div>
+
+<div class="card" style="position:relative;overflow:hidden"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--cto)"></div><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div class="exec-avatar" style="background:rgba(167,139,250,.1);border:1px solid var(--cto);color:var(--cto)">CTO</div><div><div class="mono" style="font-size:12px;font-weight:600">Chief Technology Officer</div><div style="font-size:11px;color:var(--t3)">Systems & cross-location operations</div></div></div><div style="margin:8px 0 12px"><span class="source-pill">Gmail/Twilio</span><span class="source-pill">Anvil Pro</span></div><div style="font-size:12.5px;line-height:1.7;color:var(--t2);margin-bottom:14px"><strong>Fix the response gap first.</strong> Your <span class="mono" style="font-weight:600;color:var(--cto)">6 missed inquiries</span> came from 4 different locations. Deploy a single Twilio auto-reply number that routes to the nearest location, with shared Calendly for walkaround scheduling.</div><div class="verdict-box"><div class="verdict-label" style="color:var(--cto)">Recommendation</div><div class="verdict-text">Single response system across all 11 locations. Deploy before the campaign goes live.</div></div><div class="metric-row" style="font-size:11.5px"><span style="color:var(--t3)">Current leak rate</span><span class="mono" style="font-size:10.5px;color:var(--t2)">23% of leads unresponded</span></div></div>
+
+<div class="card" style="position:relative;overflow:hidden"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--cfo)"></div><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div class="exec-avatar" style="background:rgba(16,185,129,.1);border:1px solid var(--cfo);color:var(--cfo)">CFO</div><div><div class="mono" style="font-size:12px;font-weight:600">Chief Financial Officer</div><div style="font-size:11px;color:var(--t3)">Margin analysis & capital efficiency</div></div></div><div style="margin:8px 0 12px"><span class="source-pill">QuickBooks</span><span class="source-pill">Anvil Pro</span><span class="source-pill">Iron Comps</span></div><div style="font-size:12.5px;line-height:1.7;color:var(--t2);margin-bottom:14px"><strong>Reprice aggressively on used, conservatively on new.</strong> Used margin at 17.2% gives you room — even at market-match you'd clear <span class="mono" style="font-weight:600;color:var(--cfo)">12%+ margin</span>. New units at 5.9% are tight; don't go below 4%.</div><div class="verdict-box"><div class="verdict-label" style="color:var(--cfo)">Recommendation</div><div class="verdict-text">Used: reprice to market. New: reprice to market-2% max. Flag units near curtailment for priority.</div></div><div class="metric-row" style="font-size:11.5px"><span style="color:var(--t3)">Floor plan saved</span><span class="mono" style="font-size:10.5px;color:var(--t2)">$17,200/mo if aged units sell</span></div></div>
+
+
+  </div>
+
+  <div class="card" style="margin-top:16px;border-color:var(--a);position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--a)"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:16px">⚡</span><span class="mono" style="font-size:13px;font-weight:600">Board Consensus</span></div>
+    <div style="font-size:13.5px;line-height:1.7;color:var(--t2);margin-bottom:14px"><strong style="color:var(--t)">All four recommend the campaign, with conditions:</strong> Fix lead response first (CTO), stagger by geography (CMO), maintain floor on new margins at 4% (CFO), brand as regional strength (CEO).</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <span class="mono" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--a);color:var(--a);background:var(--ad);display:flex;align-items:center;gap:6px"><span class="dot" style="background:var(--ceo)"></span> CEO — Approve</span>
+      <span class="mono" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--a);color:var(--a);background:var(--ad);display:flex;align-items:center;gap:6px"><span class="dot" style="background:var(--cmo)"></span> CMO — Approve</span>
+      <span class="mono" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--a);color:var(--a);background:var(--ad);display:flex;align-items:center;gap:6px"><span class="dot" style="background:var(--cto)"></span> CTO — Approve (prereq)</span>
+      <span class="mono" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--a);color:var(--a);background:var(--ad);display:flex;align-items:center;gap:6px"><span class="dot" style="background:var(--cfo)"></span> CFO — Approve (floor)</span>
+    </div>
+    <div style="display:flex;gap:8px"><button class="btn btn-primary">▶ Approve & Execute All</button><button class="btn">Discuss Further</button></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+
+<!-- AGENT DETAIL -->
+
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="view" id="view-agent">
+<div class="container" style="max-width:800px">
+  <div class="mono" style="font-size:12px;color:var(--t3);margin-bottom:24px">&gt;_ Open Command › CMO › Sub-Agents › <span style="color:var(--t)">Listing Optimizer</span></div>
+
+  <div class="card" style="position:relative;overflow:hidden;margin-bottom:20px">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--cmo)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="exec-avatar" style="width:46px;height:46px;border-radius:10px;background:rgba(59,130,246,.1);border:1px solid var(--cmo);color:var(--cmo);font-size:14px">LO</div>
+        <div><div style="font-size:18px;font-weight:600">Listing Optimizer</div><div class="mono" style="font-size:11px;color:var(--t3)">CMO Department · Manages TractorHouse listings across all locations</div></div>
+      </div>
+      <span class="mono" style="font-size:11px;color:var(--a);background:var(--ad);border:1px solid var(--a);border-radius:6px;padding:5px 12px;display:flex;align-items:center;gap:5px"><span class="dot dot-pulse" style="background:var(--a)"></span> Active</span>
+    </div>
+    <div class="stat-grid">
+      <div><span class="stat-val">47</span><span class="stat-lbl">Tasks completed</span></div>
+      <div><span class="stat-val" style="color:var(--a)">96%</span><span class="stat-lbl">Approval rate</span></div>
+      <div><span class="stat-val">$3.80</span><span class="stat-lbl">Avg cost/task</span></div>
+      <div><span class="stat-val">42 min</span><span class="stat-lbl">Avg time saved</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">Autonomy Level</div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;margin-bottom:18px"><span class="mono" style="font-size:13px;font-weight:600">Who initiates the interaction?</span><span class="mono" style="font-size:12px;color:var(--a);background:var(--ad);border:1px solid var(--a);border-radius:6px;padding:4px 10px">Current: Level 1</span></div>
+    <div class="dial-track">
+      <div class="dial-seg"><span class="dial-level">L0</span><span class="dial-sub">You Ask AI</span></div>
+      <div class="dial-seg active"><span class="dial-level">L1</span><span class="dial-sub">AI Asks You</span></div>
+      <div class="dial-seg"><span class="dial-level">L2</span><span class="dial-sub">AI Does, Tells</span></div>
+      <div class="dial-seg"><span class="dial-level">L3</span><span class="dial-sub">Full Auto</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">Trust & Promotion</div>
+  <div class="card" style="border-color:var(--a);position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--a)"></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:14px"><span class="mono" style="font-size:13px;font-weight:600;color:var(--a)">Promotion Eligible</span><span class="mono" style="font-size:11px;color:var(--a);background:var(--ad);border-radius:6px;padding:4px 10px">▲ L1 → L2 recommended</span></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center;margin-bottom:14px">
+      <div><span class="mono" style="font-size:22px;font-weight:700;color:var(--a);display:block">96%</span><span class="stat-lbl">Approval rate</span></div>
+      <div><span class="mono" style="font-size:22px;font-weight:700;color:var(--a);display:block">47</span><span class="stat-lbl">Tasks completed</span></div>
+      <div><span class="mono" style="font-size:22px;font-weight:700;color:var(--a);display:block">21d</span><span class="stat-lbl">Days at L1</span></div>
+    </div>
+    <div style="background:var(--ad);border:1px solid var(--a);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:13px;color:var(--t2);line-height:1.5"><strong style="color:var(--a)">Listing Optimizer</strong> completed 47 tasks at 96% approval over 21 days. Promoting to <strong style="color:var(--a)">Level 2</strong> means auto-optimizing listings across all 11 locations.</div>
+      <button class="btn btn-primary" style="margin-left:12px;white-space:nowrap">Promote to L2</button>
+    </div>
+  </div>
+
+  <div class="section-label">Safety Ratchet Log</div>
+  <div class="card">
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--b)"><div style="width:26px;height:26px;border-radius:6px;background:rgba(245,158,11,.1);border:1px solid var(--w);display:flex;align-items:center;justify-content:center;flex-shrink:0" class="mono" style="font-size:11px;font-weight:700;color:var(--w)">▼</div><div style="flex:1"><div style="font-size:13px;font-weight:500">Auto-demoted L2 → L1</div><div style="font-size:12px;color:var(--t3);line-height:1.5">Repriced a 2024 Case IH 8250 at La Crosse to $12K below floor cost. User manually reverted.</div></div><span class="mono" style="font-size:10px;color:var(--t3)">Jun 8</span></div>
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--b)"><div style="width:26px;height:26px;border-radius:6px;background:var(--ad);border:1px solid var(--a);display:flex;align-items:center;justify-content:center;flex-shrink:0">▲</div><div style="flex:1"><div style="font-size:13px;font-weight:500">Manually promoted L1 → L2 (trial)</div><div style="font-size:12px;color:var(--t3)">Promoted after 12 consecutive approved tasks. Trial: 7 days.</div></div><span class="mono" style="font-size:10px;color:var(--t3)">Jun 5</span></div>
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0"><div style="width:26px;height:26px;border-radius:6px;background:var(--ad);border:1px solid var(--a);display:flex;align-items:center;justify-content:center;flex-shrink:0">▲</div><div style="flex:1"><div style="font-size:13px;font-weight:500">Initial assignment: L1</div><div style="font-size:12px;color:var(--t3)">CMO recommended L1 — listing modifications involve pricing decisions across multiple locations.</div></div><span class="mono" style="font-size:10px;color:var(--t3)">Jun 2</span></div>
+  </div>
+
+  <div class="section-label">Recent Activity</div>
+  <div class="card">
+    <div class="activity-row"><div style="display:flex;align-items:center;gap:10px;flex:1"><span class="dot" style="background:var(--a)"></span><span style="font-size:12.5px;color:var(--t2)">Optimized listing copy for 2023 Case IH 8250 — CTR +2.4%</span></div><div style="display:flex;gap:14px;flex-shrink:0"><span class="source-pill">flash</span><span class="mono" style="font-size:11px;color:var(--t3)">$0.02</span><span class="mono" style="font-size:10px;color:var(--t3)">2h ago</span></div></div>
+    <div class="activity-row"><div style="display:flex;align-items:center;gap:10px;flex:1"><span class="dot" style="background:var(--a)"></span><span style="font-size:12.5px;color:var(--t2)">Repriced 2021 Case IH 7250 at Rochelle ($295K → $278K)</span></div><div style="display:flex;gap:14px;flex-shrink:0"><span class="source-pill">flash</span><span class="mono" style="font-size:11px;color:var(--t3)">$0.03</span><span class="mono" style="font-size:10px;color:var(--t3)">5h ago</span></div></div>
+    <div class="activity-row"><div style="display:flex;align-items:center;gap:10px;flex:1"><span class="dot" style="background:var(--w)"></span><span style="font-size:12.5px;color:var(--t2)">Draft: Upgrade 5 aged units to featured — awaiting approval</span></div><div style="display:flex;gap:14px;flex-shrink:0"><span class="source-pill">flash</span><span class="mono" style="font-size:11px;color:var(--t3)">$0.01</span><span class="mono" style="font-size:10px;color:var(--t3)">6h ago</span></div></div>
+    <div class="activity-row"><div style="display:flex;align-items:center;gap:10px;flex:1"><span class="dot" style="background:var(--a)"></span><span style="font-size:12.5px;color:var(--t2)">Weekly listing report: 14 listings, 3,240 views across 11 locations</span></div><div style="display:flex;gap:14px;flex-shrink:0"><span class="source-pill">flash</span><span class="mono" style="font-size:11px;color:var(--t3)">$0.04</span><span class="mono" style="font-size:10px;color:var(--t3)">1d ago</span></div></div>
+    <div class="activity-row"><div style="display:flex;align-items:center;gap:10px;flex:1"><span class="dot" style="background:var(--cr)"></span><span style="font-size:12.5px;color:var(--t2)">Photo reorder on La Crosse 6140 — Sandhills session expired</span></div><div style="display:flex;gap:14px;flex-shrink:0"><span class="source-pill">flash</span><span class="mono" style="font-size:11px;color:var(--t3)">$0.01</span><span class="mono" style="font-size:10px;color:var(--t3)">3d ago</span></div></div>
+  </div>
+</div>
+</div>
+
+<!-- FOOTER -->
+
+<div class="footer">
+  <span>Demo preview for Johnson Tractor · Data shown is illustrative</span>
+  <span>opencommand.co</span>
+</div>
+
+<script>
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+
+</body>
+</html>
