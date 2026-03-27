@@ -658,12 +658,12 @@ export default function AgentDetail() {
 
 /* ─── Connector (BYOA) Tab ─────────────────────────────────────────────── */
 const CONNECTOR_OPTIONS = [
-  { value: "internal",   label: "Internal",    desc: "Powered by OpenCommand's built-in AI",           badge: "Default",   color: "text-emerald-400" },
-  { value: "openai",     label: "OpenAI",      desc: "GPT-4o, GPT-4 Turbo, or any OpenAI model",       badge: "BYOA",      color: "text-blue-400" },
-  { value: "anthropic",  label: "Anthropic",   desc: "Claude 3.5 Sonnet, Claude 3 Opus, and more",     badge: "BYOA",      color: "text-violet-400" },
-  { value: "gemini",     label: "Gemini",      desc: "Google Gemini Pro or Gemini Ultra",               badge: "BYOA",      color: "text-amber-400" },
-  { value: "custom_api", label: "Custom API",  desc: "Any HTTP endpoint that accepts a task payload",  badge: "BYOA",      color: "text-pink-400" },
-  { value: "crewai",     label: "CrewAI",      desc: "CrewAI crew endpoint via /kickoff",               badge: "BYOA",      color: "text-cyan-400" },
+  { value: "internal",   label: "OpenCommand AI", desc: "Powered by OpenCommand's built-in AI — no key required",  badge: "Managed",   color: "text-emerald-400", logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/WP82CNZ6C5SdwCUYfYptJQ/opencommand-ai-owl-icon-e3SxVtUebh4P2Phx8gqNjM.webp" },
+  { value: "openai",     label: "OpenAI",         desc: "GPT-4o, GPT-4 Turbo, or any OpenAI model",                badge: "BYOA",      color: "text-blue-400" },
+  { value: "anthropic",  label: "Anthropic",      desc: "Claude 3.5 Sonnet, Claude 3 Opus, and more",              badge: "BYOA",      color: "text-violet-400" },
+  { value: "gemini",     label: "Gemini",         desc: "Google Gemini Pro or Ultra — get key at aistudio.google.com/apikey", badge: "BYOA", color: "text-amber-400", keyLink: "https://aistudio.google.com/apikey" },
+  { value: "custom_api", label: "Custom API",     desc: "Any HTTP endpoint that accepts a task payload",           badge: "BYOA",      color: "text-pink-400" },
+  { value: "crewai",     label: "CrewAI",         desc: "CrewAI crew endpoint via /kickoff",                       badge: "BYOA",      color: "text-cyan-400" },
 ] as const;
 
 type ConnectorType = typeof CONNECTOR_OPTIONS[number]["value"];
@@ -720,6 +720,8 @@ function ConnectorTab({ agentId, currentType, hasConfig }: { agentId: number; cu
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {CONNECTOR_OPTIONS.map(opt => {
             const isActive = selectedType === opt.value;
+            const hasLogo = !!(opt as any).logo;
+            const keyLink = (opt as any).keyLink as string | undefined;
             return (
               <button
                 key={opt.value}
@@ -729,11 +731,25 @@ function ConnectorTab({ agentId, currentType, hasConfig }: { agentId: number; cu
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`w-2 h-2 rounded-full ${isActive ? "bg-current" : "bg-zinc-600"} ${opt.color}`} />
+                  {hasLogo
+                    ? <img src={(opt as any).logo} alt="" className="w-4 h-4 rounded-sm object-cover" />
+                    : <span className={`w-2 h-2 rounded-full ${isActive ? "bg-current" : "bg-zinc-600"} ${opt.color}`} />
+                  }
                   <span className={`text-sm font-medium ${isActive ? opt.color : "text-foreground"}`}>{opt.label}</span>
                   <span className="ml-auto text-[9px] font-medium uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">{opt.badge}</span>
                 </div>
                 <p className="text-[11px] text-muted-foreground">{opt.desc}</p>
+                {keyLink && isActive && (
+                  <a
+                    href={keyLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="mt-2 inline-flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 underline underline-offset-2"
+                  >
+                    Get Gemini API key → aistudio.google.com/apikey
+                  </a>
+                )}
               </button>
             );
           })}

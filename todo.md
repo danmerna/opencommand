@@ -286,3 +286,10 @@
 - [x] Build Connector Config tab on Agent Detail page (masked key UI + Test Connection)
 - [x] Build BYOA step in agent creation flow ("How should this agent run?")
 - [x] Write vitest tests for dispatcher, encrypt, and new procedures
+
+## Provider Badges, Gemini UI, Heartbeat Auto-Pause, OpenCommand AI Provider
+- [x] Add Connected provider badge to agent cards in Mission Control (show provider logo next to agent name)
+- [x] Add OpenCommand AI as a paid provider option in BYOA selector with owl logo
+- [x] Add Gemini connector UI flow with aistudio.google.com/apikey tooltip in AgentDetail Connector tab
+- [x] Wire heartbeat auto-pause: if testConnection returns ok:false, pause heartbeat + notify owner
+- [x] Write tests for provider badges, Gemini UI, and heartbeat auto-pause

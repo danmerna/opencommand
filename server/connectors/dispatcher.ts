@@ -238,10 +238,14 @@ export async function dispatchToConnector(input: DispatchInput): Promise<Dispatc
  */
 export async function testConnector(
   connectorType: ConnectorType | string,
-  encryptedConfig: string
+  encryptedConfig: string | null
 ): Promise<{ ok: boolean; message: string }> {
   try {
-    const config = parseConfig(decryptConnectorConfig(encryptedConfig));
+    // Internal never needs a config — short-circuit before any decryption attempt
+    if ((connectorType as ConnectorType) === "internal") {
+      return { ok: true, message: "Internal connector is always available." };
+    }
+    const config = parseConfig(encryptedConfig ? decryptConnectorConfig(encryptedConfig) : null);
     switch (connectorType as ConnectorType) {
       case "internal":
         return { ok: true, message: "Internal connector is always available." };

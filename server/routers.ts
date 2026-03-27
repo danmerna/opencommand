@@ -247,6 +247,22 @@ const agentsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const agent = await getAgentById(input.agentId);
       if (!agent) throw new Error("Agent not found");
+
+      // Auto-pause if external connector is unreachable before doing any work
+      if (agent.connectorType !== "internal" && agent.connectorConfig) {
+        const connTest = await testConnector(agent.connectorType, agent.connectorConfig).catch(() => ({ ok: false as const, message: "Connection check failed" }));
+        if (!connTest.ok) {
+          await updateAgent(input.agentId, { status: "paused", heartbeatEnabled: false });
+          await createHeartbeatLogEntry({ agentId: input.agentId, companyId: agent.companyId, status: "error", tasksChecked: 0, tasksActedOn: 0, duration: 0, tokenCost: "0" });
+          await notifyOwner({
+            title: `Agent Paused: ${agent.name}`,
+            content: `Heartbeat auto-paused ${agent.name} because the ${agent.connectorType} connector failed health check: ${connTest.message}. Go to the Connector tab to update credentials and resume.`,
+          }).catch(() => {});
+          emitToUser(ctx.user.id, "agent_status", `${agent.name} paused`, `Connector check failed: ${connTest.message}`, { agentId: input.agentId });
+          return { success: false, paused: true, reason: connTest.message, tasksChecked: 0, tasksActedOn: 0, duration: 0 };
+        }
+      }
+
       const start = Date.now();
       const pendingTasks = (await getTasksByUserId(ctx.user.id)).filter(t => t.status === "pending" && (t.agentId === input.agentId || !t.agentId));
       let tasksActedOn = 0;

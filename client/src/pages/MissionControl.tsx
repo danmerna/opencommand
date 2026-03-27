@@ -18,8 +18,18 @@ import {
   Target, Zap, Plus, Trash2, Check, X, Clock, TrendingUp, DollarSign, FileCheck,
   Inbox, Building2, GitBranch, Heart, Activity, BarChart3, Shield, Power, Wrench,
   CheckCircle2, Sparkles, ArrowRight, Bot, BookOpen, RefreshCw, Calendar, Pencil,
-  Plug, Eye, EyeOff
+  Plug, Eye, EyeOff, ExternalLink
 } from "lucide-react";
+
+// Provider badge config — used on agent cards and BYOA selector
+const PROVIDER_BADGE: Record<string, { label: string; color: string; logo?: string }> = {
+  internal:   { label: "OpenCommand AI", color: "text-emerald-400",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/WP82CNZ6C5SdwCUYfYptJQ/opencommand-ai-owl-icon-e3SxVtUebh4P2Phx8gqNjM.webp" },
+  openai:     { label: "OpenAI",         color: "text-blue-400" },
+  anthropic:  { label: "Anthropic",      color: "text-violet-400" },
+  gemini:     { label: "Gemini",         color: "text-amber-400" },
+  custom_api: { label: "Custom API",     color: "text-pink-400" },
+  crewai:     { label: "CrewAI",         color: "text-cyan-400" },
+};
 
 type Tab = "okrs" | "fleet" | "org" | "heartbeat" | "budget" | "poo" | "inbox" | "governance" | "strategy";
 
@@ -488,7 +498,19 @@ export default function MissionControl() {
                     <span className="text-mono text-[11px] text-muted-foreground">{agent.status}</span>
                   </div>
                 </div>
-                <h3 className="font-semibold text-foreground mb-0.5">{agent.name}</h3>
+                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                  <h3 className="font-semibold text-foreground">{agent.name}</h3>
+                  {(() => {
+                    const ct = (agent as any).connectorType ?? "internal";
+                    const badge = PROVIDER_BADGE[ct] ?? PROVIDER_BADGE.internal;
+                    return (
+                      <span className={`flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider border border-current/20 rounded px-1.5 py-0.5 ${badge.color}`}>
+                        {badge.logo ? <img src={badge.logo} alt="" className="w-3 h-3 rounded-sm object-cover" /> : null}
+                        {badge.label}
+                      </span>
+                    );
+                  })()}
+                </div>
                 {(agent as any).roleTitle && <p className="text-label text-[10px] mb-2">{(agent as any).roleTitle}</p>}
                 <p className="text-muted-foreground text-xs leading-relaxed mb-4 line-clamp-2">{agent.description}</p>
                 <div className="grid grid-cols-3 gap-2 text-xs mb-3">
@@ -971,20 +993,25 @@ export default function MissionControl() {
                 <span className="ml-auto text-[10px] text-muted-foreground">Bring Your Own Agent</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {(["internal", "openai", "anthropic", "gemini", "custom_api", "crewai"] as const).map(ct => (
-                  <button
-                    key={ct}
-                    type="button"
-                    onClick={() => setNewAgent(p => ({ ...p, connectorType: ct }))}
-                    className={`rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all ${
-                      newAgent.connectorType === ct
-                        ? "border-white/20 bg-white/[0.08] text-foreground"
-                        : "border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                    }`}
-                  >
-                    {ct === "internal" ? "Internal" : ct === "openai" ? "OpenAI" : ct === "anthropic" ? "Anthropic" : ct === "gemini" ? "Gemini" : ct === "custom_api" ? "Custom API" : "CrewAI"}
-                  </button>
-                ))}
+                {(["internal", "openai", "anthropic", "gemini", "custom_api", "crewai"] as const).map(ct => {
+                  const badge = PROVIDER_BADGE[ct];
+                  const isActive = newAgent.connectorType === ct;
+                  return (
+                    <button
+                      key={ct}
+                      type="button"
+                      onClick={() => setNewAgent(p => ({ ...p, connectorType: ct }))}
+                      className={`rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all flex items-center gap-1.5 ${
+                        isActive
+                          ? "border-white/20 bg-white/[0.08] text-foreground"
+                          : "border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      {badge?.logo ? <img src={badge.logo} alt="" className="w-3.5 h-3.5 rounded-sm object-cover" /> : null}
+                      {badge?.label ?? ct}
+                    </button>
+                  );
+                })}
               </div>
               {newAgent.connectorType !== "internal" && (
                 <div className="space-y-2 pt-1">
