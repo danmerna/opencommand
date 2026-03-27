@@ -14,7 +14,8 @@ export type ConnectorType =
   | "anthropic"
   | "gemini"
   | "custom_api"
-  | "crewai";
+  | "crewai"
+  | "claude_code";
 
 export interface DispatchInput {
   connectorType: ConnectorType | string | null;
@@ -166,6 +167,39 @@ async function dispatchCustomApi(input: DispatchInput): Promise<DispatchResult> 
   return { content, provider: "custom_api" };
 }
 
+// ─── Claude Code ────────────────────────────────────────────────────────────
+
+/**
+ * Dispatches to a Claude Code HTTP wrapper endpoint.
+ * The wrapper accepts { task, context, agent, role, contextManifest } and returns { result }.
+ * Deploy your own wrapper: https://github.com/anthropics/claude-code
+ */
+async function dispatchClaudeCode(input: DispatchInput & { contextManifest?: unknown }): Promise<DispatchResult> {
+  const config = parseConfig(input.connectorConfig);
+  const url = config.url as string;
+  const apiKey = config.apiKey as string | undefined;
+  if (!url) throw new Error("claude_code connector is missing url in connectorConfig");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+  const res = await fetch(`${url}/execute`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      task: input.userMessage,
+      context: input.systemPrompt,
+      agent: input.agentName,
+      role: input.agentRole,
+      contextManifest: input.contextManifest ?? null,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Claude Code wrapper error ${res.status}: ${err}`);
+  }
+  const data = (await res.json()) as { result?: string; output?: string; content?: string };
+  return { content: data.result ?? data.output ?? data.content ?? "", provider: "claude_code" };
+}
+
 // ─── CrewAI ──────────────────────────────────────────────────────────────────
 
 async function dispatchCrewAI(input: DispatchInput): Promise<DispatchResult> {
@@ -225,6 +259,8 @@ export async function dispatchToConnector(input: DispatchInput): Promise<Dispatc
       return dispatchCustomApi(decryptedInput);
     case "crewai":
       return dispatchCrewAI(decryptedInput);
+    case "claude_code":
+      return dispatchClaudeCode(decryptedInput);
     default:
       // Unknown connector type — fall back to internal
       console.warn(`[Dispatcher] Unknown connectorType "${type}", falling back to internal`);
@@ -285,7 +321,8 @@ export async function testConnector(
       }
 
       case "custom_api":
-      case "crewai": {
+      case "crewai":
+      case "claude_code": {
         const url = config.url as string;
         if (!url) throw new Error("No URL configured");
         const res = await fetch(url, { method: "HEAD" });

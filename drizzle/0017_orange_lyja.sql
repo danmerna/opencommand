@@ -1,0 +1,1 @@
+ALTER TABLE `executive_context_manifests` ADD `executiveType` varchar(16);

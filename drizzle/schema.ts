@@ -83,7 +83,7 @@ export const agents = mysqlTable("agents", {
   description: text("description"),
   capabilities: json("capabilities").$type<string[]>(),
   tools: json("tools").$type<string[]>(),
-  connectorType: mysqlEnum("connectorType", ["internal", "openai", "anthropic", "gemini", "custom_api", "crewai"]).default("internal").notNull(),
+  connectorType: mysqlEnum("connectorType", ["internal", "openai", "anthropic", "gemini", "custom_api", "crewai", "claude_code"]).default("internal").notNull(),
   connectorConfig: text("connectorConfig"),
   heartbeatCron: varchar("heartbeatCron", { length: 64 }),
   heartbeatEnabled: boolean("heartbeatEnabled").default(false).notNull(),
@@ -822,3 +822,27 @@ export const integrationRequests = mysqlTable("integration_requests", {
 });
 export type IntegrationRequest = typeof integrationRequests.$inferSelect;
 export type InsertIntegrationRequest = typeof integrationRequests.$inferInsert;
+
+// ─── Executive Context Manifests ─────────────────────────────────────────────
+// Stores the declared data sources each executive agent accessed during its
+// last context assembly. Sub-agents inherit this manifest so they operate
+// within the same data frame without re-assembling context from scratch.
+export const executiveContextManifests = mysqlTable("executive_context_manifests", {
+  id: int("id").autoincrement().primaryKey(),
+  agentId: int("agentId").notNull(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  // Which executive type owns this manifest (ceo | cmo | cto | cfo)
+  executiveType: varchar("executiveType", { length: 16 }),
+  // JSON array of data source slugs this executive declared access to
+  dataSources: json("dataSources").$type<string[]>().notNull(),
+  // Compact text summary of what was found — passed to sub-agents as context header
+  contextSummary: text("contextSummary"),
+  // Raw liveState snapshot (JSON) for sub-agent inheritance
+  liveStateSnapshot: json("liveStateSnapshot").$type<Record<string, unknown>>(),
+  assembledAt: timestamp("assembledAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ExecutiveContextManifest = typeof executiveContextManifests.$inferSelect;
+export type InsertExecutiveContextManifest = typeof executiveContextManifests.$inferInsert;

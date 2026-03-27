@@ -664,6 +664,7 @@ const CONNECTOR_OPTIONS = [
   { value: "gemini",     label: "Gemini",         desc: "Google Gemini Pro or Ultra — get key at aistudio.google.com/apikey", badge: "BYOA", color: "text-amber-400", keyLink: "https://aistudio.google.com/apikey" },
   { value: "custom_api", label: "Custom API",     desc: "Any HTTP endpoint that accepts a task payload",           badge: "BYOA",      color: "text-pink-400" },
   { value: "crewai",     label: "CrewAI",         desc: "CrewAI crew endpoint via /kickoff",                       badge: "BYOA",      color: "text-cyan-400" },
+  { value: "claude_code", label: "Claude Code",   desc: "Self-hosted Claude Code container — wrap with HTTP endpoint", badge: "BYOA",   color: "text-orange-400" },
 ] as const;
 
 type ConnectorType = typeof CONNECTOR_OPTIONS[number]["value"];
@@ -708,7 +709,7 @@ function ConnectorTab({ agentId, currentType, hasConfig }: { agentId: number; cu
   };
 
   const needsApiKey = ["openai", "anthropic", "gemini"].includes(selectedType);
-  const needsUrl = ["custom_api", "crewai"].includes(selectedType);
+  const needsUrl = ["custom_api", "crewai", "claude_code"].includes(selectedType);
   const configSaved = hasConfig || !!savedMasked;
 
   return (
@@ -866,6 +867,24 @@ function ConnectorTab({ agentId, currentType, hasConfig }: { agentId: number; cu
             <strong className="text-foreground">Internal</strong> uses OpenCommand's built-in AI — no API key required.
             Switch to OpenAI, Anthropic, Gemini, or a custom endpoint to bring your own model.
           </p>
+        </div>
+      )}
+
+      {/* Claude Code setup guide */}
+      {selectedType === "claude_code" && (
+        <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-4 space-y-3">
+          <p className="text-xs font-semibold text-orange-400">Claude Code — Container Setup</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Claude Code runs as a CLI tool. Wrap it in a lightweight HTTP server that accepts a
+            <code className="mx-1 px-1 py-0.5 rounded bg-white/5 font-mono text-[10px]">POST /task</code>
+            payload and returns the result. Point the Endpoint URL above at your container.
+          </p>
+          <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
+            <li>Deploy a container with <code className="font-mono">claude</code> CLI installed (Fly.io, Railway, or any VPS)</li>
+            <li>Add a thin HTTP wrapper (Express, FastAPI) on port 8080 that calls <code className="font-mono">claude -p "$TASK"</code></li>
+            <li>Pass <code className="font-mono">ANTHROPIC_API_KEY</code> as an env var to the container</li>
+            <li>Enter the container URL in the Endpoint URL field above and click Save Connector</li>
+          </ol>
         </div>
       )}
     </div>

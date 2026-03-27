@@ -293,3 +293,15 @@
 - [x] Add Gemini connector UI flow with aistudio.google.com/apikey tooltip in AgentDetail Connector tab
 - [x] Wire heartbeat auto-pause: if testConnection returns ok:false, pause heartbeat + notify owner
 - [x] Write tests for provider badges, Gemini UI, and heartbeat auto-pause
+
+## One-Instance-Per-Executive BYOA Architecture
+- [x] Add executive_context_manifests table to schema (agentId, dataSources JSON, lastAssembledAt)
+- [x] Add agents.getContextManifest and agents.updateContextManifest tRPC procedures
+- [x] Auto-generate context manifest when executive completes onboarding (link to connected integrations)
+- [x] Add crew_name field to connectorConfig so dispatcher routes to correct executive instance
+- [x] Add claude_code connector type to dispatcher (HTTP wrapper endpoint)
+- [x] Wire context manifest into executeTask: pass manifest as context to external connector
+- [x] Wire context manifest inheritance into sub-agent task delegation (sub-agents receive parent executive manifest)
+- [x] Update AgentDetail Connector tab: show context manifest panel (data sources + freshness)
+- [x] Add claude_code option to BYOA selector with container URL field
+- [x] Write tests for manifest system, crew routing, claude_code connector, and sub-agent inheritance

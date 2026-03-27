@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `executive_context_manifests` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`agentId` int NOT NULL,\n\t`userId` int NOT NULL,\n\t`companyId` int,\n\t`dataSources` json NOT NULL,\n\t`contextSummary` text,\n\t`liveStateSnapshot` json,\n\t`assembledAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `executive_context_manifests_id` PRIMARY KEY(`id`)\n);\nALTER TABLE `agents` MODIFY COLUMN `connectorType` enum('internal','openai','anthropic','gemini','custom_api','crewai','claude_code') NOT NULL DEFAULT 'internal';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute CREATE TABLE `executive_context_manifests` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`agentId` int NOT NULL,\n\t`userId` int NOT NULL,\n\t`companyId` int,\n\t`dataSources` json NOT NULL,\n\t`contextSummary` text,\n\t`liveStateSnapshot` json,\n\t`assembledAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `executive_context_manifests_id` PRIMARY KEY(`id`)\n);\nALTER TABLE `agents` MODIFY COLUMN `connectorType` enum('internal','openai','anthropic','gemini','custom_api','crewai','claude_code') NOT NULL DEFAULT 'internal';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 227
+}

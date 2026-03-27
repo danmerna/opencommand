@@ -113,6 +113,20 @@
       "when": 1774599963097,
       "tag": "0015_fancy_golden_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1774649215434,
+      "tag": "0016_wonderful_mauler",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1774649635490,
+      "tag": "0017_orange_lyja",
+      "breakpoints": true
     }
   ]
 }

@@ -59,6 +59,7 @@ import {
   getAutonomySettings, upsertAutonomySettings,
   createRalfLog, getRalfLogsByTask, getRalfLogsByAgent, updateRalfLogStatus,
   createSubAgentRecommendation, getSubAgentRecommendations, getSubAgentRecommendationsByExecutive, updateSubAgentRecommendationStatus,
+  getContextManifest, upsertContextManifest, getContextManifestsByUserId,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -273,6 +274,33 @@ const agentsRouter = router({
       const duration = Date.now() - start;
       await createHeartbeatLogEntry({ agentId: input.agentId, companyId: agent.companyId, status: "success", tasksChecked: pendingTasks.length, tasksActedOn, duration, tokenCost: "0.0050" });
       await updateAgent(input.agentId, { lastHeartbeat: new Date() });
+
+      // ─── Context Manifest: declare data sources this executive accessed ──────
+      // Executive agents (ceo/cmo/cto/cfo) save a manifest of their data sources
+      // so sub-agents can inherit the same context frame without re-assembling.
+      const executiveTypes = ["ceo", "cmo", "cfo", "cto"];
+      if (executiveTypes.includes(agent.type)) {
+        try {
+          // Map executive type to canonical data sources
+          const dataSourceMap: Record<string, string[]> = {
+            ceo:  ["mission_control", "okrs", "analytics", "briefings", "decision_log"],
+            cmo:  ["meta_ads", "google_ads", "hubspot", "ga4", "tiktok_ads", "content"],
+            cto:  ["github", "jira", "datadog", "code_review", "architecture"],
+            cfo:  ["stripe", "quickbooks", "salesforce", "arr", "budget", "runway"],
+          };
+          const dataSources = dataSourceMap[agent.type] ?? [];
+          const contextSummary = `${agent.name} heartbeat — accessed ${dataSources.length} data sources: ${dataSources.join(", ")}. ${tasksActedOn} tasks acted on.`;
+          await upsertContextManifest({
+            agentId: input.agentId,
+            userId: ctx.user.id,
+            executiveType: agent.type as "ceo" | "cmo" | "cto" | "cfo",
+            dataSources,
+            contextSummary,
+            liveStateSnapshot: { tasksChecked: pendingTasks.length, tasksActedOn, heartbeatAt: new Date().toISOString() },
+          });
+        } catch (_) { /* non-fatal — manifest save failure should not block heartbeat */ }
+      }
+
       emitToUser(ctx.user.id, "heartbeat", `Heartbeat: ${agent.name}`, `Checked ${pendingTasks.length} tasks, acted on ${tasksActedOn}. Duration: ${duration}ms`, { agentId: input.agentId, tasksChecked: pendingTasks.length, tasksActedOn });
       return { success: true, tasksChecked: pendingTasks.length, tasksActedOn, duration };
     }),
@@ -411,7 +439,27 @@ const tasksRouter = router({
       await updateTask(input.taskId, { status: "in_progress" });
       // Resolve the agent for this task (may be assigned or inferred)
       const taskAgent = task.agentId ? await getAgentById(task.agentId) : null;
-      const execSystemPrompt = "You are the OpenCommand AI Agent CEO executing a task autonomously. Complete the task and provide: 1) A detailed outcome description, 2) Estimated labor hours saved vs doing this manually, 3) Dollar value created (use $150/hr benchmark), 4) Estimated cost of this execution. Respond in JSON format with keys: outcome, laborHoursSaved, dollarValueCreated, costIncurred, executionSteps (array of strings).";
+      // ─── Context Manifest Inheritance ────────────────────────────────────────
+      // If the task's agent has a parent executive, fetch that executive's context
+      // manifest so the sub-agent operates within the same data frame.
+      let inheritedContextBlock = "";
+      if (taskAgent?.parentAgentId) {
+        try {
+          const parentManifest = await getContextManifest(taskAgent.parentAgentId);
+          if (parentManifest) {
+            inheritedContextBlock = `\n\nContext Frame (inherited from ${parentManifest.executiveType?.toUpperCase() ?? "executive"} executive):\nData Sources: ${(parentManifest.dataSources as string[]).join(", ")}\nContext Summary: ${parentManifest.contextSummary ?? ""}\nLast Updated: ${parentManifest.assembledAt?.toISOString() ?? "unknown"}`;
+          }
+        } catch (_) { /* non-fatal */ }
+      } else if (taskAgent) {
+        // The task agent itself may be an executive — use its own manifest
+        try {
+          const ownManifest = await getContextManifest(taskAgent.id);
+          if (ownManifest) {
+            inheritedContextBlock = `\n\nContext Frame (own manifest):\nData Sources: ${(ownManifest.dataSources as string[]).join(", ")}\nContext Summary: ${ownManifest.contextSummary ?? ""}`;
+          }
+        } catch (_) { /* non-fatal */ }
+      }
+      const execSystemPrompt = `You are the OpenCommand AI Agent CEO executing a task autonomously. Complete the task and provide: 1) A detailed outcome description, 2) Estimated labor hours saved vs doing this manually, 3) Dollar value created (use $150/hr benchmark), 4) Estimated cost of this execution. Respond in JSON format with keys: outcome, laborHoursSaved, dollarValueCreated, costIncurred, executionSteps (array of strings).${inheritedContextBlock}`;
       const execUserMessage = `Execute this task:\nTitle: ${task.title}\nDescription: ${task.description ?? ""}\nPrompt: ${task.generatedPrompt ?? ""}`;
       const dispatchResult = await dispatchToConnector({
         connectorType: taskAgent?.connectorType ?? "internal",

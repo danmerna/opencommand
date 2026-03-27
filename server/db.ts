@@ -40,6 +40,7 @@ import {
   agentAutonomySettings, InsertAgentAutonomySetting,
   ralfExecutionLogs, InsertRalfExecutionLog,
   subAgentRecommendations, InsertSubAgentRecommendation,
+  executiveContextManifests, InsertExecutiveContextManifest,
 } from "../drizzle/schema";
 import type { InsertChangelogEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -1381,4 +1382,53 @@ export async function ensureWaitlistFields(userId: number) {
   if (Object.keys(updates).length > 0) {
     await db.update(users).set(updates).where(eq(users.id, userId));
   }
+}
+
+// ─── Executive Context Manifests ─────────────────────────────────────────────
+// Each executive agent declares which data sources it accessed during context
+// assembly. Sub-agents inherit this manifest so they operate within the same
+// data frame without re-assembling context from scratch.
+
+export async function getContextManifest(agentId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const r = await db
+    .select()
+    .from(executiveContextManifests)
+    .where(eq(executiveContextManifests.agentId, agentId))
+    .orderBy(desc(executiveContextManifests.assembledAt))
+    .limit(1);
+  return r[0];
+}
+
+export async function upsertContextManifest(data: InsertExecutiveContextManifest) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Check if a manifest already exists for this agent
+  const existing = await getContextManifest(data.agentId);
+  if (existing) {
+    await db
+      .update(executiveContextManifests)
+      .set({
+        dataSources: data.dataSources,
+        contextSummary: data.contextSummary ?? null,
+        liveStateSnapshot: data.liveStateSnapshot ?? null,
+        assembledAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(executiveContextManifests.id, existing.id));
+    return existing.id;
+  }
+  const result = await db.insert(executiveContextManifests).values(data);
+  return (result as any).insertId as number;
+}
+
+export async function getContextManifestsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(executiveContextManifests)
+    .where(eq(executiveContextManifests.userId, userId))
+    .orderBy(desc(executiveContextManifests.assembledAt));
 }
