@@ -272,3 +272,4 @@
 - [x] Add Settings gear icon to sidebar nav
 - [x] Write tests for Settings page and navigation changes
 - [x] Move Projects section above Agents section in sidebar navigation
+- [x] Update landing page CTA to "Join Waitlist" linking to /waitlist (not onboarding)

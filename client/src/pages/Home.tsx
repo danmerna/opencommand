@@ -631,15 +631,9 @@ function HeroEmailInput() {
     onSuccess: (data) => {
       // Store email in sessionStorage so OAuth callback can link accounts
       sessionStorage.setItem("oc_signup_email", data.email ?? "");
-      // If they already have an OAuth account, send to login
-      if (data.alreadyExists) {
-        toast.info("Welcome back! Sign in to continue.");
-        window.location.href = getLoginUrl("/onboarding/pro");
-      } else {
-        // New user: send to OAuth to create their full account, then onboarding
-        toast.success("Let's get started!");
-        window.location.href = getLoginUrl("/onboarding/pro");
-      }
+      // Always send to waitlist page — onboarding will be enabled closer to launch
+      toast.success("You're on the list!");
+      setLocation("/waitlist");
     },
     onError: (err) => {
       setError(err.message || "Something went wrong. Try again.");
@@ -678,7 +672,7 @@ function HeroEmailInput() {
           {emailSignup.isPending ? (
             <RefreshCw size={16} className="animate-spin" />
           ) : (
-            <>Get Started <ArrowRight size={16} /></>
+            <>Join Waitlist <ArrowRight size={16} /></>
           )}
         </button>
       </form>
@@ -800,12 +794,12 @@ export default function Home() {
                     Mission Control
                   </Link>
                 ) : (
-                  <Link href="/onboarding/pro" className="btn-primary text-[13px] px-5 py-2 inline-block" onClick={() => setMobileMenuOpen(false)}>
-                    Continue Onboarding
+                  <Link href="/waitlist" className="btn-primary text-[13px] px-5 py-2 inline-block" onClick={() => setMobileMenuOpen(false)}>
+                    Join Waitlist
                   </Link>
                 )
               ) : (
-                <a href={getLoginUrl("/onboarding/pro")} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                <a href={getLoginUrl()} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
                   Login
                 </a>
               )}

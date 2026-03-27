@@ -248,7 +248,8 @@ describe("Waitlist source code validation", () => {
     expect(home).toContain("HeroEmailInput");
     expect(home).toContain("trpc.waitlist.emailSignup.useMutation");
     expect(home).toContain("oc_signup_email");
-    expect(home).toContain("getLoginUrl(\"/onboarding/pro\")");
+    // After signup, users route to /waitlist (onboarding deferred until closer to launch)
+    expect(home).toContain("setLocation(\"/waitlist\")");
   });
 
   it("Waitlist.tsx has position display and referral sharing", () => {

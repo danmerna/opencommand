@@ -459,12 +459,12 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("hasCompany");
     });
 
-    it("shows Get Started CTA in hero email input", () => {
-      expect(homeSource).toContain("Get Started");
+    it("shows Join Waitlist CTA in hero email input", () => {
+      expect(homeSource).toContain("Join Waitlist");
     });
 
-    it("routes to /onboarding/pro for users without company", () => {
-      expect(homeSource).toContain('/onboarding/pro');
+    it("routes to /waitlist for users without company (onboarding deferred to launch)", () => {
+      expect(homeSource).toContain('/waitlist');
     });
   });
 
