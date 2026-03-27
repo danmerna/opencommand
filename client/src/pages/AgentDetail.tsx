@@ -10,11 +10,11 @@ import {
   ArrowLeft, Bot, Pencil, Activity, Heart, Zap, DollarSign,
   Clock, Loader2, Shield, Wrench, Play, Pause, AlertTriangle,
   Power, BarChart3, CheckCircle2, XCircle, Settings, FileText,
-  RefreshCw, Wifi, WifiOff,
+  RefreshCw, Wifi, WifiOff, Plug, Eye, EyeOff, FlaskConical,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
-type Tab = "overview" | "capabilities" | "heartbeat" | "budget" | "autonomy" | "settings";
+type Tab = "overview" | "capabilities" | "heartbeat" | "budget" | "autonomy" | "connector" | "settings";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "overview",     label: "Overview",      icon: BarChart3 },
@@ -22,6 +22,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "heartbeat",    label: "Heartbeat",     icon: Heart },
   { id: "budget",       label: "Budget",        icon: DollarSign },
   { id: "autonomy",     label: "Autonomy",      icon: Shield },
+  { id: "connector",    label: "Connector",     icon: Plug },
   { id: "settings",     label: "Settings",      icon: Settings },
 ];
 
@@ -534,6 +535,9 @@ export default function AgentDetail() {
         {/* ── Autonomy & RALF ─────────────────────────────────────────────── */}
         {activeTab === "autonomy" && <AutonomyTab agentId={agentId} agentName={agent.name} />}
 
+        {/* ── Connector (BYOA) ──────────────────────────────────────────────── */}
+        {activeTab === "connector" && <ConnectorTab agentId={agentId} currentType={agent.connectorType} hasConfig={!!agent.connectorConfig} />}
+
         {/* ── Settings ──────────────────────────────────────────────────────── */}
         {activeTab === "settings" && (
           <div className="max-w-2xl space-y-6">
@@ -648,6 +652,206 @@ export default function AgentDetail() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ─── Connector (BYOA) Tab ─────────────────────────────────────────────── */
+const CONNECTOR_OPTIONS = [
+  { value: "internal",   label: "Internal",    desc: "Powered by OpenCommand's built-in AI",           badge: "Default",   color: "text-emerald-400" },
+  { value: "openai",     label: "OpenAI",      desc: "GPT-4o, GPT-4 Turbo, or any OpenAI model",       badge: "BYOA",      color: "text-blue-400" },
+  { value: "anthropic",  label: "Anthropic",   desc: "Claude 3.5 Sonnet, Claude 3 Opus, and more",     badge: "BYOA",      color: "text-violet-400" },
+  { value: "gemini",     label: "Gemini",      desc: "Google Gemini Pro or Gemini Ultra",               badge: "BYOA",      color: "text-amber-400" },
+  { value: "custom_api", label: "Custom API",  desc: "Any HTTP endpoint that accepts a task payload",  badge: "BYOA",      color: "text-pink-400" },
+  { value: "crewai",     label: "CrewAI",      desc: "CrewAI crew endpoint via /kickoff",               badge: "BYOA",      color: "text-cyan-400" },
+] as const;
+
+type ConnectorType = typeof CONNECTOR_OPTIONS[number]["value"];
+
+function ConnectorTab({ agentId, currentType, hasConfig }: { agentId: number; currentType: string; hasConfig: boolean }) {
+  const utils = trpc.useUtils();
+  const [selectedType, setSelectedType] = useState<ConnectorType>((currentType as ConnectorType) ?? "internal");
+  const [apiKey, setApiKey] = useState("");
+  const [model, setModel] = useState("");
+  const [url, setUrl] = useState("");
+  const [authHeader, setAuthHeader] = useState("");
+  const [crewName, setCrewName] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [savedMasked, setSavedMasked] = useState<string | null>(null);
+
+  const updateConnector = trpc.agents.updateConnector.useMutation({
+    onSuccess: (data: any) => {
+      utils.agents.get.invalidate({ id: agentId });
+      if (data.maskedApiKey) setSavedMasked(data.maskedApiKey);
+      setApiKey(""); // clear raw key from state after save
+      toast.success("Connector saved", { description: `Using ${data.connectorType}` });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const testConnection = trpc.agents.testConnection.useMutation({
+    onSuccess: (data: any) => {
+      if (data.ok) toast.success("Connection verified", { description: data.message });
+      else toast.error("Connection failed", { description: data.message });
+    },
+    onError: (e: any) => toast.error("Test failed", { description: e.message }),
+  });
+
+  const handleSave = () => {
+    const payload: any = { id: agentId, connectorType: selectedType };
+    if (apiKey) payload.apiKey = apiKey;
+    if (model) payload.model = model;
+    if (url) payload.url = url;
+    if (authHeader) payload.authHeader = authHeader;
+    if (crewName) payload.crewName = crewName;
+    updateConnector.mutate(payload);
+  };
+
+  const needsApiKey = ["openai", "anthropic", "gemini"].includes(selectedType);
+  const needsUrl = ["custom_api", "crewai"].includes(selectedType);
+  const configSaved = hasConfig || !!savedMasked;
+
+  return (
+    <div className="max-w-2xl space-y-8">
+      {/* Provider selector */}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-1">Agent Provider</h2>
+        <p className="text-xs text-muted-foreground mb-4">Choose which AI powers this agent's execution and RALF loop</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {CONNECTOR_OPTIONS.map(opt => {
+            const isActive = selectedType === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => setSelectedType(opt.value)}
+                className={`text-left rounded-xl border p-4 transition-all ${
+                  isActive ? "border-white/20 bg-white/[0.06]" : "border-border bg-white/[0.02] hover:bg-white/[0.04]"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`w-2 h-2 rounded-full ${isActive ? "bg-current" : "bg-zinc-600"} ${opt.color}`} />
+                  <span className={`text-sm font-medium ${isActive ? opt.color : "text-foreground"}`}>{opt.label}</span>
+                  <span className="ml-auto text-[9px] font-medium uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">{opt.badge}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">{opt.desc}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Credentials */}
+      {selectedType !== "internal" && (
+        <div className="rounded-xl border border-border bg-white/[0.02] p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Plug size={14} className="text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground">Credentials</h3>
+            {configSaved && (
+              <span className="ml-auto flex items-center gap-1 text-[10px] text-emerald-400">
+                <CheckCircle2 size={10} /> Saved
+              </span>
+            )}
+          </div>
+
+          {needsApiKey && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">API Key</label>
+              {savedMasked && !apiKey ? (
+                <div className="flex items-center gap-2">
+                  <Input value={savedMasked} readOnly className="font-mono text-sm flex-1" />
+                  <Button size="sm" variant="outline" onClick={() => setSavedMasked(null)} className="shrink-0">Replace</Button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Input
+                    type={showKey ? "text" : "password"}
+                    value={apiKey}
+                    onChange={e => setApiKey(e.target.value)}
+                    placeholder={`sk-... (${selectedType} API key)`}
+                    className="font-mono text-sm pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1.5">Stored AES-256 encrypted. Never returned after save.</p>
+            </div>
+          )}
+
+          {(needsApiKey || needsUrl) && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Model {needsUrl ? "/ Crew Name" : "(optional)"}</label>
+              <Input
+                value={needsUrl ? crewName : model}
+                onChange={e => needsUrl ? setCrewName(e.target.value) : setModel(e.target.value)}
+                placeholder={needsUrl ? "my-crew" : "gpt-4o, claude-3-5-sonnet-20241022, gemini-1.5-pro"}
+                className="font-mono text-sm"
+              />
+            </div>
+          )}
+
+          {needsUrl && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Endpoint URL</label>
+              <Input
+                value={url}
+                onChange={e => setUrl(e.target.value)}
+                placeholder="https://your-agent.example.com/api"
+                className="font-mono text-sm"
+              />
+              {selectedType === "custom_api" && (
+                <div className="mt-2">
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">Auth Header (optional)</label>
+                  <Input
+                    value={authHeader}
+                    onChange={e => setAuthHeader(e.target.value)}
+                    placeholder="Bearer sk-..."
+                    className="font-mono text-sm"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center gap-3">
+        <Button
+          onClick={handleSave}
+          disabled={updateConnector.isPending}
+          className="gap-2"
+        >
+          {updateConnector.isPending ? <Loader2 size={13} className="animate-spin" /> : <Plug size={13} />}
+          Save Connector
+        </Button>
+        {selectedType !== "internal" && configSaved && (
+          <Button
+            variant="outline"
+            onClick={() => testConnection.mutate({ id: agentId })}
+            disabled={testConnection.isPending}
+            className="gap-2"
+          >
+            {testConnection.isPending ? <Loader2 size={13} className="animate-spin" /> : <FlaskConical size={13} />}
+            Test Connection
+          </Button>
+        )}
+      </div>
+
+      {/* Info box for internal */}
+      {selectedType === "internal" && (
+        <div className="rounded-xl border border-border/50 bg-white/[0.02] p-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <strong className="text-foreground">Internal</strong> uses OpenCommand's built-in AI — no API key required.
+            Switch to OpenAI, Anthropic, Gemini, or a custom endpoint to bring your own model.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

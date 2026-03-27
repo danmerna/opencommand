@@ -1,0 +1,1 @@
+ALTER TABLE `agents` MODIFY COLUMN `connectorConfig` text;

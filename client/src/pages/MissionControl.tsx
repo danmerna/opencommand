@@ -17,7 +17,8 @@ import { QuickTour } from "@/components/QuickTour";
 import {
   Target, Zap, Plus, Trash2, Check, X, Clock, TrendingUp, DollarSign, FileCheck,
   Inbox, Building2, GitBranch, Heart, Activity, BarChart3, Shield, Power, Wrench,
-  CheckCircle2, Sparkles, ArrowRight, Bot, BookOpen, RefreshCw, Calendar, Pencil
+  CheckCircle2, Sparkles, ArrowRight, Bot, BookOpen, RefreshCw, Calendar, Pencil,
+  Plug, Eye, EyeOff
 } from "lucide-react";
 
 type Tab = "okrs" | "fleet" | "org" | "heartbeat" | "budget" | "poo" | "inbox" | "governance" | "strategy";
@@ -188,7 +189,8 @@ export default function MissionControl() {
   const [showAddGate, setShowAddGate] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [newOkr, setNewOkr] = useState({ objective: "", keyResult: "", targetValue: "", unit: "USD", level: "company" });
-  const [newAgent, setNewAgent] = useState({ name: "", type: "specialist", roleTitle: "", description: "", heartbeatCron: "", monthlyBudget: "" });
+  const [newAgent, setNewAgent] = useState({ name: "", type: "specialist", roleTitle: "", description: "", heartbeatCron: "", monthlyBudget: "", connectorType: "internal", apiKey: "", model: "", url: "", authHeader: "" });
+  const [showAgentApiKey, setShowAgentApiKey] = useState(false);
   const [newDept, setNewDept] = useState({ name: "", budget: "" });
   const [newGate, setNewGate] = useState({ gateType: "spend", description: "", threshold: "" });
 
@@ -288,7 +290,7 @@ export default function MissionControl() {
   // Mutations
   const utils = trpc.useUtils();
   const createOkr = trpc.okrs.create.useMutation({ onSuccess: () => { utils.okrs.list.invalidate(); setShowAddOkr(false); setNewOkr({ objective: "", keyResult: "", targetValue: "", unit: "USD", level: "company" }); toast.success("OKR created"); } });
-  const createAgentMut = trpc.agents.create.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); setShowAddAgent(false); track("agent", "created", { type: newAgent.type, name: newAgent.name }); setNewAgent({ name: "", type: "specialist", roleTitle: "", description: "", heartbeatCron: "", monthlyBudget: "" }); toast.success("Agent deployed"); } });
+  const createAgentMut = trpc.agents.create.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); setShowAddAgent(false); track("agent", "created", { type: newAgent.type, name: newAgent.name }); setNewAgent({ name: "", type: "specialist", roleTitle: "", description: "", heartbeatCron: "", monthlyBudget: "", connectorType: "internal", apiKey: "", model: "", url: "", authHeader: "" }); toast.success("Agent deployed"); } });
   const deleteAgentMut = trpc.agents.remove.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); toast.success("Agent removed"); } });
   const updateAgentStatus = trpc.agents.updateStatus.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); } });
   const createDeptMut = trpc.departments.create.useMutation({ onSuccess: () => { utils.departments.list.invalidate(); setShowAddDept(false); setNewDept({ name: "", budget: "" }); toast.success("Department created"); } });
@@ -960,8 +962,73 @@ export default function MissionControl() {
               <div><label className="text-label block mb-1.5">Heartbeat Cron</label><Input value={newAgent.heartbeatCron} onChange={e => setNewAgent(p => ({ ...p, heartbeatCron: e.target.value }))} placeholder="*/30 * * * *" className="bg-input border-border text-foreground" /></div>
               <div><label className="text-label block mb-1.5">Monthly Budget ($)</label><Input type="number" value={newAgent.monthlyBudget} onChange={e => setNewAgent(p => ({ ...p, monthlyBudget: e.target.value }))} placeholder="500" className="bg-input border-border text-foreground" /></div>
             </div>
+
+            {/* BYOA — Connector */}
+            <div className="rounded-xl border border-border bg-white/[0.02] p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Plug size={13} className="text-muted-foreground" />
+                <span className="text-xs font-semibold text-foreground">Agent Provider</span>
+                <span className="ml-auto text-[10px] text-muted-foreground">Bring Your Own Agent</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {(["internal", "openai", "anthropic", "gemini", "custom_api", "crewai"] as const).map(ct => (
+                  <button
+                    key={ct}
+                    type="button"
+                    onClick={() => setNewAgent(p => ({ ...p, connectorType: ct }))}
+                    className={`rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all ${
+                      newAgent.connectorType === ct
+                        ? "border-white/20 bg-white/[0.08] text-foreground"
+                        : "border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    {ct === "internal" ? "Internal" : ct === "openai" ? "OpenAI" : ct === "anthropic" ? "Anthropic" : ct === "gemini" ? "Gemini" : ct === "custom_api" ? "Custom API" : "CrewAI"}
+                  </button>
+                ))}
+              </div>
+              {newAgent.connectorType !== "internal" && (
+                <div className="space-y-2 pt-1">
+                  {["openai", "anthropic", "gemini"].includes(newAgent.connectorType) && (
+                    <div className="relative">
+                      <Input
+                        type={showAgentApiKey ? "text" : "password"}
+                        value={newAgent.apiKey}
+                        onChange={e => setNewAgent(p => ({ ...p, apiKey: e.target.value }))}
+                        placeholder="API Key (optional — configure later)"
+                        className="bg-input border-border text-foreground font-mono text-xs pr-9"
+                      />
+                      <button type="button" onClick={() => setShowAgentApiKey(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                        {showAgentApiKey ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
+                    </div>
+                  )}
+                  {["custom_api", "crewai"].includes(newAgent.connectorType) && (
+                    <Input
+                      value={newAgent.url}
+                      onChange={e => setNewAgent(p => ({ ...p, url: e.target.value }))}
+                      placeholder="Endpoint URL (optional — configure later)"
+                      className="bg-input border-border text-foreground font-mono text-xs"
+                    />
+                  )}
+                  <Input
+                    value={newAgent.model}
+                    onChange={e => setNewAgent(p => ({ ...p, model: e.target.value }))}
+                    placeholder="Model override (optional)"
+                    className="bg-input border-border text-foreground font-mono text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Credentials stored AES-256 encrypted. You can also configure this later in the Connector tab.</p>
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-3 pt-2">
-              <Button onClick={() => createAgentMut.mutate({ name: newAgent.name, type: newAgent.type as any, roleTitle: newAgent.roleTitle || undefined, description: newAgent.description || undefined, heartbeatCron: newAgent.heartbeatCron || undefined, monthlyBudget: newAgent.monthlyBudget ? Number(newAgent.monthlyBudget) : undefined, companyId: effectiveCompanyId ?? undefined })} disabled={!newAgent.name || createAgentMut.isPending} className="flex-1 btn-primary">{createAgentMut.isPending ? "Deploying..." : "Deploy Agent"}</Button>
+              <Button onClick={() => {
+                const payload: any = { name: newAgent.name, type: newAgent.type as any, roleTitle: newAgent.roleTitle || undefined, description: newAgent.description || undefined, heartbeatCron: newAgent.heartbeatCron || undefined, monthlyBudget: newAgent.monthlyBudget ? Number(newAgent.monthlyBudget) : undefined, companyId: effectiveCompanyId ?? undefined, connectorType: newAgent.connectorType as any };
+                if (newAgent.apiKey) payload.apiKey = newAgent.apiKey;
+                if (newAgent.model) payload.model = newAgent.model;
+                if (newAgent.url) payload.url = newAgent.url;
+                createAgentMut.mutate(payload);
+              }} disabled={!newAgent.name || createAgentMut.isPending} className="flex-1 btn-primary">{createAgentMut.isPending ? "Deploying..." : "Deploy Agent"}</Button>
               <Button variant="outline" onClick={() => setShowAddAgent(false)}>Cancel</Button>
             </div>
           </div>

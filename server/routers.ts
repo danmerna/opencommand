@@ -4,6 +4,8 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
+import { dispatchToConnector, testConnector } from "./connectors/dispatcher";
+import { encryptConnectorConfig, maskApiKey } from "./connectors/encrypt";
 import { notifyOwner } from "./_core/notification";
 import {
   getAgentsByUserId, getAgentsByCompanyId, getAgentById, createAgent, updateAgentStatus, updateAgent, deleteAgent,
@@ -127,15 +129,27 @@ const agentsRouter = router({
       companyId: z.number().optional(), departmentId: z.number().optional(), parentAgentId: z.number().optional(),
       roleTitle: z.string().optional(), jobDescription: z.string().optional(), tools: z.array(z.string()).optional(),
       connectorType: z.enum(["internal", "openai", "anthropic", "gemini", "custom_api", "crewai"]).optional(),
+      apiKey: z.string().optional(),
+      model: z.string().optional(),
+      url: z.string().optional(),
       heartbeatCron: z.string().optional(), monthlyBudget: z.number().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      // Encrypt connector config if provided
+      const rawConfig: Record<string, string> = {};
+      if (input.apiKey) rawConfig.apiKey = input.apiKey;
+      if (input.model) rawConfig.model = input.model;
+      if (input.url) rawConfig.url = input.url;
+      const encryptedConfig = Object.keys(rawConfig).length > 0
+        ? encryptConnectorConfig(JSON.stringify(rawConfig))
+        : null;
       await createAgent({
         userId: ctx.user.id, name: input.name, type: input.type, description: input.description,
         capabilities: input.capabilities ?? [], status: "idle",
         companyId: input.companyId, departmentId: input.departmentId, parentAgentId: input.parentAgentId,
         roleTitle: input.roleTitle, jobDescription: input.jobDescription, tools: input.tools ?? [],
         connectorType: input.connectorType ?? "internal",
+        connectorConfig: encryptedConfig,
         heartbeatCron: input.heartbeatCron, heartbeatEnabled: !!input.heartbeatCron,
         monthlyBudget: input.monthlyBudget ? String(input.monthlyBudget) : "0",
       });
@@ -170,6 +184,55 @@ const agentsRouter = router({
     }),
 
   remove: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => { await deleteAgent(input.id); return { success: true }; }),
+
+  // ── BYOA: save encrypted connector config ──────────────────────────────────
+  updateConnector: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      connectorType: z.enum(["internal", "openai", "anthropic", "gemini", "custom_api", "crewai"]),
+      // Raw config fields — never stored as-is; encrypted before DB write
+      apiKey: z.string().optional(),
+      model: z.string().optional(),
+      url: z.string().optional(),
+      authHeader: z.string().optional(),
+      crewName: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, connectorType, apiKey, model, url, authHeader, crewName } = input;
+      // Build raw config object from provided fields
+      const rawConfig: Record<string, string> = {};
+      if (apiKey) rawConfig.apiKey = apiKey;
+      if (model) rawConfig.model = model;
+      if (url) rawConfig.url = url;
+      if (authHeader) rawConfig.authHeader = authHeader;
+      if (crewName) rawConfig.crewName = crewName;
+      const encryptedConfig = Object.keys(rawConfig).length > 0
+        ? encryptConnectorConfig(JSON.stringify(rawConfig))
+        : null;
+      await updateAgent(id, { connectorType, connectorConfig: encryptedConfig } as any);
+      // Return masked key for display — never return raw key
+      return {
+        success: true,
+        connectorType,
+        maskedApiKey: apiKey ? maskApiKey(apiKey) : null,
+      };
+    }),
+
+  // ── BYOA: test connector credentials ──────────────────────────────────────
+  testConnection: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const agent = await getAgentById(input.id);
+      if (!agent) throw new Error("Agent not found");
+      if (!agent.connectorType || agent.connectorType === "internal") {
+        return { ok: true, message: "Internal connector is always available." };
+      }
+      if (!agent.connectorConfig) {
+        return { ok: false, message: "No connector config saved. Please enter your credentials first." };
+      }
+      const result = await testConnector(agent.connectorType, agent.connectorConfig);
+      return result;
+    }),
 
   capabilities: protectedProcedure.input(z.object({ agentId: z.number() })).query(({ input }) => getCapabilitiesByAgentId(input.agentId)),
   addCapability: protectedProcedure
@@ -330,33 +393,20 @@ const tasksRouter = router({
       const task = await getTaskById(input.taskId);
       if (!task) throw new Error("Task not found");
       await updateTask(input.taskId, { status: "in_progress" });
-      const response = await invokeLLM({
-        messages: [
-          { role: "system", content: "You are the OpenCommand AI Agent CEO executing a task autonomously. Complete the task and provide: 1) A detailed outcome description, 2) Estimated labor hours saved vs doing this manually, 3) Dollar value created (use $150/hr benchmark), 4) Estimated cost of this execution. Respond in JSON format with keys: outcome, laborHoursSaved, dollarValueCreated, costIncurred, executionSteps (array of strings)." },
-          { role: "user", content: `Execute this task:\nTitle: ${task.title}\nDescription: ${task.description ?? ""}\nPrompt: ${task.generatedPrompt ?? ""}` },
-        ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "task_execution_result",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: {
-                outcome: { type: "string" },
-                laborHoursSaved: { type: "number" },
-                dollarValueCreated: { type: "number" },
-                costIncurred: { type: "number" },
-                executionSteps: { type: "array", items: { type: "string" } },
-              },
-              required: ["outcome", "laborHoursSaved", "dollarValueCreated", "costIncurred", "executionSteps"],
-              additionalProperties: false,
-            },
-          },
-        },
+      // Resolve the agent for this task (may be assigned or inferred)
+      const taskAgent = task.agentId ? await getAgentById(task.agentId) : null;
+      const execSystemPrompt = "You are the OpenCommand AI Agent CEO executing a task autonomously. Complete the task and provide: 1) A detailed outcome description, 2) Estimated labor hours saved vs doing this manually, 3) Dollar value created (use $150/hr benchmark), 4) Estimated cost of this execution. Respond in JSON format with keys: outcome, laborHoursSaved, dollarValueCreated, costIncurred, executionSteps (array of strings).";
+      const execUserMessage = `Execute this task:\nTitle: ${task.title}\nDescription: ${task.description ?? ""}\nPrompt: ${task.generatedPrompt ?? ""}`;
+      const dispatchResult = await dispatchToConnector({
+        connectorType: taskAgent?.connectorType ?? "internal",
+        connectorConfig: taskAgent?.connectorConfig ?? null,
+        agentName: taskAgent?.name ?? "OpenCommand Agent",
+        agentRole: taskAgent?.roleTitle ?? "AI Agent",
+        systemPrompt: execSystemPrompt,
+        userMessage: execUserMessage,
       });
       let result = { outcome: "Task completed successfully.", laborHoursSaved: 2, dollarValueCreated: 300, costIncurred: 0.12, executionSteps: ["Task analyzed", "Execution completed"] };
-      try { const content = (response.choices[0]?.message?.content ?? "{}") as string; result = JSON.parse(content); } catch (_) {}
+      try { result = JSON.parse(dispatchResult.content); } catch (_) { if (dispatchResult.content) result.outcome = dispatchResult.content; }
       const receiptNumber = `POO-${Date.now()}-${nanoid(6).toUpperCase()}`;
       await createPooReceipt({ taskId: input.taskId, userId: ctx.user.id, companyId: task.companyId, receiptNumber, taskTitle: task.title, outcome: result.outcome, laborHoursSaved: String(result.laborHoursSaved), dollarValueCreated: String(result.dollarValueCreated), costIncurred: String(result.costIncurred), verificationStatus: "verified" });
       await updateTask(input.taskId, { status: "completed", completedAt: new Date(), executionLog: result.executionSteps, actualHours: String(result.laborHoursSaved), totalCost: String(result.costIncurred) });
@@ -2138,14 +2188,16 @@ const ralfRouter = router({
             feedback: `You are ${agent.name}. FEEDBACK phase: Based on the full execution cycle, provide a confidence score (0.0-1.0) and a brief summary of outcomes and recommendations. Previous learning: "${previousOutput}"`,
           };
 
-          const response = await invokeLLM({
-            messages: [
-              { role: "system", content: phasePrompts[phase] ?? "" },
-              { role: "user", content: `Execute the ${phase} phase for task: ${task.title}` },
-            ],
+          const ralfDispatch = await dispatchToConnector({
+            connectorType: agent.connectorType ?? "internal",
+            connectorConfig: agent.connectorConfig ?? null,
+            agentName: agent.name,
+            agentRole: agent.roleTitle ?? agent.type,
+            systemPrompt: phasePrompts[phase] ?? "",
+            userMessage: `Execute the ${phase} phase for task: ${task.title}`,
           });
 
-          const output = (response.choices[0]?.message?.content ?? "") as string;
+          const output = ralfDispatch.content;
           let confidence = "0.75";
 
           // Extract confidence from feedback phase

@@ -273,3 +273,16 @@
 - [x] Write tests for Settings page and navigation changes
 - [x] Move Projects section above Agents section in sidebar navigation
 - [x] Update landing page CTA to "Join Waitlist" linking to /waitlist (not onboarding)
+
+## BYOA — Bring Your Own Agent
+- [x] Add BYOA_ENCRYPTION_KEY secret for AES-256-GCM connector config encryption
+- [x] Create server/connectors/encrypt.ts — AES-256-GCM encrypt/decrypt helpers
+- [x] Create server/connectors/dispatcher.ts — route task execution by connectorType
+- [x] Wire dispatcher into agents.executeTask procedure
+- [x] Wire dispatcher into agents.triggerHeartbeat procedure
+- [x] Wire dispatcher into ralf.execute procedure
+- [x] Add agents.updateConnector tRPC procedure (save encrypted connectorConfig)
+- [x] Add agents.testConnection tRPC procedure (ping external connector)
+- [x] Build Connector Config tab on Agent Detail page (masked key UI + Test Connection)
+- [x] Build BYOA step in agent creation flow ("How should this agent run?")
+- [x] Write vitest tests for dispatcher, encrypt, and new procedures

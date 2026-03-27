@@ -84,7 +84,7 @@ export const agents = mysqlTable("agents", {
   capabilities: json("capabilities").$type<string[]>(),
   tools: json("tools").$type<string[]>(),
   connectorType: mysqlEnum("connectorType", ["internal", "openai", "anthropic", "gemini", "custom_api", "crewai"]).default("internal").notNull(),
-  connectorConfig: json("connectorConfig").$type<Record<string, unknown>>(),
+  connectorConfig: text("connectorConfig"),
   heartbeatCron: varchar("heartbeatCron", { length: 64 }),
   heartbeatEnabled: boolean("heartbeatEnabled").default(false).notNull(),
   lastHeartbeat: timestamp("lastHeartbeat"),
