@@ -12,6 +12,7 @@ Default port: 5050
 import os
 import json
 import logging
+import requests
 from datetime import datetime, timezone
 
 from flask import Flask, request, jsonify
@@ -26,6 +27,7 @@ SALESPERSON_NAME = os.environ.get("SALESPERSON_NAME", "Jake Mueller")
 DEALER_NAME = os.environ.get("DEALER_NAME", "Johnson Tractor")
 LINQ_API_KEY = os.environ.get("LINQ_API_KEY", "")
 LINQ_SANDBOX_NUMBER = os.environ.get("LINQ_SANDBOX_NUMBER", "")
+LINQ_API_BASE = "https://api.linqapp.com/v1"
 
 PORT = int(os.environ.get("WEBHOOK_PORT", "5050"))
 
@@ -60,16 +62,59 @@ def scribe(event: str, data: dict | None = None):
 KNOWN_LEADS: dict[str, dict] = {}
 
 
+def normalize_phone(phone: str) -> str:
+    return phone.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+
+
 def lookup_lead_by_phone(phone: str) -> dict | None:
     """Look up a lead by phone number."""
-    normalized = phone.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
-    return KNOWN_LEADS.get(normalized)
+    return KNOWN_LEADS.get(normalize_phone(phone))
 
 
 def register_lead(phone: str, data: dict):
     """Register a lead for later lookup (called by lead_response_agent)."""
-    normalized = phone.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
-    KNOWN_LEADS[normalized] = data
+    KNOWN_LEADS[normalize_phone(phone)] = data
+
+
+# ---------------------------------------------------------------------------
+# Salesperson Notification
+# ---------------------------------------------------------------------------
+
+
+def notify_salesperson(sender: str, message: str, dealer_slug: str, lead: dict | None):
+    """Send salesperson a notification about the buyer reply via Linq."""
+    if not LINQ_API_KEY or not LINQ_SANDBOX_NUMBER:
+        log.info("Linq not configured, skipping salesperson notification")
+        return
+
+    lead_context = ""
+    if lead:
+        equip = f"{lead.get('equipment_year', '')} {lead.get('equipment_make', '')} {lead.get('equipment_model', '')}".strip()
+        lead_context = f" (re: {equip})"
+
+    notification = (
+        f"📥 Buyer reply from {sender}{lead_context}:\n\n"
+        f'"{message}"\n\n'
+        f"Reply directly to {sender} to continue the conversation."
+    )
+
+    try:
+        requests.post(
+            f"{LINQ_API_BASE}/messages/send",
+            headers={
+                "Authorization": f"Bearer {LINQ_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "to": SALESPERSON_PHONE,
+                "from": LINQ_SANDBOX_NUMBER,
+                "content": notification,
+            },
+            timeout=10,
+        )
+        scribe("salesperson_notified", {"salesperson": SALESPERSON_PHONE, "about": sender})
+    except Exception as e:
+        log.error(f"Failed to notify salesperson: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -87,7 +132,9 @@ def handle_l0_l1(sender: str, message: str, dealer_slug: str, lead: dict | None)
         "lead": lead,
     })
 
-    # In production: send notification to salesperson via Linq/SMS/email
+    # Notify salesperson via Linq
+    notify_salesperson(sender, message, dealer_slug, lead)
+
     log.info(
         f"🔔 SALESPERSON ALERT: Reply from {sender}\n"
         f"   Message: {message}\n"
@@ -133,18 +180,23 @@ def handle_l2_plus(sender: str, message: str, dealer_slug: str, lead: dict | Non
 
 @app.route("/webhook/linq/<dealer_slug>", methods=["POST"])
 def linq_webhook(dealer_slug: str):
-    """Receive inbound messages from Linq."""
+    """
+    Receive inbound messages from Linq.
+    Route to the correct Σ instance based on dealer_slug.
+    """
     payload = request.get_json(silent=True) or {}
 
-    sender = payload.get("from", "")
-    message = payload.get("body", "")
-    channel = payload.get("channel", "unknown")
+    sender = payload.get("number", payload.get("from", ""))
+    message = payload.get("content", payload.get("body", ""))
+    is_imessage = not payload.get("was_downgraded", True)
+    channel = "imessage" if is_imessage else "sms"
     timestamp = payload.get("timestamp", datetime.now(timezone.utc).isoformat())
 
     scribe("inbound_message_received", {
         "sender": sender,
         "message": message,
         "channel": channel,
+        "is_imessage": is_imessage,
         "dealer_slug": dealer_slug,
         "timestamp": timestamp,
     })

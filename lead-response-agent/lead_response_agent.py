@@ -91,6 +91,40 @@ def scribe(event: str, data: dict | None = None):
 
 
 # ---------------------------------------------------------------------------
+# Σ Identity Provisioning
+# ---------------------------------------------------------------------------
+
+
+def provision_sig_number(dealer_slug: str, area_code: str | None = None) -> dict:
+    """
+    Provision a new Linq phone number for a Σ instance.
+    Returns number details including the provisioned phone number.
+    """
+    headers = {
+        "Authorization": f"Bearer {LINQ_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "friendly_name": f"sig-{dealer_slug}",
+    }
+
+    if area_code:
+        payload["area_code"] = area_code
+
+    response = requests.post(
+        f"{LINQ_API_BASE}/numbers",
+        headers=headers,
+        json=payload,
+        timeout=15,
+    )
+    response.raise_for_status()
+    result = response.json()
+    scribe("number_provisioned", {"dealer_slug": dealer_slug, "number": result})
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Gmail — Read Lead Emails
 # ---------------------------------------------------------------------------
 
@@ -174,6 +208,18 @@ def get_header(msg: dict, name: str) -> str:
         if h["name"].lower() == name.lower():
             return h["value"]
     return ""
+
+
+def extract_dealer_slug_from_to(msg: dict) -> str | None:
+    """
+    Extract dealer slug from To: header.
+    e.g. sig-johnsontractor@bot.opencommand.co → johnsontractor
+    """
+    to_addr = get_header(msg, "To")
+    match = re.search(r"sig-([a-z0-9]+)@", to_addr, re.IGNORECASE)
+    if match:
+        return match.group(1).lower()
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -310,10 +356,11 @@ def parse_lead(body: str, subject: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def generate_dealbuilder(lead: dict) -> str:
+def generate_dealbuilder(lead: dict, dealer_slug: str | None = None) -> str:
     """Generate a DealBuilder HTML page for this lead. Returns the filename."""
+    slug = dealer_slug or DEALER_SLUG
     quote_id = f"QT-{int(time.time()) % 100000:05d}"
-    filename = f"{DEALER_SLUG}_{quote_id}.html"
+    filename = f"{slug}_{quote_id}.html"
 
     template_path = Path(__file__).parent / "dealbuilder_template.html"
     if not template_path.exists():
@@ -324,7 +371,7 @@ def generate_dealbuilder(lead: dict) -> str:
     html = template.render(
         quote_id=quote_id,
         dealer_name=DEALER_NAME,
-        dealer_slug=DEALER_SLUG,
+        dealer_slug=slug,
         dealer_location=DEALER_LOCATION,
         salesperson_name=SALESPERSON_NAME,
         salesperson_phone=SALESPERSON_PHONE,
@@ -359,9 +406,13 @@ def generate_dealbuilder(lead: dict) -> str:
 
 
 def deploy_via_linq(to: str, message: str, from_number: str) -> dict:
-    """Deploy a message via Linq API (iMessage → RCS → SMS fallback)."""
+    """
+    Deploy a message via Linq API.
+    Automatically sends as iMessage if recipient has it,
+    falls back to RCS then SMS.
+    """
     resp = requests.post(
-        f"{LINQ_API_BASE}/messages",
+        f"{LINQ_API_BASE}/messages/send",
         headers={
             "Authorization": f"Bearer {LINQ_API_KEY}",
             "Content-Type": "application/json",
@@ -369,15 +420,16 @@ def deploy_via_linq(to: str, message: str, from_number: str) -> dict:
         json={
             "to": to,
             "from": from_number,
-            "body": message,
+            "content": message,
         },
         timeout=10,
     )
     resp.raise_for_status()
     result = resp.json()
-    channel = result.get("channel", "unknown")
-    scribe("message_deployed_linq", {"to": to, "channel": channel})
-    return {"provider": "linq", "channel": channel, "status": "deployed"}
+    is_imessage = not result.get("was_downgraded", True)
+    channel = "imessage" if is_imessage else result.get("channel", "sms")
+    scribe("message_deployed_linq", {"to": to, "channel": channel, "is_imessage": is_imessage})
+    return {"provider": "linq", "channel": channel, "is_imessage": is_imessage, "status": "deployed"}
 
 
 def deploy_via_twilio(to: str, message: str) -> dict:
@@ -392,38 +444,39 @@ def deploy_via_twilio(to: str, message: str) -> dict:
         body=message, from_=TWILIO_FROM_NUMBER, to=to
     )
     scribe("message_deployed_twilio", {"to": to, "sid": msg.sid})
-    return {"provider": "twilio", "channel": "sms", "status": "deployed", "sid": msg.sid}
+    return {"provider": "twilio", "channel": "sms", "is_imessage": False, "status": "deployed", "sid": msg.sid}
 
 
 def deploy_message(to: str, message: str, from_number: str | None = None) -> dict:
-    """Deploy a message — Linq first, Twilio fallback."""
+    """Deploy via Linq, fall back to Twilio SMS."""
     from_num = from_number or LINQ_SANDBOX_NUMBER
 
     try:
         return deploy_via_linq(to, message, from_num)
     except Exception as e:
-        log.warning(f"Linq deploy failed: {e}, falling back to Twilio")
+        log.warning(f"Linq failed, falling back to Twilio: {e}")
         scribe("linq_fallback_to_twilio", {"error": str(e)})
         try:
             return deploy_via_twilio(to, message)
         except Exception as e2:
             log.error(f"Twilio fallback also failed: {e2}")
             scribe("message_deploy_failed", {"error": str(e2)})
-            return {"provider": "none", "channel": "none", "status": "failed", "error": str(e2)}
+            return {"provider": "none", "channel": "none", "is_imessage": False, "status": "failed", "error": str(e2)}
 
 
 # ---------------------------------------------------------------------------
-# Email — Resend (follow-up emails)
+# Email — Resend (dealer-specific outbound)
 # ---------------------------------------------------------------------------
 
 
-def send_email(to: str, subject: str, html_body: str, from_addr: str | None = None):
-    """Send an email via Resend."""
+def send_sig_email(dealer_slug: str, to_email: str, subject: str, html_body: str):
+    """Send an email from Sig's dealer-specific address."""
     if not RESEND_API_KEY:
         log.warning("Resend not configured, skipping email")
         return
 
-    sender = from_addr or f"sig@{RESEND_DOMAIN}"
+    from_addr = f"sig-{dealer_slug}@{RESEND_DOMAIN}"
+
     resp = requests.post(
         "https://api.resend.com/emails",
         headers={
@@ -431,14 +484,14 @@ def send_email(to: str, subject: str, html_body: str, from_addr: str | None = No
             "Content-Type": "application/json",
         },
         json={
-            "from": f"Σ at {DEALER_NAME} <{sender}>",
-            "to": [to],
+            "from": f"Sig · {DEALER_NAME} <{from_addr}>",
+            "to": [to_email],
             "subject": subject,
             "html": html_body,
         },
         timeout=10,
     )
-    scribe("email_sent", {"to": to, "subject": subject, "status": resp.status_code})
+    scribe("email_sent", {"from": from_addr, "to": to_email, "subject": subject, "status": resp.status_code})
 
 
 # ---------------------------------------------------------------------------
@@ -450,14 +503,13 @@ def compose_buyer_message(lead: dict, dealbuilder_url: str) -> str:
     """Compose the iMessage to deploy to the buyer."""
     equip = f"{lead.get('equipment_year', '')} {lead.get('equipment_make', '')} {lead.get('equipment_model', '')}".strip()
     buyer = lead.get("buyer_name", "").split()[0] if lead.get("buyer_name") else "there"
+    source = lead.get("source_platform", "online")
 
     msg = (
-        f"Hi {buyer}, this is {SALESPERSON_NAME} at {DEALER_NAME}. "
-        f"Thanks for your interest in the {equip}! "
-        f"I put together some details and financing options for you:\n\n"
-        f"{dealbuilder_url}\n\n"
-        f"Happy to answer any questions — just reply here or call me at "
-        f"{SALESPERSON_PHONE}."
+        f"Hey {buyer}, saw you were looking at the {equip} "
+        f"on {source}. Put together pricing and options "
+        f"for you here: {dealbuilder_url}\n\n"
+        f"— {SALESPERSON_NAME}, {DEALER_NAME} {DEALER_LOCATION}"
     )
     return msg
 
@@ -468,7 +520,10 @@ def process_lead(service, msg: dict) -> dict | None:
     subject = get_header(msg, "Subject")
     body = extract_email_body(msg)
 
-    scribe("lead_received", {"msg_id": msg_id, "subject": subject})
+    # Extract dealer slug from To: header (catch-all routing)
+    email_dealer_slug = extract_dealer_slug_from_to(msg) or DEALER_SLUG
+
+    scribe("lead_received", {"msg_id": msg_id, "subject": subject, "dealer_slug": email_dealer_slug})
 
     # Parse
     lead = parse_lead(body, subject)
@@ -478,11 +533,11 @@ def process_lead(service, msg: dict) -> dict | None:
         return None
 
     # Generate DealBuilder page
-    filename = generate_dealbuilder(lead)
-    dealbuilder_url = f"{DEALBUILDER_BASE_URL}/deal/{DEALER_SLUG}/{filename}" if DEALBUILDER_BASE_URL else f"[DealBuilder: {filename}]"
+    filename = generate_dealbuilder(lead, dealer_slug=email_dealer_slug)
+    dealbuilder_url = f"{DEALBUILDER_BASE_URL}/deal/{email_dealer_slug}/{filename}" if DEALBUILDER_BASE_URL else f"[DealBuilder: {filename}]"
 
     # Deploy iMessage
-    result = {"lead": lead, "dealbuilder": filename, "message": None}
+    result = {"lead": lead, "dealer_slug": email_dealer_slug, "dealbuilder": filename, "message": None}
 
     if lead.get("buyer_phone"):
         message = compose_buyer_message(lead, dealbuilder_url)
@@ -496,6 +551,8 @@ def process_lead(service, msg: dict) -> dict | None:
         "buyer": lead.get("buyer_name", "unknown"),
         "equipment": f"{lead.get('equipment_year', '')} {lead.get('equipment_make', '')} {lead.get('equipment_model', '')}".strip(),
         "channel": result.get("message", {}).get("channel", "none"),
+        "is_imessage": result.get("message", {}).get("is_imessage", False),
+        "dealer_slug": email_dealer_slug,
     })
 
     return result
@@ -531,13 +588,15 @@ def format_report(results: list[dict]) -> str:
         source = lead.get("source_platform", "Unknown")
         msg_status = r.get("message", {})
         channel = msg_status.get("channel", "none")
+        is_imessage = msg_status.get("is_imessage", False)
         phone = lead.get("buyer_phone", "N/A")
+        bubble = "blue bubble" if is_imessage else "SMS"
 
         if msg_status.get("status") == "deployed":
             lines.append(
                 f"✅ Lead from {source}: {buyer} asking about\n"
                 f"   {equip}. DealBuilder generated,\n"
-                f"   iMessage deployed to {phone}."
+                f"   iMessage deployed to {phone} ({bubble})."
             )
         else:
             lines.append(
@@ -553,7 +612,15 @@ def main():
     parser = argparse.ArgumentParser(description="Σ Lead Response Agent")
     parser.add_argument("--once", action="store_true", help="Single run, then exit")
     parser.add_argument("--json", action="store_true", help="JSON output mode")
+    parser.add_argument("--provision", metavar="SLUG", help="Provision a new Linq number for a dealer")
+    parser.add_argument("--area-code", metavar="CODE", help="Preferred area code for provisioning")
     args = parser.parse_args()
+
+    # Provision mode — just get a number and exit
+    if args.provision:
+        result = provision_sig_number(args.provision, args.area_code)
+        print(json.dumps(result, indent=2))
+        return
 
     log.info("Σ Lead Response Agent starting...")
     service = get_gmail_service()
