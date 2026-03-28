@@ -18,7 +18,8 @@ export type NotificationEventType =
   | "poo_receipt"
   | "payment_success"
   | "okr_updated"
-  | "kill_switch";
+  | "kill_switch"
+  | "lead_response";
 
 export interface NotificationPayload {
   type: NotificationEventType;

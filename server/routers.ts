@@ -42,6 +42,10 @@ import {
   getStrategyProposalsByCompanyId, getStrategyProposalsByUserId, getStrategyProposalById,
   createStrategyProposal, updateStrategyProposalStatus,
   joinWaitlist, getWaitlistCount, isEmailOnWaitlist,
+  getLeadsByCompanyId, getLeadById, getLeadsByStatus, createLead, updateLead,
+  getInventoryByCompanyId, searchInventory, bulkCreateInventory, updateInventoryItem, deleteInventoryItem,
+  getDraftsByLeadId, getPendingDrafts,
+  getLeadResponseStats, getViolationsByCompanyId,
 } from "./db";
 import { nanoid } from "nanoid";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
@@ -1336,6 +1340,215 @@ const waitlistRouter = router({
   count: publicProcedure.query(() => getWaitlistCount()),
 });
 
+// ─── Lead Response Agent Router ─────────────────────────────────────────────
+const leadResponseRouter = router({
+  // ── Leads ─────────────────────────────────────
+  leadsList: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(({ input }) => getLeadsByCompanyId(input.companyId)),
+
+  leadsGet: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(({ input }) => getLeadById(input.id)),
+
+  leadsIngest: protectedProcedure
+    .input(z.object({
+      rawBody: z.string().min(1),
+      companyId: z.number(),
+      agentId: z.number().optional(),
+      source: z.enum(["tractorhouse", "website", "phone", "walkin", "email", "manual"]).default("tractorhouse"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { ingestLead } = await import("./agents/leadResponse/ingestLeads");
+      const { generateDraft } = await import("./agents/leadResponse/draftResponse");
+
+      const { leadId, inventoryMatch } = await ingestLead(
+        input.rawBody, ctx.user.id, input.companyId, input.source, input.agentId,
+      );
+
+      // Auto-generate a draft
+      const draftResult = await generateDraft(leadId, ctx.user.id, input.companyId, input.agentId);
+
+      return { leadId, draftId: draftResult.draftId, inventoryMatch, guardrailsPassed: draftResult.guardrailsPassed };
+    }),
+
+  leadsCreate: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      contactName: z.string().optional(),
+      contactEmail: z.string().optional(),
+      contactPhone: z.string().optional(),
+      contactLocation: z.string().optional(),
+      equipmentInterest: z.string().optional(),
+      source: z.enum(["tractorhouse", "website", "phone", "walkin", "email", "manual"]).default("manual"),
+      pipelineValue: z.number().optional(),
+      agentId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      let inventoryMatchId: number | undefined;
+      if (input.equipmentInterest) {
+        const matches = await searchInventory(input.companyId, input.equipmentInterest);
+        if (matches.length > 0) inventoryMatchId = matches[0].id;
+      }
+
+      const result = await createLead({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        agentId: input.agentId,
+        source: input.source,
+        contactName: input.contactName,
+        contactEmail: input.contactEmail,
+        contactPhone: input.contactPhone,
+        contactLocation: input.contactLocation,
+        equipmentInterest: input.equipmentInterest,
+        inventoryMatchId,
+        pipelineValue: input.pipelineValue ? String(input.pipelineValue) : undefined,
+        status: "new",
+        receivedAt: new Date(),
+      });
+
+      const leadId = (result as any)[0]?.insertId ?? (result as any).insertId ?? 0;
+      return { success: true, leadId };
+    }),
+
+  // ── Drafts / Approval ─────────────────────────
+  draftsPending: protectedProcedure.query(({ ctx }) => getPendingDrafts(ctx.user.id)),
+
+  draftsForLead: protectedProcedure
+    .input(z.object({ leadId: z.number() }))
+    .query(({ input }) => getDraftsByLeadId(input.leadId)),
+
+  draftsApprove: protectedProcedure
+    .input(z.object({ draftId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const { approveDraft } = await import("./agents/leadResponse/approvalFlow");
+      return approveDraft(input.draftId, ctx.user.id);
+    }),
+
+  draftsModify: protectedProcedure
+    .input(z.object({ draftId: z.number(), body: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const { modifyDraft } = await import("./agents/leadResponse/approvalFlow");
+      return modifyDraft(input.draftId, ctx.user.id, input.body);
+    }),
+
+  draftsDismiss: protectedProcedure
+    .input(z.object({ draftId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const { dismissDraft } = await import("./agents/leadResponse/approvalFlow");
+      return dismissDraft(input.draftId, ctx.user.id);
+    }),
+
+  draftsRegenerate: protectedProcedure
+    .input(z.object({ leadId: z.number(), companyId: z.number(), agentId: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const { generateDraft } = await import("./agents/leadResponse/draftResponse");
+      return generateDraft(input.leadId, ctx.user.id, input.companyId, input.agentId);
+    }),
+
+  // ── Execution ─────────────────────────────────
+  execute: protectedProcedure
+    .input(z.object({ executionQueueId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const { executeResponse } = await import("./agents/leadResponse/execute");
+      return executeResponse(input.executionQueueId, ctx.user.id);
+    }),
+
+  // ── Inventory ─────────────────────────────────
+  inventoryList: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(({ input }) => getInventoryByCompanyId(input.companyId)),
+
+  inventorySearch: protectedProcedure
+    .input(z.object({ companyId: z.number(), query: z.string() }))
+    .query(({ input }) => searchInventory(input.companyId, input.query)),
+
+  inventoryUpload: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      items: z.array(z.object({
+        stockNumber: z.string().optional(),
+        make: z.string().optional(),
+        model: z.string().optional(),
+        year: z.number().optional(),
+        category: z.string().optional(),
+        condition: z.enum(["new", "used"]).optional(),
+        price: z.number().optional(),
+        location: z.string().optional(),
+        hours: z.number().optional(),
+        description: z.string().optional(),
+        listingUrl: z.string().optional(),
+        dealBuilderUrl: z.string().optional(),
+        daysOnLot: z.number().optional(),
+      })),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const items = input.items.map(item => ({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        stockNumber: item.stockNumber,
+        make: item.make,
+        model: item.model,
+        year: item.year,
+        category: item.category,
+        condition: item.condition as "new" | "used" | undefined,
+        price: item.price ? String(item.price) : undefined,
+        location: item.location,
+        hours: item.hours,
+        description: item.description,
+        listingUrl: item.listingUrl,
+        dealBuilderUrl: item.dealBuilderUrl,
+        daysOnLot: item.daysOnLot,
+        isAvailable: true,
+      }));
+      await bulkCreateInventory(items);
+      return { success: true, count: items.length };
+    }),
+
+  inventoryUpdate: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      stockNumber: z.string().optional(),
+      make: z.string().optional(),
+      model: z.string().optional(),
+      year: z.number().optional(),
+      price: z.number().optional(),
+      location: z.string().optional(),
+      hours: z.number().optional(),
+      description: z.string().optional(),
+      isAvailable: z.boolean().optional(),
+      daysOnLot: z.number().optional(),
+      dealBuilderUrl: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, price, ...rest } = input;
+      const data: Record<string, unknown> = { ...rest };
+      if (price !== undefined) data.price = String(price);
+      await updateInventoryItem(id, data as any);
+      return { success: true };
+    }),
+
+  inventoryRemove: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => { await deleteInventoryItem(input.id); return { success: true }; }),
+
+  // ── Stats & Guardrails ────────────────────────
+  stats: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(({ input }) => getLeadResponseStats(input.companyId)),
+
+  violations: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(({ input }) => getViolationsByCompanyId(input.companyId)),
+
+  promotionCheck: protectedProcedure
+    .input(z.object({ agentId: z.number(), companyId: z.number() }))
+    .query(async ({ input }) => {
+      const { checkPromotionEligibility } = await import("./agents/leadResponse/approvalFlow");
+      return checkPromotionEligibility(input.agentId, input.companyId);
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -1367,6 +1580,7 @@ export const appRouter = router({
   projects: projectsRouter,
   onboarding: onboardingRouter,
   waitlist: waitlistRouter,
+  leadResponse: leadResponseRouter,
 });
 
 export type AppRouter = typeof appRouter;

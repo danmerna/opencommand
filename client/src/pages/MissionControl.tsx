@@ -377,6 +377,9 @@ export default function MissionControl() {
                   <button onClick={() => { if (confirm("Remove this agent?")) deleteAgentMut.mutate({ id: agent.id }); }} className="btn-outline text-xs px-3 py-1.5 text-red-400 border-red-400/30 hover:bg-red-400/10">
                     <Trash2 size={12} />
                   </button>
+                  <button onClick={() => navigate(`/agents/${agent.id}`)} className="btn-outline text-xs px-3 py-1.5 text-emerald-400 border-emerald-400/30 hover:bg-emerald-400/10">
+                    Detail
+                  </button>
                 </div>
               </div>
             ))}

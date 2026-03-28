@@ -29,6 +29,11 @@ import {
   agentOnboardings, InsertAgentOnboarding,
   strategyProposals, InsertStrategyProposal,
   waitlistEntries, InsertWaitlistEntry,
+  leads, InsertLead,
+  inventory, InsertInventoryItem,
+  draftResponses, InsertDraftResponse,
+  executionQueue, InsertExecutionQueueItem,
+  guardrailViolations, InsertGuardrailViolation,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -759,4 +764,146 @@ export async function isEmailOnWaitlist(email: string) {
   const db = await getDb(); if (!db) return false;
   const rows = await db.select().from(waitlistEntries).where(eq(waitlistEntries.email, email)).limit(1);
   return rows.length > 0;
+}
+
+// ─── Leads ──────────────────────────────────────────────────────────────────
+export async function getLeadsByCompanyId(companyId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(leads).where(eq(leads.companyId, companyId)).orderBy(desc(leads.createdAt));
+}
+export async function getLeadsByUserId(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(leads).where(eq(leads.userId, userId)).orderBy(desc(leads.createdAt));
+}
+export async function getLeadById(id: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(leads).where(eq(leads.id, id)).limit(1);
+  return r[0];
+}
+export async function getLeadsByStatus(companyId: number, status: string) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(leads).where(and(eq(leads.companyId, companyId), eq(leads.status, status as any))).orderBy(desc(leads.createdAt));
+}
+export async function createLead(data: InsertLead) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(leads).values(data);
+}
+export async function updateLead(id: number, data: Partial<InsertLead>) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(leads).set({ ...data, updatedAt: new Date() }).where(eq(leads.id, id));
+}
+
+// ─── Inventory ──────────────────────────────────────────────────────────────
+export async function getInventoryByCompanyId(companyId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(inventory).where(eq(inventory.companyId, companyId)).orderBy(desc(inventory.createdAt));
+}
+export async function getAvailableInventory(companyId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(inventory).where(and(eq(inventory.companyId, companyId), eq(inventory.isAvailable, true))).orderBy(desc(inventory.createdAt));
+}
+export async function getInventoryById(id: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(inventory).where(eq(inventory.id, id)).limit(1);
+  return r[0];
+}
+export async function searchInventory(companyId: number, query: string) {
+  const db = await getDb(); if (!db) return [];
+  const term = `%${query}%`;
+  return db.select().from(inventory).where(
+    and(
+      eq(inventory.companyId, companyId),
+      eq(inventory.isAvailable, true),
+      sql`(${inventory.make} LIKE ${term} OR ${inventory.model} LIKE ${term} OR CONCAT(${inventory.year}, ' ', ${inventory.make}, ' ', ${inventory.model}) LIKE ${term} OR ${inventory.stockNumber} LIKE ${term})`
+    )
+  ).limit(10);
+}
+export async function createInventoryItem(data: InsertInventoryItem) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(inventory).values(data);
+}
+export async function bulkCreateInventory(items: InsertInventoryItem[]) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  if (items.length === 0) return;
+  return db.insert(inventory).values(items);
+}
+export async function updateInventoryItem(id: number, data: Partial<InsertInventoryItem>) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(inventory).set({ ...data, updatedAt: new Date() }).where(eq(inventory.id, id));
+}
+export async function deleteInventoryItem(id: number) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.delete(inventory).where(eq(inventory.id, id));
+}
+
+// ─── Draft Responses ────────────────────────────────────────────────────────
+export async function getDraftsByLeadId(leadId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(draftResponses).where(eq(draftResponses.leadId, leadId)).orderBy(desc(draftResponses.createdAt));
+}
+export async function getPendingDrafts(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(draftResponses).where(and(eq(draftResponses.userId, userId), eq(draftResponses.status, "pending_review"))).orderBy(desc(draftResponses.createdAt));
+}
+export async function getDraftById(id: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(draftResponses).where(eq(draftResponses.id, id)).limit(1);
+  return r[0];
+}
+export async function createDraftResponse(data: InsertDraftResponse) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(draftResponses).values(data);
+}
+export async function updateDraftResponse(id: number, data: Partial<InsertDraftResponse>) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(draftResponses).set({ ...data, updatedAt: new Date() }).where(eq(draftResponses.id, id));
+}
+
+// ─── Execution Queue ────────────────────────────────────────────────────────
+export async function getQueuedExecutions(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(executionQueue).where(and(eq(executionQueue.userId, userId), eq(executionQueue.status, "queued"))).orderBy(desc(executionQueue.createdAt));
+}
+export async function createExecutionQueueItem(data: InsertExecutionQueueItem) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(executionQueue).values(data);
+}
+export async function updateExecutionQueueItem(id: number, data: Partial<InsertExecutionQueueItem>) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.update(executionQueue).set(data).where(eq(executionQueue.id, id));
+}
+
+// ─── Guardrail Violations ───────────────────────────────────────────────────
+export async function getViolationsByCompanyId(companyId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(guardrailViolations).where(eq(guardrailViolations.companyId, companyId)).orderBy(desc(guardrailViolations.createdAt));
+}
+export async function createGuardrailViolation(data: InsertGuardrailViolation) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(guardrailViolations).values(data);
+}
+
+// ─── Lead Response Stats (Aggregates) ───────────────────────────────────────
+export async function getLeadResponseStats(companyId: number) {
+  const db = await getDb();
+  if (!db) return { totalLeads: 0, avgResponseTimeMins: 0, approvalRate: 0, draftsPending: 0, leadsSent: 0 };
+
+  const allLeads = await db.select().from(leads).where(eq(leads.companyId, companyId));
+  const totalLeads = allLeads.length;
+  const leadsSent = allLeads.filter(l => l.status === "sent" || l.status === "replied" || l.status === "closed").length;
+
+  const allDrafts = await db.select().from(draftResponses).where(eq(draftResponses.companyId, companyId));
+  const draftsPending = allDrafts.filter(d => d.status === "pending_review").length;
+  const decided = allDrafts.filter(d => d.status === "approved" || d.status === "sent" || d.status === "dismissed" || d.status === "modified");
+  const approved = decided.filter(d => d.status !== "dismissed").length;
+  const approvalRate = decided.length > 0 ? Math.round((approved / decided.length) * 100) : 0;
+
+  const respondedLeads = allLeads.filter(l => l.respondedAt && l.receivedAt);
+  let avgResponseTimeMins = 0;
+  if (respondedLeads.length > 0) {
+    const totalMs = respondedLeads.reduce((sum, l) => sum + (new Date(l.respondedAt!).getTime() - new Date(l.receivedAt!).getTime()), 0);
+    avgResponseTimeMins = Math.round(totalMs / respondedLeads.length / 60000);
+  }
+
+  return { totalLeads, avgResponseTimeMins, approvalRate, draftsPending, leadsSent };
 }

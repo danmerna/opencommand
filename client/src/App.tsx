@@ -26,6 +26,7 @@ import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import AgentOnboarding from "./pages/AgentOnboarding";
 import Creators from "./pages/Creators";
+import AgentDetail from "./pages/AgentDetail";
 
 function Router() {
   return (
@@ -64,6 +65,9 @@ function Router() {
       </Route>
       <Route path="/projects/:id">
         <AppLayout><ProjectDetail /></AppLayout>
+      </Route>
+      <Route path="/agents/:id">
+        <AppLayout><AgentDetail /></AppLayout>
       </Route>
       <Route path="/onboarding/:agentId">
         <AppLayout><AgentOnboarding /></AppLayout>

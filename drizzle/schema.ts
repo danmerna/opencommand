@@ -224,7 +224,7 @@ export const inboxItems = mysqlTable("inbox_items", {
   companyId: int("companyId"),
   taskId: int("taskId"),
   agentId: int("agentId"),
-  type: mysqlEnum("type", ["decision_required", "budget_approval", "task_review", "alert", "poo_generated", "hire_approval", "strategy_review", "kill_switch"]).notNull(),
+  type: mysqlEnum("type", ["decision_required", "budget_approval", "task_review", "alert", "poo_generated", "hire_approval", "strategy_review", "kill_switch", "lead_response"]).notNull(),
   title: varchar("title", { length: 256 }).notNull(),
   body: text("body").notNull(),
   priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium").notNull(),
@@ -652,3 +652,135 @@ export const waitlistEntries = mysqlTable("waitlist_entries", {
 });
 export type WaitlistEntry = typeof waitlistEntries.$inferSelect;
 export type InsertWaitlistEntry = typeof waitlistEntries.$inferInsert;
+
+// ─── Leads (Inbound Lead Records) ──────────────────────────────────────────
+export const leads = mysqlTable("leads", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  agentId: int("agentId"),
+  source: mysqlEnum("source", ["tractorhouse", "website", "phone", "walkin", "email", "manual"]).notNull(),
+  sourceRaw: text("sourceRaw"),
+  contactName: varchar("contactName", { length: 256 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  contactPhone: varchar("contactPhone", { length: 32 }),
+  contactLocation: varchar("contactLocation", { length: 256 }),
+  equipmentInterest: varchar("equipmentInterest", { length: 256 }),
+  inventoryMatchId: int("inventoryMatchId"),
+  pipelineValue: decimal("pipelineValue", { precision: 12, scale: 2 }),
+  status: mysqlEnum("status", [
+    "new", "processing", "draft_ready", "approved", "sent", "replied", "closed", "stale",
+  ]).default("new").notNull(),
+  followUpCount: int("followUpCount").default(0).notNull(),
+  maxFollowUps: int("maxFollowUps").default(3).notNull(),
+  confidenceScore: decimal("confidenceScore", { precision: 5, scale: 2 }),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  receivedAt: timestamp("receivedAt"),
+  respondedAt: timestamp("respondedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Lead = typeof leads.$inferSelect;
+export type InsertLead = typeof leads.$inferInsert;
+
+// ─── Inventory (Equipment from Anvil Pro DMS) ──────────────────────────────
+export const inventory = mysqlTable("inventory", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  stockNumber: varchar("stockNumber", { length: 64 }),
+  make: varchar("make", { length: 64 }),
+  model: varchar("model", { length: 128 }),
+  year: int("year"),
+  category: varchar("category", { length: 64 }),
+  condition: mysqlEnum("condition", ["new", "used"]).default("used").notNull(),
+  price: decimal("price", { precision: 12, scale: 2 }),
+  location: varchar("location", { length: 128 }),
+  hours: int("hours"),
+  description: text("description"),
+  listingUrl: varchar("listingUrl", { length: 512 }),
+  dealBuilderUrl: varchar("dealBuilderUrl", { length: 512 }),
+  isAvailable: boolean("isAvailable").default(true).notNull(),
+  daysOnLot: int("daysOnLot").default(0),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type InventoryItem = typeof inventory.$inferSelect;
+export type InsertInventoryItem = typeof inventory.$inferInsert;
+
+// ─── Draft Responses (Agent-Generated Response Drafts) ─────────────────────
+export const draftResponses = mysqlTable("draft_responses", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  leadId: int("leadId").notNull(),
+  agentId: int("agentId"),
+  channel: mysqlEnum("channel", ["email", "sms"]).default("email").notNull(),
+  subject: varchar("subject", { length: 256 }),
+  body: text("body").notNull(),
+  dealBuilderLink: varchar("dealBuilderLink", { length: 512 }),
+  wordCount: int("wordCount").default(0),
+  confidenceScore: decimal("confidenceScore", { precision: 5, scale: 2 }),
+  guardrailsPassed: boolean("guardrailsPassed").default(false).notNull(),
+  guardrailNotes: text("guardrailNotes"),
+  status: mysqlEnum("status", [
+    "pending_review", "approved", "modified", "dismissed", "sent", "failed",
+  ]).default("pending_review").notNull(),
+  modifiedBody: text("modifiedBody"),
+  approvedAt: timestamp("approvedAt"),
+  approvedBy: int("approvedBy"),
+  sentAt: timestamp("sentAt"),
+  llmModel: varchar("llmModel", { length: 64 }),
+  llmCost: decimal("llmCost", { precision: 10, scale: 4 }).default("0"),
+  executionLog: json("executionLog").$type<string[]>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DraftResponse = typeof draftResponses.$inferSelect;
+export type InsertDraftResponse = typeof draftResponses.$inferInsert;
+
+// ─── Execution Queue (Approved Items Queued for Sending) ───────────────────
+export const executionQueue = mysqlTable("execution_queue", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  draftId: int("draftId").notNull(),
+  leadId: int("leadId").notNull(),
+  channel: mysqlEnum("channel", ["email", "sms"]).default("email").notNull(),
+  recipientAddress: varchar("recipientAddress", { length: 320 }).notNull(),
+  status: mysqlEnum("status", [
+    "queued", "sending", "sent", "failed", "stubbed",
+  ]).default("queued").notNull(),
+  attempts: int("attempts").default(0).notNull(),
+  lastAttemptAt: timestamp("lastAttemptAt"),
+  sentAt: timestamp("sentAt"),
+  errorMessage: text("errorMessage"),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ExecutionQueueItem = typeof executionQueue.$inferSelect;
+export type InsertExecutionQueueItem = typeof executionQueue.$inferInsert;
+
+// ─── Guardrail Violations (Audit Trail) ────────────────────────────────────
+export const guardrailViolations = mysqlTable("guardrail_violations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  agentId: int("agentId"),
+  leadId: int("leadId"),
+  draftId: int("draftId"),
+  ruleCode: varchar("ruleCode", { length: 64 }).notNull(),
+  ruleDescription: text("ruleDescription"),
+  severity: mysqlEnum("severity", ["warning", "block"]).default("block").notNull(),
+  violationDetail: text("violationDetail"),
+  wasOverridden: boolean("wasOverridden").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type GuardrailViolation = typeof guardrailViolations.$inferSelect;
+export type InsertGuardrailViolation = typeof guardrailViolations.$inferInsert;
