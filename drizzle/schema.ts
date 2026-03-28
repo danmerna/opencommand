@@ -98,6 +98,8 @@ export const agents = mysqlTable("agents", {
   totalValueCreated: decimal("totalValueCreated", { precision: 12, scale: 2 }).default("0"),
   totalCostIncurred: decimal("totalCostIncurred", { precision: 12, scale: 2 }).default("0"),
   isMarketplaceListing: boolean("isMarketplaceListing").default(false).notNull(),
+  builtWithSigma: boolean("builtWithSigma").default(false).notNull(),
+  sigmaSpec: json("sigmaSpec").$type<Record<string, unknown>>(),
   orgChartX: int("orgChartX").default(0),
   orgChartY: int("orgChartY").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -846,3 +848,97 @@ export const executiveContextManifests = mysqlTable("executive_context_manifests
 
 export type ExecutiveContextManifest = typeof executiveContextManifests.$inferSelect;
 export type InsertExecutiveContextManifest = typeof executiveContextManifests.$inferInsert;
+
+
+// ─── Action Items (Intent Engine) ──────────────────────────────────────────────
+export const actionItems = mysqlTable("action_items", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  agentId: int("agentId"),
+  actionText: text("actionText").notNull(),
+  context: text("context"),
+  riskLevel: mysqlEnum("riskLevel", ["low", "medium", "high"]).default("medium").notNull(),
+  options: json("options").$type<{
+    recommended: { text: string; reasoning: string };
+    conservative: { text: string; reasoning: string };
+    aggressive: { text: string; reasoning: string };
+  }>().notNull(),
+  selectedOption: mysqlEnum("selectedOption", ["recommended", "conservative", "aggressive"]),
+  status: mysqlEnum("status", ["pending", "approved", "dismissed", "executed", "failed"]).default("pending").notNull(),
+  executedAt: timestamp("executedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ActionItem = typeof actionItems.$inferSelect;
+export type InsertActionItem = typeof actionItems.$inferInsert;
+
+// ─── Overnight Changes (Morning Briefing) ──────────────────────────────────────
+export const overnightChanges = mysqlTable("overnight_changes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  changeType: varchar("changeType", { length: 64 }).notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description"),
+  dataSource: varchar("dataSource", { length: 128 }),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium").notNull(),
+  actionRequired: boolean("actionRequired").default(false).notNull(),
+  actionItemId: int("actionItemId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OvernightChange = typeof overnightChanges.$inferSelect;
+export type InsertOvernightChange = typeof overnightChanges.$inferInsert;
+
+// ─── Strategy Cards (Morning Briefing) ─────────────────────────────────────────
+export const strategyCards = mysqlTable("strategy_cards", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  title: varchar("title", { length: 256 }).notNull(),
+  recommendation: text("recommendation").notNull(),
+  riskLevel: mysqlEnum("riskLevel", ["low", "medium", "high"]).default("medium").notNull(),
+  context: text("context"),
+  actionItemId: int("actionItemId"),
+  status: mysqlEnum("status", ["pending", "approved", "dismissed"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type StrategyCard = typeof strategyCards.$inferSelect;
+export type InsertStrategyCard = typeof strategyCards.$inferInsert;
+
+// ─── Completed Work (ROI Dashboard) ────────────────────────────────────────────
+export const completedWork = mysqlTable("completed_work", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  agentId: int("agentId"),
+  taskDescription: text("taskDescription").notNull(),
+  timeSavedHours: decimal("timeSavedHours", { precision: 8, scale: 2 }).notNull(),
+  laborValueUsd: decimal("laborValueUsd", { precision: 12, scale: 2 }).notNull(),
+  costIncurredUsd: decimal("costIncurredUsd", { precision: 10, scale: 2 }).default("0"),
+  netValueUsd: decimal("netValueUsd", { precision: 12, scale: 2 }).notNull(),
+  outcome: text("outcome"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CompletedWork = typeof completedWork.$inferSelect;
+export type InsertCompletedWork = typeof completedWork.$inferInsert;
+
+// ─── Blueprint Model Evaluations (Premium Model Evaluator) ────────────────────
+export const blueprintModelEvaluations = mysqlTable("blueprint_model_evaluations", {
+  id: int("id").autoincrement().primaryKey(),
+  blueprintId: int("blueprintId").notNull(),
+  userId: int("userId").notNull(),
+  modelName: varchar("modelName", { length: 128 }).notNull(),
+  qualityScore: decimal("qualityScore", { precision: 3, scale: 2 }).notNull(),
+  speedMs: int("speedMs").notNull(),
+  costPerRun: decimal("costPerRun", { precision: 10, scale: 6 }).notNull(),
+  recommendedModel: boolean("recommendedModel").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BlueprintModelEvaluation = typeof blueprintModelEvaluations.$inferSelect;
+export type InsertBlueprintModelEvaluation = typeof blueprintModelEvaluations.$inferInsert;

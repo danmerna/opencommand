@@ -323,6 +323,36 @@ const agentsRouter = router({
     }
     return { success: true };
   }),
+
+  importFromSigma: protectedProcedure
+    .input(z.object({
+      sigmaSpec: z.record(z.string(), z.unknown()),
+      companyId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const spec = input.sigmaSpec as any;
+      const name = spec.name || spec.agentName || "Sigma-Generated Agent";
+      const roleTitle = spec.role || spec.roleTitle || "Specialist";
+      const description = spec.systemInstructions || spec.description || "";
+      const capabilities = spec.capabilities || [];
+      const tools = spec.dataSources || [];
+      
+      await createAgent({
+        userId: ctx.user.id,
+        name,
+        type: "specialist",
+        roleTitle,
+        description,
+        capabilities,
+        tools,
+        companyId: input.companyId,
+        status: "idle",
+        builtWithSigma: true,
+        sigmaSpec: input.sigmaSpec,
+      } as any);
+      
+      return { success: true, message: `Agent "${name}" imported from Sigma` };
+    }),
 });
 
 // ─── OKRs Router ─────────────────────────────────────────────────────────────

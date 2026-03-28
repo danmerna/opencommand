@@ -127,6 +127,20 @@
       "when": 1774649635490,
       "tag": "0017_orange_lyja",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1774706867740,
+      "tag": "0018_chubby_wilson_fisk",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1774707443048,
+      "tag": "0019_omniscient_lord_hawal",
+      "breakpoints": true
     }
   ]
 }

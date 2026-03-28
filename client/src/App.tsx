@@ -32,6 +32,9 @@ import Settings from "./pages/Settings";
 import AdminUsers from "./pages/AdminUsers";
 import Waitlist from "./pages/Waitlist";
 import AuthRelay from "./pages/AuthRelay";
+import { OnboardingSigma } from "./pages/OnboardingSigma";
+import { SigmaImportModal } from "./components/SigmaImportModal";
+import { SigmaBadge } from "./components/SigmaBadge";
 import { usePageTracking } from "./hooks/usePageTracking";
 
 function Router() {
@@ -41,6 +44,9 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/auth/relay" component={AuthRelay} />
       <Route path="/waitlist" component={Waitlist} />
+      <Route path="/onboarding/sigma">
+        <AppLayout><OnboardingSigma /></AppLayout>
+      </Route>
       <Route path="/mission-control">
         <AppLayout><MissionControl /></AppLayout>
       </Route>

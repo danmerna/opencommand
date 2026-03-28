@@ -305,3 +305,84 @@
 - [x] Update AgentDetail Connector tab: show context manifest panel (data sources + freshness)
 - [x] Add claude_code option to BYOA selector with container URL field
 - [x] Write tests for manifest system, crew routing, claude_code connector, and sub-agent inheritance
+
+
+## Intent Engine & Morning Briefing (Phase 1-2)
+
+- [x] Create action_items table in schema (agentId, actionText, riskLevel, options JSONB, status, createdAt)
+- [x] Create overnight_changes table (userId, changeType, title, description, dataSource, priority, createdAt)
+- [x] Create strategy_cards table (userId, title, recommendation, riskLevel, context, createdAt)
+- [x] Create completed_work table (userId, agentId, taskDescription, timeSaved, laborValue, createdAt)
+- [x] Generate and apply database migrations via drizzle-kit
+- [ ] Build tRPC procedures: actions.generate, actions.regenerateOption, actions.approve, actions.dismiss
+- [ ] Build tRPC procedures: briefing.getOvernightChanges, briefing.getStrategyCards
+- [ ] Build tRPC procedures: completedWork.getRecent, completedWork.getTotalSavings
+- [ ] Build IntentEngine frontend component with swipeable cards
+- [ ] Build GestureHandler component for swipe left/right detection
+- [ ] Build MorningBriefing frontend component with tabs (Overnight Changes / Today's Strategy)
+- [ ] Add "Ask Board" button that pre-populates Executive Board with framed question
+- [ ] Build CompletedWorkDashboard with ROI metrics and recent tasks
+- [ ] Add red dot indicators on agent cards for pending work
+- [ ] Implement three risk-level options (Recommended/Conservative/Aggressive) per action
+- [ ] Write tests for action generation, approval workflow, and gesture handling
+
+## BYOA Section Refinement (Phase 2)
+
+- [ ] Replace emoji icons with actual provider logos (Claude, OpenAI, Anthropic, etc.)
+- [ ] Add hover effect showing provider description (e.g., "Claude Code - Self-hosted code execution")
+- [ ] Add setup guide links for each provider (opens modal or external guide)
+- [ ] Improve responsive layout for mobile (stack providers vertically on small screens)
+- [ ] Add "Connect Provider" button below each provider card
+
+## BYOA Launch (Phase 3)
+
+- [ ] Write provider setup guides (OpenAI, Anthropic, Gemini, Custom API, CrewAI, Claude Code)
+- [ ] Create /docs/byoa page with step-by-step integration instructions
+- [ ] Add BYOA section to public landing page (already done)
+- [ ] Update marketing copy to highlight BYOA as core differentiator
+- [ ] Create video demo of BYOA connector setup flow
+- [ ] Test all connectors with real API keys (OpenAI, Anthropic, Gemini)
+- [ ] Add BYOA feature to pricing page (available on all tiers)
+- [ ] Prepare launch announcement and email
+
+## Premium Model Evaluator (Phase 4)
+
+- [ ] Create blueprint_model_evaluations table (blueprintId, modelName, qualityScore, speedMs, costPerRun, createdAt)
+- [ ] Build model evaluator service that tests against top 10 OpenRouter models
+- [ ] Build tRPC procedure: blueprints.evaluateModels
+- [ ] Build tRPC procedure: blueprints.setRecommendedModel
+- [ ] Build ModelEvaluator frontend component with results table
+- [ ] Display cost savings vs. most expensive model
+- [ ] Add recommendation badge showing cheapest model that meets 80% quality threshold
+- [ ] Write tests for model evaluation logic and recommendation algorithm
+
+
+## Σ Agent Builder Integration (Phase 1-5)
+
+- [ ] Create tRPC procedure: agents.importFromSigma (accepts Σ JSON spec)
+- [ ] Add sigma_spec field to agents table (stores original Σ JSON)
+- [ ] Add built_with_sigma boolean field to agents table
+- [ ] Create agent import modal with Σ JSON paste/upload
+- [ ] Update Home.tsx landing page: add "Use Σ to discover" messaging
+- [ ] Add Σ section to landing page with link to Σ Agent Builder
+- [ ] Update landing page copy: "Use Σ to discover. Use OpenCommand to execute."
+- [ ] Create AgentCard component with "Built with Σ" badge
+- [ ] Add "Use Σ to discover your agent" link in agent creation flow
+- [ ] Create unified onboarding page at /onboarding/sigma
+- [ ] Wire Σ → OpenCommand → execution flow in onboarding
+- [ ] Add Σ branding (logo, green accent #00D4AA) to integration UI
+- [ ] Write tests for Σ import flow and badge rendering
+
+
+## Σ (OK Computer) Integration
+
+- [x] Add builtWithSigma and sigmaSpec fields to agents table
+- [x] Create agents.importFromSigma tRPC procedure
+- [x] Update landing page with Σ messaging and link to okcomputer.cloud
+- [x] Create SigmaBadge component for agent cards
+- [x] Create SigmaImportModal component for pasting Σ specs
+- [x] Create unified onboarding page (/onboarding/sigma) with 3-step flow
+- [x] Add /onboarding/sigma route to App.tsx
+- [x] Write tests for Σ import functionality (5 tests passing)
+- [ ] Display SigmaBadge on agent cards when builtWithSigma=true
+- [ ] Add "Import from Σ" button to agent creation flow

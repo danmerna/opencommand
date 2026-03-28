@@ -833,6 +833,49 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─── Section 2.5: BYOA — Works with your favorite AI agents ────── */}
+      <div className="accent-line" />
+      <section className="px-8 py-20 max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-4">
+            Works with your favorite AI agents
+          </h2>
+          <p className="text-muted-foreground text-lg text-body max-w-2xl mx-auto">
+            Bring your own API keys from any major provider
+          </p>
+          <p className="text-sm text-muted-foreground mt-4">
+            Or use <a href="https://okcomputer.cloud" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-semibold">Sigma Agent Builder</a> to discover the perfect agent for your workflow, then deploy it here.
+          </p>
+        </div>
+
+        {/* Provider Cards Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
+          {[
+            { name: "Claude Code", icon: "🌟" },
+            { name: "Codex", icon: "🔵" },
+            { name: "OpenCode", icon: "⬛" },
+            { name: "PI Agent", icon: "⬜" },
+            { name: "Hermes", icon: "🐦" },
+            { name: "OpenClaw", icon: "🔴" },
+          ].map((provider, i) => (
+            <div
+              key={i}
+              className="flex flex-col items-center justify-center p-6 rounded-lg border border-border bg-card/30 hover:bg-card/60 hover:border-foreground/20 transition-all duration-300 cursor-default group"
+            >
+              <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">
+                {provider.icon}
+              </div>
+              <p className="text-sm font-medium text-foreground text-center">{provider.name}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Subtitle */}
+        <p className="text-center text-muted-foreground text-sm text-body">
+          And yes — you can use your existing Claude Code or Codex subscription.
+        </p>
+      </section>
+
       {/* ─── Section 3: Context Engine Demo ────────────────────────── */}
       <div className="accent-line" />
       <section className="px-8 py-20 max-w-7xl mx-auto">
