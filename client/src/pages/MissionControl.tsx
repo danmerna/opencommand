@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import type { JSX } from "react";
 import { Streamdown } from "streamdown";
 import { QuickTour } from "@/components/QuickTour";
+import { SigmaBadge } from "@/components/SigmaBadge";
 import {
   Target, Zap, Plus, Trash2, Check, X, Clock, TrendingUp, DollarSign, FileCheck,
   Inbox, Building2, GitBranch, Heart, Activity, BarChart3, Shield, Power, Wrench,
@@ -500,6 +501,7 @@ export default function MissionControl() {
                 </div>
                 <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                   <h3 className="font-semibold text-foreground">{agent.name}</h3>
+                  {(agent as any).builtWithSigma && <SigmaBadge />}
                   {(() => {
                     const ct = (agent as any).connectorType ?? "internal";
                     const badge = PROVIDER_BADGE[ct] ?? PROVIDER_BADGE.internal;
