@@ -2,7 +2,8 @@ import type { InventoryItem, Lead } from "../../../drizzle/schema";
 import { createGuardrailViolation } from "../../db";
 import { GUARDRAIL_RULES, type GuardrailResult, type GuardrailViolationDetail } from "./types";
 
-const PRICE_PATTERNS = /\$[\d,]+|\b\d{1,3},\d{3}\b|\bpric(?:e|ed|ing)\s+(?:at|is|of|for)\b|\bquote\s+(?:of|at|is)\b|\boffer(?:ing)?\s+\$|\bwe(?:'ll| will)\s+(?:do|sell|let\s+it\s+go)\s+(?:for|at)\b/i;
+// Match specific price commitments but NOT "pricing details for you" (recommended language)
+const PRICE_PATTERNS = /\$[\d,]+|\bpric(?:e|ed|ing)\s+(?:at|is|of)\s+\$?\d|\bquote\s+(?:of|at|is)\s+\$?\d|\boffer(?:ing)?\s+\$|\bwe(?:'ll| will)\s+(?:do|sell|let\s+it\s+go)\s+(?:for|at)\s+\$?\d/i;
 const PERSON_SIGN_PATTERNS = /(?:^|\n)\s*(?:best|regards|sincerely|thanks|cheers),?\s*\n\s*[A-Z][a-z]+ [A-Z][a-z]+/m;
 
 export function checkGuardrails(

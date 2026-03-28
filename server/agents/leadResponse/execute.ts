@@ -1,5 +1,7 @@
+import { eq } from "drizzle-orm";
+import { executionQueue } from "../../../drizzle/schema";
 import {
-  getDraftById, getLeadById, updateDraftResponse, updateLead,
+  getDb, getDraftById, getLeadById, updateDraftResponse, updateLead,
   updateExecutionQueueItem, createPooReceipt, createAuditLogEntry,
   updateAgent, getAgentById,
 } from "../../db";
@@ -10,11 +12,6 @@ export async function executeResponse(
   executionQueueId: number,
   userId: number,
 ): Promise<{ success: boolean; status: string; error?: string }> {
-  // Fetch queue item
-  const { getDb } = await import("../../db");
-  const { executionQueue } = await import("../../../drizzle/schema");
-  const { eq } = await import("drizzle-orm");
-
   const db = await getDb();
   if (!db) return { success: false, status: "failed", error: "Database unavailable" };
 

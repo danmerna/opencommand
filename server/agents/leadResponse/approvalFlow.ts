@@ -1,10 +1,11 @@
+import { eq, and } from "drizzle-orm";
+import { draftResponses } from "../../../drizzle/schema";
 import {
-  getDraftById, updateDraftResponse, updateLead, getLeadById,
+  getDb, getDraftById, updateDraftResponse, updateLead, getLeadById,
   createExecutionQueueItem, createAuditLogEntry,
-  getDraftsByLeadId,
+  getInventoryById,
 } from "../../db";
 import { checkGuardrails, logViolations } from "./guardrails";
-import { getInventoryById } from "../../db";
 
 export async function approveDraft(
   draftId: number,
@@ -45,7 +46,7 @@ export async function approveDraft(
     status: "queued",
   });
 
-  const executionQueueId = (queueResult as any)[0]?.insertId ?? (queueResult as any).insertId ?? 0;
+  const executionQueueId = Number((queueResult as any)[0]?.insertId ?? 0);
 
   // Audit log
   await createAuditLogEntry({
@@ -68,6 +69,9 @@ export async function modifyDraft(
 ): Promise<{ success: boolean; guardrailsPassed: boolean; error?: string }> {
   const draft = await getDraftById(draftId);
   if (!draft) return { success: false, guardrailsPassed: false, error: "Draft not found" };
+  if (draft.status === "sent" || draft.status === "dismissed" || draft.status === "failed") {
+    return { success: false, guardrailsPassed: false, error: `Cannot modify draft with status '${draft.status}'` };
+  }
 
   const lead = await getLeadById(draft.leadId);
   if (!lead) return { success: false, guardrailsPassed: false, error: "Associated lead not found" };
@@ -137,6 +141,9 @@ export async function dismissDraft(
 ): Promise<{ success: boolean; error?: string }> {
   const draft = await getDraftById(draftId);
   if (!draft) return { success: false, error: "Draft not found" };
+  if (draft.status === "sent" || draft.status === "dismissed" || draft.status === "failed") {
+    return { success: false, error: `Cannot dismiss draft with status '${draft.status}'` };
+  }
 
   await updateDraftResponse(draftId, {
     status: "dismissed",
@@ -163,12 +170,6 @@ export async function checkPromotionEligibility(
   agentId: number,
   companyId: number,
 ): Promise<{ eligible: boolean; approvalRate: number; totalDrafts: number; message: string }> {
-  // We need to query drafts for this agent — use getDraftsByLeadId through leads
-  // Instead, query all drafts for this company and filter by agentId
-  const { getDb } = await import("../../db");
-  const { draftResponses } = await import("../../../drizzle/schema");
-  const { eq, and } = await import("drizzle-orm");
-
   const db = await getDb();
   if (!db) return { eligible: false, approvalRate: 0, totalDrafts: 0, message: "Database unavailable" };
 

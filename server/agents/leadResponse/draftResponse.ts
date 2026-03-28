@@ -20,38 +20,45 @@ export async function generateDraft(
   const userPrompt = buildPrompt(lead, inventoryItem);
 
   // Generate the draft via LLM
-  const result = await invokeLLM({
-    messages: [
-      { role: "system", content: LEAD_RESPONSE_SYSTEM_PROMPT },
-      { role: "user", content: userPrompt },
-    ],
-    responseFormat: {
-      type: "json_schema",
-      json_schema: {
-        name: "lead_response_draft",
-        schema: {
-          type: "object",
-          properties: {
-            subject: { type: "string" },
-            body: { type: "string" },
-            dealBuilderLink: { type: ["string", "null"] },
+  let llmResult: Awaited<ReturnType<typeof invokeLLM>> | null = null;
+  let parsed: { subject: string; body: string; dealBuilderLink: string | null };
+
+  try {
+    llmResult = await invokeLLM({
+      messages: [
+        { role: "system", content: LEAD_RESPONSE_SYSTEM_PROMPT },
+        { role: "user", content: userPrompt },
+      ],
+      responseFormat: {
+        type: "json_schema",
+        json_schema: {
+          name: "lead_response_draft",
+          schema: {
+            type: "object",
+            properties: {
+              subject: { type: "string" },
+              body: { type: "string" },
+              dealBuilderLink: { type: ["string", "null"] },
+            },
+            required: ["subject", "body", "dealBuilderLink"],
           },
-          required: ["subject", "body", "dealBuilderLink"],
         },
       },
-    },
-  });
+    });
 
-  const content = result.choices[0]?.message?.content;
-  const text = typeof content === "string" ? content : Array.isArray(content) ? content.map(c => "text" in c ? c.text : "").join("") : "";
+    const content = llmResult.choices[0]?.message?.content;
+    const text = typeof content === "string"
+      ? content
+      : Array.isArray(content)
+        ? content.map(c => "text" in c ? c.text : "").join("")
+        : "";
 
-  let parsed: { subject: string; body: string; dealBuilderLink: string | null };
-  try {
     parsed = JSON.parse(text);
-  } catch {
+  } catch (err) {
+    console.error("[LeadResponse] LLM draft generation failed:", err);
     parsed = {
       subject: `Re: ${lead.equipmentInterest ?? "Your Equipment Inquiry"}`,
-      body: text || "Thank you for your inquiry. A member of the Johnson Tractor Team will follow up with you shortly.",
+      body: "Thank you for your inquiry. A member of the Johnson Tractor Team will follow up with you shortly.",
       dealBuilderLink: inventoryItem?.dealBuilderUrl ?? null,
     };
   }
@@ -92,15 +99,15 @@ export async function generateDraft(
     guardrailsPassed: guardrailResult.passed,
     guardrailNotes,
     status: "pending_review",
-    llmModel: result.model ?? "gemini-2.5-flash",
-    llmCost: result.usage ? String(result.usage.total_tokens * 0.00001) : "0",
+    llmModel: llmResult?.model ?? "gemini-2.5-flash",
+    llmCost: llmResult?.usage ? String(llmResult.usage.total_tokens * 0.00001) : "0",
     executionLog: [
       `${new Date().toISOString()} — Draft generated for lead #${leadId}`,
       `${new Date().toISOString()} — Guardrails: ${guardrailResult.passed ? "PASSED" : "BLOCKED"} (${guardrailResult.violations.length} violations, ${guardrailResult.warnings.length} warnings)`,
     ],
   });
 
-  const draftId = (insertResult as any)[0]?.insertId ?? (insertResult as any).insertId ?? 0;
+  const draftId = Number((insertResult as any)[0]?.insertId ?? 0);
 
   // Update lead status
   await updateLead(leadId, { status: "draft_ready" });

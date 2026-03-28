@@ -4,11 +4,10 @@ import { useState, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Send, Check, X, Edit3, RefreshCw, Upload, Search,
-  Shield, BarChart3, Clock, Target, AlertTriangle, ChevronDown, ChevronUp,
+  ArrowLeft, Send, Check, X, Edit3, Upload, Search,
+  Shield, BarChart3, Clock, Target, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -406,15 +405,35 @@ function InventoryTab({ companyId }: { companyId: number | undefined }) {
     e.target.value = "";
   }
 
+  function splitCsvLine(line: string): string[] {
+    const values: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+        else { inQuotes = !inQuotes; }
+      } else if (ch === ',' && !inQuotes) {
+        values.push(current.trim());
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+    values.push(current.trim());
+    return values;
+  }
+
   function parseCsv(text: string): Array<Record<string, any>> {
     const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
     if (lines.length < 2) return [];
 
-    const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/[^a-z0-9]/g, ""));
+    const headers = splitCsvLine(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ""));
     const items: Array<Record<string, any>> = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(",").map(v => v.trim().replace(/^"|"$/g, ""));
+      const values = splitCsvLine(lines[i]);
       const row: Record<string, string> = {};
       headers.forEach((h, idx) => { row[h] = values[idx] ?? ""; });
 
