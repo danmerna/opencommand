@@ -66,7 +66,7 @@ SALESPERSON_PHONE = os.environ.get("SALESPERSON_PHONE", "+16125550147")
 CREDENTIALS_FILE = os.environ.get("GMAIL_CREDENTIALS_FILE", "credentials.json")
 TOKEN_FILE = os.environ.get("GMAIL_TOKEN_FILE", "token.json")
 
-TRUST_LEVEL = int(os.environ.get("TRUST_LEVEL", "3"))  # L0=Notify, L1=Drafts, L2=Auto+Log, L3=Full Autonomy
+TRUST_LEVEL = int(os.environ.get("TRUST_LEVEL", "1"))  # L0=Notify, L1=Drafts, L2=Auto+Log, L3=Full Autonomy
 
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", "30"))
 
