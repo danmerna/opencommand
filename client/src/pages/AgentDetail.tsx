@@ -5,14 +5,14 @@ import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 import {
   ArrowLeft, Send, Check, X, Edit3, Upload, Search,
-  Shield, BarChart3, Clock, Target, AlertTriangle,
+  Shield, BarChart3, Clock, Target, AlertTriangle, DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
-type Tab = "approval" | "leads" | "inventory" | "guardrails" | "stats";
+type Tab = "approval" | "leads" | "inventory" | "competitive" | "guardrails" | "stats";
 
 export default function AgentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +40,7 @@ export default function AgentDetail() {
     { id: "approval", label: "Approval Queue", icon: Check },
     { id: "leads", label: "Lead Queue", icon: Target },
     { id: "inventory", label: "Inventory", icon: Search },
+    { id: "competitive", label: "Market Intel", icon: DollarSign },
     { id: "guardrails", label: "Guardrails", icon: Shield },
     { id: "stats", label: "Stats", icon: BarChart3 },
   ];
@@ -105,10 +106,11 @@ export default function AgentDetail() {
 
       {/* Tab Content */}
       {tab === "approval" && <ApprovalQueue companyId={companyId} />}
-      {tab === "leads" && <LeadQueue companyId={companyId} />}
+      {tab === "leads" && <LeadQueue companyId={companyId} agentId={agentId} />}
       {tab === "inventory" && <InventoryTab companyId={companyId} />}
+      {tab === "competitive" && <CompetitivePricingTab companyId={companyId} />}
       {tab === "guardrails" && <GuardrailsTab companyId={companyId} />}
-      {tab === "stats" && <StatsTab companyId={companyId} stats={stats} />}
+      {tab === "stats" && <StatsTab companyId={companyId} stats={stats} agentId={agentId} />}
     </div>
   );
 }
@@ -273,11 +275,12 @@ function ApprovalQueue({ companyId }: { companyId: number | undefined }) {
 
 // ─── Lead Queue Tab ─────────────────────────────────────────────────────────
 
-function LeadQueue({ companyId }: { companyId: number | undefined }) {
+function LeadQueue({ companyId, agentId }: { companyId: number | undefined; agentId: number }) {
   const leadsQ = trpc.leadResponse.leadsList.useQuery({ companyId: companyId! }, { enabled: !!companyId });
   const allLeads = leadsQ.data ?? [];
   const [showIngest, setShowIngest] = useState(false);
   const [rawBody, setRawBody] = useState("");
+  const [ingestMode, setIngestMode] = useState<"general" | "tractorhouse">("general");
   const utils = trpc.useUtils();
 
   const ingestMut = trpc.leadResponse.leadsIngest.useMutation({
@@ -286,6 +289,19 @@ function LeadQueue({ companyId }: { companyId: number | undefined }) {
       utils.leadResponse.draftsPending.invalidate();
       utils.leadResponse.stats.invalidate();
       toast.success(`Lead #${data.leadId} ingested, draft #${data.draftId} generated`);
+      setShowIngest(false);
+      setRawBody("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const tractorHouseMut = trpc.leadResponse.tractorHouseIngest.useMutation({
+    onSuccess: (data) => {
+      utils.leadResponse.leadsList.invalidate();
+      utils.leadResponse.draftsPending.invalidate();
+      utils.leadResponse.stats.invalidate();
+      const parsed = data.parsed;
+      toast.success(`TractorHouse lead ingested: ${parsed.contactName ?? "Unknown"} — ${parsed.equipmentInterest ?? "equipment inquiry"}`);
       setShowIngest(false);
       setRawBody("");
     },
@@ -345,20 +361,46 @@ function LeadQueue({ companyId }: { companyId: number | undefined }) {
           <DialogHeader>
             <DialogTitle>Ingest Lead</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-3">Paste a TractorHouse lead notification email or raw inquiry text.</p>
+          <div className="flex gap-2 mb-3">
+            <Button
+              size="sm"
+              variant={ingestMode === "tractorhouse" ? "default" : "outline"}
+              onClick={() => setIngestMode("tractorhouse")}
+            >
+              TractorHouse Email
+            </Button>
+            <Button
+              size="sm"
+              variant={ingestMode === "general" ? "default" : "outline"}
+              onClick={() => setIngestMode("general")}
+            >
+              General Inquiry
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground mb-3">
+            {ingestMode === "tractorhouse"
+              ? "Paste a TractorHouse lead notification email. The system will auto-extract buyer info, match inventory, and generate a draft response."
+              : "Paste any raw inquiry text (email, phone note, walk-in note)."}
+          </p>
           <Textarea
             value={rawBody}
             onChange={e => setRawBody(e.target.value)}
-            placeholder="Paste the email body here..."
+            placeholder={ingestMode === "tractorhouse" ? "Paste the TractorHouse email body here..." : "Paste the inquiry text here..."}
             className="min-h-[200px] font-mono text-sm"
           />
           <div className="flex gap-2 justify-end mt-2">
             <Button variant="ghost" onClick={() => setShowIngest(false)}>Cancel</Button>
             <Button
-              onClick={() => ingestMut.mutate({ rawBody, companyId: companyId!, source: "tractorhouse" })}
-              disabled={!rawBody.trim() || !companyId || ingestMut.isPending}
+              onClick={() => {
+                if (ingestMode === "tractorhouse") {
+                  tractorHouseMut.mutate({ companyId: companyId!, emailBody: rawBody, agentId });
+                } else {
+                  ingestMut.mutate({ rawBody, companyId: companyId!, source: "manual" });
+                }
+              }}
+              disabled={!rawBody.trim() || !companyId || ingestMut.isPending || tractorHouseMut.isPending}
             >
-              {ingestMut.isPending ? "Processing..." : "Ingest & Generate Draft"}
+              {(ingestMut.isPending || tractorHouseMut.isPending) ? "Processing..." : "Ingest & Generate Draft"}
             </Button>
           </div>
         </DialogContent>
@@ -375,10 +417,14 @@ function InventoryTab({ companyId }: { companyId: number | undefined }) {
   const utils = trpc.useUtils();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadMut = trpc.leadResponse.inventoryUpload.useMutation({
+  const anvilProMut = trpc.leadResponse.anvilProParseCsv.useMutation({
     onSuccess: (data) => {
       utils.leadResponse.inventoryList.invalidate();
-      toast.success(`${data.count} inventory items uploaded`);
+      if (data.success) {
+        toast.success(`Anvil Pro import: ${data.inserted} added, ${data.updated} updated${data.skipped ? `, ${data.skipped} skipped` : ""}`);
+      } else {
+        toast.error(`Import failed: ${data.errors.join(", ")}`);
+      }
     },
     onError: (e) => toast.error(e.message),
   });
@@ -393,69 +439,11 @@ function InventoryTab({ companyId }: { companyId: number | undefined }) {
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const parsed = parseCsv(text);
-      if (parsed.length === 0) {
-        toast.error("No valid rows found in CSV");
-        return;
-      }
-      uploadMut.mutate({ companyId, items: parsed });
+      const csvText = event.target?.result as string;
+      anvilProMut.mutate({ companyId, csvText });
     };
     reader.readAsText(file);
     e.target.value = "";
-  }
-
-  function splitCsvLine(line: string): string[] {
-    const values: string[] = [];
-    let current = "";
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
-        else { inQuotes = !inQuotes; }
-      } else if (ch === ',' && !inQuotes) {
-        values.push(current.trim());
-        current = "";
-      } else {
-        current += ch;
-      }
-    }
-    values.push(current.trim());
-    return values;
-  }
-
-  function parseCsv(text: string): Array<Record<string, any>> {
-    const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
-    if (lines.length < 2) return [];
-
-    const headers = splitCsvLine(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ""));
-    const items: Array<Record<string, any>> = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = splitCsvLine(lines[i]);
-      const row: Record<string, string> = {};
-      headers.forEach((h, idx) => { row[h] = values[idx] ?? ""; });
-
-      const item: Record<string, any> = {};
-      // Map common CSV column names to our schema
-      item.stockNumber = row.stocknumber || row.stock || row.stockno || row.stk || undefined;
-      item.make = row.make || row.manufacturer || row.brand || undefined;
-      item.model = row.model || undefined;
-      item.year = parseInt(row.year) || undefined;
-      item.category = row.category || row.type || row.equipmenttype || undefined;
-      item.condition = (row.condition || "").toLowerCase() === "new" ? "new" : "used";
-      item.price = parseFloat((row.price || row.listprice || row.askingprice || "").replace(/[$,]/g, "")) || undefined;
-      item.location = row.location || row.store || row.branch || row.dealership || undefined;
-      item.hours = parseInt(row.hours || row.enginehours || "") || undefined;
-      item.description = row.description || row.notes || row.comments || undefined;
-      item.daysOnLot = parseInt(row.daysonlot || row.dol || "") || undefined;
-
-      if (item.make || item.model || item.stockNumber) {
-        items.push(item);
-      }
-    }
-    return items;
   }
 
   return (
@@ -470,8 +458,8 @@ function InventoryTab({ companyId }: { companyId: number | undefined }) {
             className="hidden"
             onChange={handleCsvUpload}
           />
-          <Button size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadMut.isPending}>
-            <Upload size={14} className="mr-1" /> {uploadMut.isPending ? "Uploading..." : "Upload CSV"}
+          <Button size="sm" onClick={() => fileInputRef.current?.click()} disabled={anvilProMut.isPending}>
+            <Upload size={14} className="mr-1" /> {anvilProMut.isPending ? "Importing..." : "Import Anvil Pro CSV"}
           </Button>
         </div>
       </div>
@@ -522,6 +510,108 @@ function InventoryTab({ companyId }: { companyId: number | undefined }) {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Competitive Pricing / Market Intel Tab ─────────────────────────────────
+
+function CompetitivePricingTab({ companyId }: { companyId: number | undefined }) {
+  const pricingQ = trpc.leadResponse.competitivePricingList.useQuery({ companyId: companyId! }, { enabled: !!companyId });
+  const listings = pricingQ.data ?? [];
+  const [showIngest, setShowIngest] = useState(false);
+  const [content, setContent] = useState("");
+  const utils = trpc.useUtils();
+
+  const ingestMut = trpc.leadResponse.tractorHouseCompetitorIngest.useMutation({
+    onSuccess: (data) => {
+      utils.leadResponse.competitivePricingList.invalidate();
+      toast.success(`${data.count} competitor listings imported`);
+      setShowIngest(false);
+      setContent("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <p className="text-sm text-muted-foreground">{listings.length} competitor listings tracked</p>
+        <Button size="sm" onClick={() => setShowIngest(true)}>
+          <DollarSign size={14} className="mr-1" /> Import Market Data
+        </Button>
+      </div>
+
+      {listings.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <DollarSign size={48} className="mx-auto mb-4 opacity-30" />
+          <p className="text-lg">No market intelligence yet</p>
+          <p className="text-sm mt-1">Paste TractorHouse listing pages or market digest emails to track competitor pricing</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                <th className="pb-2 pr-4">Year</th>
+                <th className="pb-2 pr-4">Make</th>
+                <th className="pb-2 pr-4">Model</th>
+                <th className="pb-2 pr-4">Price</th>
+                <th className="pb-2 pr-4">Dealer</th>
+                <th className="pb-2 pr-4">Location</th>
+                <th className="pb-2 pr-4">Hours</th>
+                <th className="pb-2 pr-4">Source</th>
+                <th className="pb-2">Scraped</th>
+              </tr>
+            </thead>
+            <tbody>
+              {listings.map(item => (
+                <tr key={item.id} className="border-b border-border/50 hover:bg-muted/20">
+                  <td className="py-2 pr-4">{item.year ?? "—"}</td>
+                  <td className="py-2 pr-4">{item.make ?? "—"}</td>
+                  <td className="py-2 pr-4">{item.model ?? "—"}</td>
+                  <td className="py-2 pr-4 font-mono">{item.askingPrice ? `$${parseFloat(item.askingPrice).toLocaleString()}` : "—"}</td>
+                  <td className="py-2 pr-4">{item.dealerName ?? "—"}</td>
+                  <td className="py-2 pr-4">{item.dealerLocation ?? "—"}</td>
+                  <td className="py-2 pr-4">{item.hours ?? "—"}</td>
+                  <td className="py-2 pr-4">
+                    <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-400">{item.source}</Badge>
+                  </td>
+                  <td className="py-2 text-xs text-muted-foreground">
+                    {item.scrapedAt ? new Date(item.scrapedAt).toLocaleDateString() : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <Dialog open={showIngest} onOpenChange={setShowIngest}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Import Competitor Data</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-3">
+            Paste TractorHouse search results, listing pages, or market digest email content. The system will extract competitor pricing data.
+          </p>
+          <Textarea
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            placeholder="Paste TractorHouse listing content here..."
+            className="min-h-[200px] font-mono text-sm"
+          />
+          <div className="flex gap-2 justify-end mt-2">
+            <Button variant="ghost" onClick={() => setShowIngest(false)}>Cancel</Button>
+            <Button
+              onClick={() => ingestMut.mutate({ companyId: companyId!, content })}
+              disabled={!content.trim() || !companyId || ingestMut.isPending}
+            >
+              {ingestMut.isPending ? "Extracting..." : "Extract & Import"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -586,7 +676,42 @@ function GuardrailsTab({ companyId }: { companyId: number | undefined }) {
 
 // ─── Stats Tab ──────────────────────────────────────────────────────────────
 
-function StatsTab({ companyId, stats }: { companyId: number | undefined; stats: any }) {
+function StatsTab({ companyId, stats, agentId }: { companyId: number | undefined; stats: any; agentId: number }) {
+  const agentQ = trpc.agents.get.useQuery({ id: agentId }, { enabled: agentId > 0 });
+  const agent = agentQ.data;
+  const promotionQ = trpc.leadResponse.promotionCheck.useQuery(
+    { agentId, companyId: companyId! },
+    { enabled: !!companyId && agentId > 0 },
+  );
+  const utils = trpc.useUtils();
+
+  const setLevelMut = trpc.leadResponse.setAutonomyLevel.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        utils.agents.get.invalidate({ id: agentId });
+        toast.success(`Autonomy level set to ${data.level}`);
+      } else {
+        toast.error(data.error ?? "Failed to update autonomy level");
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const processQueueMut = trpc.leadResponse.processQueue.useMutation({
+    onSuccess: (data) => {
+      utils.leadResponse.stats.invalidate();
+      toast.success(`Processed ${data.processed} queued items`);
+    },
+  });
+
+  const currentLevel = agent?.autonomyLevel ?? "L1";
+  const levelLabels: Record<string, { label: string; color: string }> = {
+    L0: { label: "L0 — Notify Only", color: "text-gray-400" },
+    L1: { label: "L1 — Drafts for Review", color: "text-emerald-400" },
+    L2: { label: "L2 — Auto-Execute + Log", color: "text-blue-400" },
+    L3: { label: "L3 — Full Autonomy", color: "text-purple-400" },
+  };
+
   if (!stats) {
     return <p className="text-muted-foreground text-sm">Loading stats...</p>;
   }
@@ -601,13 +726,32 @@ function StatsTab({ companyId, stats }: { companyId: number | undefined; stats: 
       </div>
 
       <div className="p-4 rounded-lg border border-border bg-card">
-        <h3 className="text-sm font-medium text-foreground mb-2">Autonomy Promotion Status</h3>
-        <p className="text-xs text-muted-foreground">
-          Current level: <span className="text-emerald-400">L1 — Drafts for Review</span>
+        <h3 className="text-sm font-medium text-foreground mb-2">Trust Gradient — Autonomy Level</h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          Current level: <span className={levelLabels[currentLevel]?.color ?? "text-foreground"}>{levelLabels[currentLevel]?.label ?? currentLevel}</span>
         </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Promotion to L2 requires 95% approval rate over 30+ reviewed drafts with explicit CMO sign-off.
-        </p>
+
+        <div className="flex gap-2 mb-4">
+          {(["L0", "L1", "L2", "L3"] as const).map(level => (
+            <Button
+              key={level}
+              size="sm"
+              variant={currentLevel === level ? "default" : "outline"}
+              className={currentLevel === level ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+              onClick={() => setLevelMut.mutate({ agentId, level })}
+              disabled={setLevelMut.isPending}
+            >
+              {level}
+            </Button>
+          ))}
+        </div>
+
+        {promotionQ.data && (
+          <div className={`p-3 rounded text-xs ${promotionQ.data.eligible ? "bg-emerald-500/10 text-emerald-400" : "bg-muted text-muted-foreground"}`}>
+            {promotionQ.data.message}
+          </div>
+        )}
+
         <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
           <div
             className="h-full bg-emerald-500 rounded-full transition-all"
@@ -615,6 +759,18 @@ function StatsTab({ companyId, stats }: { companyId: number | undefined; stats: 
           />
         </div>
         <p className="text-xs text-muted-foreground mt-1">{stats.approvalRate}% approval rate</p>
+      </div>
+
+      <div className="p-4 rounded-lg border border-border bg-card">
+        <h3 className="text-sm font-medium text-foreground mb-2">Execution Queue</h3>
+        <p className="text-xs text-muted-foreground mb-3">Manually trigger processing of all queued responses.</p>
+        <Button
+          size="sm"
+          onClick={() => processQueueMut.mutate()}
+          disabled={processQueueMut.isPending}
+        >
+          <Send size={14} className="mr-1" /> {processQueueMut.isPending ? "Processing..." : "Process Queue"}
+        </Button>
       </div>
     </div>
   );

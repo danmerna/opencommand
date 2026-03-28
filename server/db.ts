@@ -34,6 +34,7 @@ import {
   draftResponses, InsertDraftResponse,
   executionQueue, InsertExecutionQueueItem,
   guardrailViolations, InsertGuardrailViolation,
+  competitivePricing, InsertCompetitivePricing,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -906,4 +907,38 @@ export async function getLeadResponseStats(companyId: number) {
   }
 
   return { totalLeads, avgResponseTimeMins, approvalRate, draftsPending, leadsSent };
+}
+
+// ─── Competitive Pricing ───────────────────────────────────────────────────
+export async function getCompetitivePricingByCompanyId(companyId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(competitivePricing).where(eq(competitivePricing.companyId, companyId)).orderBy(desc(competitivePricing.createdAt));
+}
+export async function searchCompetitivePricing(companyId: number, make: string, model: string) {
+  const db = await getDb(); if (!db) return [];
+  const makeTerm = `%${make}%`;
+  const modelTerm = `%${model}%`;
+  return db.select().from(competitivePricing).where(
+    and(
+      eq(competitivePricing.companyId, companyId),
+      sql`${competitivePricing.make} LIKE ${makeTerm}`,
+      sql`${competitivePricing.model} LIKE ${modelTerm}`,
+    )
+  ).orderBy(desc(competitivePricing.createdAt)).limit(20);
+}
+export async function createCompetitivePricingEntry(data: InsertCompetitivePricing) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  return db.insert(competitivePricing).values(data);
+}
+export async function bulkCreateCompetitivePricing(items: InsertCompetitivePricing[]) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  if (items.length === 0) return;
+  return db.insert(competitivePricing).values(items);
+}
+export async function getInventoryByStockNumber(companyId: number, stockNumber: string) {
+  const db = await getDb(); if (!db) return undefined;
+  const r = await db.select().from(inventory).where(
+    and(eq(inventory.companyId, companyId), eq(inventory.stockNumber, stockNumber))
+  ).limit(1);
+  return r[0];
 }

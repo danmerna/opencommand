@@ -46,6 +46,8 @@ import {
   getInventoryByCompanyId, searchInventory, bulkCreateInventory, updateInventoryItem, deleteInventoryItem,
   getDraftsByLeadId, getPendingDrafts,
   getLeadResponseStats, getViolationsByCompanyId,
+  getCompetitivePricingByCompanyId, searchCompetitivePricing, bulkCreateCompetitivePricing,
+  getInventoryByStockNumber, getQueuedExecutions,
 } from "./db";
 import { nanoid } from "nanoid";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
@@ -626,6 +628,96 @@ const aiCeoRouter = router({
     }),
 
   decisionLog: protectedProcedure.query(({ ctx }) => getDecisionLogByUserId(ctx.user.id)),
+
+  // ── Morning Briefing ─────────────────────────
+  morningBriefing: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const { generateMorningBriefing } = await import("./agents/morningBriefing/briefingService");
+      return generateMorningBriefing(input.companyId, ctx.user.id);
+    }),
+
+  // ── Executive Board Analysis ──────────────────
+  boardAnalysis: protectedProcedure
+    .input(z.object({ topic: z.string().min(1), companyId: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const okrData = await getOkrsByUserId(ctx.user.id);
+      const agentData = await getAgentsByUserId(ctx.user.id);
+      const okrSummary = JSON.stringify(okrData.slice(0, 10).map(o => ({ objective: o.objective, keyResult: o.keyResult, progress: `${o.currentValue}/${o.targetValue} ${o.unit}` })));
+      const agentSummary = JSON.stringify(agentData.slice(0, 10).map(a => ({ name: a.name, type: a.type, status: a.status })));
+
+      // Gather lead response stats if available
+      let leadStats = "";
+      if (input.companyId) {
+        const stats = await getLeadResponseStats(input.companyId);
+        leadStats = `\nLead Response: ${stats.totalLeads} leads, ${stats.approvalRate}% approval rate, ${stats.avgResponseTimeMins}min avg response, ${stats.draftsPending} pending drafts`;
+      }
+
+      const context = `Topic: ${input.topic}\n\nOKRs: ${okrSummary}\n\nAgent Fleet: ${agentSummary}${leadStats}`;
+
+      const EXEC_PROMPTS: Record<string, { name: string; title: string; prompt: string }> = {
+        ceo: {
+          name: "Arch",
+          title: "Chief Executive Officer",
+          prompt: "You are Arch, the AI CEO. Provide a strategic executive perspective on the topic. Focus on vision alignment, competitive positioning, resource allocation, and growth trajectory. Be concise (3-4 sentences) and decisive. End with one clear recommendation.",
+        },
+        cto: {
+          name: "Sage",
+          title: "Chief Technology Officer",
+          prompt: "You are Sage, the AI CTO. Provide a technical perspective on the topic. Focus on systems architecture, technical feasibility, scalability, security implications, and engineering resources. Be concise (3-4 sentences) and practical. End with one clear recommendation.",
+        },
+        cmo: {
+          name: "Nova",
+          title: "Chief Marketing Officer",
+          prompt: "You are Nova, the AI CMO. Provide a market and customer perspective on the topic. Focus on customer impact, market positioning, brand implications, go-to-market strategy, and competitive differentiation. Be concise (3-4 sentences) and customer-centric. End with one clear recommendation.",
+        },
+        cfo: {
+          name: "Ledger",
+          title: "Chief Financial Officer",
+          prompt: "You are Ledger, the AI CFO. Provide a financial perspective on the topic. Focus on ROI analysis, cost implications, revenue impact, budget allocation, and risk assessment. Be concise (3-4 sentences) and numbers-driven. End with one clear recommendation.",
+        },
+      };
+
+      // Run all 4 executive analyses in parallel
+      const analyses = await Promise.all(
+        Object.entries(EXEC_PROMPTS).map(async ([role, exec]) => {
+          try {
+            const response = await invokeLLM({
+              messages: [
+                { role: "system" as const, content: exec.prompt },
+                { role: "user" as const, content: context },
+              ],
+            });
+            return {
+              role,
+              name: exec.name,
+              title: exec.title,
+              analysis: (response.choices[0]?.message?.content ?? "") as string,
+              error: null,
+            };
+          } catch (err) {
+            return {
+              role,
+              name: exec.name,
+              title: exec.title,
+              analysis: "",
+              error: `Analysis unavailable: ${err instanceof Error ? err.message : "unknown error"}`,
+            };
+          }
+        })
+      );
+
+      await createDecisionLogEntry({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        decisionType: "board_analysis",
+        context: input.topic,
+        decision: analyses.map(a => `[${a.name}] ${a.analysis}`).join("\n\n"),
+        rationale: "Executive Board multi-perspective analysis",
+      });
+
+      return { analyses, topic: input.topic };
+    }),
 });
 
 // ─── App Router ──────────────────────────────────────────────────────────────
@@ -1468,6 +1560,7 @@ const leadResponseRouter = router({
       companyId: z.number(),
       items: z.array(z.object({
         stockNumber: z.string().optional(),
+        serialNumber: z.string().optional(),
         make: z.string().optional(),
         model: z.string().optional(),
         year: z.number().optional(),
@@ -1480,6 +1573,7 @@ const leadResponseRouter = router({
         listingUrl: z.string().optional(),
         dealBuilderUrl: z.string().optional(),
         daysOnLot: z.number().optional(),
+        photos: z.array(z.string()).optional(),
       })),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -1487,6 +1581,7 @@ const leadResponseRouter = router({
         userId: ctx.user.id,
         companyId: input.companyId,
         stockNumber: item.stockNumber,
+        serialNumber: item.serialNumber,
         make: item.make,
         model: item.model,
         year: item.year,
@@ -1499,6 +1594,7 @@ const leadResponseRouter = router({
         listingUrl: item.listingUrl,
         dealBuilderUrl: item.dealBuilderUrl,
         daysOnLot: item.daysOnLot,
+        photos: item.photos,
         isAvailable: true,
       }));
       await bulkCreateInventory(items);
@@ -1532,6 +1628,150 @@ const leadResponseRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => { await deleteInventoryItem(input.id); return { success: true }; }),
 
+  // ── Anvil Pro DMS Integration ─────────────────
+  anvilProParseCsv: protectedProcedure
+    .input(z.object({ companyId: z.number(), csvText: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { parseAnvilProCsv } = await import("./integrations/anvilPro");
+      const result = parseAnvilProCsv(input.csvText);
+
+      if (result.items.length > 0) {
+        const items = result.items.map(item => ({
+          userId: ctx.user.id,
+          companyId: input.companyId,
+          stockNumber: item.stockNumber,
+          serialNumber: item.serialNumber,
+          make: item.make,
+          model: item.model,
+          year: item.year,
+          category: item.category,
+          condition: item.condition as "new" | "used" | undefined,
+          price: item.price ? String(item.price) : undefined,
+          location: item.location,
+          hours: item.hours,
+          description: item.description,
+          listingUrl: item.listingUrl,
+          dealBuilderUrl: item.dealBuilderUrl,
+          photos: item.photos,
+          isAvailable: true,
+        }));
+
+        // Upsert: check for existing stock numbers and update or insert
+        let inserted = 0;
+        let updated = 0;
+        for (const item of items) {
+          if (item.stockNumber) {
+            const existing = await getInventoryByStockNumber(input.companyId, item.stockNumber);
+            if (existing) {
+              await updateInventoryItem(existing.id, item as any);
+              updated++;
+              continue;
+            }
+          }
+          await bulkCreateInventory([item]);
+          inserted++;
+        }
+
+        return {
+          success: true,
+          inserted,
+          updated,
+          skipped: result.skipped,
+          errors: result.errors,
+          total: result.total,
+        };
+      }
+
+      return {
+        success: false,
+        inserted: 0,
+        updated: 0,
+        skipped: result.skipped,
+        errors: result.errors,
+        total: result.total,
+      };
+    }),
+
+  // ── TractorHouse Integration ──────────────────
+  tractorHouseIngest: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      emailBody: z.string(),
+      agentId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { parseTractorHouseLeadEmail } = await import("./integrations/tractorHouse");
+      const { ingestLead } = await import("./agents/leadResponse/ingestLeads");
+      const { generateDraft } = await import("./agents/leadResponse/draftResponse");
+
+      // Parse the TractorHouse email
+      const parsed = await parseTractorHouseLeadEmail(input.emailBody);
+
+      // Ingest into the lead pipeline
+      const { leadId, inventoryMatch } = await ingestLead(
+        input.emailBody,
+        ctx.user.id,
+        input.companyId,
+        "tractorhouse",
+        input.agentId,
+      );
+
+      // Auto-generate draft response
+      const draftResult = await generateDraft(leadId, ctx.user.id, input.companyId, input.agentId);
+
+      return {
+        success: true,
+        leadId,
+        draftId: draftResult.draftId,
+        inventoryMatch,
+        parsed: {
+          contactName: parsed.contactName,
+          contactEmail: parsed.contactEmail,
+          equipmentInterest: parsed.equipmentInterest,
+        },
+        guardrailsPassed: draftResult.guardrailsPassed,
+      };
+    }),
+
+  tractorHouseCompetitorIngest: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      content: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { parseTractorHouseCompetitorData } = await import("./integrations/tractorHouse");
+      const listings = await parseTractorHouseCompetitorData(input.content);
+
+      if (listings.length > 0) {
+        const items = listings.map(l => ({
+          companyId: input.companyId,
+          make: l.make,
+          model: l.model,
+          year: l.year,
+          condition: l.condition as "new" | "used",
+          askingPrice: l.askingPrice ? String(l.askingPrice) : undefined,
+          dealerName: l.dealerName,
+          dealerLocation: l.dealerLocation,
+          listingUrl: l.listingUrl,
+          hours: l.hours,
+          source: "tractorhouse" as const,
+          scrapedAt: new Date(),
+        }));
+        await bulkCreateCompetitivePricing(items);
+      }
+
+      return { success: true, count: listings.length };
+    }),
+
+  // ── Competitive Pricing ───────────────────────
+  competitivePricingList: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(({ input }) => getCompetitivePricingByCompanyId(input.companyId)),
+
+  competitivePricingSearch: protectedProcedure
+    .input(z.object({ companyId: z.number(), make: z.string(), model: z.string() }))
+    .query(({ input }) => searchCompetitivePricing(input.companyId, input.make, input.model)),
+
   // ── Stats & Guardrails ────────────────────────
   stats: protectedProcedure
     .input(z.object({ companyId: z.number() }))
@@ -1546,6 +1786,55 @@ const leadResponseRouter = router({
     .query(async ({ input }) => {
       const { checkPromotionEligibility } = await import("./agents/leadResponse/approvalFlow");
       return checkPromotionEligibility(input.agentId, input.companyId);
+    }),
+
+  // ── Autonomy Level Management ─────────────────
+  setAutonomyLevel: protectedProcedure
+    .input(z.object({
+      agentId: z.number(),
+      level: z.enum(["L0", "L1", "L2", "L3"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const agent = await getAgentById(input.agentId);
+      if (!agent) return { success: false, error: "Agent not found" };
+
+      // L2 promotion requires eligibility check
+      if (input.level === "L2" || input.level === "L3") {
+        const { checkPromotionEligibility } = await import("./agents/leadResponse/approvalFlow");
+        const eligibility = await checkPromotionEligibility(input.agentId, agent.companyId ?? 0);
+        if (!eligibility.eligible && input.level === "L2") {
+          return { success: false, error: eligibility.message };
+        }
+      }
+
+      await updateAgent(input.agentId, { autonomyLevel: input.level });
+
+      await createAuditLogEntry({
+        companyId: agent.companyId,
+        userId: ctx.user.id,
+        agentId: input.agentId,
+        action: "AUTONOMY_LEVEL_CHANGED",
+        entityType: "agent",
+        entityId: input.agentId,
+        details: `Autonomy level changed from ${agent.autonomyLevel} to ${input.level}`,
+      });
+
+      return { success: true, level: input.level };
+    }),
+
+  // ── Process Execution Queue ───────────────────
+  processQueue: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const queued = await getQueuedExecutions(ctx.user.id);
+      if (queued.length === 0) return { success: true, processed: 0 };
+
+      const { executeResponse } = await import("./agents/leadResponse/execute");
+      let processed = 0;
+      for (const item of queued) {
+        const result = await executeResponse(item.id, ctx.user.id);
+        if (result.success) processed++;
+      }
+      return { success: true, processed };
     }),
 });
 

@@ -2,17 +2,18 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { Send, Brain, Target, History, Zap, RotateCcw } from "lucide-react";
+import { Send, Brain, Target, History, Zap, RotateCcw, Users, Sun } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Streamdown } from "streamdown";
 
 type Message = { role: "user" | "assistant"; content: string };
-type Tab = "chat" | "strategy" | "log";
+type Tab = "briefing" | "chat" | "board" | "strategy" | "log";
 
 export default function AICeo() {
   const { isAuthenticated } = useAuth();
-  const [tab, setTab] = useState<Tab>("chat");
+  const [tab, setTab] = useState<Tab>("briefing");
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: "**Arch online.** I am your AI Chief Executive Officer. I have full visibility into your OKRs, agent fleet, and execution history.\n\nI can help you:\n- **Strategize** — analyze your goals and build action plans\n- **Orchestrate** — delegate tasks to the right agents\n- **Decide** — provide executive-level recommendations\n\nWhat would you like to command today?" }
   ]);
@@ -20,6 +21,8 @@ export default function AICeo() {
   const [isThinking, setIsThinking] = useState(false);
   const [goalInput, setGoalInput] = useState("");
   const [strategy, setStrategy] = useState<string | null>(null);
+  const [boardTopic, setBoardTopic] = useState("");
+  const [boardResults, setBoardResults] = useState<Array<{ role: string; name: string; title: string; analysis: string; error: string | null }> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const utils = trpc.useUtils();
@@ -28,10 +31,19 @@ export default function AICeo() {
   const pooSummaryQ = trpc.poo.summary.useQuery(undefined, { enabled: isAuthenticated });
   const decisionLogQ = trpc.aiCeo.decisionLog.useQuery(undefined, { enabled: isAuthenticated && tab === "log" });
 
+  const companiesQ = trpc.companies.list.useQuery(undefined, { enabled: isAuthenticated });
+  const companyId = companiesQ.data?.[0]?.id;
+
   const socratiqueQ = trpc.aiCeo.socratiqueQuestion.useMutation();
   const strategizeQ = trpc.aiCeo.strategize.useMutation({
     onSuccess: (data) => {
       setStrategy(data.strategy);
+      utils.aiCeo.decisionLog.invalidate();
+    },
+  });
+  const boardAnalysisQ = trpc.aiCeo.boardAnalysis.useMutation({
+    onSuccess: (data) => {
+      setBoardResults(data.analyses);
       utils.aiCeo.decisionLog.invalidate();
     },
   });
@@ -63,8 +75,15 @@ export default function AICeo() {
   const totalValue = Number(pooSummaryQ.data?.totalValue ?? 0);
   const activeAgents = agents.filter(a => a.status === "active").length;
 
+  const briefingQ = trpc.aiCeo.morningBriefing.useQuery(
+    { companyId: companyId! },
+    { enabled: !!companyId && tab === "briefing" },
+  );
+
   const tabs = [
+    { id: "briefing" as Tab, label: "Morning Briefing", icon: Sun },
     { id: "chat" as Tab, label: "Arch Chat", icon: Brain },
+    { id: "board" as Tab, label: "Executive Board", icon: Users },
     { id: "strategy" as Tab, label: "Strategy Engine", icon: Target },
     { id: "log" as Tab, label: "Decision Log", icon: History },
   ];
@@ -105,6 +124,87 @@ export default function AICeo() {
           </button>
         ))}
       </div>
+
+      {/* Morning Briefing */}
+      {tab === "briefing" && (
+        <div className="space-y-6">
+          {briefingQ.isLoading && (
+            <div className="text-center py-16">
+              <RotateCcw size={24} className="mx-auto mb-4 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Generating morning briefing...</p>
+            </div>
+          )}
+
+          {briefingQ.data && (
+            <>
+              {/* Briefing Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: "New Leads", value: briefingQ.data.stats.newLeadsOvernight, color: "text-blue-400" },
+                  { label: "Pending Drafts", value: briefingQ.data.stats.pendingDrafts, color: briefingQ.data.stats.pendingDrafts > 0 ? "text-yellow-400" : "text-green-400" },
+                  { label: "Inventory", value: briefingQ.data.stats.inventoryCount, color: "text-foreground" },
+                  { label: "Competitor Intel", value: briefingQ.data.stats.competitorListings, color: "text-purple-400" },
+                ].map((s, i) => (
+                  <div key={i} className="card-minimal p-4">
+                    <div className="text-[10px] text-muted-foreground tracking-widest uppercase mb-1">{s.label}</div>
+                    <div className={`text-2xl font-light ${s.color}`}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Today's Strategy */}
+              <div className="card-minimal p-6 border-l-4 border-l-emerald-500">
+                <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                  <Zap size={14} className="text-emerald-400" /> Today's Strategy
+                </h3>
+                <div className="text-sm text-foreground/80 leading-relaxed prose prose-invert prose-sm max-w-none">
+                  <Streamdown text={briefingQ.data.todayStrategy} />
+                </div>
+              </div>
+
+              {/* Briefing Items */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-foreground">Overnight Activity</h3>
+                {briefingQ.data.items.map((item, i) => {
+                  const severityColors: Record<string, { border: string; badge: string; bg: string }> = {
+                    RED: { border: "border-l-red-500", badge: "bg-red-500/10 text-red-400 border-red-500/30", bg: "bg-red-500/5" },
+                    YELLOW: { border: "border-l-yellow-500", badge: "bg-yellow-500/10 text-yellow-400 border-yellow-500/30", bg: "bg-yellow-500/5" },
+                    BLUE: { border: "border-l-blue-500", badge: "bg-blue-500/10 text-blue-400 border-blue-500/30", bg: "bg-blue-500/5" },
+                    GREEN: { border: "border-l-green-500", badge: "bg-green-500/10 text-green-400 border-green-500/30", bg: "bg-green-500/5" },
+                  };
+                  const colors = severityColors[item.severity] ?? severityColors.BLUE;
+
+                  return (
+                    <div key={i} className={`card-minimal p-4 border-l-4 ${colors.border} ${colors.bg}`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className={`text-xs ${colors.badge}`}>{item.severity}</Badge>
+                            <span className="text-xs text-muted-foreground">{item.category}</span>
+                          </div>
+                          <p className="text-sm font-medium text-foreground">{item.title}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{item.detail}</p>
+                        </div>
+                        {item.metric && (
+                          <span className="text-sm font-mono text-foreground/70">{item.metric}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {!briefingQ.isLoading && !briefingQ.data && (
+            <div className="text-center py-16 text-muted-foreground">
+              <Sun size={48} className="mx-auto mb-4 opacity-30" />
+              <p className="text-lg">Briefing Unavailable</p>
+              <p className="text-sm mt-1">Select a company to generate your morning briefing</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Arch Chat */}
       {tab === "chat" && (
@@ -220,6 +320,79 @@ export default function AICeo() {
               {okrs.length === 0 && <div className="text-muted-foreground text-xs text-center py-2">No OKRs defined</div>}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Executive Board */}
+      {tab === "board" && (
+        <div className="space-y-6">
+          <div className="card-minimal p-6">
+            <h3 className="text-sm font-medium text-foreground mb-3">Board Topic</h3>
+            <p className="text-xs text-muted-foreground mb-4">Present a topic to the executive board. All four executives (CEO, CTO, CMO, CFO) will analyze it simultaneously from their perspectives.</p>
+            <Textarea
+              value={boardTopic}
+              onChange={e => setBoardTopic(e.target.value)}
+              placeholder="e.g. Should we expand into precision agriculture technology for the 2026 season?"
+              className="min-h-[80px] text-sm mb-3"
+            />
+            <Button
+              onClick={() => boardAnalysisQ.mutate({ topic: boardTopic, companyId })}
+              disabled={!boardTopic.trim() || boardAnalysisQ.isPending}
+            >
+              {boardAnalysisQ.isPending ? (
+                <><RotateCcw size={14} className="mr-2 animate-spin" /> Consulting Board...</>
+              ) : (
+                <><Users size={14} className="mr-2" /> Convene Board</>
+              )}
+            </Button>
+          </div>
+
+          {boardResults && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {boardResults.map(exec => {
+                const colors: Record<string, string> = {
+                  ceo: "border-emerald-500/30",
+                  cto: "border-blue-500/30",
+                  cmo: "border-purple-500/30",
+                  cfo: "border-amber-500/30",
+                };
+                const icons: Record<string, string> = {
+                  ceo: "bg-emerald-500/10 text-emerald-400",
+                  cto: "bg-blue-500/10 text-blue-400",
+                  cmo: "bg-purple-500/10 text-purple-400",
+                  cfo: "bg-amber-500/10 text-amber-400",
+                };
+                return (
+                  <div key={exec.role} className={`card-minimal p-5 border ${colors[exec.role] ?? "border-border"}`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${icons[exec.role] ?? ""}`}>
+                        {exec.name[0]}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-foreground">{exec.name}</div>
+                        <div className="text-xs text-muted-foreground">{exec.title}</div>
+                      </div>
+                    </div>
+                    {exec.error ? (
+                      <p className="text-xs text-red-400">{exec.error}</p>
+                    ) : (
+                      <div className="text-sm text-foreground/80 leading-relaxed prose prose-invert prose-sm max-w-none">
+                        <Streamdown text={exec.analysis} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {!boardResults && !boardAnalysisQ.isPending && (
+            <div className="text-center py-16 text-muted-foreground">
+              <Users size={48} className="mx-auto mb-4 opacity-30" />
+              <p className="text-lg">Executive Board Ready</p>
+              <p className="text-sm mt-1">Enter a topic above and convene the board for multi-perspective analysis</p>
+            </div>
+          )}
         </div>
       )}
 

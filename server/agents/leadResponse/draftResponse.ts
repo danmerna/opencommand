@@ -130,6 +130,19 @@ export async function generateDraft(
     guardrailsPassed: guardrailResult.passed,
   });
 
+  // For L2+ agents: auto-approve if guardrails pass
+  if (agentId && guardrailResult.passed) {
+    try {
+      const { autoApproveAndQueue } = await import("./executionWorker");
+      const autoResult = await autoApproveAndQueue(draftId, agentId);
+      if (autoResult.autoExecuted) {
+        console.log(`[LeadResponse] Auto-approved draft #${draftId} for L2+ agent #${agentId}`);
+      }
+    } catch (err) {
+      console.error("[LeadResponse] Auto-approve check failed:", err);
+    }
+  }
+
   return { draftId, draft, guardrailsPassed: guardrailResult.passed, guardrailNotes };
 }
 

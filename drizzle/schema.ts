@@ -87,6 +87,7 @@ export const agents = mysqlTable("agents", {
   tasksCompleted: int("tasksCompleted").default(0).notNull(),
   totalValueCreated: decimal("totalValueCreated", { precision: 12, scale: 2 }).default("0"),
   totalCostIncurred: decimal("totalCostIncurred", { precision: 12, scale: 2 }).default("0"),
+  autonomyLevel: mysqlEnum("autonomyLevel", ["L0", "L1", "L2", "L3"]).default("L1").notNull(),
   isMarketplaceListing: boolean("isMarketplaceListing").default(false).notNull(),
   orgChartX: int("orgChartX").default(0),
   orgChartY: int("orgChartY").default(0),
@@ -703,6 +704,8 @@ export const inventory = mysqlTable("inventory", {
   dealBuilderUrl: varchar("dealBuilderUrl", { length: 512 }),
   isAvailable: boolean("isAvailable").default(true).notNull(),
   daysOnLot: int("daysOnLot").default(0),
+  serialNumber: varchar("serialNumber", { length: 64 }),
+  photos: json("photos").$type<string[]>(),
   metadata: json("metadata").$type<Record<string, unknown>>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -710,6 +713,28 @@ export const inventory = mysqlTable("inventory", {
 
 export type InventoryItem = typeof inventory.$inferSelect;
 export type InsertInventoryItem = typeof inventory.$inferInsert;
+
+// ─── Competitive Pricing (TractorHouse Market Data) ──────────────────────────
+export const competitivePricing = mysqlTable("competitive_pricing", {
+  id: int("id").autoincrement().primaryKey(),
+  companyId: int("companyId"),
+  make: varchar("make", { length: 64 }),
+  model: varchar("model", { length: 128 }),
+  year: int("year"),
+  condition: mysqlEnum("condition", ["new", "used"]).default("used").notNull(),
+  askingPrice: decimal("askingPrice", { precision: 12, scale: 2 }),
+  dealerName: varchar("dealerName", { length: 128 }),
+  dealerLocation: varchar("dealerLocation", { length: 128 }),
+  listingUrl: varchar("listingUrl", { length: 512 }),
+  hours: int("hours"),
+  source: mysqlEnum("source", ["tractorhouse", "machinefinder", "equipmenttrader", "manual"]).default("tractorhouse").notNull(),
+  scrapedAt: timestamp("scrapedAt"),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CompetitivePricing = typeof competitivePricing.$inferSelect;
+export type InsertCompetitivePricing = typeof competitivePricing.$inferInsert;
 
 // ─── Draft Responses (Agent-Generated Response Drafts) ─────────────────────
 export const draftResponses = mysqlTable("draft_responses", {
