@@ -1,0 +1,82 @@
+{
+  "source": "marketplace",
+  "status": "sample",
+  "generated_at": "2026-03-28T06:00:00Z",
+  "dealer": "Johnson Tractor",
+  "period": "last_24h",
+  "listings": [
+    {
+      "stock_id": "JT-2401",
+      "platform": "TractorHouse",
+      "title": "2022 John Deere 6130R",
+      "our_price": 189500,
+      "views_24h": 18,
+      "views_7d": 84,
+      "inquiries_24h": 1,
+      "competitor_avg_price": 195000,
+      "price_position": "below_market"
+    },
+    {
+      "stock_id": "JT-2402",
+      "platform": "TractorHouse",
+      "title": "2021 Case IH Magnum 340",
+      "our_price": 245000,
+      "views_24h": 7,
+      "views_7d": 31,
+      "inquiries_24h": 0,
+      "competitor_avg_price": 238000,
+      "price_position": "above_market"
+    },
+    {
+      "stock_id": "JT-2403",
+      "platform": "TractorHouse",
+      "title": "2023 John Deere S780",
+      "our_price": 425000,
+      "views_24h": 22,
+      "views_7d": 102,
+      "inquiries_24h": 2,
+      "competitor_avg_price": 440000,
+      "price_position": "below_market"
+    },
+    {
+      "stock_id": "JT-2406",
+      "platform": "MachineryTrader",
+      "title": "2023 John Deere 9620RX",
+      "our_price": 575000,
+      "views_24h": 31,
+      "views_7d": 45,
+      "inquiries_24h": 3,
+      "competitor_avg_price": 590000,
+      "price_position": "below_market"
+    },
+    {
+      "stock_id": "JT-2405",
+      "platform": "MachineryTrader",
+      "title": "2020 Case IH 3240 Sprayer",
+      "our_price": 198000,
+      "views_24h": 14,
+      "views_7d": 14,
+      "inquiries_24h": 1,
+      "competitor_avg_price": 205000,
+      "price_position": "below_market"
+    },
+    {
+      "stock_id": "JT-2407",
+      "platform": "TractorHouse",
+      "title": "2021 Case IH Farmall 75A",
+      "our_price": 42000,
+      "views_24h": 9,
+      "views_7d": 52,
+      "inquiries_24h": 0,
+      "competitor_avg_price": 40500,
+      "price_position": "above_market"
+    }
+  ],
+  "market_summary": {
+    "total_views_24h": 101,
+    "total_inquiries_24h": 7,
+    "listings_below_market": 4,
+    "listings_above_market": 2,
+    "trending_categories": ["4WD Tractors", "Combines"]
+  }
+}

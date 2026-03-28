@@ -1,0 +1,60 @@
+{
+  "source": "website",
+  "status": "sample",
+  "generated_at": "2026-03-28T06:00:00Z",
+  "dealer": "Johnson Tractor",
+  "period": "last_24h",
+  "visitors": {
+    "total": 147,
+    "unique": 112,
+    "returning": 35,
+    "avg_session_duration_seconds": 185
+  },
+  "top_pages": [
+    {
+      "path": "/inventory",
+      "title": "Used Equipment Inventory",
+      "views": 89,
+      "avg_time_on_page_seconds": 142
+    },
+    {
+      "path": "/inventory/jt-2406-john-deere-9620rx",
+      "title": "2023 John Deere 9620RX",
+      "views": 34,
+      "avg_time_on_page_seconds": 220
+    },
+    {
+      "path": "/inventory/jt-2403-john-deere-s780",
+      "title": "2023 John Deere S780 Combine",
+      "views": 28,
+      "avg_time_on_page_seconds": 195
+    },
+    {
+      "path": "/financing",
+      "title": "Financing Options",
+      "views": 22,
+      "avg_time_on_page_seconds": 110
+    },
+    {
+      "path": "/contact",
+      "title": "Contact Us",
+      "views": 15,
+      "avg_time_on_page_seconds": 45
+    }
+  ],
+  "search_terms": [
+    {"term": "john deere 9620rx", "count": 12},
+    {"term": "used combine", "count": 8},
+    {"term": "planter for sale", "count": 6},
+    {"term": "case ih sprayer", "count": 5},
+    {"term": "financing rates", "count": 4},
+    {"term": "trade in value", "count": 3}
+  ],
+  "referral_sources": [
+    {"source": "Google Organic", "visitors": 62},
+    {"source": "Direct", "visitors": 38},
+    {"source": "TractorHouse", "visitors": 18},
+    {"source": "Facebook", "visitors": 12},
+    {"source": "MachineryTrader", "visitors": 8}
+  ]
+}

@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ equipment_year }} {{ equipment_make }} {{ equipment_model }} — {{ dealer_name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --navy: #1A2744;
+            --steel-blue: #5B8EC9;
+            --bg-subtle: #F7F8FA;
+            --border: #E2E8F0;
+            --success: #00D4AA;
+            --success-dark: #2E9E6A;
+            --warning: #C97A2E;
+            --alert: #C45B5B;
+            --text-primary: #1A2744;
+            --text-secondary: #4A5568;
+            --text-muted: #718096;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--white);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Top accent bar */
+        .accent-bar {
+            height: 3px;
+            background: var(--steel-blue);
+            width: 100%;
+        }
+
+        /* Equipment hero section */
+        .hero {
+            position: relative;
+            background: linear-gradient(135deg, var(--navy) 0%, #2D4A7A 100%);
+            padding: 2rem 1.5rem;
+            color: var(--white);
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(180deg, rgba(26,39,68,0.3) 0%, rgba(26,39,68,0.8) 100%);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(91, 142, 201, 0.3);
+            border: 1px solid rgba(91, 142, 201, 0.5);
+            color: var(--white);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .hero h1 {
+            font-weight: 800;
+            font-size: 1.75rem;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 0.95rem;
+            opacity: 0.85;
+        }
+
+        .photo-placeholder {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(135deg, #2D4A7A 0%, #1A2744 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+        }
+
+        .photo-placeholder svg {
+            width: 80px;
+            height: 80px;
+            opacity: 0.1;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Section */
+        .section {
+            padding: 1.5rem;
+        }
+
+        .section + .section {
+            border-top: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-weight: 800;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        /* Equipment details grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .detail-item {
+            background: var(--bg-subtle);
+            border-left: 4px solid var(--border);
+            padding: 0.75rem 1rem;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .detail-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .detail-value.mono {
+            font-size: 0.9rem;
+        }
+
+        /* Price section */
+        .price-section {
+            background: var(--bg-subtle);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .price-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .price-amount {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.25rem;
+            font-weight: 600;
+            color: var(--navy);
+        }
+
+        .price-contact {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--steel-blue);
+        }
+
+        /* Financing cards */
+        .financing-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .financing-card {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--border);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .financing-card:hover {
+            border-left-color: var(--steel-blue);
+            background: var(--white);
+            box-shadow: 0 2px 8px rgba(26, 39, 68, 0.08);
+        }
+
+        .financing-card.active {
+            border-left-color: var(--steel-blue);
+            background: var(--white);
+            box-shadow: 0 2px 12px rgba(91, 142, 201, 0.15);
+        }
+
+        .financing-term {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .financing-rate {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        .financing-payment {
+            text-align: right;
+        }
+
+        .financing-amount {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: var(--navy);
+        }
+
+        .financing-per {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Quote block — buyer message echo */
+        .buyer-quote {
+            background: var(--bg-subtle);
+            border-left: 4px solid var(--steel-blue);
+            padding: 1rem 1.25rem;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .buyer-quote-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--steel-blue);
+            margin-bottom: 0.35rem;
+        }
+
+        .buyer-quote-text {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            line-height: 1.5;
+        }
+
+        /* CTAs */
+        .cta-section {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .cta-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .cta-primary {
+            background: var(--steel-blue);
+            color: var(--white);
+        }
+
+        .cta-primary:hover {
+            background: #4A7DB8;
+            box-shadow: 0 4px 12px rgba(91, 142, 201, 0.3);
+        }
+
+        .cta-secondary {
+            background: var(--white);
+            color: var(--navy);
+            border: 2px solid var(--border);
+        }
+
+        .cta-secondary:hover {
+            border-color: var(--steel-blue);
+            background: var(--bg-subtle);
+        }
+
+        /* Salesperson card */
+        .salesperson-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-subtle);
+            padding: 1.25rem;
+            border-radius: 8px;
+        }
+
+        .salesperson-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--navy);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .salesperson-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .salesperson-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .salesperson-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .salesperson-phone {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--steel-blue);
+            font-weight: 500;
+            margin-top: 0.15rem;
+        }
+
+        /* Store info */
+        .store-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .store-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .store-icon {
+            flex-shrink: 0;
+            width: 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 1.5rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            background: var(--bg-subtle);
+        }
+
+        .footer-powered {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        /* Responsive */
+        @media (min-width: 480px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .cta-section {
+                flex-direction: row;
+            }
+
+            .cta-btn {
+                flex: 1;
+            }
+        }
+
+        @media (min-width: 640px) {
+            .hero {
+                padding: 3rem 2rem;
+            }
+
+            .section {
+                padding: 2rem;
+            }
+
+            .cta-section {
+                padding: 2rem;
+            }
+
+            .price-amount {
+                font-size: 2.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="accent-bar"></div>
+
+    <div class="container">
+        <!-- Equipment Hero -->
+        <div class="hero">
+            <div class="photo-placeholder">
+                <svg viewBox="0 0 24 24" fill="white">
+                    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                </svg>
+            </div>
+            <div class="hero-content">
+                <span class="hero-badge">{{ source }}</span>
+                <h1>{{ equipment_year }} {{ equipment_make }} {{ equipment_model }}</h1>
+                {% if equipment_stock %}
+                <div class="hero-subtitle">Stock # <span class="mono">{{ equipment_stock }}</span></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Equipment Details Grid -->
+        <div class="section">
+            <div class="section-title">Equipment Details</div>
+            <div class="details-grid">
+                {% if equipment_hours %}
+                <div class="detail-item">
+                    <div class="detail-label">Hours</div>
+                    <div class="detail-value mono">{{ equipment_hours }}</div>
+                </div>
+                {% endif %}
+                {% if equipment_stock %}
+                <div class="detail-item">
+                    <div class="detail-label">Stock #</div>
+                    <div class="detail-value mono">{{ equipment_stock }}</div>
+                </div>
+                {% endif %}
+                {% if dealer_location %}
+                <div class="detail-item">
+                    <div class="detail-label">Location</div>
+                    <div class="detail-value">{{ dealer_location }}</div>
+                </div>
+                {% endif %}
+                {% if source %}
+                <div class="detail-item">
+                    <div class="detail-label">Source</div>
+                    <div class="detail-value">{{ source }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Price Section -->
+        <div class="price-section">
+            <div class="price-label">Asking Price</div>
+            {% if equipment_price %}
+            <div class="price-amount">${{ "${:,.0f}".format(equipment_price) }}</div>
+            {% else %}
+            <div class="price-contact">Contact for Pricing</div>
+            {% endif %}
+        </div>
+
+        <!-- Financing Scenarios -->
+        {% if financing %}
+        <div class="section">
+            <div class="section-title">Financing Options</div>
+            <div class="financing-cards">
+                {% for scenario in financing %}
+                <div class="financing-card{% if loop.first %} active{% endif %}" data-term="{{ scenario.term_months }}" onclick="selectFinancing(this)">
+                    <div>
+                        <div class="financing-term">{{ scenario.term_months }} Months</div>
+                        <div class="financing-rate mono">{{ scenario.rate_pct }}% APR</div>
+                    </div>
+                    <div class="financing-payment">
+                        <div class="financing-amount">${{ "${:,.0f}".format(scenario.monthly_payment) }}</div>
+                        <div class="financing-per">/month</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Buyer Message Echo -->
+        {% if buyer_message %}
+        <div class="section">
+            <div class="buyer-quote">
+                <div class="buyer-quote-label">You asked</div>
+                <div class="buyer-quote-text">"{{ buyer_message }}"</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- CTAs -->
+        <div class="cta-section">
+            {% if buyer_phone %}
+            <a href="sms:{{ salesperson_phone }}" class="cta-btn cta-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                Reply to This Text
+            </a>
+            {% endif %}
+            {% if salesperson_phone %}
+            <a href="tel:{{ salesperson_phone }}" class="cta-btn cta-secondary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                Call {{ salesperson_name }}
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Salesperson Card -->
+        <div class="section">
+            <div class="section-title">Your Contact</div>
+            <div class="salesperson-card">
+                <div class="salesperson-avatar">{{ salesperson_initials }}</div>
+                <div class="salesperson-info">
+                    <div class="salesperson-name">{{ salesperson_name }}</div>
+                    <div class="salesperson-title">{{ salesperson_title }}</div>
+                    {% if salesperson_phone %}
+                    <div class="salesperson-phone">{{ salesperson_phone }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Store Info -->
+        <div class="section">
+            <div class="section-title">Dealership</div>
+            <div class="store-info">
+                {% if dealer_location %}
+                <div class="store-row">
+                    <span class="store-icon">&#x1F4CD;</span>
+                    <span>{{ dealer_location }}</span>
+                </div>
+                {% endif %}
+                {% if dealer_phone %}
+                <div class="store-row">
+                    <span class="store-icon">&#x260E;</span>
+                    <span class="mono">{{ dealer_phone }}</span>
+                </div>
+                {% endif %}
+                {% if source %}
+                <div class="store-row">
+                    <span class="store-icon">&#x1F517;</span>
+                    <span>Listed on {{ source }}{% if source_url %} &mdash; <a href="{{ source_url }}" style="color:var(--steel-blue);">View Listing</a>{% endif %}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-powered">Powered by Magnetic AI</div>
+            <div class="footer-meta">{{ quote_id }} &middot; {{ dealer_name }}</div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ── Analytics tracking ──
+            var pageData = {
+                quoteId: '{{ quote_id }}',
+                dealerSlug: '{{ dealer_slug }}',
+                openedAt: new Date().toISOString(),
+                financingClicks: [],
+                timeOnPage: 0
+            };
+
+            // Log page open
+            console.log('[DealBuilder] Page opened', {
+                quoteId: pageData.quoteId,
+                timestamp: pageData.openedAt
+            });
+
+            // Track time on page
+            var startTime = Date.now();
+            setInterval(function() {
+                pageData.timeOnPage = Math.round((Date.now() - startTime) / 1000);
+            }, 1000);
+
+            // Log time on page when leaving
+            window.addEventListener('beforeunload', function() {
+                var seconds = Math.round((Date.now() - startTime) / 1000);
+                console.log('[DealBuilder] Page closed', {
+                    quoteId: pageData.quoteId,
+                    timeOnPageSeconds: seconds
+                });
+                // Ready for analytics endpoint:
+                // navigator.sendBeacon('/api/analytics', JSON.stringify(pageData));
+            });
+
+            // Financing card selection
+            window.selectFinancing = function(card) {
+                var cards = document.querySelectorAll('.financing-card');
+                cards.forEach(function(c) { c.classList.remove('active'); });
+                card.classList.add('active');
+
+                var term = card.getAttribute('data-term');
+                var clickEvent = {
+                    term: term,
+                    timestamp: new Date().toISOString()
+                };
+                pageData.financingClicks.push(clickEvent);
+
+                console.log('[DealBuilder] Financing card selected', clickEvent);
+            };
+        })();
+    </script>
+</body>
+</html>

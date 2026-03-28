@@ -1,0 +1,106 @@
+{
+  "source": "crm",
+  "status": "sample",
+  "generated_at": "2026-03-28T06:00:00Z",
+  "dealer": "Johnson Tractor",
+  "pipeline": [
+    {
+      "deal_id": "D-1001",
+      "contact": "Mike Henderson",
+      "equipment": "John Deere 6130R",
+      "stock_id": "JT-2401",
+      "stage": "Negotiation",
+      "value": 189500,
+      "last_activity": "2026-03-27",
+      "days_in_stage": 5,
+      "stalled": false,
+      "probability": 0.70,
+      "notes": "Waiting on trade-in appraisal"
+    },
+    {
+      "deal_id": "D-1002",
+      "contact": "Sarah Lindstrom",
+      "equipment": "John Deere S780",
+      "stock_id": "JT-2403",
+      "stage": "Proposal Sent",
+      "value": 425000,
+      "last_activity": "2026-03-26",
+      "days_in_stage": 3,
+      "stalled": false,
+      "probability": 0.55,
+      "notes": "Financing pre-approved, reviewing terms"
+    },
+    {
+      "deal_id": "D-1003",
+      "contact": "Tom Bakken",
+      "equipment": "Case IH 3240 Sprayer",
+      "stock_id": "JT-2405",
+      "stage": "Closing",
+      "value": 198000,
+      "last_activity": "2026-03-27",
+      "days_in_stage": 2,
+      "stalled": false,
+      "probability": 0.90,
+      "notes": "Signing paperwork Friday"
+    },
+    {
+      "deal_id": "D-1004",
+      "contact": "Dave Erickson",
+      "equipment": "John Deere 1795 Planter",
+      "stock_id": "JT-2404",
+      "stage": "Discovery",
+      "value": 165000,
+      "last_activity": "2026-03-15",
+      "days_in_stage": 18,
+      "stalled": true,
+      "probability": 0.25,
+      "notes": "Went quiet after initial call"
+    },
+    {
+      "deal_id": "D-1005",
+      "contact": "Lisa Runquist",
+      "equipment": "Case IH Farmall 75A",
+      "stock_id": "JT-2407",
+      "stage": "Qualification",
+      "value": 42000,
+      "last_activity": "2026-03-20",
+      "days_in_stage": 12,
+      "stalled": true,
+      "probability": 0.30,
+      "notes": "Comparing with Kubota dealer"
+    },
+    {
+      "deal_id": "D-1006",
+      "contact": "Jeff Pearson",
+      "equipment": "John Deere 9620RX",
+      "stock_id": "JT-2406",
+      "stage": "Discovery",
+      "value": 575000,
+      "last_activity": "2026-03-26",
+      "days_in_stage": 2,
+      "stalled": false,
+      "probability": 0.35,
+      "notes": "Large operation, needs spring delivery"
+    },
+    {
+      "deal_id": "D-1007",
+      "contact": "Amanda Schultz",
+      "equipment": "Case IH Magnum 340",
+      "stock_id": "JT-2402",
+      "stage": "Proposal Sent",
+      "value": 245000,
+      "last_activity": "2026-03-10",
+      "days_in_stage": 22,
+      "stalled": true,
+      "probability": 0.20,
+      "notes": "No response to last two follow-ups"
+    }
+  ],
+  "summary": {
+    "total_pipeline_value": 1839500,
+    "active_deals": 5,
+    "stalled_deals": 2,
+    "closing_this_week": 1,
+    "weighted_pipeline": 698250
+  }
+}
