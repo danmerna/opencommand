@@ -851,19 +851,22 @@ export default function Home() {
         {/* Provider Cards Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
           {[
-            { name: "Claude Code", icon: "🌟" },
-            { name: "Codex", icon: "🔵" },
-            { name: "OpenCode", icon: "⬛" },
-            { name: "PI Agent", icon: "⬜" },
-            { name: "Hermes", icon: "🐦" },
-            { name: "OpenClaw", icon: "🔴" },
+            { name: "Claude Code", logo: "🌟", color: "from-orange-500 to-orange-600" },
+            { name: "Codex", logo: "⚙️", color: "from-gray-700 to-gray-900" },
+            { name: "OpenCode", logo: "→", color: "from-blue-400 to-blue-600" },
+            { name: "Pi Agent", logo: "☁️", color: "from-indigo-400 to-indigo-600" },
+            { name: "Hermes", logo: "⚡", color: "from-purple-500 to-purple-700" },
+            { name: "OpenClaw", logo: "🦞", color: "from-red-500 to-red-600" },
           ].map((provider, i) => (
             <div
               key={i}
-              className="flex flex-col items-center justify-center p-6 rounded-lg border border-border bg-card/30 hover:bg-card/60 hover:border-foreground/20 transition-all duration-300 cursor-default group"
+              className="flex flex-col items-center justify-center p-6 rounded-lg border border-border bg-gradient-to-br hover:border-foreground/40 transition-all duration-300 cursor-default group overflow-hidden"
+              style={{
+                backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)`
+              }}
             >
-              <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">
-                {provider.icon}
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 text-xl font-bold text-white">
+                {provider.logo}
               </div>
               <p className="text-sm font-medium text-foreground text-center">{provider.name}</p>
             </div>
@@ -872,7 +875,7 @@ export default function Home() {
 
         {/* Subtitle */}
         <p className="text-center text-muted-foreground text-sm text-body">
-          And yes — you can use your existing Claude Code or Codex subscription.
+          And yes — you can use your existing Claude Code or Codex subscription. Hermes runs locally with zero API cost.
         </p>
       </section>
 

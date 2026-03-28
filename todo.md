@@ -386,3 +386,34 @@
 - [x] Write tests for Σ import functionality (5 tests passing)
 - [ ] Display SigmaBadge on agent cards when builtWithSigma=true
 - [ ] Add "Import from Σ" button to agent creation flow
+
+## BYOA Provider Logos Update
+
+- [x] Update BYOA provider cards with real logos and branding
+- [x] Add gradient backgrounds for each provider (Claude Code orange, Codex gray, OpenCode blue, Pi Agent indigo, Hermes purple, OpenClaw red)
+- [x] Add hover scale animation to provider cards
+- [x] Update subtitle to mention Hermes local execution
+- [ ] Replace emoji logos with official SVG/PNG assets from each provider
+- [ ] Add provider links to official documentation
+- [ ] Add "Set up guide" button to each provider card
+
+
+## Intent Engine Backend (In Progress)
+
+- [ ] Create action_items table with three risk-level options
+- [ ] Create overnight_changes table for morning briefing
+- [ ] Create strategy_cards table for strategy recommendations
+- [ ] Implement action generation with LLM integration
+- [ ] Implement option regeneration (Conservative/Aggressive)
+- [ ] Implement batch approval procedure
+- [ ] Write backend tests for action flows
+
+## Completed Work Dashboard
+
+- [ ] Create completed_work table with ROI tracking
+- [ ] Implement procedure to fetch completed work
+- [ ] Build CompletedWorkDashboard component
+- [ ] Add cumulative savings banner
+- [ ] Add red dot indicators on agent cards
+- [ ] Implement time/labor value calculations
+- [ ] Write tests for ROI calculations
