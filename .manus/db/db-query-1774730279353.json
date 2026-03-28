@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `emails` (\n\t`id` int AUTO_INCREMENT PRIMARY KEY NOT NULL,\n\t`messageId` varchar(255) NOT NULL,\n\t`threadId` varchar(255),\n\t`from` varchar(255) NOT NULL,\n\t`to` varchar(255) NOT NULL,\n\t`subject` varchar(512) NOT NULL,\n\t`body` text NOT NULL,\n\t`htmlBody` text,\n\t`attachmentsJson` text,\n\t`timestamp` timestamp NOT NULL,\n\t`status` varchar(50) NOT NULL DEFAULT 'received',\n\t`metadataJson` text,\n\t`createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\t`updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute CREATE TABLE `emails` (\n\t`id` int AUTO_INCREMENT PRIMARY KEY NOT NULL,\n\t`messageId` varchar(255) NOT NULL,\n\t`threadId` varchar(255),\n\t`from` varchar(255) NOT NULL,\n\t`to` varchar(255) NOT NULL,\n\t`subject` varchar(512) NOT NULL,\n\t`body` text NOT NULL,\n\t`htmlBody` text,\n\t`attachmentsJson` text,\n\t`timestamp` timestamp NOT NULL,\n\t`status` varchar(50) NOT NULL DEFAULT 'received',\n\t`metadataJson` text,\n\t`createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\t`updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 293
+}

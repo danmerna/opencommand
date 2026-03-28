@@ -942,3 +942,25 @@ export const blueprintModelEvaluations = mysqlTable("blueprint_model_evaluations
 
 export type BlueprintModelEvaluation = typeof blueprintModelEvaluations.$inferSelect;
 export type InsertBlueprintModelEvaluation = typeof blueprintModelEvaluations.$inferInsert;
+
+
+// ─── Emails (Linq Integration) ──────────────────────────────────────────────
+export const emails = mysqlTable("emails", {
+  id: int("id").autoincrement().primaryKey(),
+  messageId: varchar("messageId", { length: 255 }).notNull(),
+  threadId: varchar("threadId", { length: 255 }),
+  from: varchar("from", { length: 255 }).notNull(),
+  to: varchar("to", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 512 }).notNull(),
+  body: text("body").notNull(),
+  htmlBody: text("htmlBody"),
+  attachmentsJson: text("attachmentsJson"),
+  timestamp: timestamp("timestamp").notNull(),
+  status: varchar("status", { length: 50 }).default("received").notNull(),
+  metadataJson: text("metadataJson"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Email = typeof emails.$inferSelect;
+export type InsertEmail = typeof emails.$inferInsert;

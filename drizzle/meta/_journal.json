@@ -141,6 +141,13 @@
       "when": 1774707443048,
       "tag": "0019_omniscient_lord_hawal",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1774730271652,
+      "tag": "0020_thankful_amazoness",
+      "breakpoints": true
     }
   ]
 }
