@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ dealer_name }} — {{ equipment_year }} {{ equipment_make }} {{ equipment_model }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #1A2744;
+      --steel: #5B8EC9;
+      --bg-subtle: #F7F8FA;
+      --border: #E2E8F0;
+      --text: #334155;
+      --text-muted: #64748B;
+      --white: #FFFFFF;
+      --green: #10B981;
+      --amber: #F59E0B;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--white);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Header */
+    .header {
+      background: var(--navy);
+      color: var(--white);
+      padding: 24px 20px;
+    }
+    .header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .header .quote-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      opacity: 0.6;
+    }
+
+    /* Equipment Card */
+    .equipment-card {
+      background: var(--bg-subtle);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px;
+    }
+    .equipment-photo {
+      width: 100%;
+      height: 200px;
+      background: var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .equipment-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .equipment-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .equipment-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .detail-item {
+      border-left: 4px solid var(--steel);
+      padding: 8px 12px;
+      background: var(--white);
+      border-radius: 0 6px 6px 0;
+    }
+    .detail-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .detail-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--navy);
+    }
+
+    /* Price */
+    .price-section {
+      padding: 20px;
+      text-align: center;
+    }
+    .price-amount {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--navy);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .price-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Financing Cards */
+    .financing-section {
+      padding: 0 20px 20px;
+    }
+    .financing-section h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 12px;
+    }
+    .financing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .financing-card {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--white);
+    }
+    .financing-card:hover, .financing-card.selected {
+      border-color: var(--steel);
+      background: #F0F5FF;
+    }
+    .financing-card.selected {
+      box-shadow: 0 0 0 1px var(--steel);
+    }
+    .financing-term {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--navy);
+    }
+    .financing-payment {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--steel);
+      margin: 6px 0 2px;
+    }
+    .financing-label {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Buyer Message */
+    .buyer-message {
+      margin: 0 20px 20px;
+      border-left: 4px solid var(--steel);
+      background: var(--bg-subtle);
+      border-radius: 0 8px 8px 0;
+      padding: 16px;
+    }
+    .buyer-message-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .buyer-message-text {
+      font-size: 14px;
+      color: var(--text);
+      font-style: italic;
+    }
+
+    /* CTAs */
+    .cta-section {
+      padding: 0 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cta-primary {
+      display: block;
+      background: var(--steel);
+      color: var(--white);
+      text-align: center;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .cta-primary:hover { background: #4A7DB8; }
+    .cta-secondary {
+      display: block;
+      background: var(--white);
+      color: var(--navy);
+      text-align: center;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 2px solid var(--border);
+      transition: all 0.2s;
+    }
+    .cta-secondary:hover {
+      border-color: var(--navy);
+      background: var(--bg-subtle);
+    }
+
+    /* Salesperson Card */
+    .salesperson-card {
+      margin: 0 20px 20px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .salesperson-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .salesperson-name {
+      font-weight: 700;
+      color: var(--navy);
+      font-size: 15px;
+    }
+    .salesperson-title {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .salesperson-phone {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--steel);
+      text-decoration: none;
+    }
+
+    /* Store Info */
+    .store-grid {
+      margin: 0 20px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .store-item {
+      background: var(--bg-subtle);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .store-item-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .store-item-value {
+      font-size: 13px;
+      color: var(--navy);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 24px 20px;
+      border-top: 1px solid var(--border);
+      margin-top: 20px;
+    }
+    .footer-powered {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .footer-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #94A3B8;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="container">
+      <h1>{{ dealer_name }}</h1>
+      <span class="quote-id">{{ quote_id }}</span>
+    </div>
+  </div>
+
+  <!-- Equipment -->
+  <div class="equipment-card">
+    <div class="equipment-photo">📷 Photo Coming Soon</div>
+    <div class="equipment-title">{{ equipment_year }} {{ equipment_make }} {{ equipment_model }}</div>
+    <div class="equipment-subtitle">Stock #{{ equipment_stock }} · {{ equipment_location }}</div>
+    <div class="equipment-details">
+      {% if equipment_hours %}
+      <div class="detail-item">
+        <div class="detail-label">Hours</div>
+        <div class="detail-value">{{ equipment_hours }}</div>
+      </div>
+      {% endif %}
+      {% if equipment_year %}
+      <div class="detail-item">
+        <div class="detail-label">Year</div>
+        <div class="detail-value">{{ equipment_year }}</div>
+      </div>
+      {% endif %}
+      <div class="detail-item">
+        <div class="detail-label">Location</div>
+        <div class="detail-value">{{ equipment_location }}</div>
+      </div>
+      {% if source_platform %}
+      <div class="detail-item">
+        <div class="detail-label">Source</div>
+        <div class="detail-value">{{ source_platform }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Price -->
+  <div class="price-section">
+    {% if equipment_price %}
+    <div class="price-label">Listed Price</div>
+    <div class="price-amount">${{ equipment_price }}</div>
+    {% else %}
+    <div class="price-label">Pricing</div>
+    <div class="price-amount" style="font-size: 20px;">Contact for Pricing</div>
+    {% endif %}
+  </div>
+
+  <!-- Financing Options -->
+  {% if equipment_price %}
+  <div class="financing-section">
+    <h3>Estimated Monthly Payment</h3>
+    <div class="financing-grid">
+      <div class="financing-card selected" onclick="selectFinancing(this, 0)">
+        <div class="financing-term">36 mo</div>
+        <div class="financing-payment" id="payment-36">—</div>
+        <div class="financing-label">per month</div>
+      </div>
+      <div class="financing-card" onclick="selectFinancing(this, 1)">
+        <div class="financing-term">60 mo</div>
+        <div class="financing-payment" id="payment-60">—</div>
+        <div class="financing-label">per month</div>
+      </div>
+      <div class="financing-card" onclick="selectFinancing(this, 2)">
+        <div class="financing-term">84 mo</div>
+        <div class="financing-payment" id="payment-84">—</div>
+        <div class="financing-label">per month</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Buyer Message -->
+  {% if buyer_message %}
+  <div class="buyer-message">
+    <div class="buyer-message-label">You asked</div>
+    <div class="buyer-message-text">"{{ buyer_message }}"</div>
+  </div>
+  {% endif %}
+
+  <!-- CTAs -->
+  <div class="cta-section">
+    <a href="sms:{{ sig_number }}" class="cta-primary" onclick="trackCTA('reply_text')">
+      Reply to This Text
+    </a>
+    <a href="tel:{{ salesperson_phone }}" class="cta-secondary" onclick="trackCTA('call_salesperson')">
+      📞 Call {{ salesperson_name }}
+    </a>
+  </div>
+
+  <!-- Salesperson Card -->
+  <div class="salesperson-card">
+    <div class="salesperson-avatar">{{ salesperson_initials }}</div>
+    <div>
+      <div class="salesperson-name">{{ salesperson_name }}</div>
+      <div class="salesperson-title">Sales Specialist · {{ dealer_name }}</div>
+      <a href="tel:{{ salesperson_phone }}" class="salesperson-phone">{{ salesperson_phone }}</a>
+    </div>
+  </div>
+
+  <!-- Store Info -->
+  <div class="store-grid">
+    <div class="store-item">
+      <div class="store-item-label">Location</div>
+      <div class="store-item-value">{{ dealer_location }}</div>
+    </div>
+    <div class="store-item">
+      <div class="store-item-label">Hours</div>
+      <div class="store-item-value">Mon–Fri 7:30–5</div>
+    </div>
+    {% if source_platform %}
+    <div class="store-item">
+      <div class="store-item-label">Source</div>
+      <div class="store-item-value">{{ source_platform }}</div>
+    </div>
+    {% endif %}
+    <div class="store-item">
+      <div class="store-item-label">Generated</div>
+      <div class="store-item-value">{{ generated_at }}</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-powered">Powered by Magnetic AI</div>
+    <div class="footer-meta">{{ quote_id }} · {{ dealer_slug }} · {{ source_platform }}</div>
+  </div>
+
+  <script>
+    // Financing calculator
+    (function() {
+      var priceText = '{{ equipment_price }}'.replace(/[^0-9.]/g, '');
+      var price = parseFloat(priceText);
+      if (!isNaN(price) && price > 0) {
+        var rate = 0.0649 / 12; // 6.49% APR
+        var terms = [36, 60, 84];
+        terms.forEach(function(t) {
+          var payment = (price * rate * Math.pow(1 + rate, t)) / (Math.pow(1 + rate, t) - 1);
+          var el = document.getElementById('payment-' + t);
+          if (el) el.textContent = '$' + Math.round(payment).toLocaleString();
+        });
+      }
+    })();
+
+    // Financing card selection
+    function selectFinancing(el, index) {
+      document.querySelectorAll('.financing-card').forEach(function(c) {
+        c.classList.remove('selected');
+      });
+      el.classList.add('selected');
+      trackEvent('financing_tab_click', { tab: index });
+    }
+
+    // Tracking (console for now — production: POST to analytics API)
+    var pageOpenTime = Date.now();
+    trackEvent('page_open', { quote_id: '{{ quote_id }}', dealer: '{{ dealer_slug }}' });
+
+    function trackEvent(name, data) {
+      var payload = {
+        event: name,
+        quote_id: '{{ quote_id }}',
+        dealer_slug: '{{ dealer_slug }}',
+        timestamp: new Date().toISOString(),
+        time_on_page_ms: Date.now() - pageOpenTime,
+        data: data || {}
+      };
+      console.log('[DealBuilder Track]', JSON.stringify(payload));
+    }
+
+    function trackCTA(action) {
+      trackEvent('cta_click', { action: action });
+    }
+
+    // Track time on page every 10 seconds
+    setInterval(function() {
+      trackEvent('heartbeat', { seconds: Math.round((Date.now() - pageOpenTime) / 1000) });
+    }, 10000);
+
+    // Track page visibility changes
+    document.addEventListener('visibilitychange', function() {
+      trackEvent(document.hidden ? 'page_hidden' : 'page_visible', {});
+    });
+  </script>
+</body>
+</html>
