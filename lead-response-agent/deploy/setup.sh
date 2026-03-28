@@ -3,41 +3,31 @@
 # Σ Runtime — One-Command Server Setup
 # ============================================================================
 #
-# Run on a fresh Ubuntu 24.04 VPS (Hetzner CX22, DigitalOcean, etc.):
+# Run on Ubuntu 24.04 VPS:
 #
-#   curl -sSL https://raw.githubusercontent.com/danmerna/opencommand/claude/lead-response-agent-YHxGy/lead-response-agent/deploy/setup.sh | bash
-#
-# Or after cloning:
-#
-#   chmod +x deploy/setup.sh && sudo ./deploy/setup.sh
-#
-# Prerequisites:
-#   - Ubuntu 24.04
-#   - Root or sudo access
-#   - Domain pointed at server IP (sigma.opencommand.co)
-#
-# What this installs:
-#   - Python 3.12 + pip + venv
-#   - nginx + certbot (SSL)
-#   - Lead Response Agent (polling service)
-#   - Webhook Server (Flask, port 5050)
-#   - Morning Briefing cron (6:30 AM CT)
-#   - Tailscale (optional, for admin access)
+#   git clone --branch claude/lead-response-agent-YHxGy --single-branch \
+#     https://github.com/danmerna/opencommand.git /tmp/opencommand
+#   chmod +x /tmp/opencommand/lead-response-agent/deploy/setup.sh
+#   sudo DOMAIN=sigma.opencommand.co /tmp/opencommand/lead-response-agent/deploy/setup.sh
 #
 # ============================================================================
 
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Config — edit these before running
+# Config
 # ---------------------------------------------------------------------------
 
 DOMAIN="${DOMAIN:-sigma.opencommand.co}"
 APP_USER="${APP_USER:-sig}"
-APP_DIR="/home/${APP_USER}/lead-response-agent"
+APP_HOME="/home/${APP_USER}"
+APP_DIR="${APP_HOME}/lead-response-agent"
+VENV_DIR="${APP_HOME}/venv"
+ENV_FILE="${APP_HOME}/.env"
 REPO_URL="https://github.com/danmerna/opencommand.git"
 REPO_BRANCH="claude/lead-response-agent-YHxGy"
 EMAIL_FOR_CERTBOT="${CERTBOT_EMAIL:-daniel@opencommand.co}"
+SERVER_IP="$(curl -s --max-time 5 ifconfig.me || echo '<unknown>')"
 
 # ---------------------------------------------------------------------------
 # Colors
@@ -63,26 +53,31 @@ fi
 
 log "Σ Runtime Setup — starting..."
 log "Domain: ${DOMAIN}"
-log "App user: ${APP_USER}"
+log "Server IP: ${SERVER_IP}"
 
 # ---------------------------------------------------------------------------
 # 1. System packages
 # ---------------------------------------------------------------------------
 
-log "Installing system packages..."
+log "1/12 — Installing system packages..."
 apt-get update -qq
 apt-get install -y -qq \
-    python3.12 python3.12-venv python3-pip \
+    python3 python3-venv python3-pip \
     nginx certbot python3-certbot-nginx \
     git curl ufw jq
+
+# Use python3 (whatever version is available on Ubuntu 24.04)
+PYTHON=$(command -v python3)
+log "Using Python: ${PYTHON} ($(${PYTHON} --version))"
 
 # ---------------------------------------------------------------------------
 # 2. Create app user
 # ---------------------------------------------------------------------------
 
+log "2/12 — Setting up user: ${APP_USER}..."
 if ! id "${APP_USER}" &>/dev/null; then
-    log "Creating user: ${APP_USER}"
     useradd -m -s /bin/bash "${APP_USER}"
+    log "Created user: ${APP_USER}"
 else
     log "User ${APP_USER} already exists"
 fi
@@ -91,39 +86,65 @@ fi
 # 3. Clone repo and install dependencies
 # ---------------------------------------------------------------------------
 
-log "Cloning repository..."
-if [ -d "${APP_DIR}" ]; then
-    cd "${APP_DIR}" && git pull origin "${REPO_BRANCH}" || true
+log "3/12 — Cloning repository..."
+REPO_DIR="${APP_HOME}/opencommand"
+if [ -d "${REPO_DIR}" ]; then
+    cd "${REPO_DIR}"
+    sudo -u "${APP_USER}" git fetch origin "${REPO_BRANCH}" 2>/dev/null || true
+    sudo -u "${APP_USER}" git checkout "${REPO_BRANCH}" 2>/dev/null || true
+    sudo -u "${APP_USER}" git pull origin "${REPO_BRANCH}" 2>/dev/null || true
+    log "Updated existing repo"
 else
     sudo -u "${APP_USER}" git clone --branch "${REPO_BRANCH}" --single-branch \
-        "${REPO_URL}" "/home/${APP_USER}/opencommand"
-    ln -sf "/home/${APP_USER}/opencommand/lead-response-agent" "${APP_DIR}"
+        "${REPO_URL}" "${REPO_DIR}"
+    log "Cloned fresh"
 fi
 
-log "Setting up Python virtual environment..."
-sudo -u "${APP_USER}" python3.12 -m venv "/home/${APP_USER}/venv"
-sudo -u "${APP_USER}" /home/${APP_USER}/venv/bin/pip install -q -r "${APP_DIR}/requirements.txt"
+# Symlink lead-response-agent to home dir for convenience
+ln -sfn "${REPO_DIR}/lead-response-agent" "${APP_DIR}"
+
+log "4/12 — Installing Python dependencies..."
+sudo -u "${APP_USER}" ${PYTHON} -m venv "${VENV_DIR}"
+sudo -u "${APP_USER}" "${VENV_DIR}/bin/pip" install -q --upgrade pip
+sudo -u "${APP_USER}" "${VENV_DIR}/bin/pip" install -q -r "${APP_DIR}/requirements.txt"
 
 # ---------------------------------------------------------------------------
-# 4. Environment file
+# 5. Write .env with all credentials baked in
 # ---------------------------------------------------------------------------
 
-ENV_FILE="/home/${APP_USER}/.env"
-if [ ! -f "${ENV_FILE}" ]; then
-    log "Creating .env from template..."
+log "5/12 — Writing .env..."
+if [ -f "${ENV_FILE}" ]; then
+    log ".env already exists, preserving"
+else
     cp "${APP_DIR}/.env.example" "${ENV_FILE}"
+    # Substitute known non-secret defaults
+    sed -i "s|DEALBUILDER_BASE_URL=|DEALBUILDER_BASE_URL=https://${DOMAIN}|" "${ENV_FILE}"
+    sed -i "s|DEALBUILDER_OUTPUT_DIR=./dealbuilder_pages|DEALBUILDER_OUTPUT_DIR=${APP_HOME}/dealbuilder_pages|" "${ENV_FILE}"
+    sed -i "s|GMAIL_CREDENTIALS_FILE=credentials.json|GMAIL_CREDENTIALS_FILE=${APP_DIR}/credentials.json|" "${ENV_FILE}"
+    sed -i "s|GMAIL_TOKEN_FILE=token.json|GMAIL_TOKEN_FILE=${APP_DIR}/token.json|" "${ENV_FILE}"
     chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
     chmod 600 "${ENV_FILE}"
-    warn ">>> IMPORTANT: Edit ${ENV_FILE} with your API keys! <<<"
-else
-    log ".env already exists, skipping"
+    warn ">>> Edit ${ENV_FILE} and add your API keys (LINQ_API_KEY, RESEND_API_KEY, LLM_API_KEY) <<<"
 fi
 
 # ---------------------------------------------------------------------------
-# 5. Systemd — Lead Response Agent (polling)
+# 6. Write Gmail OAuth credentials.json
 # ---------------------------------------------------------------------------
 
-log "Installing Lead Response Agent service..."
+log "6/12 — Checking Gmail credentials.json..."
+CREDS_FILE="${APP_DIR}/credentials.json"
+if [ -f "${CREDS_FILE}" ]; then
+    log "credentials.json found"
+else
+    warn "credentials.json NOT found at ${CREDS_FILE}"
+    warn "Upload it: scp credentials.json root@<ip>:${CREDS_FILE}"
+fi
+
+# ---------------------------------------------------------------------------
+# 7. Systemd — Lead Response Agent (polling)
+# ---------------------------------------------------------------------------
+
+log "7/12 — Installing systemd services..."
 cat > /etc/systemd/system/sig-lead-response.service << UNIT
 [Unit]
 Description=Σ Lead Response Agent
@@ -135,7 +156,7 @@ Type=simple
 User=${APP_USER}
 WorkingDirectory=${APP_DIR}
 EnvironmentFile=${ENV_FILE}
-ExecStart=/home/${APP_USER}/venv/bin/python lead_response_agent.py
+ExecStart=${VENV_DIR}/bin/python lead_response_agent.py
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -147,10 +168,9 @@ WantedBy=multi-user.target
 UNIT
 
 # ---------------------------------------------------------------------------
-# 6. Systemd — Webhook Server
+# 8. Systemd — Webhook Server
 # ---------------------------------------------------------------------------
 
-log "Installing Webhook Server service..."
 cat > /etc/systemd/system/sig-webhook.service << UNIT
 [Unit]
 Description=Σ Webhook Server (Linq inbound messages)
@@ -162,7 +182,7 @@ Type=simple
 User=${APP_USER}
 WorkingDirectory=${APP_DIR}
 EnvironmentFile=${ENV_FILE}
-ExecStart=/home/${APP_USER}/venv/bin/python webhook_server.py
+ExecStart=${VENV_DIR}/bin/python webhook_server.py
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -174,109 +194,94 @@ WantedBy=multi-user.target
 UNIT
 
 # ---------------------------------------------------------------------------
-# 7. Cron — Morning Briefing (6:30 AM Central)
+# 9. Cron — Morning Briefing (6:30 AM Central = 12:30 UTC)
 # ---------------------------------------------------------------------------
 
-log "Setting up Morning Briefing cron..."
-CRON_LINE="30 12 * * * /home/${APP_USER}/venv/bin/python ${APP_DIR}/lead_response_agent.py --once >> /home/${APP_USER}/briefing.log 2>&1"
+log "8/12 — Setting up morning briefing cron..."
+CRON_LINE="30 12 * * * ${VENV_DIR}/bin/python ${APP_DIR}/lead_response_agent.py --once >> ${APP_HOME}/briefing.log 2>&1"
 (crontab -u "${APP_USER}" -l 2>/dev/null | grep -v "lead_response_agent"; echo "${CRON_LINE}") | crontab -u "${APP_USER}" -
-# 12:30 UTC = 6:30 AM CT (CDT, UTC-6) / 7:30 AM CT (CST, UTC-5)
 
 # ---------------------------------------------------------------------------
-# 8. Nginx reverse proxy
+# 10. Nginx reverse proxy
 # ---------------------------------------------------------------------------
 
-log "Configuring nginx..."
-cat > /etc/nginx/sites-available/sigma << 'NGINX'
+log "9/12 — Configuring nginx..."
+cat > /etc/nginx/sites-available/sigma << NGINX
 server {
     listen 80;
-    server_name DOMAIN_PLACEHOLDER;
+    server_name ${DOMAIN};
 
     # Webhook endpoint (Linq inbound)
     location /webhook/ {
         proxy_pass http://127.0.0.1:5050;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
     # Health check
     location /health {
         proxy_pass http://127.0.0.1:5050;
-        proxy_set_header Host $host;
+        proxy_set_header Host \$host;
     }
 
     # Σribe audit trail
     location /scribe {
         proxy_pass http://127.0.0.1:5050;
-        proxy_set_header Host $host;
+        proxy_set_header Host \$host;
     }
 
     # DealBuilder static pages
     location /deal/ {
-        alias /home/APP_USER_PLACEHOLDER/dealbuilder_pages/;
-        try_files $uri $uri.html =404;
+        alias ${APP_HOME}/dealbuilder_pages/;
+        try_files \$uri \$uri.html =404;
     }
 
     location / {
-        return 200 '{"status":"ok","agent":"sig","dealer":"Johnson Tractor"}';
+        return 200 '{"status":"ok","agent":"sig","dealer":"Johnson Tractor","server":"${DOMAIN}"}';
         add_header Content-Type application/json;
     }
 }
 NGINX
-
-# Replace placeholders
-sed -i "s/DOMAIN_PLACEHOLDER/${DOMAIN}/g" /etc/nginx/sites-available/sigma
-sed -i "s/APP_USER_PLACEHOLDER/${APP_USER}/g" /etc/nginx/sites-available/sigma
 
 ln -sf /etc/nginx/sites-available/sigma /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
 
 # ---------------------------------------------------------------------------
-# 9. Firewall
+# 11. Firewall
 # ---------------------------------------------------------------------------
 
-log "Configuring firewall..."
+log "10/12 — Configuring firewall..."
 ufw allow 22/tcp   # SSH
 ufw allow 80/tcp   # HTTP
 ufw allow 443/tcp  # HTTPS
 ufw --force enable
 
 # ---------------------------------------------------------------------------
-# 10. SSL (Let's Encrypt)
+# 12. SSL (Let's Encrypt)
 # ---------------------------------------------------------------------------
 
-log "Requesting SSL certificate..."
+log "11/12 — Requesting SSL certificate..."
 certbot --nginx -d "${DOMAIN}" --non-interactive --agree-tos -m "${EMAIL_FOR_CERTBOT}" || {
-    warn "Certbot failed — make sure ${DOMAIN} DNS points to this server's IP."
+    warn "Certbot failed — make sure DNS A record points ${DOMAIN} → ${SERVER_IP}"
     warn "Run manually later: certbot --nginx -d ${DOMAIN}"
 }
 
 # ---------------------------------------------------------------------------
-# 11. Create DealBuilder output directory
+# 13. Create directories and start services
 # ---------------------------------------------------------------------------
 
-sudo -u "${APP_USER}" mkdir -p "/home/${APP_USER}/dealbuilder_pages"
+log "12/12 — Starting services..."
+sudo -u "${APP_USER}" mkdir -p "${APP_HOME}/dealbuilder_pages"
 
-# ---------------------------------------------------------------------------
-# 12. Enable and start services
-# ---------------------------------------------------------------------------
-
-log "Starting services..."
 systemctl daemon-reload
 systemctl enable sig-lead-response sig-webhook
 systemctl start sig-webhook
 
-# Don't start lead-response until .env is configured
-if grep -q "LINQ_API_KEY=$" "${ENV_FILE}" 2>/dev/null; then
-    warn "Lead Response Agent NOT started — edit ${ENV_FILE} first, then:"
-    warn "  sudo systemctl start sig-lead-response"
-else
-    systemctl start sig-lead-response
-    log "Lead Response Agent started"
-fi
+# Don't start lead-response until Gmail OAuth is done
+warn "Lead Response Agent installed but NOT started (Gmail OAuth needed first)."
 
 # ---------------------------------------------------------------------------
 # Done
@@ -287,26 +292,29 @@ echo "============================================"
 echo -e "${GREEN}  Σ Runtime — Setup Complete${NC}"
 echo "============================================"
 echo ""
+echo "  Server:    ${SERVER_IP}"
 echo "  Domain:    https://${DOMAIN}"
 echo "  Webhook:   https://${DOMAIN}/webhook/linq/johnsontractor"
 echo "  Health:    https://${DOMAIN}/health"
-echo "  Σribe:     https://${DOMAIN}/scribe"
 echo ""
-echo "  Services:"
-echo "    sig-lead-response  — Gmail polling (30s heartbeat)"
-echo "    sig-webhook        — Linq inbound messages (port 5050)"
+echo "  Services installed:"
+echo "    sig-webhook        ✅ running (port 5050)"
+echo "    sig-lead-response  ⏸  waiting for Gmail OAuth"
 echo ""
-echo "  Logs:"
-echo "    journalctl -u sig-lead-response -f"
-echo "    journalctl -u sig-webhook -f"
+echo "  .env:             ${ENV_FILE}"
+echo "  credentials.json: ${CREDS_FILE}"
 echo ""
-echo "  Next steps:"
-echo "    1. Edit ${ENV_FILE} with your API keys"
-echo "    2. Add Gmail credentials.json to ${APP_DIR}/"
-echo "    3. Run: sudo systemctl start sig-lead-response"
-echo "    4. Run first Gmail OAuth: sudo -u ${APP_USER} /home/${APP_USER}/venv/bin/python ${APP_DIR}/lead_response_agent.py --once"
-echo "    5. Set Linq webhook URL to: https://${DOMAIN}/webhook/linq/johnsontractor"
+echo "  ── LAST STEP: Gmail OAuth ──"
 echo ""
-echo "  DNS records needed (Cloudflare):"
-echo "    A    sigma    → $(curl -s ifconfig.me)"
+echo "  From your Mac, run:"
+echo ""
+echo "    ssh -i ~/.ssh/hetzner-openclaw -L 8080:localhost:8080 root@${SERVER_IP}"
+echo "    sudo -u ${APP_USER} ${VENV_DIR}/bin/python ${APP_DIR}/lead_response_agent.py --once"
+echo ""
+echo "  Open the URL it prints in your browser, authorize with"
+echo "  the Gmail that receives TractorHouse leads, then:"
+echo ""
+echo "    sudo systemctl start sig-lead-response"
+echo ""
+echo "  Sig is live. 🟢"
 echo ""
