@@ -66,7 +66,12 @@ SALESPERSON_PHONE = os.environ.get("SALESPERSON_PHONE", "+16125550147")
 CREDENTIALS_FILE = os.environ.get("GMAIL_CREDENTIALS_FILE", "credentials.json")
 TOKEN_FILE = os.environ.get("GMAIL_TOKEN_FILE", "token.json")
 
-TRUST_LEVEL = int(os.environ.get("TRUST_LEVEL", "1"))  # L0=Notify, L1=Drafts, L2=Auto+Log, L3=Full Autonomy
+# Autonomy Level — controls how independently this agent can act
+# "manual"    — Agent only responds when directly asked
+# "approval"  — Agent proposes, human approves before execution
+# "supervised" — Agent acts but logs everything for review
+# "full_auto" — Agent acts independently, no approvals needed
+AUTONOMY_LEVEL = os.environ.get("AUTONOMY_LEVEL", "approval")
 
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", "30"))
 
@@ -425,27 +430,28 @@ def compose_buyer_message(lead: dict, dealbuilder_url: str) -> str:
     )
 
 
-def check_trust_gradient(action: str, context: dict) -> dict:
+def check_autonomy(action: str, context: dict) -> dict:
     """
-    Framework-level trust check. Runs on EVERY action, non-negotiable.
+    Framework-level autonomy check. Runs on EVERY action, non-negotiable.
 
-    L0 — Notify Only: Log the action, notify operator, do NOT execute
-    L1 — Drafts for Review: Generate the output, hold for approval
-    L2 — Auto-Execute + Log: Execute and log, notify operator after
-    L3 — Full Autonomy: Execute, log, no notification needed
+    manual     — Agent only responds when directly asked. Do NOT execute.
+    approval   — Agent proposes, human approves before execution. Hold for review.
+    supervised — Agent acts but logs everything for review. Execute + log.
+    full_auto  — Agent acts independently, no approvals needed. Execute + log.
 
-    Returns: {"execute": bool, "log": bool, "notify": bool, "hold": bool}
+    Returns: {"execute": bool, "hold": bool, "log": bool}
     """
+    level = AUTONOMY_LEVEL
+
     decision = {
-        "trust_level": TRUST_LEVEL,
+        "autonomy_level": level,
         "action": action,
-        "execute": TRUST_LEVEL >= 2,
-        "hold": TRUST_LEVEL == 1,
-        "notify": TRUST_LEVEL <= 2,
+        "execute": level in ("supervised", "full_auto"),
+        "hold": level == "approval",
         "log": True,  # Always log. Non-negotiable.
     }
 
-    audit("trust_check", {**decision, **context})
+    audit("autonomy_check", {**decision, **context})
     return decision
 
 
@@ -477,29 +483,29 @@ def process_lead(service, msg: dict) -> dict | None:
         "lead": lead,
         "dealer": dealer_slug,
         "dealbuilder": filename,
-        "trust_level": TRUST_LEVEL,
+        "autonomy_level": AUTONOMY_LEVEL,
         "message": None,
         "email": None,
     }
 
-    # Trust check before deploying message
-    trust = check_trust_gradient("deploy_message", {
+    # Autonomy check before deploying message
+    autonomy = check_autonomy("deploy_message", {
         "buyer": lead.get("buyer_name", "unknown"),
         "phone": lead.get("buyer_phone", ""),
         "dealer": dealer_slug,
     })
 
-    if trust["hold"]:
-        # L1: Draft generated, held for review
+    if autonomy["hold"]:
+        # Approval Required: draft generated, held for human approval
         result["message"] = {
             "status": "held",
-            "reason": "L1 — drafted, awaiting approval",
+            "reason": "Approval Required — drafted, awaiting human approval",
             "draft": compose_buyer_message(lead, dealbuilder_url),
         }
-        audit("message_held", {"trust_level": 1, "buyer": lead.get("buyer_name")})
+        audit("message_held", {"autonomy": "approval", "buyer": lead.get("buyer_name")})
 
-    elif trust["execute"]:
-        # L2/L3: Deploy
+    elif autonomy["execute"]:
+        # Supervised or Full Auto: deploy
         if lead.get("buyer_phone"):
             message = compose_buyer_message(lead, dealbuilder_url)
             result["message"] = deploy_message(lead["buyer_phone"], message)
@@ -519,9 +525,9 @@ def process_lead(service, msg: dict) -> dict | None:
             result["email"] = {"status": "sent", "to": lead["buyer_email"]}
 
     else:
-        # L0: Notify only, do not execute
-        result["message"] = {"status": "logged", "reason": "L0 — notify only, not deployed"}
-        audit("message_not_deployed", {"trust_level": 0, "buyer": lead.get("buyer_name")})
+        # Manual Only: log, do not execute
+        result["message"] = {"status": "logged", "reason": "Manual Only — not deployed"}
+        audit("message_not_deployed", {"autonomy": "manual", "buyer": lead.get("buyer_name")})
 
     mark_as_read(service, msg_id)
 
@@ -529,7 +535,7 @@ def process_lead(service, msg: dict) -> dict | None:
         "buyer": lead.get("buyer_name", "unknown"),
         "equipment": f"{lead.get('equipment_year', '')} {lead.get('equipment_make', '')} {lead.get('equipment_model', '')}".strip(),
         "channel": (result.get("message") or {}).get("channel", "email" if result.get("email") else "none"),
-        "trust_level": TRUST_LEVEL,
+        "autonomy": AUTONOMY_LEVEL,
         "dealer": dealer_slug,
     })
 

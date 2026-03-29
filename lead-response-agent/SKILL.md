@@ -38,7 +38,7 @@ TWILIO_AUTH_TOKEN      # Twilio fallback
 TWILIO_FROM_NUMBER     # Twilio fallback
 RESEND_API_KEY         # For email follow-ups
 DEALBUILDER_BASE_URL   # Public URL base for generated pages
-TRUST_LEVEL            # 0-3, controls autonomy (default: 1)
+AUTONOMY_LEVEL         # manual | approval | supervised | full_auto (default: approval)
 ```
 
 ## Brand Terminology (Critical)

@@ -26,7 +26,7 @@ python webhook_server.py
 | File | What it does |
 |------|-------------|
 | `lead_response_agent.py` | Main agent. Reads Gmail, parses leads (regex + LLM), generates DealBuilder pages, deploys iMessages via Linq (Twilio fallback). |
-| `webhook_server.py` | Flask server receiving inbound Linq messages. Routes by Trust Gradient: L0-L1 flags salesperson, L2+ stubs auto-response. |
+| `webhook_server.py` | Flask server receiving inbound Linq messages. Routes by dealer_slug, logs everything, notifies salesperson. |
 | `dealbuilder_template.html` | Blue Ace design system HTML template. Mobile-first, financing calculator, tracking events. Rendered with Jinja2. |
 | `SKILL.md` | OpenClaw skill definition — run modes, env vars, brand rules, rate limits. |
 | `.env.example` | Template for all required environment variables. |
@@ -42,7 +42,7 @@ TractorHouse email → Gmail inbox
   → Buyer opens DealBuilder link
   → Buyer replies via iMessage
   → Linq webhook → webhook_server.py
-  → Salesperson flagged (L0-L1)
+  → Salesperson notified
 ```
 
 ## Testing
