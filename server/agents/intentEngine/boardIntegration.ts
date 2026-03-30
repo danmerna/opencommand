@@ -195,7 +195,7 @@ export function shouldAutoEscalate(riskLevel: string, actionText: string): boole
   if (riskLevel === "high") return true;
 
   // Certain keywords in action text should trigger escalation
-  const escalationKeywords = ["budget", "hiring", "vendor", "strategic", "partnership", "acquisition"];
+  const escalationKeywords = ["budget", "hire", "vendor", "strategic", "partnership", "acquisition"];
   const lowerText = actionText.toLowerCase();
   if (escalationKeywords.some((keyword) => lowerText.includes(keyword))) return true;
 
