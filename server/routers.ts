@@ -5,6 +5,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import { dispatchToConnector, testConnector } from "./connectors/dispatcher";
+import { leadResponseRouter } from "./routers/leadResponse";
+import { executiveBoardRouter } from "./routers/executiveBoard";
 import { encryptConnectorConfig, maskApiKey } from "./connectors/encrypt";
 import { notifyOwner } from "./_core/notification";
 import {
@@ -2710,6 +2712,8 @@ export const appRouter = router({
   autonomy: autonomyRouter,
   ralf: ralfRouter,
   subAgents: subAgentRouter,
+  leadResponse: leadResponseRouter,
+  executiveBoard: executiveBoardRouter,
 });
 
 export type AppRouter = typeof appRouter;
