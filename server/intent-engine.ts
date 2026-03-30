@@ -150,105 +150,46 @@ Include specific data points from the context to justify each recommendation.`;
       },
     });
 
-    const content = response.choices[0].message.content;
-    const actionItems = typeof content === "string" ? JSON.parse(content) : content;
+    const contentStr = response.choices[0]?.message?.content;
+    if (!contentStr || typeof contentStr !== "string") {
+      throw new Error("Invalid LLM response format");
+    }
 
-    return actionItems;
+    const items: ActionItemData[] = JSON.parse(contentStr);
+
+    // Store in database
+    for (const item of items) {
+      await db.insert(actionItems).values({
+        userId: Number(userId),
+        agentId: Number(agentId),
+        actionText: item.title,
+        context: JSON.stringify(context),
+        options: item.options as any,
+        status: "pending",
+      });
+    }
+
+    return items;
   } catch (error) {
-    console.error("[Intent Engine] Failed to generate action items:", error);
+    console.error("[Intent Engine] Error generating actions:", error);
     throw error;
   }
 }
 
 /**
- * Save action items to database
- */
-export async function saveActionItems(
-  agentId: string,
-  userId: string,
-  items: ActionItemData[]
-): Promise<string[]> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not initialized");
-  const savedIds: string[] = [];
-
-  for (const item of items) {
-    // Add variant cycling capability to Conservative and Aggressive options
-    const options = {
-      recommended: {
-        ...item.options.recommended,
-        canRegenerate: false,
-        variants: null,
-      },
-      conservative: {
-        ...item.options.conservative,
-        canRegenerate: true,
-        currentVariant: 1,
-        variants: [
-          {
-            title: "Variant 1",
-            description: item.options.conservative.description,
-            dataPoints: item.options.conservative.dataPoints,
-          },
-          {
-            title: "Variant 2",
-            description: `Alternative approach: ${item.options.conservative.description}`,
-            dataPoints: item.options.conservative.dataPoints,
-          },
-        ],
-      },
-      aggressive: {
-        ...item.options.aggressive,
-        canRegenerate: true,
-        currentVariant: 1,
-        variants: [
-          {
-            title: "Variant 1",
-            description: item.options.aggressive.description,
-            dataPoints: item.options.aggressive.dataPoints,
-          },
-          {
-            title: "Variant 2",
-            description: `Alternative approach: ${item.options.aggressive.description}`,
-            dataPoints: item.options.aggressive.dataPoints,
-          },
-        ],
-      },
-    };
-
-    const result = await db
-      .insert(actionItems)
-      .values({
-        agentId,
-        userId,
-        title: item.title,
-        description: item.description,
-        boardQuestion: item.boardQuestion,
-        status: "pending",
-        options: options as any,
-      })
-      .returning();
-
-    savedIds.push(result[0].id);
-  }
-
-  return savedIds;
-}
-
-/**
- * Approve an action item with selected option
+ * Approve an action item with a specific option
  */
 export async function approveAction(
   actionItemId: string,
-  selectedOption: "recommended" | "conservative" | "aggressive"
+  option: "recommended" | "conservative" | "aggressive"
 ): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not initialized");
   await db
     .update(actionItems)
     .set({
+      selectedOption: option,
       status: "approved",
-      selectedOption,
       updatedAt: new Date(),
     })
     .where(eq(actionItems.id, Number(actionItemId)));
@@ -278,17 +219,21 @@ export async function regenerateVariant(
 ): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not initialized");
-  const action = await db.query.actionItems.findFirst({
-    where: eq(actionItems.id, Number(actionItemId)),
-  });
 
+  const existing = await db
+    .select()
+    .from(actionItems)
+    .where(eq(actionItems.id, Number(actionItemId)))
+    .limit(1);
+
+  const action = existing[0];
   if (!action) throw new Error("Action item not found");
 
   const options = action.options as any;
   const option = options[optionType];
 
-  if (!option.canRegenerate) {
-    throw new Error(`Cannot regenerate ${optionType} option`);
+  if (!option) {
+    throw new Error(`Option ${optionType} not found`);
   }
 
   // Cycle to next variant
@@ -312,9 +257,15 @@ export async function regenerateVariant(
 export async function getPendingActions(userId: string): Promise<any[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not initialized");
-  return db.query.actionItems.findMany({
-    where: and(eq(actionItems.userId, Number(userId)), eq(actionItems.status, "pending")),
-  });
+  return db
+    .select()
+    .from(actionItems)
+    .where(
+      and(
+        eq(actionItems.userId, Number(userId)),
+        eq(actionItems.status, "pending")
+      )
+    );
 }
 
 /**
@@ -323,7 +274,25 @@ export async function getPendingActions(userId: string): Promise<any[]> {
 export async function getCompletedActions(userId: string): Promise<any[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not initialized");
-  return db.query.actionItems.findMany({
-    where: and(eq(actionItems.userId, Number(userId)), eq(actionItems.status, "approved")),
-  });
+  return db
+    .select()
+    .from(actionItems)
+    .where(
+      and(
+        eq(actionItems.userId, Number(userId)),
+        eq(actionItems.status, "approved")
+      )
+    );
+}
+
+/**
+ * Get all action items for a user
+ */
+export async function getAllActions(userId: string): Promise<any[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  return db
+    .select()
+    .from(actionItems)
+    .where(eq(actionItems.userId, Number(userId)));
 }

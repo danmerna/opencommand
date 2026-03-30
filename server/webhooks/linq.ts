@@ -1,8 +1,9 @@
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
-import { db } from "../db";
+import { getDb } from "../db";
 import { emails } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { eq } from "drizzle-orm";
 
 const linqRouter = Router();
 
@@ -61,6 +62,12 @@ linqRouter.post("/incoming-email", async (req: Request, res: Response) => {
     const parsed = parseEmailContent(emailData);
 
     // Store email in database
+    const db = await getDb();
+    if (!db) {
+      console.error("[Linq Webhook] Database not available");
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const result = await db
       .insert(emails)
       .values({
@@ -71,23 +78,25 @@ linqRouter.post("/incoming-email", async (req: Request, res: Response) => {
         subject: parsed.subject,
         body: parsed.body,
         htmlBody: parsed.htmlBody,
-        attachments: JSON.stringify(parsed.attachments),
+        attachmentsJson: JSON.stringify(parsed.attachments),
         timestamp: new Date(parsed.timestamp),
         status: "received",
-        metadata: JSON.stringify({
+        metadataJson: JSON.stringify({
           source: "linq",
           linqId: emailData.id,
         }),
-      })
-      .returning({ id: emails.id });
+      });
 
-    const emailId = result[0]?.id;
+    // Get the inserted ID from the result
+    const emailId = (result as any).insertId || (result as any)[0]?.id;
     console.log("[Linq Webhook] Stored email with ID:", emailId);
 
     // Trigger email processing (async, don't wait)
-    processEmailAsync(emailId, parsed).catch((err) => {
-      console.error("[Email Processing] Error:", err);
-    });
+    if (emailId) {
+      processEmailAsync(emailId, parsed).catch((err) => {
+        console.error("[Email Processing] Error:", err);
+      });
+    }
 
     // Return success immediately
     return res.json({
@@ -111,6 +120,12 @@ linqRouter.post("/incoming-email", async (req: Request, res: Response) => {
  * - Generate response if needed
  */
 async function processEmailAsync(emailId: number, parsed: any) {
+  const db = await getDb();
+  if (!db) {
+    console.error("[Email Processing] Database not available");
+    return;
+  }
+
   try {
     console.log("[Email Processing] Starting for email:", emailId);
 
@@ -157,9 +172,12 @@ async function processEmailAsync(emailId: number, parsed: any) {
       },
     });
 
-    const intentData = JSON.parse(
-      intentResponse.choices[0]?.message?.content || "{}"
-    );
+    const contentStr = intentResponse.choices[0]?.message?.content;
+    if (!contentStr || typeof contentStr !== "string") {
+      throw new Error("Invalid LLM response format");
+    }
+
+    const intentData = JSON.parse(contentStr);
     console.log("[Email Processing] Extracted intent:", intentData);
 
     // Update email with processing results
@@ -167,7 +185,7 @@ async function processEmailAsync(emailId: number, parsed: any) {
       .update(emails)
       .set({
         status: "processed",
-        metadata: JSON.stringify({
+        metadataJson: JSON.stringify({
           source: "linq",
           intent: intentData.intent,
           action: intentData.action,
@@ -175,7 +193,7 @@ async function processEmailAsync(emailId: number, parsed: any) {
           processedAt: new Date().toISOString(),
         }),
       })
-      .where({ id: emailId });
+      .where(eq(emails.id, emailId));
 
     console.log("[Email Processing] Completed for email:", emailId);
   } catch (error) {
@@ -186,11 +204,11 @@ async function processEmailAsync(emailId: number, parsed: any) {
       .update(emails)
       .set({
         status: "failed",
-        metadata: JSON.stringify({
+        metadataJson: JSON.stringify({
           error: error instanceof Error ? error.message : "Unknown error",
         }),
       })
-      .where({ id: emailId })
+      .where(eq(emails.id, emailId))
       .catch(() => {
         /* ignore */
       });

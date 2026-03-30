@@ -1,6 +1,6 @@
 import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
-import { generateActionItems, saveActionItems, approveAction, dismissAction, regenerateVariant, getPendingActions, getCompletedActions } from "../intent-engine";
+import { generateActionItems, approveAction, dismissAction, regenerateVariant, getPendingActions, getCompletedActions } from "../intent-engine";
 
 export const intentEngineRouter = router({
   /**
@@ -23,15 +23,8 @@ export const intentEngineRouter = router({
           input.intent
         );
 
-        const savedIds = await saveActionItems(
-          input.agentId,
-          String(ctx.user.id),
-          actionItems
-        );
-
         return {
           success: true,
-          actionIds: savedIds,
           actions: actionItems,
         };
       } catch (error) {
