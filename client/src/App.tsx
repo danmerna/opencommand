@@ -36,6 +36,8 @@ import { OnboardingSigma } from "./pages/OnboardingSigma";
 import { SigmaImportModal } from "./components/SigmaImportModal";
 import { SigmaBadge } from "./components/SigmaBadge";
 import { usePageTracking } from "./hooks/usePageTracking";
+import { LeadResponsePage } from "./pages/LeadResponsePage";
+import { SigmaChatUI } from "./components/SigmaChatUI";
 
 function Router() {
   usePageTracking();
@@ -108,6 +110,12 @@ function Router() {
       <Route path="/briefings" component={Briefings} />
       <Route path="/analytics">
         <AppLayout><Analytics /></AppLayout>
+      </Route>
+      <Route path="/lead-response">
+        <AppLayout><LeadResponsePage /></AppLayout>
+      </Route>
+      <Route path="/sigma-chat">
+        <AppLayout><SigmaChatUI /></AppLayout>
       </Route>
       <Route path="/feedback-admin">
         <AppLayout><FeedbackAdmin /></AppLayout>
