@@ -8,6 +8,7 @@ import { dispatchToConnector, testConnector } from "./connectors/dispatcher";
 import { leadResponseRouter } from "./routers/leadResponse";
 import { executiveBoardRouter } from "./routers/executiveBoard";
 import { intentEngineRouter } from "./routers/intentEngine";
+import { sigmaRouter } from "./routers/sigma";
 import { encryptConnectorConfig, maskApiKey } from "./connectors/encrypt";
 import { notifyOwner } from "./_core/notification";
 import {
@@ -2716,6 +2717,7 @@ export const appRouter = router({
   leadResponse: leadResponseRouter,
   executiveBoard: executiveBoardRouter,
   intentEngine: intentEngineRouter,
+  sigma: sigmaRouter,
 });
 
 export type AppRouter = typeof appRouter;
