@@ -38,6 +38,8 @@ import { SigmaBadge } from "./components/SigmaBadge";
 import { usePageTracking } from "./hooks/usePageTracking";
 import { LeadResponsePage } from "./pages/LeadResponsePage";
 import { SigmaChatUI } from "./components/SigmaChatUI";
+import { LeadScoringDashboard } from "./pages/LeadScoringDashboard";
+import { ROIAttribution } from "./pages/ROIAttribution";
 
 function Router() {
   usePageTracking();
@@ -116,6 +118,12 @@ function Router() {
       </Route>
       <Route path="/sigma-chat">
         <AppLayout><SigmaChatUI /></AppLayout>
+      </Route>
+      <Route path="/lead-scoring">
+        <AppLayout><LeadScoringDashboard /></AppLayout>
+      </Route>
+      <Route path="/roi-attribution">
+        <AppLayout><ROIAttribution /></AppLayout>
       </Route>
       <Route path="/feedback-admin">
         <AppLayout><FeedbackAdmin /></AppLayout>
