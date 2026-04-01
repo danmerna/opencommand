@@ -11,6 +11,7 @@ import { intentEngineRouter } from "./routers/intentEngine";
 import { sigmaRouter } from "./routers/sigma";
 import { templatesRouter } from "./routers/templates";
 import { workspaceRouter } from "./routers/workspace";
+import { goalsRouter } from "./routers/goals";
 import { encryptConnectorConfig, maskApiKey } from "./connectors/encrypt";
 import { notifyOwner } from "./_core/notification";
 import {
@@ -2722,6 +2723,7 @@ export const appRouter = router({
   sigma: sigmaRouter,
   templates: templatesRouter,
   workspace: workspaceRouter,
+  goals: goalsRouter,
 });
 
 export type AppRouter = typeof appRouter;

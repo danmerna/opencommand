@@ -450,3 +450,15 @@
 - [ ] Build agent orchestration patterns (cascade, voting, consensus)
 - [ ] Add workspace analytics (agent activity, performance)
 - [ ] Create workspace templates (pre-configured agent swarms)
+
+
+## Multi-Agent Goals Feature (NEW)
+
+- [ ] Create workspaceGoals, goalAgents, goalProgress database tables
+- [ ] Build Goals Dashboard page with CRUD operations (create/edit/delete/list goals)
+- [ ] Integrate goal creation into Σ Chat (@create-goal command)
+- [ ] Add real-time goal progress tracking and WebSocket updates
+- [ ] Build agent collaboration interface for goals (assign agents, track contributions)
+- [ ] Create goal status visualization (on-track, at-risk, completed)
+- [ ] Add goal performance metrics and KPI tracking
+- [ ] Test multi-agent goal workflows end-to-end
