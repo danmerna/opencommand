@@ -417,3 +417,36 @@
 - [ ] Add red dot indicators on agent cards
 - [ ] Implement time/labor value calculations
 - [ ] Write tests for ROI calculations
+
+
+## OpenAgents Integration (Phase 1-3)
+
+### Phase 1: OpenAgents Launcher Integration + @mention Delegation
+- [ ] Create OpenAgents agent registry service (track running agents, their types, capabilities)
+- [ ] Build agent discovery endpoint (list available agents in workspace)
+- [ ] Implement @mention parsing in Σ Chat (extract agent names from messages)
+- [ ] Create agent delegation tRPC procedure (route tasks to specific agents)
+- [ ] Build agent status monitor (online/offline, last heartbeat)
+- [ ] Add agent configuration UI (set credentials, environment variables)
+- [ ] Create agent startup/shutdown procedures
+- [ ] Implement agent health checks and auto-restart
+
+### Phase 2: Shared Browser Preview + File Collaboration
+- [ ] Integrate OpenAgents shared browser component
+- [ ] Create email preview in shared browser (show drafted responses)
+- [ ] Build template file upload/download (store in workspace)
+- [ ] Implement real-time template editing (multiple agents editing same template)
+- [ ] Add file versioning and rollback
+- [ ] Create template collaboration UI (show who's editing what)
+- [ ] Build file sharing permissions (read/write/admin)
+- [ ] Add file search and tagging
+
+### Phase 3: Multi-Workspace Support + Custom Agent Types
+- [ ] Create workspace registry (track workspaces per dealer)
+- [ ] Implement workspace isolation (data separation per dealer)
+- [ ] Build custom agent type registration
+- [ ] Create agent capability registry (what each agent can do)
+- [ ] Implement agent-to-agent messaging (A2A protocol)
+- [ ] Build agent orchestration patterns (cascade, voting, consensus)
+- [ ] Add workspace analytics (agent activity, performance)
+- [ ] Create workspace templates (pre-configured agent swarms)
