@@ -413,6 +413,23 @@ export const webhooks = mysqlTable("webhooks", {
 export type Webhook = typeof webhooks.$inferSelect;
 export type InsertWebhook = typeof webhooks.$inferInsert;
 
+// ─── Email Templates ────────────────────────────────────────────────────────
+export const emailTemplates = mysqlTable("email_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  companyId: int("companyId").notNull(),
+  name: varchar("name", { length: 128 }).notNull(),
+  description: text("description"),
+  category: mysqlEnum("category", ["john_deere", "kubota", "financing", "parts", "service", "custom"]).default("custom").notNull(),
+  subject: varchar("subject", { length: 256 }).notNull(),
+  body: text("body").notNull(),
+  variablesJson: text("variablesJson"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type InsertEmailTemplate = typeof emailTemplates.$inferInsert;
+
 // ─── Creator Partnerships ────────────────────────────────────────────────────
 export const creatorPartnerships = mysqlTable("creator_partnerships", {
   id: int("id").autoincrement().primaryKey(),

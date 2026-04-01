@@ -9,6 +9,7 @@ import { leadResponseRouter } from "./routers/leadResponse";
 import { executiveBoardRouter } from "./routers/executiveBoard";
 import { intentEngineRouter } from "./routers/intentEngine";
 import { sigmaRouter } from "./routers/sigma";
+import { templatesRouter } from "./routers/templates";
 import { encryptConnectorConfig, maskApiKey } from "./connectors/encrypt";
 import { notifyOwner } from "./_core/notification";
 import {
@@ -2718,6 +2719,7 @@ export const appRouter = router({
   executiveBoard: executiveBoardRouter,
   intentEngine: intentEngineRouter,
   sigma: sigmaRouter,
+  templates: templatesRouter,
 });
 
 export type AppRouter = typeof appRouter;
