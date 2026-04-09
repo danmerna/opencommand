@@ -462,3 +462,8 @@
 - [ ] Create goal status visualization (on-track, at-risk, completed)
 - [ ] Add goal performance metrics and KPI tracking
 - [ ] Test multi-agent goal workflows end-to-end
+
+## Σ Chat Goal Integration
+- [x] @create-goal natural language command in Σ Chat
+- [x] Real-time progress WebSocket updates for goals dashboard
+- [x] Goal collaboration interface with thread-based communication

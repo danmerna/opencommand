@@ -40,6 +40,7 @@ import { LeadResponsePage } from "./pages/LeadResponsePage";
 import { SigmaChatUI } from "./components/SigmaChatUI";
 import { LeadScoringDashboard } from "./pages/LeadScoringDashboard";
 import { ROIAttribution } from "./pages/ROIAttribution";
+import GoalsDashboard from "./pages/GoalsDashboard";
 
 function Router() {
   usePageTracking();
@@ -124,6 +125,9 @@ function Router() {
       </Route>
       <Route path="/roi-attribution">
         <AppLayout><ROIAttribution /></AppLayout>
+      </Route>
+      <Route path="/goals">
+        <AppLayout><GoalsDashboard /></AppLayout>
       </Route>
       <Route path="/feedback-admin">
         <AppLayout><FeedbackAdmin /></AppLayout>

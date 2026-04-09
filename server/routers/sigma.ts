@@ -1,6 +1,7 @@
 import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { processSigmaLeadRequest } from "../agents/sigma/leadResponseIntegration";
+import { detectGoalIntent, processGoalRequest } from "../agents/sigma/goalIntegration";
 import { invokeLLM } from "../_core/llm";
 
 /**
@@ -29,6 +30,24 @@ export const sigmaRouter = router({
     .mutation(async ({ input, ctx }) => {
       try {
         console.log(`[Sigma Chat] Processing message from user ${ctx.user.id}: ${input.message}`);
+
+        // Check if this is a goal-related request
+        const goalIntent = detectGoalIntent(input.message);
+        if (goalIntent) {
+          const goalResponse = await processGoalRequest(input.message, {
+            userId: ctx.user.id,
+            companyId: input.companyId,
+            workspaceId: `workspace_${input.companyId}`,
+          });
+
+          return {
+            success: true,
+            response: goalResponse.response,
+            action: goalResponse.action,
+            data: goalResponse.data,
+            source: "goal_management",
+          };
+        }
 
         // Check if this is a lead response request
         const leadIntent = detectLeadIntent(input.message);
