@@ -74,6 +74,8 @@ import { seedDemoUser, getDemoUserId, DEMO_EMAIL } from "./demoUser";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
 import { emitToUser } from "./socketEmit";
 import { sendWelcomeEmail, sendWaitlistApprovalEmail } from "./email";
+import { runWebsiteAudit } from "./agents/websiteAudit";
+import { getWebsiteAuditByCompanyId, getWebsiteAuditsByUserId } from "./db";
 
 // ─── Companies Router ────────────────────────────────────────────────────────
 const companiesRouter = router({
@@ -85,6 +87,20 @@ const companiesRouter = router({
     .input(z.object({ name: z.string().min(1), mission: z.string().optional(), industry: z.string().optional(), website: z.string().optional(), monthlyBudget: z.number().optional(), briefingFrequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).optional() }))
     .mutation(async ({ ctx, input }) => {
       await createCompany({ userId: ctx.user.id, name: input.name, mission: input.mission, industry: input.industry, website: input.website, monthlyBudget: input.monthlyBudget ? String(input.monthlyBudget) : "0", briefingFrequency: input.briefingFrequency } as any);
+      // Trigger background website audit if URL provided
+      if (input.website?.trim()) {
+        const companies = await getCompaniesByUserId(ctx.user.id);
+        const company = companies[companies.length - 1];
+        if (company) {
+          runWebsiteAudit({
+            companyId: company.id,
+            userId: ctx.user.id,
+            url: input.website.trim(),
+            companyName: input.name,
+            industry: input.industry ?? "",
+          }).catch(err => console.error("[WebsiteAudit] Background audit failed:", err));
+        }
+      }
       return { success: true };
     }),
 
@@ -1982,6 +1998,12 @@ IMPORTANT: You have access to the above live data. Use it throughout the convers
       const company = await getCompanyById(input.companyId);
       const okrs = await getOkrsByCompanyId(input.companyId);
 
+      // Fetch website audit results for strategy generation
+      const websiteAudit = await getWebsiteAuditByCompanyId(input.companyId);
+      const websiteAuditSummary = websiteAudit && (websiteAudit as any).status === "complete" && (websiteAudit as any).executiveSummary
+        ? (websiteAudit as any).executiveSummary as string
+        : "";
+
       const briefingFreq = (company as any)?.briefingFrequency ?? "weekly";
       const skippedExecs = executiveContext.filter(e => e.skipped).map(e => e.name);
       const skippedNote = skippedExecs.length > 0
@@ -2034,6 +2056,8 @@ ${executiveContext.map(e => `\n### ${e.name} (${e.role})\n${e.summary}${e.skippe
 
 Current OKRs: ${JSON.stringify(okrs.map(o => ({ objective: o.objective, keyResult: o.keyResult, progress: `${o.currentValue}/${o.targetValue} ${o.unit}` })))}
 
+${websiteAuditSummary ? `Website Audit Intelligence:\n${websiteAuditSummary}` : ""}
+
 Please produce the formal strategy proposal.` },
         ],
       });
@@ -2084,6 +2108,12 @@ Please produce the formal strategy proposal.` },
 
       const company = await getCompanyById(input.companyId);
 
+      // Fetch website audit results for Σ calibration
+      const sigmaAudit = await getWebsiteAuditByCompanyId(input.companyId);
+      const sigmaAuditSummary = sigmaAudit && (sigmaAudit as any).status === "complete" && (sigmaAudit as any).executiveSummary
+        ? (sigmaAudit as any).executiveSummary as string
+        : "";
+
       const response = await invokeLLM({
         messages: [
           {
@@ -2098,6 +2128,7 @@ Rules:
 3. State what to do, why it's the highest-leverage move, and the expected impact
 4. Keep it concise — 3-4 sentences maximum
 5. Reference specific insights from the interviews to show you've synthesized them
+6. If website audit data is available, incorporate digital presence insights into your recommendation
 
 This is a calibration demonstration during onboarding — show the user what Σ can do.`,
           },
@@ -2110,7 +2141,7 @@ Industry: ${company?.industry ?? "N/A"}
 Executive Interview Summaries:
 ${executiveContext.map(e => `\n### ${e.name} (${e.role})\n${e.summary}`).join("\n")}
 
-Synthesize these perspectives into ONE highest-leverage recommendation.`,
+${sigmaAuditSummary ? `Website Audit Intelligence:\n${sigmaAuditSummary}\n\n` : ""}Synthesize these perspectives into ONE highest-leverage recommendation.`,
           },
         ],
       });
@@ -2741,6 +2772,31 @@ const adminRouter = router({
     }),
 });
 
+// ─── Website Audit Router ───────────────────────────────────────────────────
+const websiteAuditRouter = router({
+  getByCompany: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(async ({ input }) => {
+      return getWebsiteAuditByCompanyId(input.companyId) ?? null;
+    }),
+  listByUser: protectedProcedure
+    .query(async ({ ctx }) => {
+      return getWebsiteAuditsByUserId(ctx.user.id);
+    }),
+  trigger: protectedProcedure
+    .input(z.object({ companyId: z.number(), url: z.string().min(1), companyName: z.string(), industry: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await runWebsiteAudit({
+        companyId: input.companyId,
+        userId: ctx.user.id,
+        url: input.url,
+        companyName: input.companyName,
+        industry: input.industry ?? "",
+      });
+      return result;
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -2788,6 +2844,7 @@ export const appRouter = router({
   templates: templatesRouter,
   workspace: workspaceRouter,
   goals: goalsRouter,
+  websiteAudit: websiteAuditRouter,
 });
 
 export type AppRouter = typeof appRouter;

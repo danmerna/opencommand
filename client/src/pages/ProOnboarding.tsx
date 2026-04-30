@@ -321,20 +321,52 @@ export default function ProOnboarding() {
     setQuestionCount(0);
     setStep(onboardStep);
 
-    // Fetch live context from connected tools for all agents
+    // Fetch live context from connected tools + website audit for all agents
     setAgentContext(null);
     setAgentContextLoading(true);
     let fetchedContext: { contextSummary: string; insights: string[]; connectedProviders: string[]; hasLiveData: boolean } | null = null;
     try {
       const roleLabel = EXEC_AGENTS.find(a => a.type === agentType)?.roleTitle ?? agentType;
-      const ctx = await liveContextualizeMut.mutateAsync({
-        requestText: `${roleLabel} onboarding for ${companyName || "the company"} in ${companyIndustry || "technology"}`,
-      });
+      const [ctx, auditData] = await Promise.all([
+        liveContextualizeMut.mutateAsync({
+          requestText: `${roleLabel} onboarding for ${companyName || "the company"} in ${companyIndustry || "technology"}`,
+        }),
+        companyId ? utils.websiteAudit.getByCompany.fetch({ companyId }) : null,
+      ]);
+
+      const providers = [...ctx.connectedProviders];
+      let combinedSummary = ctx.contextSummary;
+      const combinedInsights = [...ctx.insights];
+      let hasData = ctx.hasLiveData;
+
+      // Merge website audit results if available
+      if (auditData && (auditData as any).status === "complete") {
+        providers.push("website_audit");
+        hasData = true;
+        const execSummary = (auditData as any).executiveSummary as string | null;
+        if (execSummary) {
+          combinedSummary = combinedSummary
+            ? `${combinedSummary}\n\nWEBSITE AUDIT RESULTS:\n${execSummary}`
+            : `WEBSITE AUDIT RESULTS:\n${execSummary}`;
+        }
+        const seoIssues = (auditData as any).seoIssues as string[] | null;
+        if (seoIssues?.length) {
+          combinedInsights.push(`Website has ${seoIssues.length} SEO issue(s): ${seoIssues.slice(0, 3).join("; ")}`);
+        }
+        const detectedTech = (auditData as any).detectedTech as Record<string, string[]> | null;
+        if (detectedTech) {
+          const allTech = Object.values(detectedTech).flat();
+          if (allTech.length > 0) {
+            combinedInsights.push(`Tech stack detected: ${allTech.slice(0, 6).join(", ")}`);
+          }
+        }
+      }
+
       fetchedContext = {
-        contextSummary: ctx.contextSummary,
-        insights: ctx.insights,
-        connectedProviders: ctx.connectedProviders,
-        hasLiveData: ctx.hasLiveData,
+        contextSummary: combinedSummary,
+        insights: combinedInsights,
+        connectedProviders: providers,
+        hasLiveData: hasData,
       };
       setAgentContext(fetchedContext);
     } catch {

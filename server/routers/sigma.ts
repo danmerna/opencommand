@@ -144,6 +144,14 @@ export const sigmaRouter = router({
             .join("\n");
         }
 
+        // Inject website audit results if available
+        const { getWebsiteAuditByCompanyId } = await import("../db");
+        const audit = await getWebsiteAuditByCompanyId(input.companyId);
+        let websiteAuditContext = "";
+        if (audit && (audit as any).status === "complete" && (audit as any).executiveSummary) {
+          websiteAuditContext = (audit as any).executiveSummary as string;
+        }
+
         const systemPrompt = `You are Σ (Sigma) — the synthesis executive of OpenCommand's 5-4-3-2-1-Σ Temporal Cascade.
 
 You are in STANDALONE MODE. The user is talking directly to you without running the full cascade. Your job is to provide instant highest-leverage recommendations using cached board context.
@@ -155,6 +163,8 @@ Mission: ${company?.mission ?? "N/A"}
 ${boardContext ? `EXECUTIVE BOARD CONTEXT (from onboarding interviews):\n${boardContext}` : "No executive context cached yet. Provide general strategic guidance."}
 
 ${liveContext ? `LIVE BUSINESS CONTEXT:\n${liveContext}` : ""}
+
+${websiteAuditContext ? `WEBSITE AUDIT INTELLIGENCE:\n${websiteAuditContext}` : ""}
 
 Rules:
 1. Always think across ALL time horizons (5yr vision, 4mo financials, 3wk marketing, 2d execution)

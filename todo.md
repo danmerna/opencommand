@@ -501,3 +501,18 @@
 ## Company Website Field in Onboarding
 - [x] Add "Company Website" input field to company-setup step in ProOnboarding
 - [x] Persist website to companies table (migration applied, column added)
+
+## Background Website Audit Pipeline
+- [x] Create website_audits table schema with all audit result fields
+- [x] Run migration for website_audits table
+- [x] Build website scraper module (fetch HTML, extract metadata, headers, response time)
+- [x] Build technical SEO checker (meta tags, robots.txt, sitemap.xml, HTTPS, security headers)
+- [x] Build social presence detector (find social links in HTML)
+- [x] Build tech stack detector (identify frameworks, analytics, ad pixels, CRM from HTML/headers)
+- [x] Build LLM content analyzer (value prop, target audience, competitive positioning, tone)
+- [x] Create orchestrator that runs all checks and stores results in website_audits
+- [x] Add tRPC procedure to trigger audit and fetch results
+- [x] Trigger audit automatically when company is created with a website URL during onboarding
+- [x] Show audit progress/results in onboarding UI during executive interviews
+- [x] Feed audit results into executive agent context (ARCH, SIGNAL, LEDGER, FORGE, Σ)
+- [x] Write vitest tests for audit pipeline (18/18 passed)

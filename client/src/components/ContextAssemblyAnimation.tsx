@@ -57,6 +57,12 @@ const PROVIDER_STREAMS: Record<string, DataStream> = {
     color: "text-red-400 border-red-400/30 bg-red-400/5",
     dataPoints: ["Scanning recent threads...", "Extracting key conversations...", "Reading response patterns...", "Pulling contact activity..."],
   },
+  website_audit: {
+    provider: "Website Audit",
+    icon: "🌐",
+    color: "text-teal-400 border-teal-400/30 bg-teal-400/5",
+    dataPoints: ["Scraping website metadata...", "Checking technical SEO...", "Detecting tech stack...", "Analyzing content with AI...", "Generating executive summary..."],
+  },
 };
 
 const FALLBACK_STREAM: DataStream = {

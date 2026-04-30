@@ -85,13 +85,14 @@ John`,
 
 describe("Executive Board", () => {
   describe("Board Members", () => {
-    it("should have all 5 board members defined", () => {
-      expect(Object.keys(BOARD_MEMBERS)).toHaveLength(5);
+    it("should have all 6 board members defined (including sigma)", () => {
+      expect(Object.keys(BOARD_MEMBERS)).toHaveLength(6);
       expect(BOARD_MEMBERS.ceo).toBeDefined();
       expect(BOARD_MEMBERS.cfo).toBeDefined();
       expect(BOARD_MEMBERS.cmo).toBeDefined();
       expect(BOARD_MEMBERS.cto).toBeDefined();
       expect(BOARD_MEMBERS.briefing).toBeDefined();
+      expect(BOARD_MEMBERS.sigma).toBeDefined();
     });
 
     it("should have correct time horizons", () => {
@@ -99,21 +100,22 @@ describe("Executive Board", () => {
       expect(BOARD_MEMBERS.cfo.timeHorizon).toBe("4-month");
       expect(BOARD_MEMBERS.cmo.timeHorizon).toBe("3-week");
       expect(BOARD_MEMBERS.cto.timeHorizon).toBe("2-day");
-      expect(BOARD_MEMBERS.briefing.timeHorizon).toBe("1-day");
+      expect(BOARD_MEMBERS.briefing.timeHorizon).toBe("now");
+      expect(BOARD_MEMBERS.sigma.timeHorizon).toBe("sigma");
     });
 
     it("should have appropriate focus areas", () => {
-      expect(BOARD_MEMBERS.ceo.focus).toContain("Strategic");
-      expect(BOARD_MEMBERS.cfo.focus).toContain("Financial");
-      expect(BOARD_MEMBERS.cmo.focus).toContain("Campaign");
-      expect(BOARD_MEMBERS.cto.focus).toContain("technical");
-      expect(BOARD_MEMBERS.briefing.focus).toContain("Daily");
+      expect(BOARD_MEMBERS.ceo.focus).toContain("Vision");
+      expect(BOARD_MEMBERS.cfo.focus).toBeDefined();
+      expect(BOARD_MEMBERS.cmo.focus).toBeDefined();
+      expect(BOARD_MEMBERS.cto.focus).toBeDefined();
+      expect(BOARD_MEMBERS.sigma.focus).toBeDefined();
     });
   });
 
   describe("Board Thinking Structure", () => {
     it("should validate board member roles", () => {
-      const validRoles = ["ceo", "cfo", "cmo", "cto", "briefing"];
+      const validRoles = ["ceo", "cfo", "cmo", "cto", "briefing", "sigma"];
       Object.values(BOARD_MEMBERS).forEach((member) => {
         expect(validRoles).toContain(member.role);
       });

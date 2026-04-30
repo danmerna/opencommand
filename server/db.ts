@@ -41,6 +41,7 @@ import {
   ralfExecutionLogs, InsertRalfExecutionLog,
   subAgentRecommendations, InsertSubAgentRecommendation,
   executiveContextManifests, InsertExecutiveContextManifest,
+  websiteAudits, InsertWebsiteAudit,
 } from "../drizzle/schema";
 import type { InsertChangelogEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -1431,4 +1432,30 @@ export async function getContextManifestsByUserId(userId: number) {
     .from(executiveContextManifests)
     .where(eq(executiveContextManifests.userId, userId))
     .orderBy(desc(executiveContextManifests.assembledAt));
+}
+
+// ─── Website Audits ─────────────────────────────────────────────────────────
+export async function createWebsiteAudit(data: InsertWebsiteAudit) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(websiteAudits).values(data);
+}
+
+export async function updateWebsiteAudit(id: number, data: Partial<InsertWebsiteAudit>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(websiteAudits).set(data as any).where(eq(websiteAudits.id, id));
+}
+
+export async function getWebsiteAuditByCompanyId(companyId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(websiteAudits).where(eq(websiteAudits.companyId, companyId)).orderBy(desc(websiteAudits.createdAt)).limit(1);
+  return rows[0];
+}
+
+export async function getWebsiteAuditsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(websiteAudits).where(eq(websiteAudits.userId, userId)).orderBy(desc(websiteAudits.createdAt));
 }

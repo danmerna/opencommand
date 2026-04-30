@@ -982,3 +982,56 @@ export const emails = mysqlTable("emails", {
 
 export type Email = typeof emails.$inferSelect;
 export type InsertEmail = typeof emails.$inferInsert;
+
+// ─── Website Audits (Background analysis during onboarding) ─────────────────
+export const websiteAudits = mysqlTable("website_audits", {
+  id: int("id").autoincrement().primaryKey(),
+  companyId: int("companyId").notNull(),
+  userId: int("userId").notNull(),
+  url: varchar("url", { length: 512 }).notNull(),
+  status: mysqlEnum("status", ["pending", "scraping", "analyzing", "complete", "failed"]).default("pending").notNull(),
+
+  // ── Metadata & SEO ──
+  pageTitle: varchar("pageTitle", { length: 512 }),
+  metaDescription: text("metaDescription"),
+  ogTags: json("ogTags").$type<Record<string, string>>(),
+  canonicalUrl: varchar("canonicalUrl", { length: 512 }),
+  language: varchar("language", { length: 16 }),
+  favicon: varchar("favicon", { length: 512 }),
+
+  // ── Technical SEO ──
+  hasRobotsTxt: boolean("hasRobotsTxt"),
+  hasSitemapXml: boolean("hasSitemapXml"),
+  isHttps: boolean("isHttps"),
+  responseTimeMs: int("responseTimeMs"),
+  securityHeaders: json("securityHeaders").$type<Record<string, string | boolean>>(),
+  seoIssues: json("seoIssues").$type<string[]>(),
+
+  // ── Social Presence ──
+  socialLinks: json("socialLinks").$type<Record<string, string>>(),
+
+  // ── Tech Stack ──
+  detectedTech: json("detectedTech").$type<{ frameworks: string[]; analytics: string[]; adPixels: string[]; crm: string[]; other: string[] }>(),
+
+  // ── LLM Content Analysis ──
+  llmAnalysis: json("llmAnalysis").$type<{
+    valueProposition: string;
+    targetAudience: string;
+    competitivePositioning: string;
+    toneOfVoice: string;
+    keyProducts: string[];
+    likelyCompetitors: string[];
+    marketInsights: string;
+  }>(),
+
+  // ── Summary for executive agents ──
+  executiveSummary: text("executiveSummary"),
+
+  errorMessage: text("errorMessage"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type WebsiteAudit = typeof websiteAudits.$inferSelect;
+export type InsertWebsiteAudit = typeof websiteAudits.$inferInsert;
