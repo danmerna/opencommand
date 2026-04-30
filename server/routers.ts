@@ -82,19 +82,20 @@ const companiesRouter = router({
   pnl: protectedProcedure.input(z.object({ companyId: z.number() })).query(({ input }) => getCompanyPnL(input.companyId)),
 
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1), mission: z.string().optional(), industry: z.string().optional(), monthlyBudget: z.number().optional(), briefingFrequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).optional() }))
+    .input(z.object({ name: z.string().min(1), mission: z.string().optional(), industry: z.string().optional(), website: z.string().optional(), monthlyBudget: z.number().optional(), briefingFrequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).optional() }))
     .mutation(async ({ ctx, input }) => {
-      await createCompany({ userId: ctx.user.id, name: input.name, mission: input.mission, industry: input.industry, monthlyBudget: input.monthlyBudget ? String(input.monthlyBudget) : "0", briefingFrequency: input.briefingFrequency } as any);
+      await createCompany({ userId: ctx.user.id, name: input.name, mission: input.mission, industry: input.industry, website: input.website, monthlyBudget: input.monthlyBudget ? String(input.monthlyBudget) : "0", briefingFrequency: input.briefingFrequency } as any);
       return { success: true };
     }),
 
   update: protectedProcedure
-    .input(z.object({ id: z.number(), name: z.string().optional(), mission: z.string().optional(), industry: z.string().optional(), status: z.enum(["active", "paused", "archived"]).optional(), monthlyBudget: z.number().optional(), briefingFrequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).optional() }))
+    .input(z.object({ id: z.number(), name: z.string().optional(), mission: z.string().optional(), industry: z.string().optional(), website: z.string().optional(), status: z.enum(["active", "paused", "archived"]).optional(), monthlyBudget: z.number().optional(), briefingFrequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).optional() }))
     .mutation(async ({ input }) => {
       const data: Record<string, unknown> = {};
       if (input.name) data.name = input.name;
       if (input.mission !== undefined) data.mission = input.mission;
       if (input.industry !== undefined) data.industry = input.industry;
+      if (input.website !== undefined) data.website = input.website;
       if (input.status) data.status = input.status;
       if (input.monthlyBudget !== undefined) data.monthlyBudget = String(input.monthlyBudget);
       if (input.briefingFrequency !== undefined) data.briefingFrequency = input.briefingFrequency;

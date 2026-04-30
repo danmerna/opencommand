@@ -98,6 +98,7 @@ export default function ProOnboarding() {
   const [companyName, setCompanyName] = useState("");
   const [companyMission, setCompanyMission] = useState("");
   const [companyIndustry, setCompanyIndustry] = useState("");
+  const [companyWebsite, setCompanyWebsite] = useState("");
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [briefingFrequency, setBriefingFrequency] = useState<BriefingFrequency>("weekly");
   const [createdAgents, setCreatedAgents] = useState<{ id: number; type: string }[]>([]);
@@ -222,7 +223,7 @@ export default function ProOnboarding() {
       return;
     }
     try {
-      await createCompanyMut.mutateAsync({ name: companyName.trim(), mission: companyMission.trim() || undefined, industry: companyIndustry.trim() || undefined });
+      await createCompanyMut.mutateAsync({ name: companyName.trim(), mission: companyMission.trim() || undefined, industry: companyIndustry.trim() || undefined, website: companyWebsite.trim() || undefined });
       await utils.companies.list.invalidate();
       const companies = await utils.companies.list.fetch();
       const company = companies[0];
@@ -656,6 +657,15 @@ export default function ProOnboarding() {
                 value={companyIndustry}
                 onChange={e => setCompanyIndustry(e.target.value)}
                 placeholder="e.g. AI / SaaS"
+                className="h-11"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-2">Company Website</label>
+              <Input
+                value={companyWebsite}
+                onChange={e => setCompanyWebsite(e.target.value)}
+                placeholder="e.g. https://acme.com"
                 className="h-11"
               />
             </div>

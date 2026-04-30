@@ -47,6 +47,7 @@ export const companies = mysqlTable("companies", {
   totalRevenue: decimal("totalRevenue", { precision: 14, scale: 2 }).default("0"),
   totalCosts: decimal("totalCosts", { precision: 14, scale: 2 }).default("0"),
   agentCount: int("agentCount").default(0).notNull(),
+  website: varchar("website", { length: 256 }),
   briefingFrequency: mysqlEnum("briefingFrequency", ["daily", "weekly", "monthly", "quarterly"]).default("weekly"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

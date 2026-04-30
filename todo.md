@@ -497,3 +497,7 @@
 
 ## Temporary Home Page Onboarding Button
 - [x] Add temporary button to home page menu to launch new executive onboarding session (/onboarding/pro)
+
+## Company Website Field in Onboarding
+- [x] Add "Company Website" input field to company-setup step in ProOnboarding
+- [x] Persist website to companies table (migration applied, column added)

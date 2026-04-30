@@ -1,0 +1,1 @@
+ALTER TABLE `companies` ADD `website` varchar(256);
