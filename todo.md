@@ -558,3 +558,7 @@
 - [x] Frontend: expandable row showing Σ recommendation, audit summary, tech stack, social presence
 - [x] Add route and nav link for admin leads dashboard
 - [x] Write vitest tests for admin leads dashboard (8/8 passed)
+
+## Decoupling Plan
+- [x] Write comprehensive DECOUPLING_PLAN.md with module inventory, dependency map, 4-phase extraction strategy, dual-mode architecture, risk assessment, monetization, and GTM recommendations
+- [x] Update DECOUPLING_PLAN.md with latest LOC counts (7,687 server / 6,209 client), new modules (QuickStart, SharedResults, AdminLeads), and refined phase estimates (~36 days total)
