@@ -494,3 +494,6 @@
 - [x] New tRPC procedure for standalone Σ chat
 - [x] Σ responds with highest-leverage perspective using cached context without full cascade
 - [x] Write vitest tests for all three features (9/9 passed)
+
+## Temporary Home Page Onboarding Button
+- [x] Add temporary button to home page menu to launch new executive onboarding session (/onboarding/pro)
