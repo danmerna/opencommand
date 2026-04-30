@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Streamdown } from "streamdown";
+import CascadeDiagram from "@/components/CascadeDiagram";
 import type {
   DataSourceCard,
   CrossSourceInsight,
@@ -776,29 +777,17 @@ export default function ExecutiveBoard() {
             </div>
           )}
 
-          {/* Empty state */}
+          {/* Empty state — full cascade diagram */}
           {!boardResult && !isQuerying && (
-            <div className="card-minimal flex items-center justify-center py-16">
-              <div className="text-center max-w-lg">
-                <div className="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-400/20 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-cyan-300">Σ</span>
-                </div>
+            <div className="card-minimal py-10">
+              <div className="text-center mb-6">
                 <h3 className="text-lg font-medium text-foreground mb-2">5-4-3-2-1-Σ Temporal Cascade</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground max-w-lg mx-auto">
                   Ask a strategic question and all five executives will analyze your business in sequence.
                   Each inherits context from the one above. Σ goes last and distills everything into the single highest-leverage action you can take right now.
                 </p>
-                <div className="flex justify-center">
-                  <CascadeTimeline activeStep={-1} />
-                </div>
-                <div className="flex justify-center gap-4 mt-4 text-[10px] text-muted-foreground">
-                  <span><span className="text-purple-400">ARCH</span> 5yr</span>
-                  <span><span className="text-amber-400">LEDGER</span> 4mo</span>
-                  <span><span className="text-emerald-400">SIGNAL</span> 3wk</span>
-                  <span><span className="text-blue-400">FORGE</span> 2d</span>
-                  <span><span className="text-cyan-300">Σ</span> now</span>
-                </div>
               </div>
+              <CascadeDiagram animated />
             </div>
           )}
         </div>

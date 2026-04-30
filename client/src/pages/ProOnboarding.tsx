@@ -34,6 +34,7 @@ type OnboardingStep =
   | "onboarding-cmo"
   | "integrations-cfo"
   | "onboarding-cfo"
+  | "sigma-calibration"
   | "generating-strategy"
   | "strategy-reveal"
   | "complete";
@@ -110,6 +111,8 @@ export default function ProOnboarding() {
   const [isCoreComplete, setIsCoreComplete] = useState(false);
   const [questionCount, setQuestionCount] = useState(0);
   const [strategy, setStrategy] = useState("");
+  const [sigmaSynthesis, setSigmaSynthesis] = useState("");
+  const [sigmaLoading, setSigmaLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [agentContext, setAgentContext] = useState<{ contextSummary: string; insights: string[]; connectedProviders: string[]; hasLiveData: boolean } | null>(null);
   const [agentContextLoading, setAgentContextLoading] = useState(false);
@@ -168,8 +171,16 @@ export default function ProOnboarding() {
     );
     const nextUnboarded = ["ceo", "cto", "cmo", "cfo"].find(t => !onboardedTypes.has(t));
     if (!nextUnboarded) {
-      // All onboarded — go straight to strategy
-      setStep("generating-strategy");
+      // All onboarded — run Σ calibration (which leads to strategy)
+      setStep("sigma-calibration");
+      setSigmaLoading(true);
+      sigmaCalibrateMut.mutateAsync({ companyId: existingCompany.id }).then(data => {
+        setSigmaSynthesis(data.synthesis ?? "");
+      }).catch(() => {
+        setSigmaSynthesis("Σ calibration encountered an issue. Proceeding to strategy generation.");
+      }).finally(() => {
+        setSigmaLoading(false);
+      });
     } else {
       const resumeStep = typeToIntegrationStep[nextUnboarded];
       if (resumeStep) {
@@ -187,6 +198,7 @@ export default function ProOnboarding() {
   const startOnboardingMut = trpc.onboarding.start.useMutation();
   const respondMut = trpc.onboarding.respond.useMutation();
   const generateStrategyMut = trpc.onboarding.generateStrategy.useMutation();
+  const sigmaCalibrateMut = trpc.onboarding.sigmaCalibrate.useMutation();
   const liveContextualizeMut = trpc.context.liveContextualize.useMutation();
 
 
@@ -468,8 +480,8 @@ export default function ProOnboarding() {
         setStep(nextIntStep);
       }
     } else {
-      // All agents onboarded — generate strategy
-      await handleGenerateStrategy();
+      // All agents onboarded — run Σ calibration before strategy
+      await handleSigmaCalibration();
     }
   }
 
@@ -489,7 +501,21 @@ export default function ProOnboarding() {
         setStep(nextIntStep);
       }
     } else {
-      await handleGenerateStrategy();
+      await handleSigmaCalibration();
+    }
+  }
+
+  async function handleSigmaCalibration() {
+    if (!companyId) return;
+    setStep("sigma-calibration");
+    setSigmaLoading(true);
+    try {
+      const data = await sigmaCalibrateMut.mutateAsync({ companyId });
+      setSigmaSynthesis(data.synthesis ?? "");
+    } catch (err: any) {
+      setSigmaSynthesis("Σ calibration encountered an issue. Proceeding to strategy generation.");
+    } finally {
+      setSigmaLoading(false);
     }
   }
 
@@ -1238,6 +1264,58 @@ export default function ProOnboarding() {
             </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // ── Σ CALIBRATION ────────────────────────────────────────────────────────
+  if (step === "sigma-calibration") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-8">
+        <div className="max-w-lg w-full text-center">
+          {/* Σ Icon */}
+          <div className="w-16 h-16 rounded-full bg-[#00D4AA]/10 border-2 border-[#00D4AA]/40 flex items-center justify-center mx-auto mb-6">
+            <span className="text-2xl font-bold text-[#00D4AA]">Σ</span>
+          </div>
+
+          {sigmaLoading ? (
+            <>
+              <h2 className="text-xl font-light text-foreground mb-2">Σ is synthesizing all perspectives</h2>
+              <p className="text-muted-foreground text-xs mb-6">
+                Combining insights from {EXEC_AGENTS.length - skippedAgents.size} executives into one highest-leverage recommendation...
+              </p>
+              <div className="space-y-2">
+                {["Reading ARCH (CEO) context", "Reading SAGE (CTO) context", "Reading NOVA (CMO) context", "Reading TED (CFO) context", "Synthesizing into one action"].map((s, i) => (
+                  <div key={s} className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
+                    <Loader2 size={10} className="animate-spin shrink-0" />
+                    {s}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-light text-foreground mb-2">Σ Calibration Complete</h2>
+              <p className="text-muted-foreground text-xs mb-6">
+                Here's Σ's first synthesis — combining all executive perspectives into one highest-leverage recommendation:
+              </p>
+              <div className="text-left border border-[#00D4AA]/30 rounded-xl bg-[#00D4AA]/5 p-5 mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm font-semibold text-[#00D4AA]">Σ Highest-Leverage Move</span>
+                </div>
+                <div className="text-sm text-foreground/90 leading-relaxed prose prose-invert prose-sm max-w-none">
+                  <Streamdown>{sigmaSynthesis}</Streamdown>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground mb-6">
+                This is what Σ will do every time you run the cascade — collapse all executive thinking into one move.
+              </p>
+              <Button className="gap-2 h-11" onClick={() => handleGenerateStrategy()}>
+                Continue to Strategy <ArrowRight size={13} />
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     );
   }

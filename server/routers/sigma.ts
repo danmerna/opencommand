@@ -96,6 +96,99 @@ export const sigmaRouter = router({
     }),
 
   /**
+   * Standalone Σ chat with cached board context
+   * Uses last cascade run context for instant highest-leverage recommendations
+   * without running the full 5-4-3-2-1-Σ cascade
+   */
+  standaloneChat: protectedProcedure
+    .input(
+      z.object({
+        message: z.string(),
+        conversationHistory: z.array(
+          z.object({
+            role: z.enum(["user", "assistant"]),
+            content: z.string(),
+          })
+        ).optional(),
+        companyId: z.number(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        console.log(`[Sigma Standalone] Processing message from user ${ctx.user.id}`);
+
+        // Gather cached board context from completed onboardings
+        const { getOnboardingsByCompanyId, getCompanyById, getAgentsByCompanyId, getContextManifestsByUserId } = await import("../db");
+        const onboardings = await getOnboardingsByCompanyId(input.companyId);
+        const completedOnboardings = onboardings.filter(o => o.status === "completed");
+        const company = await getCompanyById(input.companyId);
+
+        // Build executive context from completed interviews
+        let boardContext = "";
+        if (completedOnboardings.length > 0) {
+          const agents = await getAgentsByCompanyId(input.companyId);
+          const agentMap = new Map(agents.map(a => [a.id, a]));
+          boardContext = completedOnboardings.map(ob => {
+            const agent = agentMap.get(ob.agentId);
+            return `${agent?.name ?? ob.agentType} (${agent?.roleTitle ?? ob.agentType}): ${ob.summary ?? "Context available"}`;
+          }).join("\n");
+        }
+
+        // Also check for live context manifests
+        const manifests = await getContextManifestsByUserId(ctx.user.id);
+        let liveContext = "";
+        if (manifests.length > 0) {
+          liveContext = manifests
+            .filter(m => m.contextSummary)
+            .map(m => m.contextSummary)
+            .join("\n");
+        }
+
+        const systemPrompt = `You are Σ (Sigma) — the synthesis executive of OpenCommand's 5-4-3-2-1-Σ Temporal Cascade.
+
+You are in STANDALONE MODE. The user is talking directly to you without running the full cascade. Your job is to provide instant highest-leverage recommendations using cached board context.
+
+Company: ${company?.name ?? "Unknown"}
+Industry: ${company?.industry ?? "N/A"}
+Mission: ${company?.mission ?? "N/A"}
+
+${boardContext ? `EXECUTIVE BOARD CONTEXT (from onboarding interviews):\n${boardContext}` : "No executive context cached yet. Provide general strategic guidance."}
+
+${liveContext ? `LIVE BUSINESS CONTEXT:\n${liveContext}` : ""}
+
+Rules:
+1. Always think across ALL time horizons (5yr vision, 4mo financials, 3wk marketing, 2d execution)
+2. Collapse your thinking into ONE specific, actionable recommendation
+3. Be concise and direct — you are the executive who cuts through noise
+4. Reference the executive context when relevant to show synthesis
+5. If the user asks a question outside business strategy, still answer helpfully but frame it through the lens of highest-leverage impact`;
+
+        const conversationMessages = [
+          { role: "system" as const, content: systemPrompt },
+          ...(input.conversationHistory || []).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+          { role: "user" as const, content: input.message },
+        ];
+
+        const llmResponse = await invokeLLM({
+          messages: conversationMessages,
+        });
+
+        const response = (llmResponse.choices[0]?.message?.content ?? "I'm unable to respond right now.") as string;
+
+        return {
+          success: true,
+          response,
+          source: "sigma_standalone",
+          hasBoardContext: completedOnboardings.length > 0,
+          hasLiveContext: liveContext.length > 0,
+        };
+      } catch (error) {
+        console.error("[Sigma Standalone] Error:", error);
+        throw new Error("Failed to process standalone Sigma chat");
+      }
+    }),
+
+  /**
    * Get conversation history for a user
    */
   getHistory: protectedProcedure

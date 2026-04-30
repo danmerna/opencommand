@@ -2055,6 +2055,69 @@ Please produce the formal strategy proposal.` },
       return { strategy: strategyContent, executiveSummary: execSummary };
     }),
 
+  // Σ Calibration: synthesize all four executive interview perspectives into one highest-leverage recommendation
+  sigmaCalibrate: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const agents = await getAgentsByCompanyId(input.companyId);
+      const csuiteAgents = agents.filter(a => CSUITE_TYPES.includes(a.type as any));
+      const onboardings = await getOnboardingsByCompanyId(input.companyId);
+      const completedMap = new Map(onboardings.filter(o => o.status === "completed").map(o => [o.agentId, o]));
+
+      // Gather executive context from completed interviews
+      const executiveContext = csuiteAgents.map(a => {
+        const ob = completedMap.get(a.id);
+        return {
+          role: a.roleTitle ?? a.type,
+          name: a.name,
+          type: a.type,
+          summary: ob?.summary ?? "[Not yet onboarded]",
+          context: ob?.context ?? {},
+          completed: ob?.status === "completed",
+        };
+      }).filter(e => e.completed);
+
+      if (executiveContext.length === 0) {
+        return { success: false, synthesis: "No completed executive interviews to synthesize." };
+      }
+
+      const company = await getCompanyById(input.companyId);
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system" as const,
+            content: `You are Σ (Sigma) — the synthesis executive of OpenCommand's 5-4-3-2-1-Σ Temporal Cascade.
+
+You have just received the completed onboarding context from the company's executive team. Your job is to demonstrate your synthesis capability by combining all their perspectives into ONE highest-leverage recommendation.
+
+Rules:
+1. The recommendation must be specific and immediately actionable
+2. It must account for all executive perspectives (strategy, finance, marketing, technology)
+3. State what to do, why it's the highest-leverage move, and the expected impact
+4. Keep it concise — 3-4 sentences maximum
+5. Reference specific insights from the interviews to show you've synthesized them
+
+This is a calibration demonstration during onboarding — show the user what Σ can do.`,
+          },
+          {
+            role: "user" as const,
+            content: `Company: ${company?.name ?? "Unknown"}
+Mission: ${company?.mission ?? "N/A"}
+Industry: ${company?.industry ?? "N/A"}
+
+Executive Interview Summaries:
+${executiveContext.map(e => `\n### ${e.name} (${e.role})\n${e.summary}`).join("\n")}
+
+Synthesize these perspectives into ONE highest-leverage recommendation.`,
+          },
+        ],
+      });
+
+      const synthesis = (response.choices[0]?.message?.content ?? "Unable to generate synthesis.") as string;
+      return { success: true, synthesis };
+    }),
+
   // List strategy proposals
   proposals: protectedProcedure
     .input(z.object({ companyId: z.number().optional() }))

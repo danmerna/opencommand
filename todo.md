@@ -476,3 +476,21 @@
 - [x] Update persona hierarchy table in plan doc (5-4-3-2-1-Σ)
 - [x] Add Σ system prompt: synthesize all perspectives into single highest-leverage action
 - [x] Test full cascade flow with Σ as final step
+
+## 5-4-3-2-1-Σ Cascade Diagram Update
+- [x] Generate updated cascade diagram as inline SVG/React component
+- [x] Show ARCH (5yr, blue/indigo) → LEDGER (4mo, green) → SIGNAL (3wk, orange/amber) → FORGE (2d, red/rose) → YOU (now) → Σ (highest-leverage, #00D4AA teal)
+- [x] Replace current image reference in ExecutiveBoard.tsx with new inline diagram
+
+## Σ ProOnboarding Calibration Step
+- [x] Add 5th step to ProOnboarding after 4 executive interviews
+- [x] Σ synthesizes all four perspectives into one highest-leverage recommendation
+- [x] Call onboarding.sigmaCalibrate tRPC mutation with collected onboarding context
+- [x] Display Σ synthesis result as preview of ongoing capability
+
+## Σ Standalone Chat Mode
+- [x] Create Σ standalone chat page/component
+- [x] Backend checks for cached board context from last cascade run
+- [x] New tRPC procedure for standalone Σ chat
+- [x] Σ responds with highest-leverage perspective using cached context without full cascade
+- [x] Write vitest tests for all three features (9/9 passed)

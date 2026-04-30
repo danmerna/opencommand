@@ -1,260 +1,263 @@
-import { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, AlertCircle, CheckCircle2, Mail } from "lucide-react";
+import { Send, Loader2, ArrowLeft, Zap, Brain, TrendingUp, Target } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useActiveCompany } from "@/components/AppLayout";
 import { Streamdown } from "streamdown";
+import { Link } from "wouter";
 
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
-  metadata?: {
-    leadCount?: number;
-    actionType?: string;
-    status?: string;
-  };
+  hasBoardContext?: boolean;
+  hasLiveContext?: boolean;
 }
 
-interface SigmaChatUIProps {
-  onLeadAction?: (action: { type: string; leadId?: number; response?: string }) => void;
-}
+const QUICK_PROMPTS = [
+  { icon: Target, label: "What's my highest-leverage move right now?", color: "text-[#00D4AA]" },
+  { icon: TrendingUp, label: "Where should I focus this week?", color: "text-amber-400" },
+  { icon: Brain, label: "What risk am I not seeing?", color: "text-rose-400" },
+  { icon: Zap, label: "What would the board recommend?", color: "text-indigo-400" },
+];
 
-export function SigmaChatUI({ onLeadAction }: SigmaChatUIProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content:
-        "Hi! I'm Σ (Sigma), your conversational assistant. I can help you manage leads, review responses, and analyze performance. What would you like to do?",
-      timestamp: new Date(),
-    },
-  ]);
+export function SigmaChatUI() {
+  const { activeCompanyId } = useActiveCompany();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const chatMutation = trpc.sigma.chat.useMutation();
+  const standaloneChatMut = trpc.sigma.standaloneChat.useMutation();
+
+  // Stable conversation history for the API
+  const conversationHistory = useMemo(() => {
+    return messages.slice(-10).map(m => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
+  }, [messages]);
 
   // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
+  // Focus input on mount
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleSend = async (messageText?: string) => {
+    const text = (messageText ?? input).trim();
+    if (!text || !activeCompanyId) return;
 
     const userMessage: ChatMessage = {
-      id: Date.now().toString(),
+      id: `user-${Date.now()}`,
       role: "user",
-      content: input,
+      content: text,
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
-      const response = await chatMutation.mutateAsync({
-        message: input,
-        companyId: 30001,
-        conversationHistory: messages.slice(-5).map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
+      const response = await standaloneChatMut.mutateAsync({
+        message: text,
+        companyId: activeCompanyId,
+        conversationHistory,
       });
 
       const assistantMessage: ChatMessage = {
-        id: Date.now().toString(),
+        id: `assistant-${Date.now()}`,
         role: "assistant",
-        content: typeof response.response === "string" ? response.response : (response.response[0] as any)?.text || "",
+        content: response.response,
         timestamp: new Date(),
-        metadata: response.data as any,
+        hasBoardContext: response.hasBoardContext,
+        hasLiveContext: response.hasLiveContext,
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      // Handle suggested actions
-      if (response.action) {
-        onLeadAction?.({
-          type: response.action,
-          ...response.data,
-        });
-      }
+      setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error("Chat error:", error);
-      const errorMessage: ChatMessage = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      console.error("[Sigma Standalone] Chat error:", error);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          role: "assistant",
+          content: "I encountered an issue processing your request. Please try again.",
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleQuickAction = async (action: string) => {
-    setInput(action);
-    // Trigger send after state update
-    setTimeout(() => {
-      const userMessage: ChatMessage = {
-        id: Date.now().toString(),
-        role: "user",
-        content: action,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, userMessage]);
-      handleSendMessage();
-    }, 0);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">
-            Σ
+    <div className="flex flex-col h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)]">
+      {/* Header */}
+      <div className="shrink-0 border-b border-border px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/executive-board">
+            <button className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+              <ArrowLeft size={16} className="text-muted-foreground" />
+            </button>
+          </Link>
+          <div className="w-9 h-9 rounded-full bg-[#00D4AA]/10 border border-[#00D4AA]/40 flex items-center justify-center">
+            <span className="text-base font-bold text-[#00D4AA]">Σ</span>
           </div>
-          Sigma Chat
-        </h1>
-        <p className="text-gray-600 mt-1">Your conversational intelligence assistant</p>
+          <div>
+            <h1 className="text-sm font-semibold text-foreground">Σ Standalone Mode</h1>
+            <p className="text-[11px] text-muted-foreground">Highest-leverage recommendations from cached board context</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-[10px] border-[#00D4AA]/30 text-[#00D4AA]">
+            <Zap size={10} className="mr-1" />
+            Instant
+          </Badge>
+        </div>
       </div>
 
-      <Card className="h-96 flex flex-col">
-        <CardHeader className="pb-3 border-b">
-          <CardTitle className="text-base">Conversation</CardTitle>
-          <CardDescription>Ask me anything about leads, responses, or performance</CardDescription>
-        </CardHeader>
-
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto px-6 py-4">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="w-20 h-20 rounded-full bg-[#00D4AA]/10 border-2 border-[#00D4AA]/30 flex items-center justify-center mb-6">
+              <span className="text-3xl font-bold text-[#00D4AA]">Σ</span>
+            </div>
+            <h2 className="text-lg font-light text-foreground mb-2">Talk directly to Σ</h2>
+            <p className="text-xs text-muted-foreground max-w-sm mb-8">
+              Skip the full cascade. Σ uses your cached executive board context to deliver instant highest-leverage recommendations.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md w-full">
+              {QUICK_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt.label}
+                  onClick={() => handleSend(prompt.label)}
+                  className="text-left p-3 rounded-xl border border-border hover:border-[#00D4AA]/30 hover:bg-[#00D4AA]/5 transition-all group"
+                >
+                  <div className="flex items-start gap-2">
+                    <prompt.icon size={14} className={`${prompt.color} mt-0.5 shrink-0`} />
+                    <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                      {prompt.label}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 max-w-3xl mx-auto">
             {messages.map((message) => (
-              <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                key={message.id}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                  className={`max-w-[85%] ${
                     message.role === "user"
-                      ? "bg-blue-500 text-white rounded-br-none"
-                      : "bg-gray-100 text-gray-900 rounded-bl-none"
+                      ? "bg-foreground/10 rounded-2xl rounded-br-sm px-4 py-3"
+                      : "rounded-2xl rounded-bl-sm"
                   }`}
                 >
                   {message.role === "assistant" ? (
-                    <Streamdown>{message.content}</Streamdown>
-                  ) : (
-                    <p className="text-sm">{message.content}</p>
-                  )}
-
-                  {message.metadata && (
-                    <div className="mt-2 flex gap-2 flex-wrap">
-                      {message.metadata.leadCount && (
-                        <Badge variant="secondary" className="text-xs">
-                          <Mail className="w-3 h-3 mr-1" />
-                          {message.metadata.leadCount} leads
-                        </Badge>
-                      )}
-                      {message.metadata.status && (
-                        <Badge
-                          variant={message.metadata.status === "success" ? "default" : "destructive"}
-                          className="text-xs"
-                        >
-                          {message.metadata.status}
-                        </Badge>
-                      )}
+                    <div className="flex gap-3">
+                      <div className="w-7 h-7 rounded-full bg-[#00D4AA]/10 border border-[#00D4AA]/40 flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-xs font-bold text-[#00D4AA]">Σ</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-foreground/90 leading-relaxed prose prose-invert prose-sm max-w-none">
+                          <Streamdown>{message.content}</Streamdown>
+                        </div>
+                        {(message.hasBoardContext || message.hasLiveContext) && (
+                          <div className="flex gap-1.5 mt-2">
+                            {message.hasBoardContext && (
+                              <Badge variant="outline" className="text-[9px] border-[#00D4AA]/20 text-[#00D4AA]/70">
+                                Board context
+                              </Badge>
+                            )}
+                            {message.hasLiveContext && (
+                              <Badge variant="outline" className="text-[9px] border-blue-400/20 text-blue-400/70">
+                                Live data
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
+                  ) : (
+                    <p className="text-sm text-foreground">{message.content}</p>
                   )}
-
-                  <p className="text-xs mt-1 opacity-70">{message.timestamp.toLocaleTimeString()}</p>
                 </div>
               </div>
             ))}
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg rounded-bl-none">
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-[#00D4AA]/10 border border-[#00D4AA]/40 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-bold text-[#00D4AA]">Σ</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 size={14} className="animate-spin" />
+                    <span className="text-xs">Synthesizing...</span>
+                  </div>
                 </div>
               </div>
             )}
 
             <div ref={scrollRef} />
           </div>
-        </ScrollArea>
+        )}
+      </div>
 
-        <CardContent className="border-t pt-4 space-y-3">
-          {/* Quick Actions */}
-          {messages.length === 1 && (
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickAction("Show me pending leads")}
-                className="text-xs"
-              >
-                <Mail className="w-3 h-3 mr-1" />
-                Pending Leads
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickAction("What's my open rate today?")}
-                className="text-xs"
-              >
-                <CheckCircle2 className="w-3 h-3 mr-1" />
-                Performance
-              </Button>
-            </div>
-          )}
-
-          {/* Input */}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Ask Sigma..."
+      {/* Input area */}
+      <div className="shrink-0 border-t border-border px-6 py-4">
+        <div className="max-w-3xl mx-auto flex gap-2">
+          <div className="flex-1 relative">
+            <textarea
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              disabled={isLoading}
-              className="text-sm"
+              onKeyDown={handleKeyDown}
+              placeholder={activeCompanyId ? "Ask Σ anything..." : "Select a company first"}
+              disabled={isLoading || !activeCompanyId}
+              rows={1}
+              className="w-full resize-none rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[#00D4AA]/50 focus:border-[#00D4AA]/50 disabled:opacity-50"
+              style={{ minHeight: "44px", maxHeight: "120px" }}
             />
-            <Button
-              onClick={handleSendMessage}
-              disabled={isLoading || !input.trim()}
-              size="sm"
-              className="gap-1"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Example Prompts */}
-      <Card className="bg-blue-50 border-blue-200">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-blue-600" />
-            Try These Prompts
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-gray-700 space-y-1">
-          <p>• "Show me pending leads"</p>
-          <p>• "What's my open rate?"</p>
-          <p>• "Draft a response for John Smith"</p>
-          <p>• "Analyze performance trends"</p>
-        </CardContent>
-      </Card>
+          <Button
+            onClick={() => handleSend()}
+            disabled={isLoading || !input.trim() || !activeCompanyId}
+            size="icon"
+            className="h-11 w-11 rounded-xl bg-[#00D4AA] hover:bg-[#00B894] text-black shrink-0"
+          >
+            {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+          </Button>
+        </div>
+        {!activeCompanyId && (
+          <p className="text-[10px] text-muted-foreground text-center mt-2">
+            Select a company from the sidebar to start chatting with Σ
+          </p>
+        )}
+      </div>
     </div>
   );
 }
