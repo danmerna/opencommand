@@ -516,3 +516,20 @@
 - [x] Show audit progress/results in onboarding UI during executive interviews
 - [x] Feed audit results into executive agent context (ARCH, SIGNAL, LEDGER, FORGE, Σ)
 - [x] Write vitest tests for audit pipeline (18/18 passed)
+
+## AI Chief of Staff Landing Page
+- [x] Create dedicated /chief-of-staff landing page
+- [x] Hero section with product name, tagline, and CTA to start onboarding
+- [x] Visual showing the 5-4-3-2-1-Σ temporal cascade
+- [x] Four executive persona cards (ARCH, LEDGER, SIGNAL, FORGE + Σ)
+- [x] "How It Works" section showing self-contextualizing onboarding flow
+- [x] Capabilities grid (Morning Briefings, Individual Chat, Cascade, Website Intel, Tool Integration, Proof of Outcome)
+- [x] Pricing section (Beta free + Pro coming soon)
+- [x] CTA button routes to /onboarding/pro for logged-in users or login for new users
+- [x] Full cascade example (Denver market expansion)
+- [x] Problem section with stats (23hrs/week, 4.2 tools, 67% incomplete context)
+- [x] Add route in App.tsx
+- [x] Write vitest tests for the landing page (14/14 passed)
+
+## Decoupling Architecture Plan
+- [x] Write comprehensive decoupling plan document covering module inventory, dependency map, extraction strategy, timeline, and architecture
