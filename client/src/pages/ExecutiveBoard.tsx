@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   Send, Brain, Users, MessageSquare, Zap, RotateCcw,
   ChevronRight, AlertTriangle, TrendingUp, Info, Loader2,
-  CheckCircle2, XCircle, History,
+  CheckCircle2, XCircle, History, Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,7 +20,7 @@ import type {
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type Tab = "board" | "executive" | "direct";
-type ExecType = "ceo" | "cmo" | "cto" | "cfo";
+type ExecType = "ceo" | "cfo" | "cmo" | "cto" | "sigma";
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
 interface ExecutiveResponse {
@@ -39,14 +39,71 @@ interface BoardResult {
   contextId: number;
 }
 
-// ─── Executive Metadata ─────────────────────────────────────────────────────
+// ─── Executive Metadata (5-4-3-2-1-Σ Temporal Cascade) ─────────────────────
 
-const EXEC_META: Record<ExecType, { name: string; label: string; color: string; bgColor: string; borderColor: string }> = {
-  ceo: { name: "ARCH", label: "CEO", color: "text-emerald-400", bgColor: "bg-emerald-500/15", borderColor: "border-emerald-500/30" },
-  cmo: { name: "NOVA", label: "CMO", color: "text-purple-400", bgColor: "bg-purple-500/15", borderColor: "border-purple-500/30" },
-  cto: { name: "SAGE", label: "CTO", color: "text-cyan-400", bgColor: "bg-cyan-500/15", borderColor: "border-cyan-500/30" },
-  cfo: { name: "TED", label: "CFO", color: "text-amber-400", bgColor: "bg-amber-500/15", borderColor: "border-amber-500/30" },
+const EXEC_META: Record<ExecType, {
+  name: string;
+  label: string;
+  timeHorizon: string;
+  focus: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  number: string;
+}> = {
+  ceo: {
+    name: "ARCH",
+    label: "CEO",
+    timeHorizon: "5 Years",
+    focus: "Vision & Market Position",
+    color: "text-purple-400",
+    bgColor: "bg-purple-500/15",
+    borderColor: "border-purple-500/30",
+    number: "5",
+  },
+  cfo: {
+    name: "LEDGER",
+    label: "CFO",
+    timeHorizon: "4 Months",
+    focus: "Quarterly Feasibility",
+    color: "text-amber-400",
+    bgColor: "bg-amber-500/15",
+    borderColor: "border-amber-500/30",
+    number: "4",
+  },
+  cmo: {
+    name: "SIGNAL",
+    label: "CMO",
+    timeHorizon: "3 Weeks",
+    focus: "Market Timing",
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-500/15",
+    borderColor: "border-emerald-500/30",
+    number: "3",
+  },
+  cto: {
+    name: "FORGE",
+    label: "CTO",
+    timeHorizon: "2 Days",
+    focus: "Sprint Execution",
+    color: "text-blue-400",
+    bgColor: "bg-blue-500/15",
+    borderColor: "border-blue-500/30",
+    number: "2",
+  },
+  sigma: {
+    name: "Σ",
+    label: "Synthesis",
+    timeHorizon: "NOW",
+    focus: "Highest-Leverage Move",
+    color: "text-cyan-300",
+    bgColor: "bg-cyan-500/15",
+    borderColor: "border-cyan-400/40",
+    number: "Σ",
+  },
 };
+
+const CASCADE_ORDER: ExecType[] = ["ceo", "cfo", "cmo", "cto", "sigma"];
 
 const SOURCE_COLORS: Record<string, string> = {
   hubspot_crm: "bg-orange-400",
@@ -137,7 +194,7 @@ function QuestionCard({
   return (
     <div className="rounded-lg border border-border bg-black/20 p-4">
       <div className="flex gap-3">
-        <span className="text-emerald-400 text-[13px] font-bold font-mono shrink-0 mt-0.5">{index + 1}.</span>
+        <span className="text-cyan-300 text-[13px] font-bold font-mono shrink-0 mt-0.5">{index + 1}.</span>
         <div className="flex-1">
           <p className="text-[13px] text-foreground leading-relaxed mb-2">{question.question}</p>
           <p className="text-[10px] text-muted-foreground mb-1">
@@ -160,7 +217,7 @@ function QuestionCard({
                 size="sm"
                 onClick={onExecute}
                 disabled={isExecuting}
-                className="h-7 px-3 text-[11px] gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="h-7 px-3 text-[11px] gap-1.5 bg-cyan-600 hover:bg-cyan-700 text-white"
               >
                 {isExecuting ? <Loader2 size={11} className="animate-spin" /> : <Zap size={11} />}
                 Execute
@@ -194,12 +251,12 @@ function ExecutiveCard({ exec, onExecute, isExecuting, executionResult }: {
   return (
     <div className={`rounded-lg border ${meta.borderColor} ${meta.bgColor} p-4`}>
       <div className="flex items-center gap-2 mb-3">
-        <div className={`w-6 h-6 rounded-full bg-black/30 flex items-center justify-center`}>
-          <span className={`text-[10px] font-bold ${meta.color}`}>{meta.name[0]}</span>
+        <div className="w-8 h-8 rounded-full bg-black/30 flex items-center justify-center">
+          <span className={`text-[11px] font-bold ${meta.color}`}>{meta.number}</span>
         </div>
         <div>
           <span className={`text-[11px] font-semibold ${meta.color}`}>{meta.name}</span>
-          <span className="text-[10px] text-muted-foreground ml-1.5">· {meta.label}</span>
+          <span className="text-[10px] text-muted-foreground ml-1.5">· {meta.label} · {meta.timeHorizon}</span>
         </div>
       </div>
 
@@ -226,13 +283,151 @@ function ExecutiveCard({ exec, onExecute, isExecuting, executionResult }: {
             size="sm"
             onClick={onExecute}
             disabled={isExecuting}
-            className="h-7 px-3 text-[11px] gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="h-7 px-3 text-[11px] gap-1.5 bg-cyan-600 hover:bg-cyan-700 text-white"
           >
             {isExecuting ? <Loader2 size={11} className="animate-spin" /> : <Zap size={11} />}
             Execute
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Σ Synthesis Card — the final card in the cascade, visually distinct */
+function SigmaCard({ sigma }: { sigma: any }) {
+  if (!sigma) return null;
+  return (
+    <div className="rounded-xl border-2 border-cyan-400/40 bg-gradient-to-br from-cyan-500/10 via-black/40 to-cyan-500/5 p-6 mt-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-full bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center">
+          <span className="text-lg font-bold text-cyan-300">Σ</span>
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-cyan-300">Σ — Highest-Leverage Move</div>
+          <div className="text-[10px] text-muted-foreground">Synthesized from all 4 executive perspectives</div>
+        </div>
+        {sigma.confidence && (
+          <div className="ml-auto">
+            <div className={`text-[11px] font-mono px-2.5 py-1 rounded-full ${
+              sigma.confidence >= 80 ? "bg-emerald-500/15 text-emerald-400" :
+              sigma.confidence >= 60 ? "bg-amber-500/15 text-amber-400" :
+              "bg-red-500/15 text-red-400"
+            }`}>
+              {sigma.confidence}% confidence
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* The ONE action */}
+      {sigma.highestLeverageAction && (
+        <div className="rounded-lg border border-cyan-400/30 bg-black/30 p-4 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Target size={14} className="text-cyan-300" />
+            <span className="text-[10px] text-cyan-300 font-mono uppercase tracking-wider">Do This Now</span>
+          </div>
+          <p className="text-[14px] text-foreground font-medium leading-relaxed">{sigma.highestLeverageAction}</p>
+        </div>
+      )}
+
+      {/* Details grid */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {sigma.expectedImpact && (
+          <div className="rounded-md border border-border/50 bg-black/20 p-3">
+            <p className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider mb-1">Expected Impact</p>
+            <p className="text-[12px] text-foreground leading-relaxed">{sigma.expectedImpact}</p>
+          </div>
+        )}
+        {sigma.timeToExecute && (
+          <div className="rounded-md border border-border/50 bg-black/20 p-3">
+            <p className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider mb-1">Time to Execute</p>
+            <p className="text-[12px] text-foreground leading-relaxed">{sigma.timeToExecute}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Risk & blockers */}
+      <div className="flex items-center gap-4 text-[11px]">
+        {sigma.riskLevel && (
+          <span className={`px-2 py-0.5 rounded-full font-mono ${
+            sigma.riskLevel === "low" ? "bg-emerald-500/15 text-emerald-400" :
+            sigma.riskLevel === "medium" ? "bg-amber-500/15 text-amber-400" :
+            "bg-red-500/15 text-red-400"
+          }`}>
+            {sigma.riskLevel} risk
+          </span>
+        )}
+        {sigma.prerequisitesMet !== undefined && (
+          <span className={`flex items-center gap-1 ${sigma.prerequisitesMet ? "text-emerald-400" : "text-amber-400"}`}>
+            {sigma.prerequisitesMet ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
+            {sigma.prerequisitesMet ? "Prerequisites met" : "Prerequisites pending"}
+          </span>
+        )}
+      </div>
+
+      {sigma.blockersIfAny && sigma.blockersIfAny.length > 0 && (
+        <div className="mt-3 rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+          <p className="text-[9px] text-amber-400 font-mono uppercase tracking-wider mb-1">Blockers</p>
+          <ul className="space-y-1">
+            {sigma.blockersIfAny.map((b: string, i: number) => (
+              <li key={i} className="text-[11px] text-foreground/80 flex items-start gap-1.5">
+                <span className="text-amber-400 mt-0.5">•</span> {b}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Perspective synthesis */}
+      {sigma.perspective && (
+        <div className="mt-4 pt-3 border-t border-border/30">
+          <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-2">Synthesis</p>
+          <p className="text-[12px] text-foreground/80 leading-relaxed">{sigma.perspective}</p>
+        </div>
+      )}
+
+      {sigma.rationale && sigma.rationale.length > 0 && (
+        <div className="mt-3">
+          <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-2">Rationale</p>
+          <div className="space-y-1">
+            {sigma.rationale.map((r: string, i: number) => (
+              <div key={i} className="flex items-start gap-2 text-[11px] text-foreground/70">
+                <span className="text-cyan-400 font-mono shrink-0">{i + 1}.</span>
+                <span>{r}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Cascade Visualization ──────────────────────────────────────────────────
+
+function CascadeTimeline({ activeStep }: { activeStep: number }) {
+  return (
+    <div className="flex items-center gap-1 mb-4">
+      {CASCADE_ORDER.map((key, i) => {
+        const meta = EXEC_META[key];
+        const isActive = i <= activeStep;
+        const isCurrent = i === activeStep;
+        return (
+          <div key={key} className="flex items-center gap-1">
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+              isCurrent ? `${meta.bgColor} ${meta.color} ring-2 ring-offset-1 ring-offset-black ${meta.borderColor}` :
+              isActive ? `${meta.bgColor} ${meta.color}` :
+              "bg-zinc-800 text-zinc-500"
+            }`}>
+              {meta.number}
+            </div>
+            {i < CASCADE_ORDER.length - 1 && (
+              <div className={`w-6 h-px ${isActive ? "bg-foreground/30" : "bg-zinc-700"}`} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -247,6 +442,7 @@ export default function ExecutiveBoard() {
   const [boardInput, setBoardInput] = useState("");
   const [boardResult, setBoardResult] = useState<BoardResult | null>(null);
   const [isQuerying, setIsQuerying] = useState(false);
+  const [cascadeStep, setCascadeStep] = useState(-1);
   const [executionResults, setExecutionResults] = useState<Record<string, { success: boolean; taskCount?: number }>>({});
   const [executingIds, setExecutingIds] = useState<Set<string>>(new Set());
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
@@ -254,10 +450,11 @@ export default function ExecutiveBoard() {
   // Individual executive tab state
   const [selectedExec, setSelectedExec] = useState<ExecType>("ceo");
   const [execMessages, setExecMessages] = useState<Record<ExecType, ChatMessage[]>>({
-    ceo: [{ role: "assistant", content: "**ARCH online.** I'm your AI CEO. I think in terms of overall strategy, revenue growth, and cross-functional alignment. What strategic challenge should we tackle?" }],
-    cmo: [{ role: "assistant", content: "**NOVA online.** I'm your AI CMO. I focus on demand generation, brand positioning, and campaign optimization. What marketing challenge can I help with?" }],
-    cto: [{ role: "assistant", content: "**SAGE online.** I'm your AI CTO. I analyze engineering velocity, system reliability, and technical debt. What technical challenge should we address?" }],
-    cfo: [{ role: "assistant", content: "**TED online.** I'm your AI CFO. I focus on unit economics, cash flow, and financial modeling. What financial question should we analyze?" }],
+    ceo: [{ role: "assistant", content: "**ARCH online.** I see in 5-year arcs. Vision, market position, competitive moats. What strategic challenge should we think through?" }],
+    cfo: [{ role: "assistant", content: "**LEDGER online.** I think in quarters. Cash flow, unit economics, budget feasibility. What financial question needs analysis?" }],
+    cmo: [{ role: "assistant", content: "**SIGNAL online.** I operate in 3-week sprints. Campaigns, lead gen, market timing. What marketing challenge can I help with?" }],
+    cto: [{ role: "assistant", content: "**FORGE online.** I think in 2-day sprints. System reliability, technical debt, build velocity. What technical challenge should we address?" }],
+    sigma: [{ role: "assistant", content: "**Σ online.** I synthesize all executive perspectives into the single highest-leverage action you can take right now. Ask me anything and I'll consult the full board, then distill it to one move." }],
   });
   const [execInput, setExecInput] = useState("");
   const [isExecThinking, setIsExecThinking] = useState(false);
@@ -299,12 +496,27 @@ export default function ExecutiveBoard() {
     setExecutionResults({});
     setExecutingIds(new Set());
     setSkippedIds(new Set());
+    setCascadeStep(0);
+
+    // Animate cascade steps
+    const stepInterval = setInterval(() => {
+      setCascadeStep(prev => {
+        if (prev >= CASCADE_ORDER.length - 1) {
+          clearInterval(stepInterval);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 1500);
+
     try {
       const result = await boardQueryM.mutateAsync({ requestText: boardInput.trim() });
       setBoardResult(result as BoardResult);
+      setCascadeStep(CASCADE_ORDER.length - 1);
     } catch {
       toast.error("Board query failed. Please try again.");
     } finally {
+      clearInterval(stepInterval);
       setIsQuerying(false);
     }
   };
@@ -355,7 +567,7 @@ export default function ExecutiveBoard() {
     setIsExecThinking(true);
     try {
       const result = await executiveChatM.mutateAsync({
-        executiveType: selectedExec,
+        executiveType: selectedExec === "sigma" ? "ceo" : selectedExec, // Σ uses board cascade
         userInput: userMsg.content,
         conversationHistory: currentMessages.slice(-8),
         contextSummary: boardResult?.socratic.contextSummary,
@@ -404,7 +616,7 @@ export default function ExecutiveBoard() {
   // ─── Tab definitions ──────────────────────────────────────────────────
 
   const tabs = [
-    { id: "board" as Tab, label: "Executive Board", icon: Users },
+    { id: "board" as Tab, label: "5-4-3-2-1-Σ", icon: Users },
     { id: "executive" as Tab, label: "1:1 Executive", icon: Brain },
     { id: "direct" as Tab, label: "Direct LLM", icon: MessageSquare },
   ];
@@ -415,7 +627,9 @@ export default function ExecutiveBoard() {
       <div className="mb-6">
         <p className="text-xs text-muted-foreground tracking-widest uppercase mb-1">OpenCommand</p>
         <h1 className="text-3xl font-light text-foreground tracking-tight">Executive Board</h1>
-        <p className="text-sm text-muted-foreground mt-1">Multi-executive Socratic intelligence · Live data · Strategic execution</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          5-4-3-2-1-Σ Temporal Cascade · ARCH → LEDGER → SIGNAL → FORGE → YOU → Σ
+        </p>
       </div>
 
       {/* Tabs */}
@@ -425,7 +639,7 @@ export default function ExecutiveBoard() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              tab === t.id ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+              tab === t.id ? "border-cyan-400 text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             <t.icon size={14} /> {t.label}
@@ -434,7 +648,7 @@ export default function ExecutiveBoard() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════════ */}
-      {/* BOARD TAB */}
+      {/* BOARD TAB — 5-4-3-2-1-Σ CASCADE */}
       {/* ═══════════════════════════════════════════════════════════════════════ */}
       {tab === "board" && (
         <div>
@@ -453,18 +667,18 @@ export default function ExecutiveBoard() {
               <Button
                 onClick={handleBoardQuery}
                 disabled={!boardInput.trim() || isQuerying}
-                className="self-end px-6 gap-2"
+                className="self-end px-6 gap-2 bg-cyan-600 hover:bg-cyan-700"
               >
                 {isQuerying ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                {isQuerying ? "Querying..." : "Ask Board"}
+                {isQuerying ? "Cascading..." : "Ask Board"}
               </Button>
             </div>
             <div className="flex gap-2 mt-3 flex-wrap">
-              {["Close more deals this quarter", "Why is our CAC increasing?", "Are we on track for profitability?", "Build an outbound campaign for Q2"].map(s => (
+              {["Close more deals this quarter", "Why is our CAC increasing?", "Are we on track for profitability?", "What's the highest-leverage move right now?"].map(s => (
                 <button
                   key={s}
                   onClick={() => setBoardInput(s)}
-                  className="text-[10px] border border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground px-2.5 py-1 rounded-md transition-colors"
+                  className="text-[10px] border border-border text-muted-foreground hover:border-cyan-400/30 hover:text-foreground px-2.5 py-1 rounded-md transition-colors"
                 >
                   {s}
                 </button>
@@ -472,13 +686,28 @@ export default function ExecutiveBoard() {
             </div>
           </div>
 
-          {/* Loading state */}
+          {/* Loading state with cascade animation */}
           {isQuerying && (
-            <div className="card-minimal flex items-center justify-center py-16">
-              <div className="text-center">
-                <Loader2 size={28} className="animate-spin text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground">Pulling live data from connected sources...</p>
-                <p className="text-[10px] text-muted-foreground/60 mt-1">4 executives analyzing simultaneously</p>
+            <div className="card-minimal py-12">
+              <div className="text-center mb-6">
+                <Loader2 size={28} className="animate-spin text-cyan-400 mx-auto mb-4" />
+                <p className="text-sm text-foreground">Running 5-4-3-2-1-Σ Temporal Cascade...</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Each executive inherits context from the one above</p>
+              </div>
+              <div className="max-w-md mx-auto">
+                <CascadeTimeline activeStep={cascadeStep} />
+                <div className="text-center">
+                  <p className="text-[11px] text-muted-foreground">
+                    {cascadeStep >= 0 && cascadeStep < CASCADE_ORDER.length && (
+                      <>
+                        <span className={EXEC_META[CASCADE_ORDER[cascadeStep]].color}>
+                          {EXEC_META[CASCADE_ORDER[cascadeStep]].name}
+                        </span>
+                        {" "}analyzing ({EXEC_META[CASCADE_ORDER[cascadeStep]].timeHorizon})...
+                      </>
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -488,11 +717,14 @@ export default function ExecutiveBoard() {
             <div className="space-y-6">
               {/* Header badge */}
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-mono font-medium">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 text-cyan-300 text-[10px] font-mono font-medium">
                   {boardResult.socratic.sourceCount} sources · {boardResult.socratic.queryTimeMs}ms
                 </span>
                 <span className="text-sm font-semibold text-foreground">{boardResult.socratic.title}</span>
               </div>
+
+              {/* Cascade timeline */}
+              <CascadeTimeline activeStep={CASCADE_ORDER.length - 1} />
 
               {/* Data source cards */}
               <DataSourceGrid cards={boardResult.socratic.dataCards} />
@@ -538,19 +770,34 @@ export default function ExecutiveBoard() {
                   })}
                 </div>
               </div>
+
+              {/* Σ Synthesis — the final card, visually distinct */}
+              <SigmaCard sigma={(boardResult as any).sigma} />
             </div>
           )}
 
           {/* Empty state */}
           {!boardResult && !isQuerying && (
             <div className="card-minimal flex items-center justify-center py-16">
-              <div className="text-center max-w-md">
-                <Users size={32} className="text-muted-foreground mx-auto mb-4 opacity-40" />
-                <h3 className="text-lg font-medium text-foreground mb-2">Executive Board</h3>
-                <p className="text-sm text-muted-foreground">
-                  Ask a strategic question and all four executives will analyze your live business data simultaneously.
-                  Each executive brings their domain expertise — CEO, CMO, CTO, and CFO.
+              <div className="text-center max-w-lg">
+                <div className="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-400/20 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-cyan-300">Σ</span>
+                </div>
+                <h3 className="text-lg font-medium text-foreground mb-2">5-4-3-2-1-Σ Temporal Cascade</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Ask a strategic question and all five executives will analyze your business in sequence.
+                  Each inherits context from the one above. Σ goes last and distills everything into the single highest-leverage action you can take right now.
                 </p>
+                <div className="flex justify-center">
+                  <CascadeTimeline activeStep={-1} />
+                </div>
+                <div className="flex justify-center gap-4 mt-4 text-[10px] text-muted-foreground">
+                  <span><span className="text-purple-400">ARCH</span> 5yr</span>
+                  <span><span className="text-amber-400">LEDGER</span> 4mo</span>
+                  <span><span className="text-emerald-400">SIGNAL</span> 3wk</span>
+                  <span><span className="text-blue-400">FORGE</span> 2d</span>
+                  <span><span className="text-cyan-300">Σ</span> now</span>
+                </div>
               </div>
             </div>
           )}
@@ -558,14 +805,14 @@ export default function ExecutiveBoard() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════ */}
-      {/* INDIVIDUAL EXECUTIVE TAB */}
+      {/* INDIVIDUAL EXECUTIVE TAB — includes Σ */}
       {/* ═══════════════════════════════════════════════════════════════════════ */}
       {tab === "executive" && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Executive selector */}
           <div className="lg:col-span-1 space-y-2">
             <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-2">Select Executive</p>
-            {(Object.keys(EXEC_META) as ExecType[]).map((key) => {
+            {CASCADE_ORDER.map((key) => {
               const meta = EXEC_META[key];
               const isActive = key === selectedExec;
               const msgCount = execMessages[key].length;
@@ -580,7 +827,7 @@ export default function ExecutiveBoard() {
                   }`}
                 >
                   <div className={`w-8 h-8 rounded-full bg-black/30 flex items-center justify-center`}>
-                    <span className={`text-xs font-bold ${meta.color}`}>{meta.name[0]}</span>
+                    <span className={`text-xs font-bold ${meta.color}`}>{meta.number}</span>
                   </div>
                   <div className="text-left flex-1">
                     <div className="flex items-center gap-1.5">
@@ -589,7 +836,7 @@ export default function ExecutiveBoard() {
                     </div>
                     <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                       <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-                      Online · {msgCount} messages
+                      {meta.timeHorizon} · {msgCount} msgs
                     </div>
                   </div>
                   {isActive && <ChevronRight size={12} className="text-muted-foreground" />}
@@ -605,14 +852,15 @@ export default function ExecutiveBoard() {
               <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full ${EXEC_META[selectedExec].bgColor} flex items-center justify-center`}>
-                    <span className={`text-xs font-bold ${EXEC_META[selectedExec].color}`}>{EXEC_META[selectedExec].name[0]}</span>
+                    <span className={`text-xs font-bold ${EXEC_META[selectedExec].color}`}>{EXEC_META[selectedExec].number}</span>
                   </div>
                   <div>
                     <div className="text-sm font-medium text-foreground">
-                      {EXEC_META[selectedExec].name} — AI {EXEC_META[selectedExec].label}
+                      {EXEC_META[selectedExec].name} — {EXEC_META[selectedExec].label}
                     </div>
                     <div className="text-[10px] text-emerald-400 flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" /> Online · 1:1 mode
+                      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                      {EXEC_META[selectedExec].timeHorizon} · {EXEC_META[selectedExec].focus}
                     </div>
                   </div>
                 </div>
@@ -636,7 +884,7 @@ export default function ExecutiveBoard() {
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                     {msg.role === "assistant" && (
                       <div className={`w-6 h-6 rounded-full ${EXEC_META[selectedExec].bgColor} flex items-center justify-center mr-2 flex-shrink-0 mt-1`}>
-                        <span className={`text-[10px] font-semibold ${EXEC_META[selectedExec].color}`}>{EXEC_META[selectedExec].name[0]}</span>
+                        <span className={`text-[10px] font-semibold ${EXEC_META[selectedExec].color}`}>{EXEC_META[selectedExec].number}</span>
                       </div>
                     )}
                     <div className={`max-w-[85%] rounded-lg px-4 py-3 ${msg.role === "user" ? "bg-zinc-800 border border-zinc-700" : "bg-card border border-border"}`}>
@@ -651,7 +899,7 @@ export default function ExecutiveBoard() {
                 {isExecThinking && (
                   <div className="flex justify-start items-center gap-2">
                     <div className={`w-6 h-6 rounded-full ${EXEC_META[selectedExec].bgColor} flex items-center justify-center`}>
-                      <span className={`text-[10px] font-semibold ${EXEC_META[selectedExec].color}`}>{EXEC_META[selectedExec].name[0]}</span>
+                      <span className={`text-[10px] font-semibold ${EXEC_META[selectedExec].color}`}>{EXEC_META[selectedExec].number}</span>
                     </div>
                     <div className="bg-card border border-border rounded-lg px-4 py-3 flex items-center gap-2">
                       {[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-foreground/50 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}

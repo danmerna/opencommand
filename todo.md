@@ -467,3 +467,12 @@
 - [x] @create-goal natural language command in Σ Chat
 - [x] Real-time progress WebSocket updates for goals dashboard
 - [x] Goal collaboration interface with thread-based communication
+
+## Σ as 5th Executive in Temporal Cascade (5-4-3-2-1-Σ)
+- [x] Update Executive Intelligence plan document with Σ persona definition
+- [x] Update boardThinking.ts to add Σ as final cascade step (inherits all 4 executive contexts)
+- [x] Update Executive Board frontend with Σ persona card and color scheme
+- [x] Update ProOnboarding EXEC_AGENTS array to include Σ
+- [x] Update persona hierarchy table in plan doc (5-4-3-2-1-Σ)
+- [x] Add Σ system prompt: synthesize all perspectives into single highest-leverage action
+- [x] Test full cascade flow with Σ as final step
