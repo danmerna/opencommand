@@ -533,3 +533,11 @@
 
 ## Decoupling Architecture Plan
 - [x] Write comprehensive decoupling plan document covering module inventory, dependency map, extraction strategy, timeline, and architecture
+
+## Main Menu Chief of Staff Link + Quick-Start Mode
+- [x] Add "AI Chief of Staff" link to the main hamburger menu on Home page
+- [x] Build quick-start onboarding mode: company name + website URL only → website audit → instant Σ recommendation
+- [x] Add quick-start CTA on the /chief-of-staff landing page
+- [x] Backend: new tRPC procedure for quick-start that runs website audit + Σ synthesis without interviews
+- [x] Frontend: quick-start results page showing Σ's first recommendation based on website audit alone
+- [x] Write vitest tests for quick-start mode (21/21 passed)

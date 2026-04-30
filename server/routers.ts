@@ -2247,6 +2247,82 @@ ${sigmaAuditSummary ? `Website Audit Intelligence:\n${sigmaAuditSummary}\n\n` : 
 
       return { success: true, okrsCreated };
     }),
+
+  // Quick-start mode: website-only → audit → instant Σ recommendation
+  quickStart: protectedProcedure
+    .input(z.object({
+      companyName: z.string().min(1),
+      website: z.string().min(1),
+      industry: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Create or find company
+      let companies = await getCompaniesByUserId(ctx.user.id);
+      let company = companies.find(c => c.name === input.companyName);
+      if (!company) {
+        await createCompany({
+          userId: ctx.user.id,
+          name: input.companyName,
+          industry: input.industry ?? "",
+          mission: "",
+          website: input.website,
+        } as any);
+        companies = await getCompaniesByUserId(ctx.user.id);
+        company = companies.find(c => c.name === input.companyName);
+        if (!company) throw new Error("Failed to create company");
+      }
+
+      // 2. Run website audit (blocking - wait for results)
+      let auditResult: any = null;
+      try {
+        auditResult = await runWebsiteAudit({
+          companyId: company!.id,
+          userId: ctx.user.id,
+          url: input.website,
+          companyName: input.companyName,
+          industry: input.industry ?? "",
+        });
+      } catch (e) {
+        console.error("[quickStart] Website audit failed:", e);
+      }
+
+      // 3. Generate Σ synthesis based on audit alone
+      const auditContext = auditResult?.status === "complete"
+        ? `Website Audit Results:\n- Executive Summary: ${auditResult.executiveSummary ?? "N/A"}\n- Tech Stack: ${JSON.stringify(auditResult.techStack ?? {})}\n- SEO Score: ${auditResult.seoScore ?? "N/A"}/100\n- Social Profiles: ${JSON.stringify(auditResult.socialProfiles ?? {})}\n- Content Analysis: ${JSON.stringify(auditResult.contentAnalysis ?? {})}`
+        : "Website audit is still processing. Providing initial recommendations based on available information.";
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system" as const,
+            content: `You are Σ (Sigma), the synthesis executive in a 5-4-3-2-1 temporal cascade. You identify the single highest-leverage move a business can make RIGHT NOW.
+
+You have just analyzed this company's website and digital presence. Based on the audit data, provide:
+1. ONE highest-leverage recommendation they should execute immediately
+2. Why this is the highest-leverage move (backed by the audit data)
+3. Expected impact if executed within 7 days
+4. Three specific action steps to implement it
+
+Be specific, actionable, and data-driven. Reference actual findings from the website audit. Keep your response under 400 words. Format with clear headers.`,
+          },
+          {
+            role: "user" as const,
+            content: `Company: ${input.companyName}\nIndustry: ${input.industry ?? "Not specified"}\nWebsite: ${input.website}\n\n${auditContext}\n\nWhat is the single highest-leverage move this company should make right now?`,
+          },
+        ],
+      });
+
+      const recommendation = (response.choices[0]?.message?.content ?? "Unable to generate recommendation.") as string;
+
+      return {
+        success: true,
+        companyId: company!.id,
+        recommendation,
+        auditStatus: auditResult?.status ?? "pending",
+        auditSummary: auditResult?.executiveSummary ?? null,
+        seoScore: auditResult?.seoScore ?? null,
+      };
+    }),
 });
 
 // ─── Waitlist Router ────────────────────────────────────────────────────────

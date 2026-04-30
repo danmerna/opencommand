@@ -42,6 +42,7 @@ import { LeadScoringDashboard } from "./pages/LeadScoringDashboard";
 import { ROIAttribution } from "./pages/ROIAttribution";
 import GoalsDashboard from "./pages/GoalsDashboard";
 import ChiefOfStaff from "./pages/ChiefOfStaff";
+import QuickStart from "./pages/QuickStart";
 
 function Router() {
   usePageTracking();
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/auth/relay" component={AuthRelay} />
       <Route path="/waitlist" component={Waitlist} />
       <Route path="/chief-of-staff" component={ChiefOfStaff} />
+      <Route path="/quick-start" component={QuickStart} />
       <Route path="/onboarding/sigma">
         <AppLayout><OnboardingSigma /></AppLayout>
       </Route>

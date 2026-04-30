@@ -505,10 +505,17 @@ export default function ChiefOfStaff() {
         <p className="text-muted-foreground text-base mb-8 leading-relaxed max-w-xl mx-auto">
           In 20 minutes, four AI executives will know your business, your numbers, your market, and your stack. From that point forward, every decision comes with the full picture.
         </p>
-        <Button size="lg" className="gap-2" onClick={handleGetStarted}>
-          Start Executive Onboarding <ArrowRight size={16} />
-        </Button>
-        <p className="text-[11px] text-muted-foreground/50 mt-4">Free during beta · No credit card · 20-minute setup</p>
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+          <Button size="lg" className="gap-2" onClick={handleGetStarted}>
+            Start Executive Onboarding <ArrowRight size={16} />
+          </Button>
+          <Link href="/quick-start">
+            <Button size="lg" variant="outline" className="gap-2 border-[#00D4AA]/30 text-[#00D4AA] hover:bg-[#00D4AA]/10">
+              <Zap size={14} /> Quick Start (60 seconds)
+            </Button>
+          </Link>
+        </div>
+        <p className="text-[11px] text-muted-foreground/50 mt-4">Free during beta · No credit card · Quick Start needs only your website URL</p>
       </section>
 
       {/* ─── Footer ────────────────────────────────────────────────────── */}

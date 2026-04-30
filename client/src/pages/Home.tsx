@@ -787,6 +787,9 @@ export default function Home() {
             <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
               Creators
             </Link>
+            <Link href="/chief-of-staff" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              AI Chief of Staff
+            </Link>
             <Link href="/onboarding/pro" className="text-[13px] font-medium text-[#00D4AA] hover:text-[#00B894] transition-colors flex items-center gap-1.5" onClick={() => setMobileMenuOpen(false)}>
               <Zap size={13} />
               Start Executive Onboarding
