@@ -42,6 +42,7 @@ import {
   subAgentRecommendations, InsertSubAgentRecommendation,
   executiveContextManifests, InsertExecutiveContextManifest,
   websiteAudits, InsertWebsiteAudit,
+  quickStartResults, InsertQuickStartResult,
 } from "../drizzle/schema";
 import type { InsertChangelogEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -1458,4 +1459,18 @@ export async function getWebsiteAuditsByUserId(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(websiteAudits).where(eq(websiteAudits.userId, userId)).orderBy(desc(websiteAudits.createdAt));
+}
+
+
+// ─── Quick Start Results ─────────────────────────────────────────────────────
+export async function createQuickStartResult(data: InsertQuickStartResult) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(quickStartResults).values(data);
+}
+export async function getQuickStartResultByShareId(shareId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(quickStartResults).where(eq(quickStartResults.shareId, shareId)).limit(1);
+  return rows[0];
 }

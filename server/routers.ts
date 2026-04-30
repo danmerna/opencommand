@@ -67,6 +67,7 @@ import {
   createRalfLog, getRalfLogsByTask, getRalfLogsByAgent, updateRalfLogStatus,
   createSubAgentRecommendation, getSubAgentRecommendations, getSubAgentRecommendationsByExecutive, updateSubAgentRecommendationStatus,
   getContextManifest, upsertContextManifest, getContextManifestsByUserId,
+  createQuickStartResult, getQuickStartResultByShareId,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -2254,6 +2255,7 @@ ${sigmaAuditSummary ? `Website Audit Intelligence:\n${sigmaAuditSummary}\n\n` : 
       companyName: z.string().min(1),
       website: z.string().min(1),
       industry: z.string().optional(),
+      email: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       // 1. Create or find company
@@ -2314,6 +2316,22 @@ Be specific, actionable, and data-driven. Reference actual findings from the web
 
       const recommendation = (response.choices[0]?.message?.content ?? "Unable to generate recommendation.") as string;
 
+      // 4. Save results with shareable ID
+      const shareId = nanoid(12);
+      await createQuickStartResult({
+        shareId,
+        userId: ctx.user.id,
+        email: input.email ?? ctx.user.email ?? null,
+        companyName: input.companyName,
+        website: input.website,
+        industry: input.industry ?? null,
+        recommendation,
+        auditSummary: auditResult?.executiveSummary ?? null,
+        seoScore: auditResult?.seoScore ?? null,
+        techStack: auditResult?.techStack ?? null,
+        socialPresence: auditResult?.socialProfiles ?? null,
+      });
+
       return {
         success: true,
         companyId: company!.id,
@@ -2321,6 +2339,26 @@ Be specific, actionable, and data-driven. Reference actual findings from the web
         auditStatus: auditResult?.status ?? "pending",
         auditSummary: auditResult?.executiveSummary ?? null,
         seoScore: auditResult?.seoScore ?? null,
+        shareId,
+      };
+    }),
+
+  // Public: get shared quick-start results by shareId
+  getSharedResult: publicProcedure
+    .input(z.object({ shareId: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const result = await getQuickStartResultByShareId(input.shareId);
+      if (!result) return null;
+      return {
+        companyName: result.companyName,
+        website: result.website,
+        industry: result.industry,
+        recommendation: result.recommendation,
+        auditSummary: result.auditSummary,
+        seoScore: result.seoScore,
+        techStack: result.techStack,
+        socialPresence: result.socialPresence,
+        createdAt: result.createdAt,
       };
     }),
 });

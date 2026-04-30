@@ -1035,3 +1035,22 @@ export const websiteAudits = mysqlTable("website_audits", {
 
 export type WebsiteAudit = typeof websiteAudits.$inferSelect;
 export type InsertWebsiteAudit = typeof websiteAudits.$inferInsert;
+
+// ─── Quick Start Results (Shareable) ─────────────────────────────────────────
+export const quickStartResults = mysqlTable("quick_start_results", {
+  id: int("id").autoincrement().primaryKey(),
+  shareId: varchar("shareId", { length: 32 }).notNull().unique(),
+  userId: int("userId"),
+  email: varchar("email", { length: 320 }),
+  companyName: varchar("companyName", { length: 256 }).notNull(),
+  website: varchar("website", { length: 512 }).notNull(),
+  industry: varchar("industry", { length: 128 }),
+  recommendation: text("recommendation"),
+  auditSummary: text("auditSummary"),
+  seoScore: int("seoScore"),
+  techStack: json("techStack"),
+  socialPresence: json("socialPresence"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type QuickStartResult = typeof quickStartResults.$inferSelect;
+export type InsertQuickStartResult = typeof quickStartResults.$inferInsert;

@@ -48,8 +48,8 @@ describe("Quick-Start Mode", () => {
   });
 
   describe("Frontend: QuickStart page", () => {
-    it("should have three steps: input, analyzing, results", () => {
-      expect(quickStartPage).toContain('"input" | "analyzing" | "results"');
+    it("should have four steps: input, email-gate, analyzing, results", () => {
+      expect(quickStartPage).toContain('"input" | "analyzing" | "email-gate" | "results"');
     });
 
     it("should have company name input field", () => {

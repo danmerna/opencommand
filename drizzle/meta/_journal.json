@@ -169,6 +169,13 @@
       "when": 1777557698903,
       "tag": "0023_lame_human_cannonball",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1777562964371,
+      "tag": "0024_stormy_vision",
+      "breakpoints": true
     }
   ]
 }

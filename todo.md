@@ -541,3 +541,12 @@
 - [x] Backend: new tRPC procedure for quick-start that runs website audit + Σ synthesis without interviews
 - [x] Frontend: quick-start results page showing Σ's first recommendation based on website audit alone
 - [x] Write vitest tests for quick-start mode (21/21 passed)
+
+## Email Capture Gate + Shareable Results
+- [x] Create quick_start_results table (id, shareId, email, companyName, website, industry, recommendation, auditSummary, seoScore, createdAt)
+- [x] Add email capture step between analyzing and results in Quick Start flow
+- [x] Backend: save results to DB with unique shareId, store email for lead capture
+- [x] Backend: public procedure to fetch results by shareId (no auth required)
+- [x] Frontend: shareable results page at /results/:shareId (publicly accessible)
+- [x] Frontend: show share button with copy-to-clipboard on results page
+- [x] Write vitest tests for email capture and shareable results (21/21 passed)

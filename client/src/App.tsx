@@ -43,6 +43,7 @@ import { ROIAttribution } from "./pages/ROIAttribution";
 import GoalsDashboard from "./pages/GoalsDashboard";
 import ChiefOfStaff from "./pages/ChiefOfStaff";
 import QuickStart from "./pages/QuickStart";
+import SharedResults from "./pages/SharedResults";
 
 function Router() {
   usePageTracking();
@@ -53,6 +54,7 @@ function Router() {
       <Route path="/waitlist" component={Waitlist} />
       <Route path="/chief-of-staff" component={ChiefOfStaff} />
       <Route path="/quick-start" component={QuickStart} />
+      <Route path="/results/:shareId" component={SharedResults} />
       <Route path="/onboarding/sigma">
         <AppLayout><OnboardingSigma /></AppLayout>
       </Route>

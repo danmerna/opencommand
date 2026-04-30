@@ -3,10 +3,11 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
-import { ArrowRight, Globe, Zap, Loader2, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { ArrowRight, Globe, Zap, Loader2, CheckCircle2, AlertCircle, ExternalLink, Copy, Share2, Mail } from "lucide-react";
 import { Streamdown } from "streamdown";
+import { toast } from "sonner";
 
-type QuickStartStep = "input" | "analyzing" | "results";
+type QuickStartStep = "input" | "analyzing" | "email-gate" | "results";
 
 export default function QuickStart() {
   const { user, loading: authLoading } = useAuth();
@@ -14,6 +15,8 @@ export default function QuickStart() {
   const [companyName, setCompanyName] = useState("");
   const [website, setWebsite] = useState("");
   const [industry, setIndustry] = useState("");
+  const [email, setEmail] = useState("");
+  const [shareId, setShareId] = useState<string | null>(null);
   const [result, setResult] = useState<{
     recommendation: string;
     auditStatus: string;
@@ -31,22 +34,60 @@ export default function QuickStart() {
         seoScore: data.seoScore ?? null,
         companyId: data.companyId,
       });
+      setShareId(data.shareId);
       setStep("results");
     },
     onError: () => {
       setStep("input");
+      toast.error("Something went wrong. Please try again.");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyName.trim() || !website.trim()) return;
+    // Show email gate before running analysis
+    setStep("email-gate");
+  };
+
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    runAnalysis();
+  };
+
+  const handleSkipEmail = () => {
+    runAnalysis();
+  };
+
+  const runAnalysis = () => {
     setStep("analyzing");
     quickStartMutation.mutate({
       companyName: companyName.trim(),
       website: website.trim().startsWith("http") ? website.trim() : `https://${website.trim()}`,
       industry: industry.trim() || undefined,
+      email: email.trim() || undefined,
     });
+  };
+
+  const shareUrl = shareId ? `${window.location.origin}/results/${shareId}` : "";
+
+  const copyLink = () => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success("Link copied to clipboard");
+  };
+
+  const handleShare = () => {
+    if (!shareUrl) return;
+    if (navigator.share) {
+      navigator.share({
+        title: `${companyName} — AI Chief of Staff Recommendation`,
+        text: `Check out this AI-generated highest-leverage recommendation for ${companyName}`,
+        url: shareUrl,
+      }).catch(() => copyLink());
+    } else {
+      copyLink();
+    }
   };
 
   if (authLoading) {
@@ -166,6 +207,67 @@ export default function QuickStart() {
           </div>
         )}
 
+        {step === "email-gate" && (
+          <div className="space-y-8">
+            <div className="text-center space-y-3">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-[#00D4AA]/10 flex items-center justify-center">
+                <Mail className="w-7 h-7 text-[#00D4AA]" />
+              </div>
+              <h1 className="text-2xl font-bold">Where should we send your results?</h1>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                Enter your email to receive a shareable link to your recommendation. You can also share it with your team.
+              </p>
+            </div>
+
+            <form onSubmit={handleEmailSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-xs font-medium tracking-wider uppercase text-muted-foreground">Email Address</label>
+                <div className="relative">
+                  <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@company.com"
+                    className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#00D4AA]/40"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-card border border-border rounded-lg p-4 space-y-2">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 size={16} className="text-[#00D4AA] mt-0.5 shrink-0" />
+                  <div className="text-sm text-muted-foreground">
+                    <span className="text-foreground font-medium">Analyzing:</span> {companyName} ({website})
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 size={16} className="text-[#00D4AA] mt-0.5 shrink-0" />
+                  <div className="text-sm text-muted-foreground">
+                    You'll get a shareable link to forward your recommendation to teammates
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 bg-[#00D4AA] text-black font-semibold rounded-lg hover:bg-[#00B894] transition-colors flex items-center justify-center gap-2"
+              >
+                <Zap size={16} />
+                Generate My Recommendation
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSkipEmail}
+                className="w-full py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Skip — I'll just view the results now
+              </button>
+            </form>
+          </div>
+        )}
+
         {step === "analyzing" && (
           <div className="text-center space-y-8 py-12">
             <div className="w-20 h-20 mx-auto rounded-full bg-[#00D4AA]/10 flex items-center justify-center animate-pulse">
@@ -218,6 +320,29 @@ export default function QuickStart() {
                 Based on Σ's analysis of <span className="text-foreground font-medium">{website}</span>
               </p>
             </div>
+
+            {/* Share bar */}
+            {shareId && (
+              <div className="flex items-center gap-2 p-3 bg-card border border-border rounded-lg">
+                <div className="flex-1 text-xs text-muted-foreground truncate font-mono">
+                  {shareUrl}
+                </div>
+                <button
+                  onClick={copyLink}
+                  className="shrink-0 p-2 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                  title="Copy link"
+                >
+                  <Copy size={14} />
+                </button>
+                <button
+                  onClick={handleShare}
+                  className="shrink-0 p-2 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                  title="Share"
+                >
+                  <Share2 size={14} />
+                </button>
+              </div>
+            )}
 
             {/* Audit summary badges */}
             {(result.seoScore !== null || result.auditSummary) && (
