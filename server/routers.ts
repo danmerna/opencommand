@@ -76,7 +76,7 @@ import { PRODUCTS, type ProductKey } from "./stripe/products";
 import { emitToUser } from "./socketEmit";
 import { sendWelcomeEmail, sendWaitlistApprovalEmail } from "./email";
 import { runWebsiteAudit } from "./agents/websiteAudit";
-import { getWebsiteAuditByCompanyId, getWebsiteAuditsByUserId } from "./db";
+import { getWebsiteAuditByCompanyId, getWebsiteAuditsByUserId, adminGetAllQuickStartLeads } from "./db";
 
 // ─── Companies Router ────────────────────────────────────────────────────────
 const companiesRouter = router({
@@ -2883,6 +2883,17 @@ const adminRouter = router({
       const secret = (process.env.JWT_SECRET ?? "").slice(0, 16);
       const url = `${input.origin}/api/demo-login?secret=${encodeURIComponent(secret)}&returnTo=/mission-control`;
       return { url };
+    }),
+  // ─── Leads Dashboard ─────────────────────────────────────────────────────
+  leads: adminProcedure.query(() => adminGetAllQuickStartLeads()),
+  leadIntentHistory: adminProcedure
+    .input(z.object({ userId: z.number().optional(), email: z.string().optional() }))
+    .query(async ({ input }) => {
+      // Get decision log entries (intent engine queries) for a user
+      if (input.userId) {
+        return getDecisionLogByUserId(input.userId);
+      }
+      return [];
     }),
 });
 

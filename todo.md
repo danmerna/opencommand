@@ -550,3 +550,11 @@
 - [x] Frontend: shareable results page at /results/:shareId (publicly accessible)
 - [x] Frontend: show share button with copy-to-clipboard on results page
 - [x] Write vitest tests for email capture and shareable results (21/21 passed)
+
+## Admin Leads Dashboard
+- [x] Backend: add tRPC procedure to list all quick-start leads (admin-only)
+- [x] Backend: add tRPC procedure to list intent engine queries by user/company
+- [x] Frontend: build /admin/leads page showing leads table (email, company, website, date, SEO score)
+- [x] Frontend: expandable row showing Σ recommendation, audit summary, tech stack, social presence
+- [x] Add route and nav link for admin leads dashboard
+- [x] Write vitest tests for admin leads dashboard (8/8 passed)

@@ -30,6 +30,7 @@ import Analytics from "./pages/Analytics";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
 import Settings from "./pages/Settings";
 import AdminUsers from "./pages/AdminUsers";
+import AdminLeads from "./pages/AdminLeads";
 import Waitlist from "./pages/Waitlist";
 import AuthRelay from "./pages/AuthRelay";
 import { OnboardingSigma } from "./pages/OnboardingSigma";
@@ -139,6 +140,7 @@ function Router() {
         <AppLayout><FeedbackAdmin /></AppLayout>
       </Route>
       <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/admin/leads" component={AdminLeads} />
       <Route path="/onboarding/pro" component={ProOnboarding} />
       <Route path="/onboarding/:agentId">
         <AppLayout><AgentOnboarding /></AppLayout>

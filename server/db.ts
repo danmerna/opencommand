@@ -1474,3 +1474,10 @@ export async function getQuickStartResultByShareId(shareId: string) {
   const rows = await db.select().from(quickStartResults).where(eq(quickStartResults.shareId, shareId)).limit(1);
   return rows[0];
 }
+
+// ─── Admin: Quick Start Leads ────────────────────────────────────────────────
+export async function adminGetAllQuickStartLeads() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(quickStartResults).orderBy(desc(quickStartResults.createdAt));
+}
