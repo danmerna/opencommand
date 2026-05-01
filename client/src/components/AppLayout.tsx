@@ -25,9 +25,9 @@ export function useActiveCompany() { return useContext(CompanyContext); }
 const coreNavItems = [
   { href: "/mission-control", label: "Mission Control", icon: LayoutDashboard },
   { href: "/intent-engine",   label: "Intent Engine",   icon: Cpu },
-  { href: "/executive-board", label: "Executive Board",  icon: Users },
   { href: "/blueprints",      label: "Blueprints",       icon: FileStack },
   { href: "/execution",       label: "Execution",        icon: CheckSquare },
+  { href: "/goals",           label: "Goals",            icon: Users },
   { href: "/analytics",       label: "Analytics",        icon: Activity },
 ];
 
@@ -185,8 +185,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
           {/* Add company button */}
           <button
-            onClick={() => { navigate("/onboarding/pro"); closeMobile(); }}
-            title="Build Executive Team"
+            onClick={() => { navigate("/mission-control"); closeMobile(); }}
+            title="Add Company"
             className="w-9 h-9 rounded-lg border border-dashed border-white/20 flex items-center justify-center text-white/40 hover:text-white/70 hover:border-white/40 transition-all shrink-0 mt-1"
           >
             <Plus size={14} />

@@ -1,118 +1,123 @@
 import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
-import {
-  escalateToBoard,
-  getBoardFeedback,
-  getEscalatedActions,
-  formatBoardCascadeForConversation,
-  shouldAutoEscalate,
-} from "../agents/intentEngine/boardIntegration";
+import { generateActionItems, approveAction, dismissAction, regenerateVariant, getPendingActions, getCompletedActions } from "../intent-engine";
 
+/**
+ * Intent Engine Router — Agent Action Generation
+ * Generates, approves, dismisses, and regenerates action items for agents.
+ * No executive board dependency — operates independently for agent orchestration.
+ */
 export const intentEngineRouter = router({
   /**
-   * Escalate an action item to the executive board
+   * Generate action items for an agent based on context and intent
    */
-  escalateToBoard: protectedProcedure
+  generateActions: protectedProcedure
     .input(
       z.object({
-        actionItemId: z.number(),
-        actionText: z.string(),
+        agentId: z.string(),
         context: z.record(z.string(), z.unknown()),
-        riskLevel: z.enum(["low", "medium", "high"]),
+        intent: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const escalation = await escalateToBoard({
-          id: input.actionItemId,
-          userId: ctx.user.id,
-          companyId: 30001, // Default to Johnson Tractor for now
-          actionText: input.actionText,
-          context: input.context,
-          riskLevel: input.riskLevel,
-        });
+        const actionItems = await generateActionItems(
+          input.agentId,
+          String(ctx.user.id),
+          input.context,
+          input.intent
+        );
 
         return {
           success: true,
-          escalation,
-          formatted: formatBoardCascadeForConversation(escalation),
+          actions: actionItems,
         };
       } catch (error) {
-        console.error("[Intent Engine] Escalation failed:", error);
-        throw new Error("Failed to escalate to board");
+        console.error("[Intent Engine] Generate actions failed:", error);
+        throw new Error("Failed to generate action items");
       }
     }),
 
   /**
-   * Get board feedback for an action item
+   * Get pending action items for the current user
    */
-  getBoardFeedback: protectedProcedure
+  getPendingActions: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const actions = await getPendingActions(String(ctx.user.id));
+      return actions;
+    } catch (error) {
+      console.error("[Intent Engine] Get pending actions failed:", error);
+      return [];
+    }
+  }),
+
+  /**
+   * Get completed action items for the current user
+   */
+  getCompletedActions: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const actions = await getCompletedActions(String(ctx.user.id));
+      return actions;
+    } catch (error) {
+      console.error("[Intent Engine] Get completed actions failed:", error);
+      return [];
+    }
+  }),
+
+  /**
+   * Approve an action item with selected option
+   */
+  approveAction: protectedProcedure
     .input(
       z.object({
-        actionItemId: z.number(),
+        actionItemId: z.string(),
+        selectedOption: z.enum(["recommended", "conservative", "aggressive"]),
       })
     )
-    .query(async ({ input }) => {
+    .mutation(async ({ input }) => {
       try {
-        const feedback = await getBoardFeedback(input.actionItemId);
-        return {
-          success: true,
-          feedback,
-        };
+        await approveAction(input.actionItemId, input.selectedOption);
+        return { success: true };
       } catch (error) {
-        console.error("[Intent Engine] Get feedback failed:", error);
-        throw new Error("Failed to fetch board feedback");
+        console.error("[Intent Engine] Approve action failed:", error);
+        throw new Error("Failed to approve action");
       }
     }),
 
   /**
-   * Get all escalated actions for a user
+   * Dismiss an action item
    */
-  getEscalatedActions: protectedProcedure
-    .input(
-      z.object({
-        companyId: z.number(),
-      })
-    )
-    .query(async ({ input, ctx }) => {
+  dismissAction: protectedProcedure
+    .input(z.object({ actionItemId: z.string() }))
+    .mutation(async ({ input }) => {
       try {
-        const actions = await getEscalatedActions(ctx.user.id, input.companyId);
-        return {
-          success: true,
-          actions,
-          count: actions.length,
-        };
+        await dismissAction(input.actionItemId);
+        return { success: true };
       } catch (error) {
-        console.error("[Intent Engine] Get escalated actions failed:", error);
-        throw new Error("Failed to fetch escalated actions");
+        console.error("[Intent Engine] Dismiss action failed:", error);
+        throw new Error("Failed to dismiss action");
       }
     }),
 
   /**
-   * Check if an action should be auto-escalated
+   * Regenerate variant for Conservative or Aggressive option
    */
-  shouldAutoEscalate: protectedProcedure
+  regenerateVariant: protectedProcedure
     .input(
       z.object({
-        actionText: z.string(),
-        riskLevel: z.enum(["low", "medium", "high"]),
+        actionItemId: z.string(),
+        optionType: z.enum(["conservative", "aggressive"]),
       })
     )
-    .query(async ({ input }) => {
+    .mutation(async ({ input }) => {
       try {
-        const shouldEscalate = shouldAutoEscalate(input.riskLevel, input.actionText);
-        return {
-          success: true,
-          shouldEscalate,
-          reason: shouldEscalate
-            ? input.riskLevel === "high"
-              ? "High-risk action requires board review"
-              : "Action type triggers automatic escalation"
-            : "Action does not require escalation",
-        };
+        await regenerateVariant(input.actionItemId, input.optionType);
+        return { success: true };
       } catch (error) {
-        console.error("[Intent Engine] Auto-escalate check failed:", error);
-        throw new Error("Failed to check auto-escalation");
+        console.error("[Intent Engine] Regenerate variant failed:", error);
+        throw new Error("Failed to regenerate variant");
       }
     }),
 });
+
+export default intentEngineRouter;

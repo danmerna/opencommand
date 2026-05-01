@@ -209,12 +209,12 @@ describe("Onboarding Router", () => {
     expect(procedures).toContain("onboarding.updateProposalStatus");
   });
 
-  it("should have 10 onboarding procedures total (including sigmaCalibrate)", async () => {
+  it("should have 9 onboarding procedures total", async () => {
     const mod = await import("./routers");
     const onboardingProcedures = Object.keys(mod.appRouter._def.procedures).filter(
       (k) => k.startsWith("onboarding.")
     );
-    expect(onboardingProcedures.length).toBe(10);
+    expect(onboardingProcedures.length).toBe(9);
   });
 
   it("should define system prompts for ceo, cto, cmo, cfo, vp", async () => {

@@ -7,7 +7,7 @@ export interface IntentEngineCardProps {
   id: string;
   title: string;
   description: string;
-  boardQuestion: string;
+  escalationQuestion: string;
   options: {
     recommended: {
       title: string;
@@ -59,7 +59,7 @@ export const IntentEngineCard: React.FC<IntentEngineCardProps> = ({
   id,
   title,
   description,
-  boardQuestion,
+  escalationQuestion,
   options,
   onApprove,
   onDismiss,
@@ -145,9 +145,9 @@ export const IntentEngineCard: React.FC<IntentEngineCardProps> = ({
         {showDetails && (
           <div className="mb-4 p-3 bg-background/50 border border-border rounded">
             <p className="text-xs text-muted-foreground mb-2">
-              <span className="font-medium text-foreground">Escalate to Board:</span>
+              <span className="font-medium text-foreground">Escalation Question:</span>
             </p>
-            <p className="text-sm text-foreground">{boardQuestion}</p>
+            <p className="text-sm text-foreground">{escalationQuestion}</p>
           </div>
         )}
 

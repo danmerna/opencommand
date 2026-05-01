@@ -145,7 +145,7 @@ export default function AgentOnboarding() {
                 ? "Onboarding complete — context established"
                 : started
                   ? `Question ${questionCount} · ${answerCount} answers given`
-                  : "Establish baseline context for this executive agent"
+                  : "Establish baseline context for this agent"
               }
             </p>
           </div>

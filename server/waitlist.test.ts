@@ -309,11 +309,4 @@ describe("Waitlist source code validation", () => {
     expect(db).toContain("getUserByIdForApproval");
     expect(db).toContain("waitlistPosition");
   });
-
-  it("ProOnboarding.tsx has Speed Mode (core-only) toggle", () => {
-    const onboarding = fs.readFileSync(path.resolve(__dirname, "../client/src/pages/ProOnboarding.tsx"), "utf-8");
-    expect(onboarding).toContain("coreOnlyMode");
-    expect(onboarding).toContain("Speed Mode");
-    expect(onboarding).toContain("setCoreOnlyMode");
-  });
 });

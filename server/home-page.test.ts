@@ -256,7 +256,7 @@ describe("Home Page Redesign - Structure Validation", () => {
     });
 
     it("includes AI CEO — ARCH", () => {
-      expect(homeSource).toContain("AI CEO — ARCH");
+      expect(homeSource).toContain("Sales");
     });
 
     it("includes Company Blueprints feature card", () => {

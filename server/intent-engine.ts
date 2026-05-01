@@ -20,7 +20,7 @@ export interface ActionOption {
 export interface ActionItemData {
   title: string;
   description: string;
-  boardQuestion: string;
+  escalationQuestion: string;
   options: {
     recommended: ActionOption;
     conservative: ActionOption;
@@ -50,7 +50,7 @@ Format your response as a JSON array with this structure:
   {
     "title": "Action title",
     "description": "One-line summary",
-    "boardQuestion": "Strategic question to escalate to board",
+    "escalationQuestion": "Strategic question for human review",
     "options": {
       "recommended": {
         "title": "Recommended",
@@ -105,7 +105,7 @@ Include specific data points from the context to justify each recommendation.`;
               properties: {
                 title: { type: "string" },
                 description: { type: "string" },
-                boardQuestion: { type: "string" },
+                escalationQuestion: { type: "string" },
                 options: {
                   type: "object",
                   properties: {
@@ -143,7 +143,7 @@ Include specific data points from the context to justify each recommendation.`;
                   required: ["recommended", "conservative", "aggressive"],
                 },
               },
-              required: ["title", "description", "boardQuestion", "options"],
+              required: ["title", "description", "escalationQuestion", "options"],
             },
           },
         },

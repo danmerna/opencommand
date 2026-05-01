@@ -35,7 +35,7 @@ const menuItems = [
 
 const adminMenuItems = [
   { icon: Shield, label: "User Analytics", path: "/admin/users" },
-  { icon: UserPlus, label: "Leads", path: "/admin/leads" },
+  { icon: UserPlus, label: "Lead Response", path: "/lead-response" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

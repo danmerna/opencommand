@@ -93,7 +93,7 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
               <CheckCircle2 size={20} className="text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-emerald-400">All executives onboarded</p>
+              <p className="text-sm font-medium text-emerald-400">All agents onboarded</p>
               <p className="text-xs text-muted-foreground">Baseline context established for {data.total} C-suite agents.</p>
             </div>
           </div>
@@ -130,9 +130,9 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
               <Bot size={20} className="text-amber-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Continue Building Your Executive Team</p>
+              <p className="text-sm font-medium text-foreground">Continue Building Your Agent Team</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {data.completed} of {data.total} executives contextualized — {data.total - data.completed} remaining to unlock ARCH's strategy proposal
+                {data.completed} of {data.total} agents contextualized — {data.total - data.completed} remaining to unlock strategy proposals
               </p>
             </div>
           </div>
@@ -321,9 +321,9 @@ export default function MissionControl() {
             <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-6">
               <Sparkles size={28} className="text-amber-400" />
             </div>
-            <h1 className="text-3xl font-light text-foreground tracking-tight mb-3">Build Your AI Executive Team</h1>
+            <h1 className="text-3xl font-light text-foreground tracking-tight mb-3">Build Your AI Agent Team</h1>
             <p className="text-muted-foreground text-sm leading-relaxed mb-4 max-w-md mx-auto">
-              OpenCommand's self-contextualizing engine connects to your existing tools, pulls real data, and uses it to build personalized executive agents that understand your business from day one.
+              OpenCommand's self-contextualizing engine connects to your existing tools, pulls real data, and uses it to build personalized agents that understand your business from day one.
             </p>
             <div className="flex items-center justify-center gap-6 text-[11px] text-muted-foreground mb-8">
               <span className="flex items-center gap-1.5"><Wrench size={11} className="text-blue-400" /> Connect tools</span>
@@ -333,9 +333,9 @@ export default function MissionControl() {
               <span className="flex items-center gap-1.5"><Bot size={11} className="text-amber-400" /> Personalized team</span>
             </div>
             <Button className="h-11 px-8 gap-2" onClick={() => navigate("/onboarding/pro")}>
-              Start Executive Onboarding <ArrowRight size={14} />
+              Start Agent Onboarding <ArrowRight size={14} />
             </Button>
-            <p className="text-[11px] text-muted-foreground mt-3">Takes about 10 minutes. You can skip any executive and come back later.</p>
+            <p className="text-[11px] text-muted-foreground mt-3">Takes about 10 minutes. You can skip any agent and come back later.</p>
           </div>
         </div>
       )}
@@ -811,7 +811,7 @@ export default function MissionControl() {
             <div className="card-minimal text-center py-16">
               <BookOpen size={28} className="text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
               <p className="text-foreground text-sm font-medium mb-1">No strategy generated yet</p>
-              <p className="text-muted-foreground text-xs mb-6 max-w-xs mx-auto">Complete the executive onboarding interviews, then generate your combined strategic plan.</p>
+              <p className="text-muted-foreground text-xs mb-6 max-w-xs mx-auto">Complete the agent onboarding interviews, then generate your combined strategic plan.</p>
               <Button
                 size="sm"
                 className="gap-1.5 text-xs"

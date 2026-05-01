@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { processResendWebhook, calculateEmailMetrics, formatTrackingForDisplay } from "./webhooks/resend";
-import { getActionItemsForBoard, formatActionForBoard } from "./agents/intentEngine/askBoardIntegration";
 
 describe("Email Tracking Webhook", () => {
   it("should process email.sent event", () => {
@@ -158,44 +157,6 @@ describe("Email Tracking Webhook", () => {
 
     const display = formatTrackingForDisplay(trackingData);
     expect(display.summary).toContain("clicked 2x");
-  });
-});
-
-describe("Ask Board Integration", () => {
-  it("should format action for board display", () => {
-    const action = {
-      id: 1,
-      actionText: "Approve Q2 budget increase",
-      context: JSON.stringify({}),
-      riskLevel: "high" as const,
-      options: {
-        recommended: { text: "Approve with conditions", reasoning: "Market conditions support growth" },
-        conservative: { text: "Defer to Q3", reasoning: "Maintain cash reserves" },
-        aggressive: { text: "Approve full amount plus 20%", reasoning: "Capitalize on momentum" },
-      },
-    };
-
-    const formatted = formatActionForBoard(action);
-    expect(formatted).toContain("Approve Q2 budget increase");
-    expect(formatted).toContain("HIGH");
-    expect(formatted).toContain("Approve with conditions");
-  });
-
-  it("should identify high-risk actions", () => {
-    const action = {
-      id: 1,
-      actionText: "Approve Q2 budget increase",
-      context: JSON.stringify({}),
-      riskLevel: "high" as const,
-      options: {
-        recommended: { text: "Approve", reasoning: "Good" },
-        conservative: { text: "Defer", reasoning: "Safe" },
-        aggressive: { text: "Expand", reasoning: "Bold" },
-      },
-    };
-
-    const formatted = formatActionForBoard(action);
-    expect(formatted).toContain("HIGH");
   });
 });
 

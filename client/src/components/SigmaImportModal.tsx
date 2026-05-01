@@ -21,7 +21,7 @@ export function SigmaImportModal({
   const [jsonInput, setJsonInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const importMutation = trpc.agents.importFromSigma.useMutation();
+  const importMutation = trpc.agents.importFromSpec.useMutation();
 
   const handleImport = async () => {
     if (!jsonInput.trim()) {
@@ -33,7 +33,7 @@ export function SigmaImportModal({
       setIsLoading(true);
       const spec = JSON.parse(jsonInput);
       await importMutation.mutateAsync({
-        sigmaSpec: spec,
+        spec,
         companyId,
       });
       toast.success("Agent imported from Σ successfully!");

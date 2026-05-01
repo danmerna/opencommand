@@ -34,8 +34,8 @@ function useScrollReveal(threshold = 0.15) {
 /* ─── Socratic Intent Engine Demo Data ───────────────────────────────── */
 const AGENT_DEMOS = {
   ceo: {
-    label: "CEO",
-    name: "ARCH",
+    label: "Sales",
+    name: "Sales Agent",
     color: "text-emerald-400",
     badge: { sources: 4, time: "3.4s" },
     title: "Full sales intelligence cross-reference",
@@ -98,8 +98,8 @@ const AGENT_DEMOS = {
     ],
   },
   cmo: {
-    label: "CMO",
-    name: "NOVA",
+    label: "Marketing",
+    name: "Marketing Agent",
     color: "text-purple-400",
     badge: { sources: 4, time: "3.6s" },
     title: "Outbound sales optimization",
@@ -162,8 +162,8 @@ const AGENT_DEMOS = {
     ],
   },
   cto: {
-    label: "CTO",
-    name: "SAGE",
+    label: "Engineering",
+    name: "Engineering Agent",
     color: "text-cyan-400",
     badge: { sources: 4, time: "4.1s" },
     title: "Engineering velocity & reliability audit",
@@ -226,8 +226,8 @@ const AGENT_DEMOS = {
     ],
   },
   cfo: {
-    label: "CFO",
-    name: "TED",
+    label: "Finance",
+    name: "Finance Agent",
     color: "text-amber-400",
     badge: { sources: 4, time: "3.8s" },
     title: "Cash flow & unit economics analysis",
@@ -787,13 +787,7 @@ export default function Home() {
             <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
               Creators
             </Link>
-            <Link href="/chief-of-staff" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
-              AI Chief of Staff
-            </Link>
-            <Link href="/onboarding/pro" className="text-[13px] font-medium text-[#00D4AA] hover:text-[#00B894] transition-colors flex items-center gap-1.5" onClick={() => setMobileMenuOpen(false)}>
-              <Zap size={13} />
-              Start Executive Onboarding
-            </Link>
+
             <div className="pt-2 border-t border-border">
               {isAuthenticated ? (
                 hasCompany ? (
@@ -944,9 +938,9 @@ export default function Home() {
             },
             {
               icon: Bot,
-              title: "AI CEO — ARCH",
-              desc: "Your AI CEO deploys agents, tracks OKRs, and makes decisions. Compounds intelligence over time as it learns your business.",
-              href: "/ai-ceo",
+              title: "Agent Orchestration",
+              desc: "Deploy agents, track OKRs, and manage execution. Compounds intelligence over time as agents learn your business.",
+              href: "/mission-control",
             },
             {
               icon: BarChart3,
@@ -1013,8 +1007,8 @@ export default function Home() {
           <HowItWorksStep
             step="03"
             title="Your workforce executes"
-            desc="ARCH, your AI CEO, deploys the right agents, assigns tasks, and orchestrates execution across your entire operation."
-            detail="CEO, CTO, CMO, CFO — your full executive suite running in parallel."
+            desc="Your deployed agents coordinate autonomously — assigning tasks, managing budgets, and executing across your entire operation."
+            detail="Specialized agents working in parallel, governed by your rules."
             delay={300}
           />
           <HowItWorksStep
@@ -1067,7 +1061,7 @@ export default function Home() {
             icon={Layers}
             label="Scope"
             theirs="One agent, one task"
-            ours="Full org chart with executive agents working in parallel"
+            ours="Full agent fleet with specialized roles working in parallel"
           />
           <BlueprintDiffCard
             icon={Globe}
@@ -1079,7 +1073,7 @@ export default function Home() {
             icon={Users}
             label="Coordination"
             theirs="You connect the dots between agents"
-            ours="ARCH (AI CEO) orchestrates all agents autonomously"
+            ours="Built-in orchestration layer coordinates all agents autonomously"
           />
           <BlueprintDiffCard
             icon={Lock}
@@ -1182,7 +1176,7 @@ export default function Home() {
         <p className="text-label mb-4">Personal Intelligence Engine</p>
         <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-5">Deploy your zero-human workforce.</h2>
         <p className="text-muted-foreground text-body mb-10 max-w-lg mx-auto">
-          Connect your tools. State your intent. ARCH handles execution. You get a receipt proving what it accomplished.
+          Connect your tools. State your intent. Your agents handle execution. You get a receipt proving what was accomplished.
         </p>
         <div className="flex flex-col items-center gap-4 max-w-md mx-auto w-full">
           <HeroEmailInput />
@@ -1199,7 +1193,7 @@ export default function Home() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <span className="text-base text-foreground font-semibold tracking-tight">OpenCommand</span>
-            <p className="text-xs text-muted-foreground mt-2">Personal Intelligence Engine</p>
+            <p className="text-xs text-muted-foreground mt-2">Agent Operating System</p>
             <p className="text-xs text-muted-foreground/60 mt-1">From idea to verified outcome.</p>
           </div>
 
@@ -1209,7 +1203,7 @@ export default function Home() {
             <div className="flex flex-col gap-2.5">
               <Link href="/intent-engine" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Intent Engine</Link>
               <Link href="/blueprints" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Blueprints</Link>
-              <Link href="/blueprints" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Blueprints</Link>
+              <Link href="/integration-hub" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Integrations</Link>
               <Link href="/pricing" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
             </div>
           </div>

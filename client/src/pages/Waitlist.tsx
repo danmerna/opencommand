@@ -120,7 +120,7 @@ export default function Waitlist() {
         {/* Message */}
         <div className="fade-up fade-up-3 mb-12">
           <p className="text-muted-foreground text-body leading-relaxed max-w-lg">
-            Your executive team is being assembled. We're onboarding users in order — share your referral link to move up in line. Each person who joins through your link moves you up one spot.
+            Your agent team is being assembled. We're onboarding users in order — share your referral link to move up in line. Each person who joins through your link moves you up one spot.
           </p>
         </div>
 

@@ -6,9 +6,7 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import { dispatchToConnector, testConnector } from "./connectors/dispatcher";
 import { leadResponseRouter } from "./routers/leadResponse";
-import { executiveBoardRouter } from "./routers/executiveBoard";
 import { intentEngineRouter } from "./routers/intentEngine";
-import { sigmaRouter } from "./routers/sigma";
 import { templatesRouter } from "./routers/templates";
 import { workspaceRouter } from "./routers/workspace";
 import { goalsRouter } from "./routers/goals";
@@ -67,7 +65,6 @@ import {
   createRalfLog, getRalfLogsByTask, getRalfLogsByAgent, updateRalfLogStatus,
   createSubAgentRecommendation, getSubAgentRecommendations, getSubAgentRecommendationsByExecutive, updateSubAgentRecommendationStatus,
   getContextManifest, upsertContextManifest, getContextManifestsByUserId,
-  createQuickStartResult, getQuickStartResultByShareId,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -75,8 +72,7 @@ import { seedDemoUser, getDemoUserId, DEMO_EMAIL } from "./demoUser";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
 import { emitToUser } from "./socketEmit";
 import { sendWelcomeEmail, sendWaitlistApprovalEmail } from "./email";
-import { runWebsiteAudit } from "./agents/websiteAudit";
-import { getWebsiteAuditByCompanyId, getWebsiteAuditsByUserId, adminGetAllQuickStartLeads } from "./db";
+
 
 // ─── Companies Router ────────────────────────────────────────────────────────
 const companiesRouter = router({
@@ -88,20 +84,7 @@ const companiesRouter = router({
     .input(z.object({ name: z.string().min(1), mission: z.string().optional(), industry: z.string().optional(), website: z.string().optional(), monthlyBudget: z.number().optional(), briefingFrequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).optional() }))
     .mutation(async ({ ctx, input }) => {
       await createCompany({ userId: ctx.user.id, name: input.name, mission: input.mission, industry: input.industry, website: input.website, monthlyBudget: input.monthlyBudget ? String(input.monthlyBudget) : "0", briefingFrequency: input.briefingFrequency } as any);
-      // Trigger background website audit if URL provided
-      if (input.website?.trim()) {
-        const companies = await getCompaniesByUserId(ctx.user.id);
-        const company = companies[companies.length - 1];
-        if (company) {
-          runWebsiteAudit({
-            companyId: company.id,
-            userId: ctx.user.id,
-            url: input.website.trim(),
-            companyName: input.name,
-            industry: input.industry ?? "",
-          }).catch(err => console.error("[WebsiteAudit] Background audit failed:", err));
-        }
-      }
+
       return { success: true };
     }),
 
@@ -349,14 +332,14 @@ const agentsRouter = router({
     return { success: true };
   }),
 
-  importFromSigma: protectedProcedure
+  importFromSpec: protectedProcedure
     .input(z.object({
-      sigmaSpec: z.record(z.string(), z.unknown()),
+      spec: z.record(z.string(), z.unknown()),
       companyId: z.number().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const spec = input.sigmaSpec as any;
-      const name = spec.name || spec.agentName || "Sigma-Generated Agent";
+      const spec = input.spec as any;
+      const name = spec.name || spec.agentName || "Generated Agent";
       const roleTitle = spec.role || spec.roleTitle || "Specialist";
       const description = spec.systemInstructions || spec.description || "";
       const capabilities = spec.capabilities || [];
@@ -373,10 +356,10 @@ const agentsRouter = router({
         companyId: input.companyId,
         status: "idle",
         builtWithSigma: true,
-        sigmaSpec: input.sigmaSpec,
+        sigmaSpec: input.spec,
       } as any);
       
-      return { success: true, message: `Agent "${name}" imported from Sigma` };
+      return { success: true, message: `Agent "${name}" imported` };
     }),
 });
 
@@ -1999,11 +1982,7 @@ IMPORTANT: You have access to the above live data. Use it throughout the convers
       const company = await getCompanyById(input.companyId);
       const okrs = await getOkrsByCompanyId(input.companyId);
 
-      // Fetch website audit results for strategy generation
-      const websiteAudit = await getWebsiteAuditByCompanyId(input.companyId);
-      const websiteAuditSummary = websiteAudit && (websiteAudit as any).status === "complete" && (websiteAudit as any).executiveSummary
-        ? (websiteAudit as any).executiveSummary as string
-        : "";
+      const websiteAuditSummary = "";
 
       const briefingFreq = (company as any)?.briefingFrequency ?? "weekly";
       const skippedExecs = executiveContext.filter(e => e.skipped).map(e => e.name);
@@ -2079,76 +2058,6 @@ Please produce the formal strategy proposal.` },
 
       emitToUser(ctx.user.id, "task_completed", "Strategy Proposed", `ARCH has proposed a formal strategy for ${company?.name}`, { companyId: input.companyId });
       return { strategy: strategyContent, executiveSummary: execSummary };
-    }),
-
-  // Σ Calibration: synthesize all four executive interview perspectives into one highest-leverage recommendation
-  sigmaCalibrate: protectedProcedure
-    .input(z.object({ companyId: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      const agents = await getAgentsByCompanyId(input.companyId);
-      const csuiteAgents = agents.filter(a => CSUITE_TYPES.includes(a.type as any));
-      const onboardings = await getOnboardingsByCompanyId(input.companyId);
-      const completedMap = new Map(onboardings.filter(o => o.status === "completed").map(o => [o.agentId, o]));
-
-      // Gather executive context from completed interviews
-      const executiveContext = csuiteAgents.map(a => {
-        const ob = completedMap.get(a.id);
-        return {
-          role: a.roleTitle ?? a.type,
-          name: a.name,
-          type: a.type,
-          summary: ob?.summary ?? "[Not yet onboarded]",
-          context: ob?.context ?? {},
-          completed: ob?.status === "completed",
-        };
-      }).filter(e => e.completed);
-
-      if (executiveContext.length === 0) {
-        return { success: false, synthesis: "No completed executive interviews to synthesize." };
-      }
-
-      const company = await getCompanyById(input.companyId);
-
-      // Fetch website audit results for Σ calibration
-      const sigmaAudit = await getWebsiteAuditByCompanyId(input.companyId);
-      const sigmaAuditSummary = sigmaAudit && (sigmaAudit as any).status === "complete" && (sigmaAudit as any).executiveSummary
-        ? (sigmaAudit as any).executiveSummary as string
-        : "";
-
-      const response = await invokeLLM({
-        messages: [
-          {
-            role: "system" as const,
-            content: `You are Σ (Sigma) — the synthesis executive of OpenCommand's 5-4-3-2-1-Σ Temporal Cascade.
-
-You have just received the completed onboarding context from the company's executive team. Your job is to demonstrate your synthesis capability by combining all their perspectives into ONE highest-leverage recommendation.
-
-Rules:
-1. The recommendation must be specific and immediately actionable
-2. It must account for all executive perspectives (strategy, finance, marketing, technology)
-3. State what to do, why it's the highest-leverage move, and the expected impact
-4. Keep it concise — 3-4 sentences maximum
-5. Reference specific insights from the interviews to show you've synthesized them
-6. If website audit data is available, incorporate digital presence insights into your recommendation
-
-This is a calibration demonstration during onboarding — show the user what Σ can do.`,
-          },
-          {
-            role: "user" as const,
-            content: `Company: ${company?.name ?? "Unknown"}
-Mission: ${company?.mission ?? "N/A"}
-Industry: ${company?.industry ?? "N/A"}
-
-Executive Interview Summaries:
-${executiveContext.map(e => `\n### ${e.name} (${e.role})\n${e.summary}`).join("\n")}
-
-${sigmaAuditSummary ? `Website Audit Intelligence:\n${sigmaAuditSummary}\n\n` : ""}Synthesize these perspectives into ONE highest-leverage recommendation.`,
-          },
-        ],
-      });
-
-      const synthesis = (response.choices[0]?.message?.content ?? "Unable to generate synthesis.") as string;
-      return { success: true, synthesis };
     }),
 
   // List strategy proposals
@@ -2247,119 +2156,6 @@ ${sigmaAuditSummary ? `Website Audit Intelligence:\n${sigmaAuditSummary}\n\n` : 
       }
 
       return { success: true, okrsCreated };
-    }),
-
-  // Quick-start mode: website-only → audit → instant Σ recommendation
-  quickStart: protectedProcedure
-    .input(z.object({
-      companyName: z.string().min(1),
-      website: z.string().min(1),
-      industry: z.string().optional(),
-      email: z.string().optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      // 1. Create or find company
-      let companies = await getCompaniesByUserId(ctx.user.id);
-      let company = companies.find(c => c.name === input.companyName);
-      if (!company) {
-        await createCompany({
-          userId: ctx.user.id,
-          name: input.companyName,
-          industry: input.industry ?? "",
-          mission: "",
-          website: input.website,
-        } as any);
-        companies = await getCompaniesByUserId(ctx.user.id);
-        company = companies.find(c => c.name === input.companyName);
-        if (!company) throw new Error("Failed to create company");
-      }
-
-      // 2. Run website audit (blocking - wait for results)
-      let auditResult: any = null;
-      try {
-        auditResult = await runWebsiteAudit({
-          companyId: company!.id,
-          userId: ctx.user.id,
-          url: input.website,
-          companyName: input.companyName,
-          industry: input.industry ?? "",
-        });
-      } catch (e) {
-        console.error("[quickStart] Website audit failed:", e);
-      }
-
-      // 3. Generate Σ synthesis based on audit alone
-      const auditContext = auditResult?.status === "complete"
-        ? `Website Audit Results:\n- Executive Summary: ${auditResult.executiveSummary ?? "N/A"}\n- Tech Stack: ${JSON.stringify(auditResult.techStack ?? {})}\n- SEO Score: ${auditResult.seoScore ?? "N/A"}/100\n- Social Profiles: ${JSON.stringify(auditResult.socialProfiles ?? {})}\n- Content Analysis: ${JSON.stringify(auditResult.contentAnalysis ?? {})}`
-        : "Website audit is still processing. Providing initial recommendations based on available information.";
-
-      const response = await invokeLLM({
-        messages: [
-          {
-            role: "system" as const,
-            content: `You are Σ (Sigma), the synthesis executive in a 5-4-3-2-1 temporal cascade. You identify the single highest-leverage move a business can make RIGHT NOW.
-
-You have just analyzed this company's website and digital presence. Based on the audit data, provide:
-1. ONE highest-leverage recommendation they should execute immediately
-2. Why this is the highest-leverage move (backed by the audit data)
-3. Expected impact if executed within 7 days
-4. Three specific action steps to implement it
-
-Be specific, actionable, and data-driven. Reference actual findings from the website audit. Keep your response under 400 words. Format with clear headers.`,
-          },
-          {
-            role: "user" as const,
-            content: `Company: ${input.companyName}\nIndustry: ${input.industry ?? "Not specified"}\nWebsite: ${input.website}\n\n${auditContext}\n\nWhat is the single highest-leverage move this company should make right now?`,
-          },
-        ],
-      });
-
-      const recommendation = (response.choices[0]?.message?.content ?? "Unable to generate recommendation.") as string;
-
-      // 4. Save results with shareable ID
-      const shareId = nanoid(12);
-      await createQuickStartResult({
-        shareId,
-        userId: ctx.user.id,
-        email: input.email ?? ctx.user.email ?? null,
-        companyName: input.companyName,
-        website: input.website,
-        industry: input.industry ?? null,
-        recommendation,
-        auditSummary: auditResult?.executiveSummary ?? null,
-        seoScore: auditResult?.seoScore ?? null,
-        techStack: auditResult?.techStack ?? null,
-        socialPresence: auditResult?.socialProfiles ?? null,
-      });
-
-      return {
-        success: true,
-        companyId: company!.id,
-        recommendation,
-        auditStatus: auditResult?.status ?? "pending",
-        auditSummary: auditResult?.executiveSummary ?? null,
-        seoScore: auditResult?.seoScore ?? null,
-        shareId,
-      };
-    }),
-
-  // Public: get shared quick-start results by shareId
-  getSharedResult: publicProcedure
-    .input(z.object({ shareId: z.string().min(1) }))
-    .query(async ({ input }) => {
-      const result = await getQuickStartResultByShareId(input.shareId);
-      if (!result) return null;
-      return {
-        companyName: result.companyName,
-        website: result.website,
-        industry: result.industry,
-        recommendation: result.recommendation,
-        auditSummary: result.auditSummary,
-        seoScore: result.seoScore,
-        techStack: result.techStack,
-        socialPresence: result.socialPresence,
-        createdAt: result.createdAt,
-      };
     }),
 });
 
@@ -2885,7 +2681,7 @@ const adminRouter = router({
       return { url };
     }),
   // ─── Leads Dashboard ─────────────────────────────────────────────────────
-  leads: adminProcedure.query(() => adminGetAllQuickStartLeads()),
+
   leadIntentHistory: adminProcedure
     .input(z.object({ userId: z.number().optional(), email: z.string().optional() }))
     .query(async ({ input }) => {
@@ -2897,30 +2693,7 @@ const adminRouter = router({
     }),
 });
 
-// ─── Website Audit Router ───────────────────────────────────────────────────
-const websiteAuditRouter = router({
-  getByCompany: protectedProcedure
-    .input(z.object({ companyId: z.number() }))
-    .query(async ({ input }) => {
-      return getWebsiteAuditByCompanyId(input.companyId) ?? null;
-    }),
-  listByUser: protectedProcedure
-    .query(async ({ ctx }) => {
-      return getWebsiteAuditsByUserId(ctx.user.id);
-    }),
-  trigger: protectedProcedure
-    .input(z.object({ companyId: z.number(), url: z.string().min(1), companyName: z.string(), industry: z.string().optional() }))
-    .mutation(async ({ ctx, input }) => {
-      const result = await runWebsiteAudit({
-        companyId: input.companyId,
-        userId: ctx.user.id,
-        url: input.url,
-        companyName: input.companyName,
-        industry: input.industry ?? "",
-      });
-      return result;
-    }),
-});
+
 
 export const appRouter = router({
   system: systemRouter,
@@ -2963,13 +2736,11 @@ export const appRouter = router({
   ralf: ralfRouter,
   subAgents: subAgentRouter,
   leadResponse: leadResponseRouter,
-  executiveBoard: executiveBoardRouter,
   intentEngine: intentEngineRouter,
-  sigma: sigmaRouter,
   templates: templatesRouter,
   workspace: workspaceRouter,
   goals: goalsRouter,
-  websiteAudit: websiteAuditRouter,
+
 });
 
 export type AppRouter = typeof appRouter;

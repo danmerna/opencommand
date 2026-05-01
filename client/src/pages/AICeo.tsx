@@ -14,7 +14,7 @@ export default function AICeo() {
   const { isAuthenticated } = useAuth();
   const [tab, setTab] = useState<Tab>("chat");
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "**ARCH online.** I am your AI Chief Executive Officer. I have full visibility into your OKRs, agent fleet, and execution history.\n\nI can help you:\n- **Strategize** — analyze your goals and build action plans\n- **Orchestrate** — delegate tasks to the right agents\n- **Decide** — provide executive-level recommendations\n\nWhat would you like to command today?" }
+    { role: "assistant", content: "**ARCH online.** I am your AI Chief Executive Officer. I have full visibility into your OKRs, agent fleet, and execution history.\n\nI can help you:\n- **Strategize** — analyze your goals and build action plans\n- **Orchestrate** — delegate tasks to the right agents\n- **Decide** — provide strategic recommendations\n\nWhat would you like to command today?" }
   ]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);

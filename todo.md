@@ -562,3 +562,15 @@
 ## Decoupling Plan
 - [x] Write comprehensive DECOUPLING_PLAN.md with module inventory, dependency map, 4-phase extraction strategy, dual-mode architecture, risk assessment, monetization, and GTM recommendations
 - [x] Update DECOUPLING_PLAN.md with latest LOC counts (7,687 server / 6,209 client), new modules (QuickStart, SharedResults, AdminLeads), and refined phase estimates (~36 days total)
+
+## Decoupling: Separate Executive Intelligence from OpenCommand
+- [x] Audit all executive board references across codebase
+- [x] Strip executive board integration from intent engine (remove boardIntegration.ts, askBoardIntegration.ts deps)
+- [x] Remove executive-intelligence routes from OpenCommand (ProOnboarding, ExecutiveBoard, SigmaChat, ChiefOfStaff, QuickStart, SharedResults, AdminLeads)
+- [x] Remove executive-intelligence menu links from Home.tsx and navigation
+- [x] Ensure all integrations (HubSpot, Salesforce, Meta, Google, TikTok, GA4) remain functional in OpenCommand
+- [x] Copy executive intelligence modules to standalone /home/ubuntu/executive-intelligence directory
+- [x] Ensure standalone executive intelligence has full integration support
+- [x] Update App.tsx routes for streamlined OpenCommand
+- [x] Update tests for decoupled OpenCommand (38 files, 658 tests passing)
+- [x] Save checkpoint

@@ -23,7 +23,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: "fleet",
     title: "Agent Fleet",
-    description: "Monitor your executive agents in real-time. Each agent's status, health score, and recent actions are visible here. Click any agent to drill into their performance.",
+    description: "Monitor your agents in real-time. Each agent's status, health score, and recent actions are visible here. Click any agent to drill into their performance.",
     icon: <Zap size={16} className="text-blue-400" />,
     targetSelector: '[data-tour="fleet"]',
     position: "right",

@@ -7,14 +7,9 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import MissionControl from "./pages/MissionControl";
 import IntentEngine from "./pages/IntentEngine";
-// Marketplace hidden — will be re-added later
-// import Marketplace from "./pages/Marketplace";
-// import CreatorProgram from "./pages/CreatorProgram";
 import Blueprints from "./pages/Blueprints";
-// import BlueprintDashboard from "./pages/BlueprintDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
-// import CompatibilityChecker from "./pages/CompatibilityChecker";
 import ReceiptViewer from "./pages/ReceiptViewer";
 import AppLayout from "./components/AppLayout";
 import Projects from "./pages/Projects";
@@ -22,29 +17,19 @@ import ProjectDetail from "./pages/ProjectDetail";
 import AgentOnboarding from "./pages/AgentOnboarding";
 import AgentDetail from "./pages/AgentDetail";
 import Creators from "./pages/Creators";
-import ProOnboarding from "./pages/ProOnboarding";
 import Briefings from "./pages/Briefings";
-import ExecutiveBoard from "./pages/ExecutiveBoard";
 import ExecutionDashboard from "./pages/ExecutionDashboard";
 import Analytics from "./pages/Analytics";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
 import Settings from "./pages/Settings";
 import AdminUsers from "./pages/AdminUsers";
-import AdminLeads from "./pages/AdminLeads";
 import Waitlist from "./pages/Waitlist";
 import AuthRelay from "./pages/AuthRelay";
-import { OnboardingSigma } from "./pages/OnboardingSigma";
-import { SigmaImportModal } from "./components/SigmaImportModal";
-import { SigmaBadge } from "./components/SigmaBadge";
 import { usePageTracking } from "./hooks/usePageTracking";
 import { LeadResponsePage } from "./pages/LeadResponsePage";
-import { SigmaChatUI } from "./components/SigmaChatUI";
 import { LeadScoringDashboard } from "./pages/LeadScoringDashboard";
 import { ROIAttribution } from "./pages/ROIAttribution";
 import GoalsDashboard from "./pages/GoalsDashboard";
-import ChiefOfStaff from "./pages/ChiefOfStaff";
-import QuickStart from "./pages/QuickStart";
-import SharedResults from "./pages/SharedResults";
 
 function Router() {
   usePageTracking();
@@ -53,29 +38,15 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/auth/relay" component={AuthRelay} />
       <Route path="/waitlist" component={Waitlist} />
-      <Route path="/chief-of-staff" component={ChiefOfStaff} />
-      <Route path="/quick-start" component={QuickStart} />
-      <Route path="/results/:shareId" component={SharedResults} />
-      <Route path="/onboarding/sigma">
-        <AppLayout><OnboardingSigma /></AppLayout>
-      </Route>
       <Route path="/mission-control">
         <AppLayout><MissionControl /></AppLayout>
       </Route>
       <Route path="/intent-engine">
         <AppLayout><IntentEngine /></AppLayout>
       </Route>
-      {/* AI CEO redirects to Executive Board (ARCH is there now) */}
-      <Route path="/ai-ceo">
-        <Redirect to="/executive-board?exec=ceo" />
-      </Route>
-      <Route path="/executive-board">
-        <AppLayout><ExecutiveBoard /></AppLayout>
-      </Route>
       <Route path="/blueprints">
         <AppLayout><Blueprints /></AppLayout>
       </Route>
-      {/* Blueprint Dashboard hidden — will be re-added later */}
 
       {/* Settings page — consolidates Governance, Integrations, Context History, Payments, Pricing, What's New */}
       <Route path="/settings">
@@ -102,9 +73,7 @@ function Router() {
         <Redirect to="/settings?tab=about" />
       </Route>
 
-      {/* Compatibility hidden — will be re-added later */}
       <Route path="/creators" component={Creators} />
-      {/* Marketplace & Creator Program hidden — will be re-added later */}
       <Route path="/projects">
         <AppLayout><Projects /></AppLayout>
       </Route>
@@ -124,9 +93,6 @@ function Router() {
       <Route path="/lead-response">
         <AppLayout><LeadResponsePage /></AppLayout>
       </Route>
-      <Route path="/sigma-chat">
-        <AppLayout><SigmaChatUI /></AppLayout>
-      </Route>
       <Route path="/lead-scoring">
         <AppLayout><LeadScoringDashboard /></AppLayout>
       </Route>
@@ -140,8 +106,6 @@ function Router() {
         <AppLayout><FeedbackAdmin /></AppLayout>
       </Route>
       <Route path="/admin/users" component={AdminUsers} />
-      <Route path="/admin/leads" component={AdminLeads} />
-      <Route path="/onboarding/pro" component={ProOnboarding} />
       <Route path="/onboarding/:agentId">
         <AppLayout><AgentOnboarding /></AppLayout>
       </Route>

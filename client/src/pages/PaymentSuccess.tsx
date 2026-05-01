@@ -19,7 +19,7 @@ export default function PaymentSuccess() {
         <CheckCircle size={40} className="text-emerald-400 mx-auto mb-4" />
         <h1 className="text-3xl font-light text-foreground tracking-tight mb-3">Welcome to OpenCommand</h1>
         <p className="text-muted-foreground text-sm mb-8">
-          Your account is ready. Let's build your AI executive team — we'll connect to your tools, pull your context, and personalize each agent to your business.
+          Your account is ready. Let's build your AI agent team — we'll connect to your tools, pull your context, and personalize each agent to your business.
         </p>
         <Link href="/onboarding/pro">
           <Button className="w-full h-11 gap-2">

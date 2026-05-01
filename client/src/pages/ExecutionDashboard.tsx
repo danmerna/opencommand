@@ -408,7 +408,7 @@ export default function ExecutionDashboard() {
                 <Users size={28} className="text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
                 <p className="text-sm text-muted-foreground mb-1">No sub-agent recommendations yet</p>
                 <p className="text-xs text-muted-foreground">
-                  Click an executive button above to generate recommendations.
+                  Click an agent button above to generate recommendations.
                 </p>
               </div>
             ) : (

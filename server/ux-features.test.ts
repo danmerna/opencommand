@@ -9,88 +9,16 @@ function readComponent(relativePath: string): string {
 }
 
 // ─── Context Assembly Animation ────────────────────────────────────────────────
-describe("ContextAssemblyAnimation component", () => {
-  const src = readComponent("components/ContextAssemblyAnimation.tsx");
-
-  it("exports ContextAssemblyAnimation", () => {
-    expect(src).toContain("export function ContextAssemblyAnimation");
-  });
-
-  it("accepts connectedProviders, agentName, agentIcon, and isComplete props", () => {
-    expect(src).toContain("connectedProviders: string[]");
-    expect(src).toContain("agentName: string");
-    expect(src).toContain("agentIcon: string");
-    expect(src).toContain("isComplete: boolean");
-  });
-
-  it("defines provider streams for major integrations", () => {
-    for (const provider of ["hubspot", "salesforce", "ga4", "meta_ads", "stripe"]) {
-      expect(src).toContain(provider);
-    }
-  });
-
-  it("has a fallback stream for when no providers are connected", () => {
-    expect(src).toContain("FALLBACK_STREAM");
-    expect(src).toContain("Context Engine");
-  });
-
-  it("renders a progress bar with percentage", () => {
-    expect(src).toContain("assemblyProgress");
-    expect(src).toMatch(/width.*assemblyProgress/);
-  });
-
-  it("shows streaming and done status indicators", () => {
-    expect(src).toContain('"streaming"');
-    expect(src).toContain('"done"');
-    expect(src).toContain("animate-spin");
-    expect(src).toContain("CheckCircle2");
-  });
-
-  it("auto-scrolls as new lines appear", () => {
-    expect(src).toContain("scrollRef");
-    expect(src).toContain("scrollTop");
-    expect(src).toContain("scrollHeight");
-  });
-
-  it("shows connected provider badges in footer", () => {
-    expect(src).toContain("Sources:");
-    expect(src).toContain("connectedProviders.map");
-  });
-
-  it("animates data points at intervals", () => {
-    expect(src).toContain("setInterval");
-    expect(src).toContain("clearInterval");
-  });
-});
-
-// ─── Context Assembly Animation Integration in ProOnboarding ────────────────
-describe("ContextAssemblyAnimation integration in ProOnboarding", () => {
-  const src = readComponent("pages/ProOnboarding.tsx");
-
-  it("imports ContextAssemblyAnimation", () => {
-    expect(src).toContain('import { ContextAssemblyAnimation }');
-  });
-
-  it("renders ContextAssemblyAnimation during context loading", () => {
-    expect(src).toContain("<ContextAssemblyAnimation");
-    expect(src).toContain("agentContextLoading");
-  });
-
-  it("passes connected providers to the animation", () => {
-    expect(src).toContain("connectedProviders=");
-  });
-});
-
 // ─── Onboarding Resume Banner ──────────────────────────────────────────────────
 describe("Onboarding Resume Banner in MissionControl", () => {
   const src = readComponent("pages/MissionControl.tsx");
 
-  it("shows 'Continue Building Your Executive Team' for incomplete onboarding", () => {
-    expect(src).toContain("Continue Building Your Executive Team");
+  it("shows 'Continue Building Your Agent Team' for incomplete onboarding", () => {
+    expect(src).toContain("Continue Building Your Agent Team");
   });
 
-  it("displays progress as X of Y executives contextualized", () => {
-    expect(src).toContain("executives contextualized");
+  it("displays progress as X of Y agents contextualized", () => {
+    expect(src).toContain("agents contextualized");
     expect(src).toContain("data.completed");
     expect(src).toContain("data.total");
   });
