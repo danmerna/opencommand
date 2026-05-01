@@ -50,18 +50,16 @@ describe("Home Page Redesign - Structure Validation", () => {
   // ─── Section 2: Hero ───────────────────────────────────────────────
   describe("Hero Section", () => {
     it("has the main headline", () => {
-      expect(homeSource).toContain("Deploy your");
-      expect(homeSource).toContain("zero-human workforce.");
+      expect(homeSource).toContain("deploying AI agents");
     });
 
-    it("has updated subheadline about self-contextualizing engine", () => {
-      expect(homeSource).toContain("connects to your tools");
-      expect(homeSource).toContain("builds its own context");
-      expect(homeSource).toContain("context-engineers itself");
+    it("has updated subheadline about agent OS", () => {
+      expect(homeSource).toContain("operating system");
+      expect(homeSource).toContain("deploy");
     });
 
-    it("has Personal Intelligence Engine label", () => {
-      expect(homeSource).toContain("Personal Intelligence Engine");
+    it("has Agent Operating System label", () => {
+      expect(homeSource).toContain("Agent Operating System");
     });
 
     it("always shows HeroEmailInput regardless of auth state", () => {
@@ -247,7 +245,7 @@ describe("Home Page Redesign - Structure Validation", () => {
   describe("Core Systems Features", () => {
     it("has the Core Systems section header", () => {
       expect(homeSource).toContain("Core Systems");
-      expect(homeSource).toContain("Everything you need to command outcomes.");
+      expect(homeSource).toContain("Everything you need to");
     });
 
     it("includes Intent Engine with updated copy", () => {
@@ -275,20 +273,17 @@ describe("Home Page Redesign - Structure Validation", () => {
 
   // ─── Section 6: How It Works (4 steps) ─────────────────────────────
   describe("How It Works - 4 Steps", () => {
-    it("has the section header", () => {
-      expect(homeSource).toContain("Four steps to autonomous execution.");
+     it("has the section header", () => {
+      expect(homeSource).toContain("Four steps to");
     });
-
-    it("includes Step 01: State your intent", () => {
-      expect(homeSource).toContain("State your intent");
+    it("includes Step 01: Connect your tools", () => {
+      expect(homeSource).toContain("Connect your tools");
     });
-
-    it("includes Step 02: We pull your context (new step)", () => {
-      expect(homeSource).toContain("We pull your context");
+    it("includes Step 02: Deploy your agents", () => {
+      expect(homeSource).toContain("Deploy your agents");
     });
-
-    it("includes Step 03: Your workforce executes", () => {
-      expect(homeSource).toContain("Your workforce executes");
+    it("includes Step 03: Set workplace goals", () => {
+      expect(homeSource).toContain("Set workplace goals");
     });
 
     it("includes Step 04 marker", () => {
@@ -422,7 +417,8 @@ describe("Home Page Redesign - Structure Validation", () => {
   // ─── Section 10: Footer ────────────────────────────────────────────
   describe("Footer - 4 Column Layout", () => {
     it("has the brand column", () => {
-      expect(homeSource).toContain("From idea to verified outcome.");
+      expect(homeSource).toContain("OpenCommand");
+      expect(homeSource).toContain("Agent Operating System");
     });
 
     it("has the Product column header", () => {

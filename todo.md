@@ -574,3 +574,15 @@
 - [x] Update App.tsx routes for streamlined OpenCommand
 - [x] Update tests for decoupled OpenCommand (38 files, 658 tests passing)
 - [x] Save checkpoint
+
+## Agent OS Positioning & Deployment UX
+- [x] Update landing page hero: new headline, subheadline, and CTA for agent OS
+- [x] Update "How It Works" steps to reflect agent deployment workflow
+- [x] Update feature cards to reflect agent OS capabilities
+- [x] Update footer tagline and product description
+- [x] Build Agent Templates library in Mission Control (fleet tab)
+- [x] Build one-click agent deploy flow with configuration modal
+- [x] Build agent monitoring dashboard (status, health, last run, outcomes)
+- [x] Add multi-agent workplace goal setting
+- [x] Initialize Executive Intelligence as standalone webdev project (/home/ubuntu/exec-intelligence)
+- [x] Wire executive intelligence integrations (HubSpot, Salesforce, Meta, Google, TikTok, GA4)

@@ -19,7 +19,7 @@ import {
   Target, Zap, Plus, Trash2, Check, X, Clock, TrendingUp, DollarSign, FileCheck,
   Inbox, Building2, GitBranch, Heart, Activity, BarChart3, Shield, Power, Wrench,
   CheckCircle2, Sparkles, ArrowRight, Bot, BookOpen, RefreshCw, Calendar, Pencil,
-  Plug, Eye, EyeOff, ExternalLink
+  Plug, Eye, EyeOff, ExternalLink, Search, Code, Layers, ChevronRight, Users, Flag
 } from "lucide-react";
 
 // Provider badge config — used on agent cards and BYOA selector
@@ -202,6 +202,12 @@ export default function MissionControl() {
   const [newOkr, setNewOkr] = useState({ objective: "", keyResult: "", targetValue: "", unit: "USD", level: "company" });
   const [newAgent, setNewAgent] = useState({ name: "", type: "specialist", roleTitle: "", description: "", heartbeatCron: "", monthlyBudget: "", connectorType: "internal", apiKey: "", model: "", url: "", authHeader: "" });
   const [showAgentApiKey, setShowAgentApiKey] = useState(false);
+  const [fleetView, setFleetView] = useState<"fleet" | "templates" | "goals">("fleet");
+  const [showTemplateDeployModal, setShowTemplateDeployModal] = useState<string | null>(null);
+  const [templateAgentName, setTemplateAgentName] = useState("");
+  const [templateConnector, setTemplateConnector] = useState<"internal" | "openai" | "anthropic" | "gemini" | "custom_api" | "crewai">("internal");
+  const [showAddGoal, setShowAddGoal] = useState(false);
+  const [newGoal, setNewGoal] = useState({ title: "", description: "", priority: "medium", targetDate: "" });
   const [newDept, setNewDept] = useState({ name: "", budget: "" });
   const [newGate, setNewGate] = useState({ gateType: "spend", description: "", threshold: "" });
 
@@ -311,6 +317,22 @@ export default function MissionControl() {
   const createGateMut = trpc.governance.createGate.useMutation({ onSuccess: () => { utils.governance.gates.invalidate(); setShowAddGate(false); setNewGate({ gateType: "spend", description: "", threshold: "" }); toast.success("Gate created"); } });
   const removeGateMut = trpc.governance.removeGate.useMutation({ onSuccess: () => { utils.governance.gates.invalidate(); toast.success("Gate removed"); } });
   const killSwitchMut = trpc.governance.killSwitch.useMutation({ onSuccess: () => { utils.agents.list.invalidate(); toast.success("Kill switch activated — all agents paused"); } });
+  const agentTemplatesQ = trpc.agents.listTemplates.useQuery();
+  const agentTemplates = agentTemplatesQ.data ?? [];
+  const deployFromTemplateMut = trpc.agents.deployFromTemplate.useMutation({
+    onSuccess: (data) => { utils.agents.list.invalidate(); setShowTemplateDeployModal(null); setTemplateAgentName(""); toast.success(data.message); },
+    onError: (err: any) => toast.error("Deploy failed", { description: err.message }),
+  });
+  const goalsQ = trpc.goals.list.useQuery({ companyId: effectiveCompanyId! }, { enabled: isAuthenticated && !!effectiveCompanyId && fleetView === "goals" });
+  const goals = goalsQ.data ?? [];
+  const createGoalMut = trpc.goals.create.useMutation({
+    onSuccess: () => { goalsQ.refetch(); setShowAddGoal(false); setNewGoal({ title: "", description: "", priority: "medium", targetDate: "" }); toast.success("Workplace goal created"); },
+    onError: (err: any) => toast.error("Failed to create goal", { description: err.message }),
+  });
+  const deleteGoalMut = trpc.goals.delete.useMutation({ onSuccess: () => goalsQ.refetch() });
+
+  const TEMPLATE_ICONS: Record<string, any> = { TrendingUp, BarChart3, Search, DollarSign, Heart, Code };
+  const TEMPLATE_COLORS: Record<string, string> = { emerald: "text-emerald-400 border-emerald-400/30 bg-emerald-400/5", blue: "text-blue-400 border-blue-400/30 bg-blue-400/5", violet: "text-violet-400 border-violet-400/30 bg-violet-400/5", amber: "text-amber-400 border-amber-400/30 bg-amber-400/5", pink: "text-pink-400 border-pink-400/30 bg-pink-400/5", cyan: "text-cyan-400 border-cyan-400/30 bg-cyan-400/5" };
 
   return (
     <div className="p-6 lg:p-10 max-w-6xl mx-auto">
@@ -474,78 +496,266 @@ export default function MissionControl() {
       {/* ─── AGENT FLEET ─── */}
       {tab === "fleet" && (
         <div className="animate-fade-in">
+          {/* Fleet sub-nav */}
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-heading text-lg">Agent Fleet — {agents.length} units</h2>
-            <Button
-              onClick={() => {
-                if (subscription.isFree || (subscription.isStarter && agents.length >= 1)) {
-                  toast.error(subscription.isFree ? "Sign up for a plan to deploy agents." : "Starter plan is limited to 1 agent. Upgrade to Pro for unlimited agents.", { action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
-                  return;
-                }
-                setShowAddAgent(true);
-              }}
-              size="sm" className="btn-primary text-xs gap-1.5 h-8"
-            >
-              <Plus size={13} /> Deploy Agent
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {agents.map(agent => (
-              <div key={agent.id} className="card-minimal">
-                <div className="flex items-start justify-between mb-3">
-                  <span className={`text-mono text-xs border px-1.5 py-0.5 rounded ${typeColors[agent.type] ?? "text-foreground border-border"}`}>{agent.type}</span>
-                  <div className="flex items-center gap-1.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${agent.status === "active" ? "bg-emerald-500 animate-pulse-subtle" : agent.status === "error" ? "bg-red-500" : "bg-zinc-600"}`} />
-                    <span className="text-mono text-[11px] text-muted-foreground">{agent.status}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                  <h3 className="font-semibold text-foreground">{agent.name}</h3>
-                  {(agent as any).builtWithSigma && <SigmaBadge />}
-                  {(() => {
-                    const ct = (agent as any).connectorType ?? "internal";
-                    const badge = PROVIDER_BADGE[ct] ?? PROVIDER_BADGE.internal;
-                    return (
-                      <span className={`flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider border border-current/20 rounded px-1.5 py-0.5 ${badge.color}`}>
-                        {badge.logo ? <img src={badge.logo} alt="" className="w-3 h-3 rounded-sm object-cover" /> : null}
-                        {badge.label}
-                      </span>
-                    );
-                  })()}
-                </div>
-                {(agent as any).roleTitle && <p className="text-label text-[10px] mb-2">{(agent as any).roleTitle}</p>}
-                <p className="text-muted-foreground text-xs leading-relaxed mb-4 line-clamp-2">{agent.description}</p>
-                <div className="grid grid-cols-3 gap-2 text-xs mb-3">
-                  <div><span className="text-label text-[10px]">Tasks</span><div className="font-semibold text-foreground">{agent.tasksCompleted}</div></div>
-                  <div><span className="text-label text-[10px]">Value</span><div className="font-semibold text-emerald-400">${Number(agent.totalValueCreated ?? 0).toFixed(0)}</div></div>
-                  <div><span className="text-label text-[10px]">Cost</span><div className="font-semibold text-amber-400">${Number((agent as any).totalCostIncurred ?? 0).toFixed(2)}</div></div>
-                </div>
-                {Number((agent as any).monthlyBudget ?? 0) > 0 && (
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-label text-[10px]">Budget</span>
-                      <span className="text-mono text-[10px] text-muted-foreground">${Number((agent as any).budgetUsed ?? 0).toFixed(2)} / ${Number((agent as any).monthlyBudget ?? 0).toFixed(0)}</span>
-                    </div>
-                    <div className="progress-bar-bg"><div className="progress-bar-fill" style={{ width: `${Math.min(100, (Number((agent as any).budgetUsed ?? 0) / Number((agent as any).monthlyBudget ?? 1)) * 100)}%` }} /></div>
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  {agent.status === "idle" && (
-                    <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "active" })} className="flex-1 btn-outline text-xs py-1.5">Activate</button>
-                  )}
-                  {agent.status === "active" && (
-                    <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "idle" })} className="flex-1 btn-outline text-xs py-1.5">Pause</button>
-                  )}
-                  {agent.status === "paused" && (
-                    <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "active" })} className="flex-1 btn-outline text-xs py-1.5">Resume</button>
-                  )}
-                  <button onClick={() => { if (confirm("Remove this agent?")) deleteAgentMut.mutate({ id: agent.id }); }} className="btn-outline text-xs px-3 py-1.5 text-red-400 border-red-400/30 hover:bg-red-400/10">
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+            <div className="flex items-center gap-1 bg-white/[0.03] border border-border rounded-lg p-1">
+              {(["fleet", "templates", "goals"] as const).map(v => (
+                <button key={v} onClick={() => setFleetView(v)}
+                  className={`px-3 py-1.5 text-xs rounded-md font-medium transition-all ${
+                    fleetView === v ? "bg-white/[0.08] text-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}>
+                  {v === "fleet" ? `Active Fleet (${agents.length})` : v === "templates" ? "Templates" : "Workplace Goals"}
+                </button>
+              ))}
+            </div>
+            {fleetView === "fleet" && (
+              <div className="flex gap-2">
+                <Button onClick={() => setFleetView("templates")} size="sm" variant="outline" className="text-xs gap-1.5 h-8">
+                  <Layers size={13} /> From Template
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (subscription.isFree || (subscription.isStarter && agents.length >= 1)) {
+                      toast.error(subscription.isFree ? "Sign up for a plan to deploy agents." : "Starter plan is limited to 1 agent. Upgrade to Pro for unlimited agents.", { action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
+                      return;
+                    }
+                    setShowAddAgent(true);
+                  }}
+                  size="sm" className="btn-primary text-xs gap-1.5 h-8"
+                >
+                  <Plus size={13} /> Custom Agent
+                </Button>
               </div>
-            ))}
+            )}
+            {fleetView === "goals" && (
+              <Button onClick={() => setShowAddGoal(true)} size="sm" className="btn-primary text-xs gap-1.5 h-8" disabled={!effectiveCompanyId}>
+                <Plus size={13} /> New Goal
+              </Button>
+            )}
           </div>
+
+          {/* ── ACTIVE FLEET VIEW ── */}
+          {fleetView === "fleet" && (
+            <>
+              {/* Fleet monitoring summary */}
+              {agents.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                  <div className="card-minimal text-center py-3">
+                    <div className="text-xl font-bold text-emerald-400">{agents.filter(a => a.status === "active").length}</div>
+                    <div className="text-label text-[10px] mt-0.5">Active</div>
+                  </div>
+                  <div className="card-minimal text-center py-3">
+                    <div className="text-xl font-bold text-foreground">{agents.filter(a => a.status === "idle").length}</div>
+                    <div className="text-label text-[10px] mt-0.5">Idle</div>
+                  </div>
+                  <div className="card-minimal text-center py-3">
+                    <div className="text-xl font-bold text-amber-400">{agents.filter(a => a.status === "error").length}</div>
+                    <div className="text-label text-[10px] mt-0.5">Error</div>
+                  </div>
+                  <div className="card-minimal text-center py-3">
+                    <div className="text-xl font-bold text-blue-400">${agents.reduce((s, a) => s + Number((a as any).totalValueCreated ?? 0), 0).toFixed(0)}</div>
+                    <div className="text-label text-[10px] mt-0.5">Total Value</div>
+                  </div>
+                </div>
+              )}
+              {agents.length === 0 ? (
+                <div className="card-minimal text-center py-16">
+                  <Bot size={32} className="text-muted-foreground mx-auto mb-4" strokeWidth={1.5} />
+                  <h3 className="text-foreground font-medium mb-2">No agents deployed yet</h3>
+                  <p className="text-muted-foreground text-sm mb-5 max-w-sm mx-auto">Start with a pre-built template for instant deployment, or configure a custom agent from scratch.</p>
+                  <div className="flex gap-3 justify-center">
+                    <Button onClick={() => setFleetView("templates")} size="sm" className="btn-primary text-xs gap-1.5">
+                      <Layers size={13} /> Browse Templates
+                    </Button>
+                    <Button onClick={() => setShowAddAgent(true)} size="sm" variant="outline" className="text-xs gap-1.5">
+                      <Plus size={13} /> Custom Agent
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {agents.map(agent => (
+                    <div key={agent.id} className="card-minimal">
+                      <div className="flex items-start justify-between mb-3">
+                        <span className={`text-mono text-xs border px-1.5 py-0.5 rounded ${typeColors[agent.type] ?? "text-foreground border-border"}`}>{agent.type}</span>
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-1.5 h-1.5 rounded-full ${agent.status === "active" ? "bg-emerald-500 animate-pulse-subtle" : agent.status === "error" ? "bg-red-500" : "bg-zinc-600"}`} />
+                          <span className="text-mono text-[11px] text-muted-foreground">{agent.status}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <h3 className="font-semibold text-foreground">{agent.name}</h3>
+                        {(agent as any).builtWithSigma && <SigmaBadge />}
+                        {(() => {
+                          const ct = (agent as any).connectorType ?? "internal";
+                          const badge = PROVIDER_BADGE[ct] ?? PROVIDER_BADGE.internal;
+                          return (
+                            <span className={`flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider border border-current/20 rounded px-1.5 py-0.5 ${badge.color}`}>
+                              {badge.logo ? <img src={badge.logo} alt="" className="w-3 h-3 rounded-sm object-cover" /> : null}
+                              {badge.label}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      {(agent as any).roleTitle && <p className="text-label text-[10px] mb-2">{(agent as any).roleTitle}</p>}
+                      <p className="text-muted-foreground text-xs leading-relaxed mb-4 line-clamp-2">{agent.description}</p>
+                      <div className="grid grid-cols-3 gap-2 text-xs mb-3">
+                        <div><span className="text-label text-[10px]">Tasks</span><div className="font-semibold text-foreground">{agent.tasksCompleted}</div></div>
+                        <div><span className="text-label text-[10px]">Value</span><div className="font-semibold text-emerald-400">${Number(agent.totalValueCreated ?? 0).toFixed(0)}</div></div>
+                        <div><span className="text-label text-[10px]">Cost</span><div className="font-semibold text-amber-400">${Number((agent as any).totalCostIncurred ?? 0).toFixed(2)}</div></div>
+                      </div>
+                      {Number((agent as any).monthlyBudget ?? 0) > 0 && (
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-label text-[10px]">Budget</span>
+                            <span className="text-mono text-[10px] text-muted-foreground">${Number((agent as any).budgetUsed ?? 0).toFixed(2)} / ${Number((agent as any).monthlyBudget ?? 0).toFixed(0)}</span>
+                          </div>
+                          <div className="progress-bar-bg"><div className="progress-bar-fill" style={{ width: `${Math.min(100, (Number((agent as any).budgetUsed ?? 0) / Number((agent as any).monthlyBudget ?? 1)) * 100)}%` }} /></div>
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        {agent.status === "idle" && (
+                          <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "active" })} className="flex-1 btn-outline text-xs py-1.5">Activate</button>
+                        )}
+                        {agent.status === "active" && (
+                          <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "idle" })} className="flex-1 btn-outline text-xs py-1.5">Pause</button>
+                        )}
+                        {agent.status === "paused" && (
+                          <button onClick={() => updateAgentStatus.mutate({ id: agent.id, status: "active" })} className="flex-1 btn-outline text-xs py-1.5">Resume</button>
+                        )}
+                        <button onClick={() => { if (confirm("Remove this agent?")) deleteAgentMut.mutate({ id: agent.id }); }} className="btn-outline text-xs px-3 py-1.5 text-red-400 border-red-400/30 hover:bg-red-400/10">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── TEMPLATES VIEW ── */}
+          {fleetView === "templates" && (
+            <div>
+              <div className="mb-6">
+                <h3 className="text-foreground font-semibold mb-1">Agent Templates</h3>
+                <p className="text-muted-foreground text-sm">Pre-configured agents ready to deploy in one click. Each template includes role definition, capabilities, and tool integrations.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {agentTemplates.map((tmpl: any) => {
+                  const IconComp = TEMPLATE_ICONS[tmpl.icon] ?? Bot;
+                  const colorCls = TEMPLATE_COLORS[tmpl.color] ?? "text-foreground border-border bg-white/[0.02]";
+                  return (
+                    <div key={tmpl.id} className="card-minimal flex flex-col">
+                      <div className={`w-9 h-9 rounded-lg border flex items-center justify-center mb-3 ${colorCls}`}>
+                        <IconComp size={16} strokeWidth={1.5} />
+                      </div>
+                      <h4 className="font-semibold text-foreground mb-1">{tmpl.name}</h4>
+                      <p className="text-muted-foreground text-xs leading-relaxed mb-3 flex-1">{tmpl.description}</p>
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {tmpl.tools.slice(0, 3).map((t: string) => (
+                          <span key={t} className="text-[9px] font-medium px-1.5 py-0.5 rounded border border-border text-muted-foreground">{t}</span>
+                        ))}
+                        {tmpl.tools.length > 3 && <span className="text-[9px] text-muted-foreground/60">+{tmpl.tools.length - 3} more</span>}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-emerald-400 font-medium">{tmpl.estimatedROI}</span>
+                        <Button
+                          size="sm"
+                          className="btn-primary text-xs h-7 gap-1"
+                          onClick={() => {
+                            if (subscription.isFree || (subscription.isStarter && agents.length >= 1)) {
+                              toast.error(subscription.isFree ? "Sign up to deploy agents." : "Upgrade to Pro for unlimited agents.", { action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
+                              return;
+                            }
+                            setShowTemplateDeployModal(tmpl.id);
+                            setTemplateAgentName(tmpl.roleTitle);
+                          }}
+                        >
+                          Deploy <ChevronRight size={11} />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── WORKPLACE GOALS VIEW ── */}
+          {fleetView === "goals" && (
+            <div>
+              <div className="mb-6">
+                <h3 className="text-foreground font-semibold mb-1">Workplace Goals</h3>
+                <p className="text-muted-foreground text-sm">Set multi-agent goals across your fleet. Agents coordinate autonomously to hit targets, track progress, and escalate blockers.</p>
+              </div>
+              {!effectiveCompanyId ? (
+                <div className="card-minimal text-center py-12">
+                  <Flag size={28} className="text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
+                  <p className="text-muted-foreground text-sm">Set up a company workspace first to create workplace goals.</p>
+                </div>
+              ) : goals.length === 0 ? (
+                <div className="card-minimal text-center py-16">
+                  <Flag size={32} className="text-muted-foreground mx-auto mb-4" strokeWidth={1.5} />
+                  <h3 className="text-foreground font-medium mb-2">No workplace goals yet</h3>
+                  <p className="text-muted-foreground text-sm mb-5 max-w-sm mx-auto">Create a goal and assign agents to it. They will coordinate autonomously to hit the target.</p>
+                  <Button onClick={() => setShowAddGoal(true)} size="sm" className="btn-primary text-xs gap-1.5">
+                    <Plus size={13} /> Create First Goal
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {goals.map((goal: any) => {
+                    const assignedAgents = goal.assignedAgents ?? [];
+                    const avgProgress = assignedAgents.length > 0
+                      ? Math.round(assignedAgents.reduce((s: number, a: any) => s + (a.completionPercentage ?? 0), 0) / assignedAgents.length)
+                      : 0;
+                    const priorityColors: Record<string, string> = { critical: "text-red-400", high: "text-amber-400", medium: "text-blue-400", low: "text-muted-foreground" };
+                    return (
+                      <div key={goal.id} className="card-minimal">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`text-[10px] font-semibold uppercase tracking-wider ${priorityColors[goal.priority] ?? "text-muted-foreground"}`}>{goal.priority}</span>
+                              <span className="text-[10px] text-muted-foreground/60">•</span>
+                              <span className="text-[10px] text-muted-foreground">{goal.status}</span>
+                            </div>
+                            <h4 className="font-semibold text-foreground">{goal.title}</h4>
+                            {goal.description && <p className="text-muted-foreground text-xs mt-0.5 line-clamp-2">{goal.description}</p>}
+                          </div>
+                          <button onClick={() => { if (confirm("Delete this goal?")) deleteGoalMut.mutate({ goalId: goal.id }); }} className="text-muted-foreground hover:text-red-400 transition-colors ml-3">
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                        {assignedAgents.length > 0 && (
+                          <div className="mb-3">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-label text-[10px]">Agent Progress</span>
+                              <span className="text-mono text-[10px] text-muted-foreground">{avgProgress}% avg</span>
+                            </div>
+                            <div className="progress-bar-bg"><div className="progress-bar-fill" style={{ width: `${avgProgress}%` }} /></div>
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {assignedAgents.map((a: any) => (
+                                <span key={a.agentId} className="text-[9px] px-1.5 py-0.5 rounded border border-border text-muted-foreground">
+                                  {a.agentName} — {a.completionPercentage ?? 0}%
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {assignedAgents.length === 0 && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+                            <Users size={11} />
+                            <span>No agents assigned yet. Assign agents from the Fleet view.</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1095,6 +1305,99 @@ export default function MissionControl() {
             <div className="flex gap-3 pt-2">
               <Button onClick={() => { if (effectiveCompanyId) createGateMut.mutate({ companyId: effectiveCompanyId, gateType: newGate.gateType as any, description: newGate.description, threshold: newGate.threshold ? Number(newGate.threshold) : undefined }); }} disabled={!newGate.description || !effectiveCompanyId || createGateMut.isPending} className="flex-1 btn-primary">{createGateMut.isPending ? "Creating..." : "Create Gate"}</Button>
               <Button variant="outline" onClick={() => setShowAddGate(false)}>Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Template Deploy Modal */}
+      <Dialog open={!!showTemplateDeployModal} onOpenChange={() => setShowTemplateDeployModal(null)}>
+        <DialogContent className="bg-card border-border text-foreground max-w-md">
+          <DialogHeader><DialogTitle className="text-heading text-xl">Deploy from Template</DialogTitle></DialogHeader>
+          {showTemplateDeployModal && (() => {
+            const tmpl = agentTemplates.find((t: any) => t.id === showTemplateDeployModal) as any;
+            if (!tmpl) return null;
+            return (
+              <div className="space-y-4 mt-2">
+                <div className="card-minimal bg-white/[0.02]">
+                  <p className="text-xs font-semibold text-foreground mb-1">{tmpl.name}</p>
+                  <p className="text-muted-foreground text-xs">{tmpl.description}</p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {tmpl.tools.map((t: string) => <span key={t} className="text-[9px] px-1.5 py-0.5 rounded border border-border text-muted-foreground">{t}</span>)}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-label block mb-1.5">Agent Name</label>
+                  <Input value={templateAgentName} onChange={e => setTemplateAgentName(e.target.value)} placeholder={tmpl.roleTitle} className="bg-input border-border text-foreground" />
+                </div>
+                <div>
+                  <label className="text-label block mb-1.5">Provider</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["internal", "openai", "anthropic", "gemini", "custom_api", "crewai"] as const).map(ct => {
+                      const badge = PROVIDER_BADGE[ct];
+                      return (
+                        <button key={ct} type="button" onClick={() => setTemplateConnector(ct)}
+                          className={`rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all flex items-center gap-1.5 ${
+                            templateConnector === ct ? "border-white/20 bg-white/[0.08] text-foreground" : "border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                          }`}>
+                          {badge?.logo ? <img src={badge.logo} alt="" className="w-3.5 h-3.5 rounded-sm object-cover" /> : null}
+                          {badge?.label ?? ct}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    onClick={() => deployFromTemplateMut.mutate({ templateId: showTemplateDeployModal, name: templateAgentName || undefined, companyId: effectiveCompanyId ?? undefined, connectorType: templateConnector })}
+                    disabled={deployFromTemplateMut.isPending}
+                    className="flex-1 btn-primary"
+                  >{deployFromTemplateMut.isPending ? "Deploying..." : `Deploy ${tmpl.name}`}</Button>
+                  <Button variant="outline" onClick={() => setShowTemplateDeployModal(null)}>Cancel</Button>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Workplace Goal */}
+      <Dialog open={showAddGoal} onOpenChange={setShowAddGoal}>
+        <DialogContent className="bg-card border-border text-foreground max-w-md">
+          <DialogHeader><DialogTitle className="text-heading text-xl">Create Workplace Goal</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div><label className="text-label block mb-1.5">Goal Title</label><Input value={newGoal.title} onChange={e => setNewGoal(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Grow MRR to $50K by Q3" className="bg-input border-border text-foreground" /></div>
+            <div><label className="text-label block mb-1.5">Description</label><Textarea value={newGoal.description} onChange={e => setNewGoal(p => ({ ...p, description: e.target.value }))} placeholder="What does success look like? What agents will work on this?" className="bg-input border-border text-foreground resize-none" rows={3} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-label block mb-1.5">Priority</label>
+                <Select value={newGoal.priority} onValueChange={v => setNewGoal(p => ({ ...p, priority: v }))}>
+                  <SelectTrigger className="bg-input border-border text-foreground h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><label className="text-label block mb-1.5">Target Date</label><Input type="date" value={newGoal.targetDate} onChange={e => setNewGoal(p => ({ ...p, targetDate: e.target.value }))} className="bg-input border-border text-foreground" /></div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                onClick={() => {
+                  if (!effectiveCompanyId) return;
+                  createGoalMut.mutate({
+                    companyId: effectiveCompanyId,
+                    title: newGoal.title,
+                    description: newGoal.description || undefined,
+                    priority: newGoal.priority as any,
+                    targetDate: newGoal.targetDate ? new Date(newGoal.targetDate).getTime() : undefined,
+                  });
+                }}
+                disabled={!newGoal.title || !effectiveCompanyId || createGoalMut.isPending}
+                className="flex-1 btn-primary"
+              >{createGoalMut.isPending ? "Creating..." : "Create Goal"}</Button>
+              <Button variant="outline" onClick={() => setShowAddGoal(false)}>Cancel</Button>
             </div>
           </div>
         </DialogContent>

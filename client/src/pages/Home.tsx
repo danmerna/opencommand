@@ -814,13 +814,13 @@ export default function Home() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           {/* Left: Copy */}
           <div>
-            <p className="hero-label text-label mb-6">Personal Intelligence Engine</p>
+            <p className="hero-label text-label mb-6">Agent Operating System</p>
             <h1 className="hero-h1 text-display text-5xl lg:text-[4.5rem] text-foreground leading-none mb-8">
-              Deploy your<br />
-              <span className="text-muted-foreground">zero-human workforce.</span>
+              The OS for<br />
+              <span className="text-muted-foreground">deploying AI agents.</span>
             </h1>
             <p className="hero-sub text-muted-foreground text-lg text-body max-w-xl mb-12">
-              Open Command connects to your tools, builds its own context, and executes work autonomously — delivering a verified receipt for every outcome. The intent engine that context-engineers itself.
+              OpenCommand is the operating system companies use to deploy, orchestrate, and govern AI agents at scale — connecting to your tools, setting goals, and delivering verified outcomes across every function.
             </p>
             <div className="hero-cta w-full max-w-xl">
               <HeroEmailInput />
@@ -926,10 +926,16 @@ export default function Home() {
       <section className="px-8 py-24 max-w-7xl mx-auto">
         <div className="mb-16">
           <p className="text-label mb-3">Core Systems</p>
-          <h2 className="text-heading text-3xl text-foreground">Everything you need to command outcomes.</h2>
+          <h2 className="text-heading text-3xl text-foreground">Everything you need to run an agent-powered company.</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {[
+            {
+              icon: Bot,
+              title: "Agent Fleet",
+              desc: "Deploy, configure, and monitor any AI agent — from OpenAI to Anthropic to your own custom APIs. One dashboard for your entire workforce.",
+              href: "/mission-control",
+            },
             {
               icon: Cpu,
               title: "Intent Engine",
@@ -937,27 +943,21 @@ export default function Home() {
               href: "/intent-engine",
             },
             {
-              icon: Bot,
-              title: "Agent Orchestration",
-              desc: "Deploy agents, track OKRs, and manage execution. Compounds intelligence over time as agents learn your business.",
+              icon: Target,
+              title: "Workplace Goals",
+              desc: "Set multi-agent OKRs across your entire operation. Agents coordinate autonomously to hit targets — you track progress in real time.",
               href: "/mission-control",
             },
             {
               icon: BarChart3,
-              title: "Mission Control",
-              desc: "Real-time OKR tracking, agent fleet monitoring, human-in-the-loop inbox, and PoO ledger.",
-              href: "/mission-control",
-            },
-            {
-              icon: Target,
               title: "Proof of Outcome",
-              desc: "Every task generates a verifiable receipt documenting labor saved and dollar value created.",
+              desc: "Every completed task generates a verified receipt documenting what was done, what it cost, and what value it created.",
               href: "/mission-control",
             },
             {
               icon: Shield,
               title: "Governance",
-              desc: "Approval gates, audit logs, kill switches, and compliance reporting for full operational control.",
+              desc: "Approval gates, audit logs, kill switches, and compliance reporting. Full operational control over every agent action.",
               href: "/governance",
             },
             {
@@ -987,33 +987,33 @@ export default function Home() {
       <section id="how-it-works" className="px-8 py-24 max-w-7xl mx-auto">
         <div className="mb-16 text-center">
           <p className="text-label mb-3">How It Works</p>
-          <h2 className="text-heading text-3xl text-foreground">Four steps to autonomous execution.</h2>
+          <h2 className="text-heading text-3xl text-foreground">Four steps to deploying your agent workforce.</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0">
           <HowItWorksStep
             step="01"
-            title="State your intent"
-            desc="Tell Open Command what you want to achieve. No prompt engineering required — just describe the outcome."
-            detail="The intent engine asks focused questions to structure your goal."
+            title="Connect your tools"
+            desc="Link your CRM, ad platforms, analytics, and data sources. OpenCommand pulls live context automatically — no manual data entry."
+            detail="HubSpot, Salesforce, Meta Ads, Google Ads, GA4, and more."
             delay={0}
           />
           <HowItWorksStep
             step="02"
-            title="We pull your context"
-            desc="The intent engine connects to your tools and builds its own context. No copy-pasting. No manual data entry. Real data, real time."
-            detail="Pipeline, ad spend, analytics — pulled and analyzed automatically."
+            title="Deploy your agents"
+            desc="Choose from pre-built agent templates or configure your own. One click deploys a fully-wired agent with context, tools, and goals."
+            detail="Sales, marketing, engineering, finance, and custom agents."
             delay={150}
           />
           <HowItWorksStep
             step="03"
-            title="Your workforce executes"
-            desc="Your deployed agents coordinate autonomously — assigning tasks, managing budgets, and executing across your entire operation."
-            detail="Specialized agents working in parallel, governed by your rules."
+            title="Set workplace goals"
+            desc="Define OKRs across your agent fleet. Agents coordinate autonomously to hit targets — assigning tasks, managing budgets, and escalating when needed."
+            detail="Multi-agent goal coordination with human-in-the-loop controls."
             delay={300}
           />
           <HowItWorksStep
             step="04"
-            title="Proof of Outcome"
+            title="Receive verified outcomes"
             desc="Every completed task generates a verified receipt documenting what was done, what it cost, and what value it created."
             detail="Immutable audit trail. Full accountability. Zero ambiguity."
             delay={450}
@@ -1173,10 +1173,10 @@ export default function Home() {
       {/* ─── Section 9: Bottom CTA ─────────────────────────────────── */}
       <div className="accent-line" />
       <section id="bottom-cta" className="px-8 py-24 text-center max-w-3xl mx-auto">
-        <p className="text-label mb-4">Personal Intelligence Engine</p>
-        <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-5">Deploy your zero-human workforce.</h2>
+        <p className="text-label mb-4">Agent Operating System</p>
+        <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-5">Your company runs on agents. OpenCommand runs your agents.</h2>
         <p className="text-muted-foreground text-body mb-10 max-w-lg mx-auto">
-          Connect your tools. State your intent. Your agents handle execution. You get a receipt proving what was accomplished.
+          Connect your tools. Deploy your fleet. Set goals. Every outcome is verified, every action is audited, every dollar is accounted for.
         </p>
         <div className="flex flex-col items-center gap-4 max-w-md mx-auto w-full">
           <HeroEmailInput />
@@ -1194,7 +1194,7 @@ export default function Home() {
           <div className="col-span-2 md:col-span-1">
             <span className="text-base text-foreground font-semibold tracking-tight">OpenCommand</span>
             <p className="text-xs text-muted-foreground mt-2">Agent Operating System</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">From idea to verified outcome.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Deploy, orchestrate, and govern AI agents at scale.</p>
           </div>
 
           {/* Product */}

@@ -361,6 +361,41 @@ const agentsRouter = router({
       
       return { success: true, message: `Agent "${name}" imported` };
     }),
+
+  // ── Agent Templates: pre-built configs for one-click deploy ──────────────
+  listTemplates: publicProcedure.query(() => {
+    return [
+      { id: "sales-sdr", name: "Sales SDR", category: "sales", description: "Qualifies inbound leads, sends personalized outreach, and books meetings. Integrates with HubSpot and email.", type: "sales", roleTitle: "Sales Development Representative", capabilities: ["lead qualification", "email outreach", "meeting scheduling", "CRM updates"], tools: ["HubSpot", "Email", "Calendar"], estimatedROI: "$8K–$15K/mo in pipeline", icon: "TrendingUp", color: "emerald" },
+      { id: "marketing-growth", name: "Growth Marketer", category: "marketing", description: "Manages ad campaigns across Meta, Google, and TikTok. Optimizes spend, generates reports, and flags anomalies.", type: "marketing", roleTitle: "Growth Marketing Agent", capabilities: ["campaign management", "budget optimization", "performance reporting", "A/B testing"], tools: ["Meta Ads", "Google Ads", "TikTok Ads", "GA4"], estimatedROI: "20–35% improvement in ROAS", icon: "BarChart3", color: "blue" },
+      { id: "research-analyst", name: "Research Analyst", category: "research", description: "Monitors competitors, synthesizes market intelligence, and delivers weekly briefings with actionable insights.", type: "research", roleTitle: "Market Research Agent", capabilities: ["competitive analysis", "market research", "trend detection", "briefing generation"], tools: ["Web search", "News feeds", "Industry databases"], estimatedROI: "40+ hours/mo saved", icon: "Search", color: "violet" },
+      { id: "finance-controller", name: "Finance Controller", category: "finance", description: "Tracks P&L, flags budget overruns, reconciles expenses, and generates financial summaries for leadership.", type: "cfo", roleTitle: "Financial Controller Agent", capabilities: ["P&L tracking", "budget monitoring", "expense reconciliation", "financial reporting"], tools: ["QuickBooks", "Stripe", "Bank feeds"], estimatedROI: "$3K–$8K/mo in oversight savings", icon: "DollarSign", color: "amber" },
+      { id: "customer-success", name: "Customer Success", category: "sales", description: "Monitors customer health scores, triggers proactive outreach for at-risk accounts, and escalates churn signals.", type: "specialist", roleTitle: "Customer Success Agent", capabilities: ["health scoring", "churn detection", "proactive outreach", "escalation management"], tools: ["HubSpot", "Intercom", "Salesforce"], estimatedROI: "15–25% reduction in churn", icon: "Heart", color: "pink" },
+      { id: "engineering-ops", name: "Engineering Ops", category: "engineering", description: "Monitors CI/CD pipelines, triages bug reports, tracks sprint velocity, and flags deployment anomalies.", type: "cto", roleTitle: "Engineering Operations Agent", capabilities: ["pipeline monitoring", "bug triage", "sprint tracking", "incident detection"], tools: ["GitHub", "Jira", "PagerDuty"], estimatedROI: "30% faster incident resolution", icon: "Code", color: "cyan" },
+    ];
+  }),
+
+  deployFromTemplate: protectedProcedure
+    .input(z.object({
+      templateId: z.string(),
+      name: z.string().optional(),
+      companyId: z.number().optional(),
+      connectorType: z.enum(["internal", "openai", "anthropic", "gemini", "custom_api", "crewai"]).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const templates: Record<string, any> = {
+        "sales-sdr": { type: "sales", roleTitle: "Sales Development Representative", description: "Qualifies inbound leads, sends personalized outreach, and books meetings.", capabilities: ["lead qualification", "email outreach", "meeting scheduling", "CRM updates"], tools: ["HubSpot", "Email", "Calendar"] },
+        "marketing-growth": { type: "marketing", roleTitle: "Growth Marketing Agent", description: "Manages ad campaigns across Meta, Google, and TikTok. Optimizes spend and flags anomalies.", capabilities: ["campaign management", "budget optimization", "performance reporting"], tools: ["Meta Ads", "Google Ads", "TikTok Ads", "GA4"] },
+        "research-analyst": { type: "research", roleTitle: "Market Research Agent", description: "Monitors competitors, synthesizes market intelligence, and delivers weekly briefings.", capabilities: ["competitive analysis", "market research", "trend detection"], tools: ["Web search", "News feeds"] },
+        "finance-controller": { type: "cfo", roleTitle: "Financial Controller Agent", description: "Tracks P&L, flags budget overruns, and generates financial summaries.", capabilities: ["P&L tracking", "budget monitoring", "expense reconciliation"], tools: ["QuickBooks", "Stripe"] },
+        "customer-success": { type: "specialist", roleTitle: "Customer Success Agent", description: "Monitors customer health scores and triggers proactive outreach for at-risk accounts.", capabilities: ["health scoring", "churn detection", "proactive outreach"], tools: ["HubSpot", "Intercom", "Salesforce"] },
+        "engineering-ops": { type: "cto", roleTitle: "Engineering Operations Agent", description: "Monitors CI/CD pipelines, triages bug reports, and tracks sprint velocity.", capabilities: ["pipeline monitoring", "bug triage", "sprint tracking"], tools: ["GitHub", "Jira"] },
+      };
+      const tmpl = templates[input.templateId];
+      if (!tmpl) throw new Error("Template not found");
+      const agentName = input.name || tmpl.roleTitle;
+      await createAgent({ userId: ctx.user.id, name: agentName, type: tmpl.type, roleTitle: tmpl.roleTitle, description: tmpl.description, capabilities: tmpl.capabilities, tools: tmpl.tools, companyId: input.companyId, connectorType: input.connectorType ?? "internal", status: "idle" } as any);
+      return { success: true, message: `${agentName} deployed from template` };
+    }),
 });
 
 // ─── OKRs Router ─────────────────────────────────────────────────────────────
