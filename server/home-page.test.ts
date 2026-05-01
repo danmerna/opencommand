@@ -50,16 +50,16 @@ describe("Home Page Redesign - Structure Validation", () => {
   // ─── Section 2: Hero ───────────────────────────────────────────────
   describe("Hero Section", () => {
     it("has the main headline", () => {
-      expect(homeSource).toContain("deploying AI agents");
+      expect(homeSource).toContain("non-human labor");
     });
 
     it("has updated subheadline about agent OS", () => {
-      expect(homeSource).toContain("operating system");
+      expect(homeSource).toContain("non-human labor");
       expect(homeSource).toContain("deploy");
     });
 
     it("has Agent Operating System label", () => {
-      expect(homeSource).toContain("Agent Operating System");
+      expect(homeSource).toContain("Automate the mundane");
     });
 
     it("always shows HeroEmailInput regardless of auth state", () => {
@@ -418,7 +418,7 @@ describe("Home Page Redesign - Structure Validation", () => {
   describe("Footer - 4 Column Layout", () => {
     it("has the brand column", () => {
       expect(homeSource).toContain("OpenCommand");
-      expect(homeSource).toContain("Agent Operating System");
+      expect(homeSource).toContain("Automate the mundane");
     });
 
     it("has the Product column header", () => {

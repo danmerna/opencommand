@@ -814,13 +814,13 @@ export default function Home() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           {/* Left: Copy */}
           <div>
-            <p className="hero-label text-label mb-6">Agent Operating System</p>
+            <p className="hero-label text-label mb-6 tracking-widest uppercase text-xs">Automate the mundane. Elevate the human.</p>
             <h1 className="hero-h1 text-display text-5xl lg:text-[4.5rem] text-foreground leading-none mb-8">
               The OS for<br />
-              <span className="text-muted-foreground">deploying AI agents.</span>
+              <span className="text-muted-foreground">non-human labor.</span>
             </h1>
             <p className="hero-sub text-muted-foreground text-lg text-body max-w-xl mb-12">
-              OpenCommand is the operating system companies use to deploy, orchestrate, and govern AI agents at scale — connecting to your tools, setting goals, and delivering verified outcomes across every function.
+              Deploy agents across every function. Set goals. Measure outcomes. OpenCommand manages the rest.
             </p>
             <div className="hero-cta w-full max-w-xl">
               <HeroEmailInput />
@@ -1173,7 +1173,7 @@ export default function Home() {
       {/* ─── Section 9: Bottom CTA ─────────────────────────────────── */}
       <div className="accent-line" />
       <section id="bottom-cta" className="px-8 py-24 text-center max-w-3xl mx-auto">
-        <p className="text-label mb-4">Agent Operating System</p>
+        <p className="text-label mb-4 tracking-widest uppercase text-xs">Automate the mundane. Elevate the human.</p>
         <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-5">Your company runs on agents. OpenCommand runs your agents.</h2>
         <p className="text-muted-foreground text-body mb-10 max-w-lg mx-auto">
           Connect your tools. Deploy your fleet. Set goals. Every outcome is verified, every action is audited, every dollar is accounted for.
@@ -1193,8 +1193,8 @@ export default function Home() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <span className="text-base text-foreground font-semibold tracking-tight">OpenCommand</span>
-            <p className="text-xs text-muted-foreground mt-2">Agent Operating System</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Deploy, orchestrate, and govern AI agents at scale.</p>
+            <p className="text-xs text-muted-foreground mt-2">The OS for non-human labor.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Automate the mundane. Elevate the human.</p>
           </div>
 
           {/* Product */}

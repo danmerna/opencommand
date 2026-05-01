@@ -586,3 +586,10 @@
 - [x] Add multi-agent workplace goal setting
 - [x] Initialize Executive Intelligence as standalone webdev project (/home/ubuntu/exec-intelligence)
 - [x] Wire executive intelligence integrations (HubSpot, Salesforce, Meta, Google, TikTok, GA4)
+
+## Hero Copy Update — Non-Human Labor + Tagline
+- [x] Change hero label from "AGENT OPERATING SYSTEM" to "AUTOMATE THE MUNDANE. ELEVATE THE HUMAN."
+- [x] Change hero headline to "The OS for non-human labor."
+- [x] Update hero subheadline to "Deploy agents across every function. Set goals. Measure outcomes. OpenCommand manages the rest."
+- [x] Add tagline to footer brand column
+- [x] Update tests to reflect new copy
