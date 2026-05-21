@@ -1032,7 +1032,7 @@ export default function Home() {
             <p className="text-label">Company Blueprints</p>
             <span className="text-[10px] font-medium tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-accent/40 text-accent">Coming Soon</span>
           </div>
-          <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-5">Not agents. Entire companies.</h2>
+          <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-5">Not agents. Entire operations.</h2>
           <p className="text-muted-foreground text-body max-w-2xl text-base">
             Every AI marketplace sells the same thing: single-task agents that do one job in isolation. Open Command sells something fundamentally different — <span className="text-foreground">complete company operating systems</span> you deploy in one click.
           </p>

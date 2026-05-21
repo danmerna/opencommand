@@ -301,8 +301,8 @@ describe("Home Page Redesign - Structure Validation", () => {
       expect(homeSource).toContain("Coming Soon");
     });
 
-    it("has the headline: Not agents. Entire companies.", () => {
-      expect(homeSource).toContain("Not agents. Entire companies.");
+    it("has the headline: Not agents. Entire operations.", () => {
+      expect(homeSource).toContain("Not agents. Entire operations.");
     });
 
     it("contrasts single-task agents vs full company operating systems", () => {
