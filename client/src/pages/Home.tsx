@@ -787,6 +787,9 @@ export default function Home() {
             <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
               Creators
             </Link>
+            <Link href="/onboarding/pro" className="text-[13px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              Start Executive Onboarding
+            </Link>
 
             <div className="pt-2 border-t border-border">
               {isAuthenticated ? (
@@ -814,7 +817,7 @@ export default function Home() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           {/* Left: Copy */}
           <div>
-            <p className="hero-label text-label mb-6 tracking-widest uppercase text-xs">Automate the mundane. Elevate the human.</p>
+            <p className="hero-label text-label mb-6 tracking-widest uppercase text-xs">Automate mundane. Elevate human.</p>
             <h1 className="hero-h1 text-display text-5xl lg:text-[4.5rem] text-foreground leading-none mb-8">
               The OS for<br />
               <span className="text-muted-foreground">non-human labor.</span>
@@ -1173,7 +1176,7 @@ export default function Home() {
       {/* ─── Section 9: Bottom CTA ─────────────────────────────────── */}
       <div className="accent-line" />
       <section id="bottom-cta" className="px-8 py-24 text-center max-w-3xl mx-auto">
-        <p className="text-label mb-4 tracking-widest uppercase text-xs">Automate the mundane. Elevate the human.</p>
+        <p className="text-label mb-4 tracking-widest uppercase text-xs">Automate mundane. Elevate human.</p>
         <h2 className="text-heading text-3xl md:text-4xl text-foreground mb-5">Your company runs on agents. OpenCommand runs your agents.</h2>
         <p className="text-muted-foreground text-body mb-10 max-w-lg mx-auto">
           Connect your tools. Deploy your fleet. Set goals. Every outcome is verified, every action is audited, every dollar is accounted for.
@@ -1194,7 +1197,7 @@ export default function Home() {
           <div className="col-span-2 md:col-span-1">
             <span className="text-base text-foreground font-semibold tracking-tight">OpenCommand</span>
             <p className="text-xs text-muted-foreground mt-2">The OS for non-human labor.</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Automate the mundane. Elevate the human.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Automate mundane. Elevate human.</p>
           </div>
 
           {/* Product */}
