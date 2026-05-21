@@ -625,3 +625,14 @@
 
 ## Company Size Dropdown
 - [x] Add Company Size dropdown to company setup form (1-10, 11-50, 51-200, 201-1000, 1000+)
+
+## Post-Onboarding Personalized Recommendations (Demo Output)
+- [x] Add generateRecommendations tRPC endpoint (LLM-powered, uses interview context + 54321 framework)
+- [x] Add recommendations JSON column to onboardings table
+- [x] Build tabbed results page after interview: Strategy tab, Your Team tab, /goals tab
+- [x] Strategy tab shows Σ synthesis / strategy reveal
+- [x] Your Team tab shows personalized subagent recommendations with 54321 horizon tags
+- [x] /goals tab shows formatted /goals prompts with horizon, outcome, context, success criteria
+- [x] Wire flow: after all interviews complete → generate recommendations → show tabbed results
+- [x] Add 54321 visual legend at top of results page
+- [x] Store recommendations in DB for return visits

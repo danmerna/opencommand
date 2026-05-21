@@ -651,6 +651,7 @@ export const agentOnboardings = mysqlTable("agent_onboardings", {
   context: json("context").$type<Record<string, unknown>>(),
   conversationHistory: json("conversationHistory").$type<{ role: string; content: string }[]>(),
   summary: text("summary"),
+  recommendations: json("recommendations").$type<Record<string, unknown>>(),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

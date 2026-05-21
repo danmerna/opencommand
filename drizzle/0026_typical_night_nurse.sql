@@ -1,0 +1,1 @@
+ALTER TABLE `agent_onboardings` ADD `recommendations` json;

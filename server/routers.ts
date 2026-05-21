@@ -2228,6 +2228,161 @@ Please produce the formal strategy proposal.` },
 
       return { success: true, okrsCreated };
     }),
+
+  // Generate personalized recommendations after all interviews complete
+  generateRecommendations: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const onboardings = await getOnboardingsByCompanyId(input.companyId);
+      const completed = onboardings.filter(o => o.status === "completed");
+      if (completed.length === 0) throw new Error("No completed onboardings found");
+
+      // Check if recommendations already exist on any onboarding for this company
+      const existingRecs = completed.find(o => (o as any).recommendations);
+      if (existingRecs) return (existingRecs as any).recommendations as { subagents: any[]; goals: any[] };
+
+      const company = await getCompanyById(input.companyId);
+
+      // Gather all executive context
+      const executiveContext = completed.map(o => ({
+        type: o.agentType,
+        summary: o.summary ?? "",
+        context: o.context ?? {},
+        history: ((o.conversationHistory ?? []) as { role: string; content: string }[]).slice(-10),
+      }));
+
+      const transcriptSummary = executiveContext.map(e => {
+        const historyText = e.history.map(h => `${h.role === "user" ? "Operator" : "Executive"}: ${h.content}`).join("\n");
+        return `### ${e.type.toUpperCase()} Interview\nSummary: ${e.summary}\nContext: ${JSON.stringify(e.context)}\n\nRecent Transcript:\n${historyText}`;
+      }).join("\n\n---\n\n");
+
+      const RECOMMENDATION_SYSTEM_PROMPT = `You are an expert AI systems architect for the OpenCommand platform. You have just reviewed the complete onboarding interviews for a specific business. Based on their unique business context, challenges, tools, and priorities, generate personalized recommendations.
+
+OpenCommand uses the 54321 Time Framework:
+- 5 = 5-year vision and trajectory
+- 4 = 4-month strategic initiatives
+- 3 = 3-week sprint-level projects
+- 2 = 2-day tactical actions
+- 1 = 1-hour immediate execution
+
+The user already has these core executive agents:
+- ARCH (AI CEO) — orchestration, OKR tracking, strategic decisions
+- NOVA (CMO) — marketing, content, campaigns, lead gen
+- SAGE (CTO) — research, competitive intel, technical architecture
+- LEDGER (COO) — operations, scheduling, reporting, workflow automation
+- APEX (VP Sales) — outreach, pipeline, deal closing [OPTIONAL — only if relevant]
+
+Your job is to recommend ADDITIONAL specialized subagents that extend this team based on what the user specifically needs. Do NOT re-recommend the core agents. Recommend agents that fill gaps the core team doesn't cover for THIS specific business.
+
+You MUST tailor every recommendation to the specific details mentioned in the interviews. Do NOT produce generic recommendations. Reference the user's actual business name, tools, challenges, and goals.
+
+Respond with a JSON object in this exact format:
+{
+  "subagents": [
+    {
+      "name": "<Descriptive agent name relevant to their business>",
+      "mission": "<1-2 sentences explaining what this agent does for THEIR specific business>",
+      "tools": "<Comma-separated list of actual tools/systems they mentioned or that logically connect>",
+      "guardrails": "<Specific safety constraint relevant to their industry/situation>",
+      "autonomy": "Low|Medium|Medium-high|High",
+      "horizons": "<Which 54321 horizons this agent primarily operates on, e.g. '3-week, 2-day'>",
+      "rationale": "<Why this agent was recommended based on what they said>"
+    }
+  ],
+  "goals": [
+    {
+      "command": "/goals <short imperative phrase specific to their business>",
+      "horizon": "<Primary 54321 horizon, e.g. '3 — 3-week sprint'>",
+      "outcome": "<What success looks like for THEIR company>",
+      "context": ["Project: <their actual project>", "Systems: <their actual tools>", "Constraint: <their actual constraint>"],
+      "success": ["<Measurable criterion tied to their KPIs>", "<Another criterion>", "<Another>"],
+      "finalDeliverable": "<Concrete output they would actually use>"
+    }
+  ]
+}
+
+Rules:
+- Every agent name, mission, and tool list must reflect the SPECIFIC business described in the interviews
+- Goals must reference the user's actual priorities, metrics, and systems
+- Each goal must be tagged with its primary 54321 horizon
+- Each subagent must specify which 54321 horizons it operates on
+- Do NOT use generic examples — if the user runs a DTC skincare brand, the agents and goals should be about skincare inventory, influencer outreach, and subscription churn, not generic "Revenue Ops"
+- If the user mentioned specific tools (e.g., HubSpot, Shopify, Meta Ads), reference those tools
+- If the user mentioned specific challenges (e.g., "churn is high", "pipeline is stalled"), create agents/goals that address those exact problems
+- Generate 3-5 subagents and 2-4 goals
+- Include at least one goal at the 2-day or 1-hour horizon (immediate action) and at least one at the 4-month horizon (strategic)
+- Only include APEX (VP Sales) activation recommendation if the user's business has sales pipeline needs
+- Format goals with the /goals command prefix to indicate they are formatted prompts for the goal functionality`;
+
+      const userPrompt = `## Company\nName: ${company?.name ?? "Unknown"}\nMission: ${company?.mission ?? "N/A"}\nIndustry: ${company?.industry ?? "N/A"}\nSize: ${(company as any)?.companySize ?? "N/A"}\nWebsite: ${company?.website ?? "N/A"}\n\n## Executive Onboarding Interviews\n${transcriptSummary}\n\nBased on this specific business's situation, generate personalized subagent and goal recommendations using the 54321 Time Framework.`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: RECOMMENDATION_SYSTEM_PROMPT },
+          { role: "user" as const, content: userPrompt },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "recommendations",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                subagents: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      mission: { type: "string" },
+                      tools: { type: "string" },
+                      guardrails: { type: "string" },
+                      autonomy: { type: "string" },
+                      horizons: { type: "string" },
+                      rationale: { type: "string" },
+                    },
+                    required: ["name", "mission", "tools", "guardrails", "autonomy", "horizons", "rationale"],
+                    additionalProperties: false,
+                  },
+                },
+                goals: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      command: { type: "string" },
+                      horizon: { type: "string" },
+                      outcome: { type: "string" },
+                      context: { type: "array", items: { type: "string" } },
+                      success: { type: "array", items: { type: "string" } },
+                      finalDeliverable: { type: "string" },
+                    },
+                    required: ["command", "horizon", "outcome", "context", "success", "finalDeliverable"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["subagents", "goals"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      const content = (response.choices[0]?.message?.content ?? "{}") as string;
+      let recommendations: { subagents: any[]; goals: any[] };
+      try {
+        recommendations = JSON.parse(content);
+      } catch {
+        recommendations = { subagents: [], goals: [] };
+      }
+
+      // Store recommendations on the first completed onboarding for this company
+      await updateOnboarding(completed[0].id, { recommendations } as any);
+
+      return recommendations;
+    }),
 });
 
 // ─── Waitlist Router ────────────────────────────────────────────────────────

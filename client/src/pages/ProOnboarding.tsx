@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Streamdown } from "streamdown";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Copy, Target, Bot, Layers } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,7 +34,7 @@ type OnboardingStep =
   | "integrations-cfo" | "onboarding-cfo"
   | "sigma-calibration"
   | "generating-strategy"
-  | "strategy-reveal"
+  | "results"
   | "complete";
 
 // ─── Static Data ──────────────────────────────────────────────────────────────
@@ -313,10 +315,12 @@ export default function ProOnboarding() {
   const [agentContext, setAgentContext] = useState<{ contextSummary: string; insights: string[]; connectedProviders: string[]; hasLiveData: boolean } | null>(null);
   const [agentContextLoading, setAgentContextLoading] = useState(false);
 
-  // Sigma + strategy
+  // Sigma + strategy + recommendations
   const [strategy, setStrategy] = useState("");
   const [sigmaSynthesis, setSigmaSynthesis] = useState("");
   const [sigmaLoading, setSigmaLoading] = useState(false);
+  const [recommendations, setRecommendations] = useState<{ subagents: any[]; goals: any[] } | null>(null);
+  const [recsLoading, setRecsLoading] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
@@ -335,6 +339,7 @@ export default function ProOnboarding() {
   const startOnboardingMut = trpc.onboarding.start.useMutation();
   const respondMut = trpc.onboarding.respond.useMutation();
   const generateStrategyMut = trpc.onboarding.generateStrategy.useMutation();
+  const generateRecsMut = trpc.onboarding.generateRecommendations.useMutation();
   // sigmaCalibrate is handled via generateStrategy
   const liveContextualizeMut = trpc.context.liveContextualize.useMutation();
 
@@ -654,16 +659,29 @@ export default function ProOnboarding() {
     try {
       const data = await generateStrategyMut.mutateAsync({ companyId });
       setStrategy((data as { strategy: string }).strategy ?? "");
-      setStep("strategy-reveal");
+      // Also generate personalized recommendations
+      setRecsLoading(true);
+      try {
+        const recs = await generateRecsMut.mutateAsync({ companyId });
+        setRecommendations(recs as { subagents: any[]; goals: any[] });
+      } catch { /* non-fatal */ }
+      finally { setRecsLoading(false); }
+      setStep("results");
     } catch (err: any) {
       toast.error("Failed to generate strategy", { description: err.message });
-      setStep("strategy-reveal");
+      setStep("results");
     }
   }
 
   function handleLaunch() {
     setStep("complete");
     setTimeout(() => navigate("/mission-control"), 1200);
+  }
+
+  function handleCopyGoal(goal: any) {
+    const text = `${goal.command}\nHorizon: ${goal.horizon}\nOutcome: ${goal.outcome}\nContext:\n${goal.context.map((c: string) => `  - ${c}`).join("\n")}\nSuccess Criteria:\n${goal.success.map((s: string) => `  - ${s}`).join("\n")}\nFinal Deliverable: ${goal.finalDeliverable}`;
+    navigator.clipboard.writeText(text);
+    toast.success("Goal prompt copied to clipboard");
   }
 
   // ─── Derived ──────────────────────────────────────────────────────────────
@@ -1148,32 +1166,218 @@ export default function ProOnboarding() {
     );
   }
 
-  // ─── Strategy Reveal ──────────────────────────────────────────────────────
+  // ─── Tabbed Results (Strategy / Your Team / /goals) ────────────────────────
 
-  if (step === "strategy-reveal") {
+  if (step === "results") {
     const freqLabel = BRIEFING_OPTIONS.find(o => o.value === briefingFrequency)?.label ?? "Weekly";
+    const HORIZON_COLORS: Record<string, string> = {
+      "5": "bg-purple-500/15 text-purple-300 border-purple-400/30",
+      "4": "bg-blue-500/15 text-blue-300 border-blue-400/30",
+      "3": "bg-amber-500/15 text-amber-300 border-amber-400/30",
+      "2": "bg-orange-500/15 text-orange-300 border-orange-400/30",
+      "1": "bg-red-500/15 text-red-300 border-red-400/30",
+    };
+    const getHorizonColor = (horizon: string) => {
+      const num = horizon.charAt(0);
+      return HORIZON_COLORS[num] ?? "bg-muted text-muted-foreground border-border";
+    };
     return (
       <div className="min-h-screen bg-background flex flex-col">
+        {/* Header */}
         <div className="border-b border-border px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <Sparkles size={14} className="text-amber-400" />
-            <span className="text-sm text-foreground">Combined Strategy — {companyName}</span>
+            <span className="text-sm text-foreground font-medium">Your Personalized Results — {companyName}</span>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-muted-foreground border-border text-[10px] gap-1"><Calendar size={10} />{freqLabel} briefings</Badge>
-            <Badge variant="outline" className="text-emerald-400 border-emerald-400/30 text-[10px]">Generated by Personal Intelligence Engine</Badge>
+            <Badge variant="outline" className="text-emerald-400 border-emerald-400/30 text-[10px]">Powered by OpenCommand</Badge>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto px-6 py-8 max-w-3xl mx-auto w-full">
-          {strategy ? (
-            <div className="prose prose-invert prose-sm max-w-none"><Streamdown>{strategy}</Streamdown></div>
-          ) : (
-            <p className="text-muted-foreground text-sm">Strategy generation encountered an issue. You can generate it manually from Mission Control.</p>
-          )}
+
+        {/* 54321 Legend */}
+        <div className="border-b border-border px-6 py-3 shrink-0">
+          <div className="max-w-4xl mx-auto flex items-center gap-3 flex-wrap">
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">54321 Framework:</span>
+            {[
+              { n: "5", label: "5-Year Vision" },
+              { n: "4", label: "4-Month Initiative" },
+              { n: "3", label: "3-Week Sprint" },
+              { n: "2", label: "2-Day Action" },
+              { n: "1", label: "1-Hour Execution" },
+            ].map(h => (
+              <Badge key={h.n} variant="outline" className={`text-[9px] ${HORIZON_COLORS[h.n]}`}>{h.n} = {h.label}</Badge>
+            ))}
+          </div>
         </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="strategy" className="flex-1 flex flex-col overflow-hidden">
+          <div className="border-b border-border px-6 shrink-0">
+            <TabsList className="bg-transparent border-0 h-auto p-0 gap-6">
+              <TabsTrigger value="strategy" className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-amber-400 data-[state=active]:text-foreground text-muted-foreground px-0 pb-3 pt-3 text-sm gap-2">
+                <Sparkles size={13} />Strategy
+              </TabsTrigger>
+              <TabsTrigger value="team" className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-400 data-[state=active]:text-foreground text-muted-foreground px-0 pb-3 pt-3 text-sm gap-2">
+                <Bot size={13} />Your Team
+              </TabsTrigger>
+              <TabsTrigger value="goals" className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-400 data-[state=active]:text-foreground text-muted-foreground px-0 pb-3 pt-3 text-sm gap-2">
+                <Target size={13} />/goals
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* Strategy Tab */}
+          <TabsContent value="strategy" className="flex-1 overflow-y-auto px-6 py-8 m-0">
+            <div className="max-w-3xl mx-auto w-full">
+              {strategy ? (
+                <div className="prose prose-invert prose-sm max-w-none"><Streamdown>{strategy}</Streamdown></div>
+              ) : (
+                <p className="text-muted-foreground text-sm">Strategy generation encountered an issue. You can generate it manually from Mission Control.</p>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Your Team Tab */}
+          <TabsContent value="team" className="flex-1 overflow-y-auto px-6 py-8 m-0">
+            <div className="max-w-4xl mx-auto w-full">
+              {recsLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="text-center">
+                    <Loader2 size={24} className="animate-spin text-blue-400 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">Generating personalized team recommendations...</p>
+                  </div>
+                </div>
+              ) : recommendations?.subagents?.length ? (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-foreground mb-1">Recommended Subagents</h3>
+                    <p className="text-xs text-muted-foreground mb-6">These specialized agents extend your core executive team based on your specific business needs.</p>
+                  </div>
+                  <div className="grid gap-4">
+                    {recommendations.subagents.map((agent, i) => (
+                      <div key={i} className="border border-border rounded-xl p-5 bg-card/50 hover:bg-card/80 transition-colors">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <Bot size={14} className="text-blue-400" />
+                              <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{agent.mission}</p>
+                          </div>
+                          <Badge variant="outline" className={`text-[9px] shrink-0 ${getHorizonColor(agent.horizons)}`}>
+                            <Layers size={9} className="mr-1" />{agent.horizons}
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-border/50">
+                          <div>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Tools</span>
+                            <p className="text-xs text-foreground/80 mt-0.5">{agent.tools}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Autonomy</span>
+                            <p className="text-xs text-foreground/80 mt-0.5">{agent.autonomy}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Guardrails</span>
+                            <p className="text-xs text-foreground/80 mt-0.5">{agent.guardrails}</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-border/50">
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Why this agent</span>
+                          <p className="text-xs text-foreground/70 mt-0.5 italic">{agent.rationale}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <Bot size={24} className="text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">Team recommendations will appear here after generation.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* /goals Tab */}
+          <TabsContent value="goals" className="flex-1 overflow-y-auto px-6 py-8 m-0">
+            <div className="max-w-4xl mx-auto w-full">
+              {recsLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="text-center">
+                    <Loader2 size={24} className="animate-spin text-emerald-400 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">Generating personalized goal prompts...</p>
+                  </div>
+                </div>
+              ) : recommendations?.goals?.length ? (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-foreground mb-1">/goals — Formatted Prompts</h3>
+                    <p className="text-xs text-muted-foreground mb-6">These are ready-to-use goal prompts for the OpenCommand /goals system. Copy any goal to use it directly.</p>
+                  </div>
+                  <div className="grid gap-4">
+                    {recommendations.goals.map((goal, i) => (
+                      <div key={i} className="border border-border rounded-xl p-5 bg-card/50 relative group">
+                        <button
+                          onClick={() => handleCopyGoal(goal)}
+                          className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-muted"
+                          title="Copy goal prompt"
+                        >
+                          <Copy size={13} className="text-muted-foreground" />
+                        </button>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge variant="outline" className={`text-[9px] ${getHorizonColor(goal.horizon)}`}>{goal.horizon}</Badge>
+                          <code className="text-xs font-mono text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">{goal.command}</code>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Outcome</span>
+                            <p className="text-sm text-foreground/90 mt-0.5">{goal.outcome}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Context</span>
+                            <ul className="mt-1 space-y-0.5">
+                              {goal.context.map((c: string, j: number) => (
+                                <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                                  <span className="text-muted-foreground mt-0.5">•</span>{c}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Success Criteria</span>
+                            <ul className="mt-1 space-y-0.5">
+                              {goal.success.map((s: string, j: number) => (
+                                <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                                  <CheckCircle2 size={10} className="text-emerald-400 mt-0.5 shrink-0" />{s}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Final Deliverable</span>
+                            <p className="text-xs text-foreground/80 mt-0.5">{goal.finalDeliverable}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <Target size={24} className="text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">Goal prompts will appear here after generation.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Footer */}
         <div className="border-t border-border px-6 py-4 shrink-0">
-          <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Your strategy is saved to Mission Control. Next briefing: {freqLabel.toLowerCase()}.</p>
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Your results are saved. Next briefing: {freqLabel.toLowerCase()}.</p>
             <Button className="gap-2 h-10" onClick={handleLaunch}>Launch Mission Control <ArrowRight size={13} /></Button>
           </div>
         </div>
