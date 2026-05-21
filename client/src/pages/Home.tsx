@@ -787,6 +787,9 @@ export default function Home() {
             <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
               Creators
             </Link>
+            <Link href="/onboarding/pro" className="text-[13px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              Start Executive Onboarding
+            </Link>
 
             <div className="pt-2 border-t border-border">
               {isAuthenticated ? (
