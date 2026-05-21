@@ -674,3 +674,12 @@
 - [x] Bar contains "Begin Onboarding" button + one-line value prop
 - [x] Disappears when user clicks or scrolls back to top
 - [x] Smooth slide-in animation
+
+## Guest Session / Email Gate (No Account Required)
+- [x] Add guest_sessions table to DB (id, guestToken, name, email, companyId, onboardingId, createdAt)
+- [x] Create public guest tRPC procedures: guest.init, guest.setupCompany, guest.startInterview, guest.respond, guest.generateStrategy, guest.generateRecommendations, guest.generateSurvey, guest.submitSurvey
+- [x] Build email gate modal (Name + Email, 2 fields) that appears when Begin Onboarding is clicked
+- [x] Generate UUID guest token on email submit, store in localStorage
+- [x] Wire entire ProOnboarding flow to use guest procedures when not authenticated
+- [x] Pre-fill waitlist email at the end with the email entered at the gate
+- [x] Logged-in users bypass the gate and use existing protected procedures

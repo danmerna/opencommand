@@ -44,6 +44,7 @@ import {
   websiteAudits, InsertWebsiteAudit,
   quickStartResults, InsertQuickStartResult,
   onboardingSurveys, InsertOnboardingSurvey,
+  guestSessions, InsertGuestSession,
 } from "../drizzle/schema";
 import type { InsertChangelogEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -1563,4 +1564,23 @@ export async function adminGetUserOnboardings(userId: number) {
     .from(agentOnboardings)
     .where(eq(agentOnboardings.userId, userId))
     .orderBy(desc(agentOnboardings.createdAt));
+}
+
+// ─── Guest Sessions ───────────────────────────────────────────────────────────
+export async function createGuestSession(data: InsertGuestSession) {
+  const db = await getDb(); if (!db) throw new Error("Database not available");
+  await db.insert(guestSessions).values(data);
+  const [row] = await db.select().from(guestSessions).where(eq(guestSessions.guestToken, data.guestToken)).limit(1);
+  return row;
+}
+
+export async function getGuestSession(guestToken: string) {
+  const db = await getDb(); if (!db) return null;
+  const [row] = await db.select().from(guestSessions).where(eq(guestSessions.guestToken, guestToken)).limit(1);
+  return row ?? null;
+}
+
+export async function updateGuestSession(guestToken: string, data: Partial<InsertGuestSession>) {
+  const db = await getDb(); if (!db) return;
+  await db.update(guestSessions).set({ ...data, updatedAt: new Date() }).where(eq(guestSessions.guestToken, guestToken));
 }

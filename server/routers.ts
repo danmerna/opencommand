@@ -67,6 +67,7 @@ import {
   getContextManifest, upsertContextManifest, getContextManifestsByUserId,
   createOnboardingSurvey, getOnboardingSurveyByCompanyId,
   adminGetAllSurveys, adminGetSurveyByUserId, adminGetUserCompany, adminGetUserOnboardings,
+  createGuestSession, getGuestSession, updateGuestSession,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -2515,6 +2516,358 @@ Generate 5 personalized survey questions.`;
     }),
 });
 
+// ─── Guest Onboarding Router ───────────────────────────────────────────────
+// Public procedures for the email-gated demo onboarding flow (no auth required)
+const guestRouter = router({
+  // Initialize a guest session with name + email, return a guestToken
+  init: publicProcedure
+    .input(z.object({ name: z.string().min(1), email: z.string().email(), guestToken: z.string() }))
+    .mutation(async ({ input }) => {
+      // Check if session already exists (resume)
+      const existing = await getGuestSession(input.guestToken);
+      if (existing) return { guestToken: input.guestToken, resumed: true };
+      // Create a real user record so companies/agents can link to userId
+      const user = await findOrCreateUserByEmail(input.email);
+      await createGuestSession({
+        guestToken: input.guestToken,
+        name: input.name,
+        email: input.email,
+      });
+      return { guestToken: input.guestToken, userId: user.id, resumed: false };
+    }),
+
+  // Get the current guest session state
+  session: publicProcedure
+    .input(z.object({ guestToken: z.string() }))
+    .query(async ({ input }) => {
+      return getGuestSession(input.guestToken);
+    }),
+
+  // Create company + agents for a guest session
+  setupCompany: publicProcedure
+    .input(z.object({
+      guestToken: z.string(),
+      companyName: z.string().min(1),
+      mission: z.string().optional(),
+      industry: z.string().optional(),
+      website: z.string().optional(),
+      companySize: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const session = await getGuestSession(input.guestToken);
+      if (!session) throw new Error("Guest session not found");
+      if (session.companyId) return { companyId: session.companyId };
+
+      // Get or create the user for this guest
+      const user = await findOrCreateUserByEmail(session.email ?? `guest_${input.guestToken}@opencommand.demo`);
+
+      // Create company
+      const result = await createCompany({
+        userId: user.id,
+        name: input.companyName,
+        mission: input.mission ?? null,
+        industry: input.industry ?? null,
+        website: input.website ?? null,
+        companySize: input.companySize as any ?? null,
+        monthlyBudget: "0",
+        status: "active",
+      } as any);
+      const companies = await getCompaniesByUserId(user.id);
+      const company = companies[0];
+      if (!company) throw new Error("Failed to create company");
+
+      // Create the 4 core C-suite agents
+      const CSUITE_AGENTS = [
+        { type: "ceo", name: "ARCH", roleTitle: "Chief Executive Officer", description: "AI CEO — orchestration, OKR tracking, strategic decisions" },
+        { type: "cto", name: "SAGE", roleTitle: "Chief Technology Officer", description: "AI CTO — research, competitive intel, technical architecture" },
+        { type: "cmo", name: "NOVA", roleTitle: "Chief Marketing Officer", description: "AI CMO — marketing, content, campaigns, lead gen" },
+        { type: "cfo", name: "TED", roleTitle: "Chief Financial Officer", description: "AI CFO — operations, scheduling, reporting, workflow automation" },
+      ];
+      for (const agent of CSUITE_AGENTS) {
+        await createAgent({ userId: user.id, companyId: company.id, ...agent, status: "idle", connectorType: "internal" } as any);
+      }
+
+      await updateGuestSession(input.guestToken, { companyId: company.id });
+      return { companyId: company.id };
+    }),
+
+  // Start onboarding for a guest agent (by agentType, not agentId)
+  startInterview: publicProcedure
+    .input(z.object({ guestToken: z.string(), agentType: z.enum(["ceo", "cto", "cmo", "cfo"]) }))
+    .mutation(async ({ input }) => {
+      const session = await getGuestSession(input.guestToken);
+      if (!session?.companyId) throw new Error("Guest session has no company");
+      const agents = await getAgentsByCompanyId(session.companyId);
+      const agent = agents.find(a => a.type === input.agentType);
+      if (!agent) throw new Error(`Agent ${input.agentType} not found`);
+
+      const existing = await getOnboardingByAgentId(agent.id);
+      if (existing?.status === "completed") throw new Error("Agent already onboarded");
+      if (existing?.status === "in_progress") {
+        const history = (existing.conversationHistory as { role: string; content: string }[]) ?? [];
+        return { onboardingId: existing.id, agentId: agent.id, resumed: true, conversationHistory: history };
+      }
+
+      const systemPrompt = ONBOARDING_SYSTEM_PROMPTS[input.agentType] ?? ONBOARDING_SYSTEM_PROMPTS.vp;
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: systemPrompt },
+          { role: "user" as const, content: "I'm ready to begin. Let's start." },
+        ],
+      });
+      const firstQuestion = (response.choices[0]?.message?.content ?? "Tell me about your company.") as string;
+      const history = [{ role: "assistant", content: firstQuestion }];
+
+      const user = await findOrCreateUserByEmail(session.email ?? `guest_${input.guestToken}@opencommand.demo`);
+      await createOnboarding({
+        agentId: agent.id,
+        userId: user.id,
+        companyId: session.companyId,
+        agentType: input.agentType,
+        conversationHistory: history,
+        context: {},
+      });
+      const created = await getOnboardingByAgentId(agent.id);
+      return { onboardingId: created!.id, agentId: agent.id, firstQuestion, resumed: false };
+    }),
+
+  // Respond to a guest onboarding question
+  respond: publicProcedure
+    .input(z.object({ guestToken: z.string(), onboardingId: z.number(), answer: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const session = await getGuestSession(input.guestToken);
+      if (!session) throw new Error("Guest session not found");
+      const onboarding = await getOnboardingById(input.onboardingId);
+      if (!onboarding) throw new Error("Onboarding not found");
+      if (onboarding.status === "completed") throw new Error("Onboarding already completed");
+
+      const rawHistory: { role: string; content: string }[] = (onboarding.conversationHistory as any) ?? [];
+      const history = rawHistory.map(h => {
+        if (h.role === "assistant") {
+          try {
+            const parsed = JSON.parse(h.content);
+            if (parsed.type === "onboarding_complete" || parsed.type === "core_complete") {
+              return { ...h, content: parsed.summary ?? "I have what I need to build your strategic context." };
+            }
+          } catch (_) {}
+        }
+        return h;
+      });
+
+      const agentType = onboarding.agentType;
+      const baseSystemPrompt = ONBOARDING_SYSTEM_PROMPTS[agentType] ?? ONBOARDING_SYSTEM_PROMPTS.vp;
+      history.push({ role: "user", content: input.answer });
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: baseSystemPrompt },
+          ...history.map(h => ({ role: h.role as "user" | "assistant", content: h.content })),
+        ],
+      });
+      const reply = (response.choices[0]?.message?.content ?? "") as string;
+
+      // Completion detection
+      const completionPhrases = ["i have what i need", "that gives me a", "that gives me enough", "i'm ready to", "i am ready to", "ready to begin", "let's get to work", "this concludes", "that wraps up", "we've covered", "thank you for sharing", "thanks for sharing", "excellent — i now", "excellent, i now", "perfect — i now", "perfect, i now"];
+      const isComplete = completionPhrases.some(p => reply.toLowerCase().includes(p));
+
+      if (isComplete) {
+        history.push({ role: "assistant", content: reply });
+        await completeOnboarding(onboarding.id, reply, {});
+        await updateOnboarding(onboarding.id, { conversationHistory: history });
+        return { reply, isComplete: true };
+      } else {
+        history.push({ role: "assistant", content: reply });
+        await updateOnboarding(onboarding.id, { conversationHistory: history });
+        return { reply, isComplete: false };
+      }
+    }),
+
+  // Generate strategy for a guest session
+  generateStrategy: publicProcedure
+    .input(z.object({ guestToken: z.string() }))
+    .mutation(async ({ input }) => {
+      const session = await getGuestSession(input.guestToken);
+      if (!session?.companyId) throw new Error("Guest session has no company");
+      const company = await getCompanyById(session.companyId);
+      const onboardings = await getOnboardingsByCompanyId(session.companyId);
+      const completed = onboardings.filter(o => o.status === "completed");
+      const agents = await getAgentsByCompanyId(session.companyId);
+      const csuiteAgents = agents.filter(a => CSUITE_TYPES.includes(a.type as any));
+      const completedMap = new Map(completed.map(o => [o.agentId, o]));
+
+      const executiveContext = csuiteAgents.map(a => {
+        const ob = completedMap.get(a.id);
+        const wasSkipped = !ob || ob.status !== "completed";
+        return { role: a.roleTitle ?? a.type, name: a.name, summary: wasSkipped ? "[Interview skipped]" : (ob?.summary ?? "Not yet onboarded"), context: ob?.context ?? {}, skipped: wasSkipped };
+      });
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: `You are ARCH, the AI CEO of ${company?.name ?? "this company"} on the OpenCommand platform. Based on the collective intelligence gathered from C-suite onboarding interviews, produce a comprehensive formal strategy proposal.\n\nStructure your proposal as:\n# Strategic Plan: ${company?.name ?? "Company"}\n\n## Executive Summary\n(3-4 sentences capturing the core strategy)\n\n## Vision & Mission Alignment\n## Strategic Priorities (Next 90 Days)\n## Resource Allocation\n## Key Metrics & OKRs\n## Risk Assessment\n## Immediate Action Items\n\nBe specific, data-driven where possible, and reference insights from each executive's onboarding.` },
+          { role: "user" as const, content: `Company: ${company?.name ?? "Unknown"}\nMission: ${company?.mission ?? "N/A"}\nIndustry: ${company?.industry ?? "N/A"}\n\nExecutive Onboarding Context:\n${executiveContext.map(e => `### ${e.name} (${e.role})\n${e.summary}${e.skipped ? " [SKIPPED]" : ""}\nDetails: ${JSON.stringify(e.context)}`).join("\n")}\n\nPlease produce the formal strategy proposal.` },
+        ],
+      });
+
+      const strategyContent = (response.choices[0]?.message?.content ?? "") as string;
+      const user = await findOrCreateUserByEmail(session.email ?? `guest_${input.guestToken}@opencommand.demo`);
+      await createStrategyProposal({
+        userId: user.id,
+        companyId: session.companyId,
+        title: `Strategic Plan: ${company?.name ?? "Company"}`,
+        content: strategyContent,
+        executiveSummary: strategyContent.slice(0, 300),
+        status: "proposed",
+      });
+      return { strategy: strategyContent };
+    }),
+
+  // Generate personalized recommendations for a guest session
+  generateRecommendations: publicProcedure
+    .input(z.object({ guestToken: z.string() }))
+    .mutation(async ({ input }) => {
+      const session = await getGuestSession(input.guestToken);
+      if (!session?.companyId) throw new Error("Guest session has no company");
+      if (session.recommendations) return session.recommendations as { subagents: any[]; goals: any[] };
+
+      const company = await getCompanyById(session.companyId);
+      const onboardings = await getOnboardingsByCompanyId(session.companyId);
+      const completed = onboardings.filter(o => o.status === "completed");
+      if (completed.length === 0) throw new Error("No completed onboardings found");
+
+      const executiveContext = completed.map(o => ({
+        type: o.agentType,
+        summary: o.summary ?? "",
+        context: o.context ?? {},
+        history: ((o.conversationHistory ?? []) as { role: string; content: string }[]).slice(-10),
+      }));
+
+      const transcriptSummary = executiveContext.map(e => {
+        const historyText = e.history.map(h => `${h.role === "user" ? "Operator" : "Executive"}: ${h.content}`).join("\n");
+        return `### ${e.type.toUpperCase()} Interview\nSummary: ${e.summary}\nContext: ${JSON.stringify(e.context)}\n\nRecent Transcript:\n${historyText}`;
+      }).join("\n\n---\n\n");
+
+      const RECOMMENDATION_SYSTEM_PROMPT = `You are an expert AI systems architect for the OpenCommand platform. Based on the onboarding interviews, generate personalized subagent recommendations and /goals prompts.\n\nOpenCommand uses the 54321 Time Framework:\n- 5 = 5-year vision\n- 4 = 4-month strategic initiatives\n- 3 = 3-week sprint-level projects\n- 2 = 2-day tactical actions\n- 1 = 1-hour immediate execution\n\nRespond with a JSON object:\n{\n  "subagents": [{ "name": string, "mission": string, "tools": string, "guardrails": string, "autonomy": string, "horizons": string, "rationale": string }],\n  "goals": [{ "command": string, "horizon": string, "outcome": string, "context": string[], "success": string[], "finalDeliverable": string }]\n}\n\nGenerate 3-5 subagents and 4-6 goals. Make everything specific to this company's context.`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: RECOMMENDATION_SYSTEM_PROMPT },
+          { role: "user" as const, content: `Company: ${company?.name ?? "Unknown"} | Industry: ${company?.industry ?? "N/A"} | Size: ${(company as any)?.companySize ?? "N/A"}\n\nInterview Transcripts:\n${transcriptSummary}\n\nGenerate personalized recommendations.` },
+        ],
+      });
+
+      const content = (response.choices[0]?.message?.content ?? "{}") as string;
+      let recommendations: { subagents: any[]; goals: any[] } = { subagents: [], goals: [] };
+      try {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) recommendations = JSON.parse(jsonMatch[0]);
+      } catch {}
+
+      await updateGuestSession(input.guestToken, { recommendations });
+      return recommendations;
+    }),
+
+  // Generate dynamic survey questions for a guest
+  generateSurvey: publicProcedure
+    .input(z.object({ guestToken: z.string(), thumbs: z.enum(["up", "down"]) }))
+    .mutation(async ({ input }) => {
+      const session = await getGuestSession(input.guestToken);
+      if (!session?.companyId) throw new Error("Guest session has no company");
+      const company = await getCompanyById(session.companyId);
+      const onboardings = await getOnboardingsByCompanyId(session.companyId);
+      const completed = onboardings.filter(o => o.status === "completed");
+
+      const executiveSummaries = completed.map(o => `${o.agentType.toUpperCase()}: ${o.summary ?? "No summary"}`).join("\n");
+
+      const SURVEY_SYSTEM_PROMPT = `You are generating a personalized post-onboarding survey for a business owner who just completed the OpenCommand executive AI onboarding.\n\nThe user gave a thumbs ${input.thumbs === "up" ? "UP (found value)" : "DOWN (did not find value)"}.\n\n${input.thumbs === "up" ? `For thumbs UP: explore what resonated, which executive felt most relevant, what they'd want the AI to do next, their preferred update cadence, and what feature would make them pay immediately.` : `For thumbs DOWN: explore what felt inaccurate, which executive felt least useful, what they expected but didn't get, what would have made it more valuable, and whether they'd try again.`}\n\nMake questions specific to this company's context. Respond with a JSON array of exactly 5 questions with: id (q1-q5), text, type (text|select|rating), options (array, for select), placeholder (for text).`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: SURVEY_SYSTEM_PROMPT },
+          { role: "user" as const, content: `Company: ${company?.name ?? "Unknown"} | Industry: ${company?.industry ?? "N/A"} | Size: ${(company as any)?.companySize ?? "N/A"}\n\nExecutive Interview Summaries:\n${executiveSummaries}\n\nGenerate 5 personalized survey questions.` },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "survey_questions",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                questions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "string" },
+                      text: { type: "string" },
+                      type: { type: "string" },
+                      options: { type: "array", items: { type: "string" } },
+                      placeholder: { type: "string" },
+                    },
+                    required: ["id", "text", "type", "options", "placeholder"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["questions"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      const content = (response.choices[0]?.message?.content ?? "{}") as string;
+      let questions: { id: string; text: string; type: string; options: string[]; placeholder: string }[] = [];
+      try {
+        const parsed = JSON.parse(content);
+        questions = parsed.questions ?? [];
+      } catch {}
+      return { questions };
+    }),
+
+  // Submit survey + waitlist for a guest
+  submitSurvey: publicProcedure
+    .input(z.object({
+      guestToken: z.string(),
+      thumbs: z.enum(["up", "down"]),
+      questions: z.array(z.object({ id: z.string(), text: z.string(), type: z.string(), options: z.array(z.string()), placeholder: z.string() })),
+      responses: z.array(z.object({ questionId: z.string(), answer: z.string() })),
+      briefingFrequency: z.string().optional(),
+      email: z.string().email().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const session = await getGuestSession(input.guestToken);
+      if (!session) throw new Error("Guest session not found");
+      const user = await findOrCreateUserByEmail(session.email ?? input.email ?? `guest_${input.guestToken}@opencommand.demo`);
+
+      const survey = await createOnboardingSurvey({
+        userId: user.id,
+        companyId: session.companyId ?? undefined,
+        thumbs: input.thumbs,
+        questions: input.questions,
+        responses: input.responses,
+        briefingFrequency: input.briefingFrequency ?? null,
+        email: input.email ?? session.email ?? null,
+      });
+
+      if (session.companyId && input.briefingFrequency) {
+        await updateCompany(session.companyId, { briefingFrequency: input.briefingFrequency as any });
+      }
+
+      await updateGuestSession(input.guestToken, { surveyId: (survey as any)?.insertId ?? undefined });
+
+      try {
+        const company = await getCompanyById(session.companyId ?? 0);
+        await notifyOwner({
+          title: `Guest Onboarding Survey — Thumbs ${input.thumbs === "up" ? "👍 UP" : "👎 DOWN"}`,
+          content: `${company?.name ?? "Unknown company"} (${session.email ?? "guest"}) completed the guest onboarding survey.\n\nThumb: ${input.thumbs}\nBriefing frequency: ${input.briefingFrequency ?? "not set"}\n\nResponses:\n${input.responses.map(r => `• ${r.questionId}: ${r.answer}`).join("\n")}`,
+        });
+      } catch {}
+
+      return { success: true };
+    }),
+});
+
 // ─── Waitlist Router ────────────────────────────────────────────────────────
 const waitlistRouter = router({
   // Email-first signup: creates user record with email, returns user info
@@ -3093,6 +3446,7 @@ export const appRouter = router({
   compatibility: compatibilityRouter,
   projects: projectsRouter,
   onboarding: onboardingRouter,
+  guest: guestRouter,
   waitlist: waitlistRouter,
   briefings: briefingsRouter,
   analytics: analyticsRouter,

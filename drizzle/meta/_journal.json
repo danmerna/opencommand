@@ -197,6 +197,13 @@
       "when": 1779378447921,
       "tag": "0027_lumpy_steel_serpent",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1779393670867,
+      "tag": "0028_dusty_molten_man",
+      "breakpoints": true
     }
   ]
 }

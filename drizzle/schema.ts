@@ -1070,3 +1070,19 @@ export const onboardingSurveys = mysqlTable("onboarding_surveys", {
 });
 export type OnboardingSurvey = typeof onboardingSurveys.$inferSelect;
 export type InsertOnboardingSurvey = typeof onboardingSurveys.$inferInsert;
+
+// ─── Guest Sessions (No-Auth Onboarding) ─────────────────────────────────────
+export const guestSessions = mysqlTable("guest_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  guestToken: varchar("guestToken", { length: 64 }).notNull().unique(),
+  name: varchar("name", { length: 128 }),
+  email: varchar("email", { length: 320 }),
+  companyId: int("companyId"),
+  onboardingId: int("onboardingId"),
+  recommendations: json("recommendations"),
+  surveyId: int("surveyId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GuestSession = typeof guestSessions.$inferSelect;
+export type InsertGuestSession = typeof guestSessions.$inferInsert;

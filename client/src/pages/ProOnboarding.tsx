@@ -18,7 +18,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Streamdown } from "streamdown";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Copy, Target, Bot, Layers } from "lucide-react";
+import { Copy, Target, Bot, Layers, User } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,6 +42,7 @@ type OnboardingStep =
   | "complete";
 
 type SurveyQuestion = { id: string; text: string; type: string; options: string[]; placeholder: string };
+type GuestSession = { token: string; name: string; email: string; userId: number; companyId?: number };
 
 // ─── Static Data ──────────────────────────────────────────────────────────────
 
@@ -369,6 +372,19 @@ export default function ProOnboarding() {
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [shareUrl, setShareUrl] = useState<string | null>(null);
 
+  // Guest session state
+  const [showEmailGate, setShowEmailGate] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestEmailError, setGuestEmailError] = useState("");
+  const [guestSession, setGuestSession] = useState<GuestSession | null>(() => {
+    try {
+      const stored = localStorage.getItem("oc_guest_session");
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
+  });
+  const [guestSubmitting, setGuestSubmitting] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
 
@@ -382,6 +398,14 @@ export default function ProOnboarding() {
   const createCompanyMut = trpc.companies.create.useMutation();
   const updateCompanyMut = trpc.companies.update.useMutation();
   const enrichWebsiteMut = trpc.companies.enrichWebsite.useMutation();
+  const guestInitMut = trpc.guest.init.useMutation();
+  const guestStartMut = trpc.guest.startInterview.useMutation();
+  const guestRespondMut = trpc.guest.respond.useMutation();
+  const guestSetupCompanyMut = trpc.guest.setupCompany.useMutation();
+  const guestGenerateStrategyMut = trpc.guest.generateStrategy.useMutation();
+  const guestGenerateRecsMut = trpc.guest.generateRecommendations.useMutation();
+  const guestGenerateSurveyMut = trpc.guest.generateSurvey.useMutation();
+  const guestSubmitSurveyMut = trpc.guest.submitSurvey.useMutation();
   const createAgentMut = trpc.agents.create.useMutation();
   const startOnboardingMut = trpc.onboarding.start.useMutation();
   const respondMut = trpc.onboarding.respond.useMutation();
@@ -446,16 +470,48 @@ export default function ProOnboarding() {
     (connectionsQ.data ?? []).filter((c: any) => c.status === "connected").map((c: any) => c.providerSlug)
   );
 
-  // ─── CTA handler: check auth, redirect or proceed ─────────────────────────
+  // ─── CTA handler: show email gate for guests, or proceed if logged in ────────
 
   function handleBegin() {
     if (authLoading) return;
-    if (!user) {
-      // Redirect to OAuth, return to /onboarding/pro after login
-      window.location.href = getLoginUrl("/onboarding/pro");
+    if (user) {
+      // Logged-in user: proceed directly
+      setStep("company-setup");
       return;
     }
-    setStep("company-setup");
+    if (guestSession) {
+      // Returning guest: resume their session
+      setCompanyId(guestSession.companyId ?? null);
+      setStep("company-setup");
+      return;
+    }
+    // New guest: show email gate
+    setShowEmailGate(true);
+  }
+
+  async function handleGuestSubmit() {
+    if (!guestName.trim()) { setGuestEmailError("Please enter your name"); return; }
+    if (!guestEmail.trim() || !/^[^@]+@[^@]+\.[^@]+$/.test(guestEmail)) {
+      setGuestEmailError("Please enter a valid email address"); return;
+    }
+    setGuestEmailError("");
+    setGuestSubmitting(true);
+    try {
+      // Generate a client-side token, then register with the server
+      const token = crypto.randomUUID();
+      const result = await guestInitMut.mutateAsync({ name: guestName.trim(), email: guestEmail.trim(), guestToken: token });
+      const userId = (result as any).userId as number | undefined;
+      const session: GuestSession = { token, name: guestName.trim(), email: guestEmail.trim(), userId: userId ?? 0 };
+      localStorage.setItem("oc_guest_session", JSON.stringify(session));
+      setGuestSession(session);
+      setWaitlistEmail(guestEmail.trim());
+      setShowEmailGate(false);
+      setStep("company-setup");
+    } catch (err: any) {
+      setGuestEmailError(err.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setGuestSubmitting(false);
+    }
   }
 
   // ─── Company Setup ────────────────────────────────────────────────────────
@@ -483,20 +539,38 @@ export default function ProOnboarding() {
     const normalizedWebsite = normalizeUrl(companyWebsite);
     if (normalizedWebsite) setCompanyWebsite(normalizedWebsite);
     try {
-      await createCompanyMut.mutateAsync({ name: companyName.trim(), mission: companyMission.trim() || undefined, industry: companyIndustry.trim() || undefined, website: normalizedWebsite || undefined, companySize: (companySize || undefined) as any });
-      await utils.companies.list.invalidate();
-      const companies = await utils.companies.list.fetch();
-      const company = companies[0];
-      if (!company) throw new Error("Company not created");
-      setCompanyId(company.id);
-      // Auto-enrich from website in background
-      if (normalizedWebsite) {
+      let cId: number;
+      if (!user && guestSession) {
+        // Guest flow: use guest.createCompany
+        const result = await guestSetupCompanyMut.mutateAsync({
+          guestToken: guestSession.token,
+          companyName: companyName.trim(),
+          mission: companyMission.trim() || undefined,
+          industry: companyIndustry.trim() || undefined,
+          website: normalizedWebsite || undefined,
+        });
+        cId = result.companyId;
+        // Update stored guest session with companyId
+        const updated = { ...guestSession, companyId: cId };
+        localStorage.setItem("oc_guest_session", JSON.stringify(updated));
+        setGuestSession(updated);
+      } else {
+        // Authenticated flow
+        await createCompanyMut.mutateAsync({ name: companyName.trim(), mission: companyMission.trim() || undefined, industry: companyIndustry.trim() || undefined, website: normalizedWebsite || undefined, companySize: (companySize || undefined) as any });
+        await utils.companies.list.invalidate();
+        const companies = await utils.companies.list.fetch();
+        const company = companies[0];
+        if (!company) throw new Error("Company not created");
+        cId = company.id;
+      }
+      setCompanyId(cId);
+      // Auto-enrich from website in background (auth users only — guest enrichment skipped for simplicity)
+      if (normalizedWebsite && user) {
         setEnriching(true);
-        enrichWebsiteMut.mutateAsync({ companyId: company.id, url: normalizedWebsite })
+        enrichWebsiteMut.mutateAsync({ companyId: cId, url: normalizedWebsite })
           .then(result => {
             if (result.success && result.enrichment) {
               setEnrichment(result.enrichment);
-              // If mission was empty and we got a description, update local state
               if (!companyMission.trim() && result.enrichment.description) {
                 setCompanyMission(result.enrichment.description);
               }
@@ -508,7 +582,7 @@ export default function ProOnboarding() {
       }
       // Skip briefing-frequency step — it's now collected in the post-results survey
       setStep("creating-agents");
-      await createAllAgents(company.id);
+      await createAllAgents(cId);
     } catch (err: any) {
       toast.error("Failed to set up company", { description: err.message });
     }
@@ -569,34 +643,43 @@ export default function ProOnboarding() {
     setQuestionCount(0);
     setStep(onboardStep);
     setAgentContext(null);
-    setAgentContextLoading(true);
-    let fetchedContext: typeof agentContext = null;
-    try {
-      const execAgent = EXEC_AGENTS.find(a => a.type === agentType);
-      const ctx = await liveContextualizeMut.mutateAsync({
-        requestText: `${execAgent?.roleTitle ?? agentType} onboarding for ${companyName || "the company"} in ${companyIndustry || "technology"}`,
-      });
-      fetchedContext = { contextSummary: ctx.contextSummary, insights: ctx.insights, connectedProviders: ctx.connectedProviders, hasLiveData: ctx.hasLiveData };
-      setAgentContext(fetchedContext);
-    } catch { /* non-fatal */ }
-    finally { setAgentContextLoading(false); }
+    setAgentContextLoading(false);
 
     try {
-      let contextSummary: string | undefined;
-      if (fetchedContext?.hasLiveData && fetchedContext.contextSummary) {
-        contextSummary = fetchedContext.contextSummary;
-        if (fetchedContext.insights.length > 0) contextSummary += "\n\nKey insights:\n" + fetchedContext.insights.map(i => `- ${i}`).join("\n");
-      }
-      const data = await startOnboardingMut.mutateAsync({ agentId: agent.id, contextSummary });
-      setOnboardingId(data.onboardingId);
-      if (data.resumed && (data as any).conversationHistory?.length) {
-        const history = ((data as any).conversationHistory as { role: string; content: string }[]).map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
-        setMessages(history);
-        const userMsgCount = history.filter((m: any) => m.role === "user").length;
-        setQuestionCount(userMsgCount);
-        if (userMsgCount >= 3 && !coreOnlyMode) setIsCoreComplete(true);
-      } else if (data.firstQuestion) {
-        setMessages([{ role: "assistant", content: data.firstQuestion }]);
+      if (!user && guestSession) {
+        // Guest flow: use guest.startInterview
+        const data = await guestStartMut.mutateAsync({ guestToken: guestSession.token, agentType: agentType as "ceo" | "cto" | "cmo" | "cfo" });
+        setOnboardingId(data.onboardingId);
+        if (data.firstQuestion) setMessages([{ role: "assistant", content: data.firstQuestion }]);
+      } else {
+        // Authenticated flow
+        let fetchedContext: typeof agentContext = null;
+        setAgentContextLoading(true);
+        try {
+          const execAgent = EXEC_AGENTS.find(a => a.type === agentType);
+          const ctx = await liveContextualizeMut.mutateAsync({
+            requestText: `${execAgent?.roleTitle ?? agentType} onboarding for ${companyName || "the company"} in ${companyIndustry || "technology"}`,
+          });
+          fetchedContext = { contextSummary: ctx.contextSummary, insights: ctx.insights, connectedProviders: ctx.connectedProviders, hasLiveData: ctx.hasLiveData };
+          setAgentContext(fetchedContext);
+        } catch { /* non-fatal */ }
+        finally { setAgentContextLoading(false); }
+        let contextSummary: string | undefined;
+        if (fetchedContext?.hasLiveData && fetchedContext.contextSummary) {
+          contextSummary = fetchedContext.contextSummary;
+          if (fetchedContext.insights.length > 0) contextSummary += "\n\nKey insights:\n" + fetchedContext.insights.map(i => `- ${i}`).join("\n");
+        }
+        const data = await startOnboardingMut.mutateAsync({ agentId: agent.id, contextSummary });
+        setOnboardingId(data.onboardingId);
+        if (data.resumed && (data as any).conversationHistory?.length) {
+          const history = ((data as any).conversationHistory as { role: string; content: string }[]).map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
+          setMessages(history);
+          const userMsgCount = history.filter((m: any) => m.role === "user").length;
+          setQuestionCount(userMsgCount);
+          if (userMsgCount >= 3 && !coreOnlyMode) setIsCoreComplete(true);
+        } else if (data.firstQuestion) {
+          setMessages([{ role: "assistant", content: data.firstQuestion }]);
+        }
       }
     } catch (err: any) {
       toast.error("Failed to start onboarding", { description: err.message });
@@ -613,7 +696,12 @@ export default function ProOnboarding() {
     const newUserAnswerCount = newMessages.filter(m => m.role === "user").length;
     setQuestionCount(newUserAnswerCount);
     try {
-      const data = await respondMut.mutateAsync({ onboardingId, answer: userMsg });
+      let data: { reply: string; isComplete: boolean; suggestedIntegrations?: string[] };
+      if (!user && guestSession) {
+        data = await guestRespondMut.mutateAsync({ guestToken: guestSession.token, onboardingId, answer: userMsg });
+      } else {
+        data = await respondMut.mutateAsync({ onboardingId, answer: userMsg });
+      }
       if (data.isComplete) {
         setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
         setIsOnboardingComplete(true);
@@ -623,7 +711,12 @@ export default function ProOnboarding() {
         setIsCoreComplete(true);
       } else if (newUserAnswerCount >= 3 && coreOnlyMode) {
         setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
-        const finalData = await respondMut.mutateAsync({ onboardingId, answer: "I've shared everything relevant — please conclude this interview." });
+        let finalData: { reply: string; isComplete: boolean };
+        if (!user && guestSession) {
+          finalData = await guestRespondMut.mutateAsync({ guestToken: guestSession.token, onboardingId, answer: "I've shared everything relevant — please conclude this interview." });
+        } else {
+          finalData = await respondMut.mutateAsync({ onboardingId, answer: "I've shared everything relevant — please conclude this interview." });
+        }
         setIsOnboardingComplete(true);
         if ((finalData as any).suggestedIntegrations?.length) setSuggestedIntegrations((finalData as any).suggestedIntegrations);
       } else {
@@ -694,8 +787,12 @@ export default function ProOnboarding() {
     setStep("sigma-calibration");
     setSigmaLoading(true);
     try {
-      // Use generateStrategy to produce the sigma synthesis preview
-      const data = await generateStrategyMut.mutateAsync({ companyId });
+      let data: { strategy?: string; sigmaSynthesis?: string };
+      if (!user && guestSession) {
+        data = await guestGenerateStrategyMut.mutateAsync({ guestToken: guestSession.token });
+      } else {
+        data = await generateStrategyMut.mutateAsync({ companyId });
+      }
       setSigmaSynthesis((data as any).sigmaSynthesis ?? data.strategy?.split("\n")[0] ?? "");
     } catch { setSigmaSynthesis("Σ calibration encountered an issue. Proceeding to strategy generation."); }
     finally { setSigmaLoading(false); }
@@ -705,13 +802,23 @@ export default function ProOnboarding() {
     if (!companyId) return;
     setStep("generating-strategy");
     try {
-      const data = await generateStrategyMut.mutateAsync({ companyId });
+      let data: { strategy?: string };
+      if (!user && guestSession) {
+        data = await guestGenerateStrategyMut.mutateAsync({ guestToken: guestSession.token });
+      } else {
+        data = await generateStrategyMut.mutateAsync({ companyId });
+      }
       setStrategy((data as { strategy: string }).strategy ?? "");
       // Also generate personalized recommendations
       setRecsLoading(true);
       try {
-        const recs = await generateRecsMut.mutateAsync({ companyId });
-        setRecommendations(recs as { subagents: any[]; goals: any[] });
+        let recs: { subagents: any[]; goals: any[] };
+        if (!user && guestSession) {
+          recs = await guestGenerateRecsMut.mutateAsync({ guestToken: guestSession.token }) as { subagents: any[]; goals: any[] };
+        } else {
+          recs = await generateRecsMut.mutateAsync({ companyId }) as { subagents: any[]; goals: any[] };
+        }
+        setRecommendations(recs);
       } catch { /* non-fatal */ }
       finally { setRecsLoading(false); }
       setStep("results");
@@ -785,12 +892,17 @@ export default function ProOnboarding() {
   }
 
   async function handleThumbsSelect(value: "up" | "down") {
-    if (!companyId) return;
     setThumbs(value);
     setSurveyLoading(true);
     try {
-      const data = await generateSurveyMut.mutateAsync({ companyId, thumbs: value });
-      setSurveyQuestions(data.questions as SurveyQuestion[]);
+      let data: { questions: SurveyQuestion[] };
+      if (!user && guestSession) {
+        data = await guestGenerateSurveyMut.mutateAsync({ guestToken: guestSession.token, thumbs: value }) as { questions: SurveyQuestion[] };
+      } else {
+        if (!companyId) return;
+        data = await generateSurveyMut.mutateAsync({ companyId, thumbs: value }) as { questions: SurveyQuestion[] };
+      }
+      setSurveyQuestions(data.questions);
     } catch {
       toast.error("Failed to generate survey questions");
     } finally {
@@ -799,23 +911,34 @@ export default function ProOnboarding() {
   }
 
   async function handleSurveySubmit() {
-    if (!companyId || !thumbs) return;
+    if (!thumbs) return;
     setSurveySubmitting(true);
     try {
       const responses = surveyQuestions.map(q => ({ questionId: q.id, answer: surveyResponses[q.id] ?? "" }));
-      // Extract briefing frequency from survey responses if thumbs up
       const bfQuestion = surveyQuestions.find(q => q.id === "q4" && thumbs === "up");
       const bfAnswer = bfQuestion ? (surveyResponses["q4"] ?? "") : undefined;
       const bfMap: Record<string, string> = { "Daily": "daily", "Weekly": "weekly", "Monthly": "monthly", "Quarterly": "quarterly" };
       const bfValue = bfAnswer ? (bfMap[bfAnswer] ?? bfAnswer.toLowerCase()) : briefingFrequency;
-      await submitSurveyMut.mutateAsync({
-        companyId,
-        thumbs,
-        questions: surveyQuestions,
-        responses,
-        briefingFrequency: bfValue,
-        email: waitlistEmail || undefined,
-      });
+      if (!user && guestSession) {
+        await guestSubmitSurveyMut.mutateAsync({
+          guestToken: guestSession.token,
+          thumbs,
+          questions: surveyQuestions,
+          responses,
+          briefingFrequency: bfValue,
+          email: waitlistEmail || undefined,
+        });
+      } else {
+        if (!companyId) return;
+        await submitSurveyMut.mutateAsync({
+          companyId,
+          thumbs,
+          questions: surveyQuestions,
+          responses,
+          briefingFrequency: bfValue,
+          email: waitlistEmail || undefined,
+        });
+      }
       setSurveySubmitted(true);
     } catch (err: any) {
       toast.error("Failed to submit survey", { description: err.message });
