@@ -59,7 +59,7 @@ describe("Home Page Redesign - Structure Validation", () => {
     });
 
     it("has Agent Operating System label", () => {
-      expect(homeSource).toContain("Automate the mundane");
+      expect(homeSource).toContain("Automate mundane");
     });
 
     it("always shows HeroEmailInput regardless of auth state", () => {
@@ -418,7 +418,7 @@ describe("Home Page Redesign - Structure Validation", () => {
   describe("Footer - 4 Column Layout", () => {
     it("has the brand column", () => {
       expect(homeSource).toContain("OpenCommand");
-      expect(homeSource).toContain("Automate the mundane");
+      expect(homeSource).toContain("Automate mundane");
     });
 
     it("has the Product column header", () => {
