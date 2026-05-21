@@ -7,7 +7,7 @@ import {
   Users, Activity, Eye, Clock, MessageSquare, Zap, ChevronRight,
   Search, Filter, ArrowLeft, Globe, Monitor, BarChart2, List,
   CheckCircle, AlertCircle, Mail, Calendar, TrendingUp, X, UserCheck,
-  Building2, ThumbsUp, ThumbsDown
+  Building2, ThumbsUp, ThumbsDown, Copy, Link, UserPlus, Loader2
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -680,6 +680,34 @@ function GuestsPanel() {
 }
 
 function GuestDetail({ guest, onClose }: { guest: GuestRow; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const [converting, setConverting] = useState(false);
+  const [convertResult, setConvertResult] = useState<string | null>(null);
+  const convertMutation = trpc.admin.convertGuestToUser.useMutation({
+    onSuccess: (data: any) => {
+      setConvertResult(data.message || "Invite sent!");
+      setConverting(false);
+    },
+    onError: (err: any) => {
+      setConvertResult(`Error: ${err.message}`);
+      setConverting(false);
+    },
+  });
+
+  const shareableLink = `https://opencommand.co/onboarding/pro?token=${guest.guestToken}`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(shareableLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleConvert = () => {
+    if (!guest.email) return;
+    setConverting(true);
+    convertMutation.mutate({ guestToken: guest.guestToken });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -745,6 +773,44 @@ function GuestDetail({ guest, onClose }: { guest: GuestRow; onClose: () => void 
               {guest.surveyCreatedAt && (
                 <p className="text-xs text-muted-foreground mt-1">{fmtTime(guest.surveyCreatedAt)}</p>
               )}
+            </div>
+          )}
+
+          {/* Shareable Link */}
+          <div className="border border-border rounded-xl p-4">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Shareable Link</h3>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-muted/30 rounded-lg px-3 py-2 text-xs font-mono text-muted-foreground truncate">
+                {shareableLink}
+              </div>
+              <button
+                onClick={handleCopy}
+                className={`shrink-0 p-2 rounded-lg border transition-all ${copied ? "border-emerald-400/50 bg-emerald-400/10 text-emerald-400" : "border-border hover:bg-muted text-muted-foreground hover:text-foreground"}`}
+                title="Copy link"
+              >
+                {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
+              </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1">
+              <Link size={10} /> Send this link to the prospect to resume their session
+            </p>
+          </div>
+
+          {/* Convert to User */}
+          {guest.email && (
+            <div className="border border-border rounded-xl p-4">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Convert to User</h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Send an invite email to {guest.email} prompting them to create a full account. Their company and onboarding data will be linked.
+              </p>
+              <button
+                onClick={handleConvert}
+                disabled={converting || !!convertResult}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-lg text-sm font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {converting ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
+                {converting ? "Sending…" : convertResult || "Send Invite Email"}
+              </button>
             </div>
           )}
 

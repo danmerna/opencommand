@@ -3,6 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "./_core/llm";
 import { dispatchToConnector, testConnector } from "./connectors/dispatcher";
 import { leadResponseRouter } from "./routers/leadResponse";
@@ -75,7 +76,7 @@ import { assembleContext } from "./integrations/contextAssembler";
 import { seedDemoUser, getDemoUserId, DEMO_EMAIL } from "./demoUser";
 import { PRODUCTS, type ProductKey } from "./stripe/products";
 import { emitToUser } from "./socketEmit";
-import { sendWelcomeEmail, sendWaitlistApprovalEmail } from "./email";
+import { sendWelcomeEmail, sendWaitlistApprovalEmail, sendGuestResultsEmail } from "./email";
 
 
 // ─── Companies Router ────────────────────────────────────────────────────────
@@ -2719,6 +2720,18 @@ const guestRouter = router({
         executiveSummary: strategyContent.slice(0, 300),
         status: "proposed",
       });
+      // Fire-and-forget: send results email to guest
+      if (session.email) {
+        const resumeUrl = `https://opencommand.co/onboarding/pro?token=${input.guestToken}`;
+        sendGuestResultsEmail({
+          to: session.email,
+          name: session.name ?? "there",
+          companyName: company?.name ?? "your company",
+          strategy: strategyContent,
+          resumeUrl,
+        }).catch((err) => console.error("[GuestResultsEmail] Failed:", err));
+      }
+
       return { strategy: strategyContent };
     }),
 
@@ -3418,6 +3431,31 @@ const adminRouter = router({
   guestOnboardingProgress: adminProcedure
     .input(z.object({ companyId: z.number() }))
     .query(({ input }) => adminGetGuestOnboardingProgress(input.companyId)),
+
+  // Convert a guest session to a full user by sending an invite email
+  convertGuestToUser: adminProcedure
+    .input(z.object({ guestToken: z.string() }))
+    .mutation(async ({ input }) => {
+      const session = await getGuestSession(input.guestToken);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Guest session not found" });
+      if (!session.email) throw new TRPCError({ code: "BAD_REQUEST", message: "Guest has no email" });
+
+      const company = session.companyId ? await getCompanyById(session.companyId) : null;
+      const companyName = company?.name ?? "OpenCommand";
+      const loginUrl = `https://opencommand.co/onboarding/pro?token=${input.guestToken}`;
+
+      // Send invite email via Resend
+      const { sendGuestInviteEmail } = await import("./email");
+      const sent = await sendGuestInviteEmail({
+        to: session.email,
+        name: session.name ?? "there",
+        companyName,
+        loginUrl,
+      });
+
+      if (!sent) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to send invite email" });
+      return { success: true, message: `Invite sent to ${session.email}` };
+    }),
 });
 
 

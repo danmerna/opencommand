@@ -438,3 +438,213 @@ export async function sendWaitlistApprovalEmail(opts: WaitlistApprovalEmailOptio
     return false;
   }
 }
+
+export interface GuestResultsEmailOptions {
+  to: string;
+  name: string;
+  companyName: string;
+  strategy: string;
+  resumeUrl: string;
+}
+
+/**
+ * Send a post-onboarding results email to a guest after Σ synthesis completes.
+ * Contains their strategy summary and a link to resume/view results.
+ * Returns true on success, false on failure (non-throwing).
+ */
+export async function sendGuestResultsEmail(opts: GuestResultsEmailOptions): Promise<boolean> {
+  try {
+    const { to, name, companyName, strategy, resumeUrl } = opts;
+    const displayName = name || "there";
+
+    // Convert markdown strategy to simple HTML
+    const strategyHtml = strategy
+      .split("\n\n")
+      .map((para) => {
+        if (para.startsWith("# ")) return `<h2 style="margin:24px 0 12px;font-size:18px;color:#fff;font-weight:700;">${para.replace(/^# /, "")}</h2>`;
+        if (para.startsWith("## ")) return `<h3 style="margin:20px 0 8px;font-size:15px;color:#22c55e;font-weight:600;">${para.replace(/^## /, "")}</h3>`;
+        if (para.startsWith("### ")) return `<h4 style="margin:16px 0 6px;font-size:13px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${para.replace(/^### /, "")}</h4>`;
+        return `<p style="margin:0 0 14px;font-size:14px;color:#ccc;line-height:1.7;">${para.replace(/\n/g, "<br/>")}</p>`;
+      })
+      .join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Strategy Results — ${companyName}</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e5e5e5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#111111;border:1px solid #222;border-radius:12px;overflow:hidden;max-width:600px;width:100%;">
+          <!-- Header -->
+          <tr>
+            <td style="padding:28px 36px 20px;border-bottom:1px solid #222;">
+              <p style="margin:0 0 4px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#666;">OpenCommand</p>
+              <p style="margin:0;font-size:11px;color:#555;">Executive Onboarding Results &middot; ${companyName}</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px;">
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#fff;">
+                Your AI executive team has spoken.
+              </h1>
+              <p style="margin:0 0 28px;font-size:14px;color:#888;line-height:1.6;">
+                Hi ${displayName} — your executive onboarding for <strong style="color:#ccc;">${companyName}</strong> is complete. Here's the strategy your AI board produced:
+              </p>
+
+              <!-- Strategy Content -->
+              <div style="background:#0a0a0a;border:1px solid #222;border-radius:10px;padding:24px;margin:0 0 28px;">
+                ${strategyHtml}
+              </div>
+
+              <!-- CTA -->
+              <a href="${resumeUrl}" style="display:inline-block;background:#22c55e;color:#000;font-weight:600;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;letter-spacing:0.01em;">
+                View Full Results &rarr;
+              </a>
+
+              <p style="margin:20px 0 0;font-size:12px;color:#555;line-height:1.6;">
+                This link will take you back to your session — no login required.
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 36px 28px;border-top:1px solid #222;">
+              <p style="margin:0;font-size:11px;color:#555;line-height:1.6;">
+                You're receiving this because you completed executive onboarding for <strong style="color:#777;">${companyName}</strong> on OpenCommand.<br/>
+                Questions? Reply to this email or visit <a href="https://opencommand.co" style="color:#888;text-decoration:underline;">opencommand.co</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `Your strategy is ready — ${companyName} executive onboarding complete`,
+      html,
+    });
+
+    if (error) {
+      console.error("[GuestResultsEmail] Resend error:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[GuestResultsEmail] Unexpected error:", err);
+    return false;
+  }
+}
+
+export interface GuestInviteEmailOptions {
+  to: string;
+  name: string;
+  companyName: string;
+  loginUrl: string;
+}
+
+/**
+ * Send an invite email to a guest prompting them to create a full account.
+ * Returns true on success, false on failure (non-throwing).
+ */
+export async function sendGuestInviteEmail(opts: GuestInviteEmailOptions): Promise<boolean> {
+  try {
+    const { to, name, companyName, loginUrl } = opts;
+    const displayName = name || "there";
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You're Invited — ${companyName} on OpenCommand</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e5e5e5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#111111;border:1px solid #222;border-radius:12px;overflow:hidden;max-width:600px;width:100%;">
+          <!-- Header -->
+          <tr>
+            <td style="padding:28px 36px 20px;border-bottom:1px solid #222;">
+              <p style="margin:0 0 4px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#666;">OpenCommand</p>
+              <p style="margin:0;font-size:11px;color:#555;">Account Invitation</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px;">
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#fff;">
+                Your AI executive team is waiting.
+              </h1>
+              <p style="margin:0 0 24px;font-size:14px;color:#888;line-height:1.6;">
+                Hi ${displayName} — you've been invited to create a full OpenCommand account for <strong style="color:#ccc;">${companyName}</strong>. Your existing onboarding data, executive interviews, and strategy will be linked to your new account automatically.
+              </p>
+
+              <!-- What you get -->
+              <div style="background:#0f1a0f;border:1px solid #1a3a1a;border-radius:10px;padding:20px 24px;margin:0 0 28px;">
+                <p style="margin:0 0 12px;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#22c55e;">With a full account you get</p>
+                <p style="margin:0 0 10px;font-size:13px;color:#aaa;line-height:1.6;">
+                  &rarr; <strong style="color:#ddd;">Strategy briefings</strong> delivered on your schedule
+                </p>
+                <p style="margin:0 0 10px;font-size:13px;color:#aaa;line-height:1.6;">
+                  &rarr; <strong style="color:#ddd;">Agent orchestration</strong> — deploy subagents to execute tasks autonomously
+                </p>
+                <p style="margin:0;font-size:13px;color:#aaa;line-height:1.6;">
+                  &rarr; <strong style="color:#ddd;">Proof of Outcome receipts</strong> tracking the value your AI team creates
+                </p>
+              </div>
+
+              <!-- CTA -->
+              <a href="${loginUrl}" style="display:inline-block;background:#22c55e;color:#000;font-weight:600;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;letter-spacing:0.01em;">
+                Create Your Account &rarr;
+              </a>
+
+              <p style="margin:20px 0 0;font-size:12px;color:#555;line-height:1.6;">
+                This link will take you to your existing session. Sign in with Google to upgrade to a full account.
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 36px 28px;border-top:1px solid #222;">
+              <p style="margin:0;font-size:11px;color:#555;line-height:1.6;">
+                You're receiving this because the OpenCommand team invited you to join.<br/>
+                Questions? Reply to this email or visit <a href="https://opencommand.co" style="color:#888;text-decoration:underline;">opencommand.co</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `You're invited — ${companyName} is live on OpenCommand`,
+      html,
+    });
+
+    if (error) {
+      console.error("[GuestInviteEmail] Resend error:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[GuestInviteEmail] Unexpected error:", err);
+    return false;
+  }
+}

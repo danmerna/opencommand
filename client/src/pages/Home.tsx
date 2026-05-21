@@ -877,10 +877,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Subtitle */}
-        <p className="text-center text-muted-foreground text-sm text-body">
-          And yes — you can use your existing Claude Code or Codex subscription. Hermes runs locally with zero API cost.
-        </p>
+
       </section>
 
       {/* ─── Section 3: Context Engine Demo ────────────────────────── */}

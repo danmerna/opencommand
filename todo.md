@@ -689,3 +689,8 @@
 - [x] Build GuestsPanel component with search, table, and detail slide-over
 - [x] Fix progress counter bug showing "5 of 4 executives" — now filters to exec types only (ceo/cto/cmo/cfo)
 - [x] End-to-end test: guest.init, guest.setupCompany, guest.startInterview all verified working
+- [x] Update OG preview meta tags for /onboarding/pro route
+- [x] Remove misleading "Claude Code or Codex subscription / Hermes runs locally" text from homepage
+- [x] Add post-onboarding results email via Resend after guest completes Σ synthesis
+- [x] Add "Copy shareable link" button to Guests detail slide-over
+- [x] Add "Convert to user" action in Guests tab with invite email
