@@ -81,9 +81,9 @@ const companiesRouter = router({
   pnl: protectedProcedure.input(z.object({ companyId: z.number() })).query(({ input }) => getCompanyPnL(input.companyId)),
 
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1), mission: z.string().optional(), industry: z.string().optional(), website: z.string().optional(), monthlyBudget: z.number().optional(), briefingFrequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).optional() }))
+    .input(z.object({ name: z.string().min(1), mission: z.string().optional(), industry: z.string().optional(), website: z.string().optional(), monthlyBudget: z.number().optional(), briefingFrequency: z.enum(["daily", "weekly", "monthly", "quarterly"]).optional(), companySize: z.enum(["1-10", "11-50", "51-200", "201-1000", "1000+"]).optional() }))
     .mutation(async ({ ctx, input }) => {
-      await createCompany({ userId: ctx.user.id, name: input.name, mission: input.mission, industry: input.industry, website: input.website, monthlyBudget: input.monthlyBudget ? String(input.monthlyBudget) : "0", briefingFrequency: input.briefingFrequency } as any);
+      await createCompany({ userId: ctx.user.id, name: input.name, mission: input.mission, industry: input.industry, website: input.website, monthlyBudget: input.monthlyBudget ? String(input.monthlyBudget) : "0", briefingFrequency: input.briefingFrequency, companySize: input.companySize } as any);
 
       return { success: true };
     }),

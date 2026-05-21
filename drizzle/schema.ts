@@ -49,12 +49,12 @@ export const companies = mysqlTable("companies", {
   agentCount: int("agentCount").default(0).notNull(),
   website: varchar("website", { length: 256 }),
   briefingFrequency: mysqlEnum("briefingFrequency", ["daily", "weekly", "monthly", "quarterly"]).default("weekly"),
+  companySize: mysqlEnum("companySize", ["1-10", "11-50", "51-200", "201-1000", "1000+"]),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
-
 export type Company = typeof companies.$inferSelect;
-export type InsertCompany = typeof companies.$inferInsert;
+export type InsertCompany = typeof companies.$inferInsert;;
 
 // ─── Departments ─────────────────────────────────────────────────────────────
 export const departments = mysqlTable("departments", {

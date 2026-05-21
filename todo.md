@@ -622,3 +622,6 @@
 - [x] Add URL validation on company website field with auto-prepend https:// and subtle hint
 - [x] Add server-side website metadata scraping endpoint (title, description, favicon)
 - [x] After company setup, auto-enrich company context from website metadata for executive interviews
+
+## Company Size Dropdown
+- [x] Add Company Size dropdown to company setup form (1-10, 11-50, 51-200, 201-1000, 1000+)

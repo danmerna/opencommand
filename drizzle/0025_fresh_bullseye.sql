@@ -1,0 +1,1 @@
+ALTER TABLE `companies` ADD `companySize` enum('1-10','11-50','51-200','201-1000','1000+');

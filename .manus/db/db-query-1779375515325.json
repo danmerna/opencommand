@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE companies ADD COLUMN companySize ENUM('1-10', '11-50', '51-200', '201-1000', '1000+') DEFAULT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute ALTER TABLE companies ADD COLUMN companySize ENUM('1-10', '11-50', '51-200', '201-1000', '1000+') DEFAULT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 499
+}

@@ -176,6 +176,13 @@
       "when": 1777562964371,
       "tag": "0024_stormy_vision",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1779375522523,
+      "tag": "0025_fresh_bullseye",
+      "breakpoints": true
     }
   ]
 }

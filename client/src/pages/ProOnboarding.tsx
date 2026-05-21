@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Streamdown } from "streamdown";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -287,6 +288,7 @@ export default function ProOnboarding() {
   const [companyMission, setCompanyMission] = useState("");
   const [companyIndustry, setCompanyIndustry] = useState("");
   const [companyWebsite, setCompanyWebsite] = useState("");
+  const [companySize, setCompanySize] = useState<string>("");
   const [websiteHint, setWebsiteHint] = useState("");
   const [enrichment, setEnrichment] = useState<{ title?: string; description?: string; h1?: string } | null>(null);
   const [enriching, setEnriching] = useState(false);
@@ -427,7 +429,7 @@ export default function ProOnboarding() {
     const normalizedWebsite = normalizeUrl(companyWebsite);
     if (normalizedWebsite) setCompanyWebsite(normalizedWebsite);
     try {
-      await createCompanyMut.mutateAsync({ name: companyName.trim(), mission: companyMission.trim() || undefined, industry: companyIndustry.trim() || undefined, website: normalizedWebsite || undefined });
+      await createCompanyMut.mutateAsync({ name: companyName.trim(), mission: companyMission.trim() || undefined, industry: companyIndustry.trim() || undefined, website: normalizedWebsite || undefined, companySize: (companySize || undefined) as any });
       await utils.companies.list.invalidate();
       const companies = await utils.companies.list.fetch();
       const company = companies[0];
@@ -709,6 +711,21 @@ export default function ProOnboarding() {
             <div>
               <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-2">Industry</label>
               <Input value={companyIndustry} onChange={e => setCompanyIndustry(e.target.value)} placeholder="e.g. SaaS, E-commerce, Healthcare..." className="h-11" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-2">Company Size</label>
+              <Select value={companySize} onValueChange={setCompanySize}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Select team size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1-10">1–10 people</SelectItem>
+                  <SelectItem value="11-50">11–50 people</SelectItem>
+                  <SelectItem value="51-200">51–200 people</SelectItem>
+                  <SelectItem value="201-1000">201–1,000 people</SelectItem>
+                  <SelectItem value="1000+">1,000+ people</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-2">Company Website</label>
