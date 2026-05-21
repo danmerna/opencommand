@@ -582,7 +582,23 @@ export default function ProOnboarding() {
       }
       // Skip briefing-frequency step — it's now collected in the post-results survey
       setStep("creating-agents");
-      await createAllAgents(cId);
+      if (!user && guestSession) {
+        // Guest flow: agents were already created by guest.setupCompany
+        // Fetch them via guest.listAgents and show the animation
+        setCreatingProgress([]);
+        for (const agent of EXEC_AGENTS) {
+          setCreatingProgress(p => [...p, agent.type]);
+          await new Promise(r => setTimeout(r, 400));
+        }
+        // Fetch the created agents
+        const guestAgents = await utils.guest.listAgents.fetch({ guestToken: guestSession.token });
+        const created = guestAgents.map((a: any) => ({ id: a.id, type: a.type }));
+        setCreatedAgents(created);
+        await new Promise(r => setTimeout(r, 800));
+        setStep("integrations-ceo");
+      } else {
+        await createAllAgents(cId);
+      }
     } catch (err: any) {
       toast.error("Failed to set up company", { description: err.message });
     }
@@ -593,7 +609,20 @@ export default function ProOnboarding() {
     // This function is kept for backwards compatibility but skips directly to creating agents.
     if (!companyId) return;
     setStep("creating-agents");
-    await createAllAgents(companyId);
+    if (!user && guestSession) {
+      setCreatingProgress([]);
+      for (const agent of EXEC_AGENTS) {
+        setCreatingProgress(p => [...p, agent.type]);
+        await new Promise(r => setTimeout(r, 400));
+      }
+      const guestAgents = await utils.guest.listAgents.fetch({ guestToken: guestSession.token });
+      const created = guestAgents.map((a: any) => ({ id: a.id, type: a.type }));
+      setCreatedAgents(created);
+      await new Promise(r => setTimeout(r, 800));
+      setStep("integrations-ceo");
+    } else {
+      await createAllAgents(companyId);
+    }
   }
 
   async function createAllAgents(cId: number) {

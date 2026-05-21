@@ -2581,9 +2581,9 @@ const guestRouter = router({
       // Create the 4 core C-suite agents
       const CSUITE_AGENTS = [
         { type: "ceo", name: "ARCH", roleTitle: "Chief Executive Officer", description: "AI CEO — orchestration, OKR tracking, strategic decisions" },
-        { type: "cto", name: "SAGE", roleTitle: "Chief Technology Officer", description: "AI CTO — research, competitive intel, technical architecture" },
-        { type: "cmo", name: "NOVA", roleTitle: "Chief Marketing Officer", description: "AI CMO — marketing, content, campaigns, lead gen" },
-        { type: "cfo", name: "TED", roleTitle: "Chief Financial Officer", description: "AI CFO — operations, scheduling, reporting, workflow automation" },
+        { type: "cto", name: "FORGE", roleTitle: "Chief Technology Officer", description: "AI CTO — technology, systems, automation leverage" },
+        { type: "cmo", name: "SIGNAL", roleTitle: "Chief Marketing Officer", description: "AI CMO — growth, positioning, channels, content" },
+        { type: "cfo", name: "LEDGER", roleTitle: "Chief Financial Officer", description: "AI CFO — finance, budget logic, unit economics, guardrails" },
       ];
       for (const agent of CSUITE_AGENTS) {
         await createAgent({ userId: user.id, companyId: company.id, ...agent, status: "idle", connectorType: "internal" } as any);
@@ -2837,6 +2837,16 @@ const guestRouter = router({
         questions = parsed.questions ?? [];
       } catch {}
       return { questions };
+    }),
+
+  // List agents for a guest session (by companyId)
+  listAgents: publicProcedure
+    .input(z.object({ guestToken: z.string() }))
+    .query(async ({ input }) => {
+      const session = await getGuestSession(input.guestToken);
+      if (!session?.companyId) return [];
+      const agents = await getAgentsByCompanyId(session.companyId);
+      return agents.map(a => ({ id: a.id, type: a.type, name: a.name, companyId: a.companyId }));
     }),
 
   // Submit survey + waitlist for a guest
