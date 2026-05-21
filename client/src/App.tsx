@@ -30,7 +30,6 @@ import { LeadResponsePage } from "./pages/LeadResponsePage";
 import { LeadScoringDashboard } from "./pages/LeadScoringDashboard";
 import { ROIAttribution } from "./pages/ROIAttribution";
 import GoalsDashboard from "./pages/GoalsDashboard";
-import ProOnboarding from "./pages/ProOnboarding";
 
 function Router() {
   usePageTracking();
@@ -107,7 +106,6 @@ function Router() {
         <AppLayout><FeedbackAdmin /></AppLayout>
       </Route>
       <Route path="/admin/users" component={AdminUsers} />
-      <Route path="/onboarding/pro" component={ProOnboarding} />
       <Route path="/onboarding/:agentId">
         <AppLayout><AgentOnboarding /></AppLayout>
       </Route>

@@ -10,18 +10,6 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
-const PUBLIC_UNAUTHENTICATED_PATHS = new Set([
-  "/",
-  "/creators",
-  "/onboarding/pro",
-  "/waitlist",
-]);
-
-const isPublicUnauthenticatedPath = () => {
-  if (typeof window === "undefined") return false;
-  return PUBLIC_UNAUTHENTICATED_PATHS.has(window.location.pathname);
-};
-
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
@@ -29,13 +17,6 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
 
   if (!isUnauthorized) return;
-
-  if (isPublicUnauthenticatedPath()) {
-    console.warn("[Auth] Suppressed login redirect on public route", {
-      path: window.location.pathname,
-    });
-    return;
-  }
 
   window.location.href = getLoginUrl();
 };
