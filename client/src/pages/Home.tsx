@@ -784,9 +784,6 @@ export default function Home() {
             <Link href="/blueprints" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
               Blueprints
             </Link>
-            <a href="https://chiefofstaff.opencommand.co" target="_blank" rel="noopener noreferrer" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
-              Chief of Staff
-            </a>
             <Link href="/creators" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors" onClick={() => setMobileMenuOpen(false)}>
               Creators
             </Link>
@@ -1207,7 +1204,6 @@ export default function Home() {
               <Link href="/intent-engine" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Intent Engine</Link>
               <Link href="/blueprints" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Blueprints</Link>
               <Link href="/integration-hub" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Integrations</Link>
-              <a href="https://chiefofstaff.opencommand.co" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Chief of Staff ↗</a>
               <Link href="/pricing" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
             </div>
           </div>

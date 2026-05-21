@@ -593,3 +593,9 @@
 - [x] Update hero subheadline to "Deploy agents across every function. Set goals. Measure outcomes. OpenCommand manages the rest."
 - [x] Add tagline to footer brand column
 - [x] Update tests to reflect new copy
+
+## Handoff: ProOnboarding Page from GitHub
+- [x] Add ProOnboarding.tsx page (dark theme, executive demo panel, subagent team, goals)
+- [x] Register /onboarding/pro route in App.tsx (before catch-all)
+- [x] Suppress auth redirect on public paths in main.tsx
+- [x] Verify TypeScript compiles and tests pass
