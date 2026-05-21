@@ -701,3 +701,9 @@
 - [x] Fix: Agent names in chat don't match — FORGE shows "SAGE", SIGNAL shows "NOVA", LEDGER shows "TED"
 - [x] Make goals page mobile-friendly with subtabs by category (2-day tactical, 3-week sprint, etc.)
 - [x] Make feedback button sticky across all three result tabs (Strategy, Team, Goals)
+- [x] Update goal generation LLM prompt to produce 8-section /goal contracts (Objective, Context, Scope, Verification, Iteration, Escalation, Output, Stop Condition)
+- [x] Redesign goal card UI to display all 8 sections of the master /goal contract template
+- [x] Update copy-to-clipboard to output the full /goal contract format
+- [x] Remove 54321 horizon dependency from goals (horizons are upstream strategy context only)
+- [x] Update download summary to include new 8-section contract format
+- [x] Change subtabs from horizon-based to agent-role-based filtering

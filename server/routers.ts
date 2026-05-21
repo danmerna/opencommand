@@ -2263,13 +2263,6 @@ Please produce the formal strategy proposal.` },
 
       const RECOMMENDATION_SYSTEM_PROMPT = `You are an expert AI systems architect for the OpenCommand platform. You have just reviewed the complete onboarding interviews for a specific business. Based on their unique business context, challenges, tools, and priorities, generate personalized recommendations.
 
-OpenCommand uses the 54321 Time Framework:
-- 5 = 5-year vision and trajectory
-- 4 = 4-month strategic initiatives
-- 3 = 3-week sprint-level projects
-- 2 = 2-day tactical actions
-- 1 = 1-hour immediate execution
-
 The user already has these core executive agents:
 - ARCH (AI CEO) — orchestration, OKR tracking, strategic decisions
 - SIGNAL (CMO) — marketing, content, campaigns, lead gen
@@ -2277,9 +2270,23 @@ The user already has these core executive agents:
 - LEDGER (COO) — operations, scheduling, reporting, workflow automation
 - APEX (VP Sales) — outreach, pipeline, deal closing [OPTIONAL — only if relevant]
 
-Your job is to recommend ADDITIONAL specialized subagents that extend this team based on what the user specifically needs. Do NOT re-recommend the core agents. Recommend agents that fill gaps the core team doesn't cover for THIS specific business.
+Your job is to:
+1. Recommend ADDITIONAL specialized subagents that extend this team based on what the user specifically needs. Do NOT re-recommend the core agents.
+2. Generate /goal autonomous completion contracts — these are durable contracts that an agent receives and works toward autonomously without requiring user input. Each goal must be a complete, self-contained contract following the 8-section master template.
 
 You MUST tailor every recommendation to the specific details mentioned in the interviews. Do NOT produce generic recommendations. Reference the user's actual business name, tools, challenges, and goals.
+
+Each /goal contract must follow this 8-section structure:
+- Primary Objective: What must become true (task description + desired final state)
+- Context: Background, relevant resources/files/tools/data to inspect first, known assumptions, non-goals
+- Scope: Allowed tools/resources, forbidden actions, actions requiring human confirmation, invariants to preserve
+- Verification: Measurable success criteria (numbered list), verification commands/checks, required evidence, required artifacts
+- Iteration: How the agent should work in checkpoints and handle failed attempts
+- Escalation: When to pause and ask for human input, retry limits, blocker reporting format
+- Output: Required deliverable format and what it must include
+- Stop Condition: When the agent should stop autonomously
+
+The priority of every goal is FULL AUTONOMY — the agent should be able to execute the entire goal without requiring user input. Escalation rules exist only as safety guardrails.
 
 Respond with a JSON object in this exact format:
 {
@@ -2290,18 +2297,38 @@ Respond with a JSON object in this exact format:
       "tools": "<Comma-separated list of actual tools/systems they mentioned or that logically connect>",
       "guardrails": "<Specific safety constraint relevant to their industry/situation>",
       "autonomy": "Low|Medium|Medium-high|High",
-      "horizons": "<Which 54321 horizons this agent primarily operates on, e.g. '3-week, 2-day'>",
+      "horizons": "<Which horizons this agent primarily operates on>",
       "rationale": "<Why this agent was recommended based on what they said>"
     }
   ],
   "goals": [
     {
-      "command": "/goals <short imperative phrase specific to their business>",
-      "horizon": "<Primary 54321 horizon, e.g. '3 — 3-week sprint'>",
-      "outcome": "<What success looks like for THEIR company>",
-      "context": ["Project: <their actual project>", "Systems: <their actual tools>", "Constraint: <their actual constraint>"],
-      "success": ["<Measurable criterion tied to their KPIs>", "<Another criterion>", "<Another>"],
-      "finalDeliverable": "<Concrete output they would actually use>"
+      "command": "/goal <short imperative phrase specific to their business>",
+      "agentRole": "<Which agent executes this — one of the core agents or a recommended subagent>",
+      "objective": "<1-2 sentences: what must become true>",
+      "desiredState": "<The verifiable end state>",
+      "context": {
+        "background": "<Relevant business context from interviews>",
+        "resources": ["<Specific tools, files, systems, data sources to inspect>"],
+        "assumptions": ["<Known assumptions the agent should verify>"],
+        "nonGoals": ["<What this goal is NOT trying to do>"]
+      },
+      "scope": {
+        "allowed": ["<Allowed tools, actions, and resources>"],
+        "forbidden": ["<Actions or areas the agent must not touch>"],
+        "requiresConfirmation": ["<Actions that need human sign-off before executing>"],
+        "invariants": ["<Constraints that must not regress>"]
+      },
+      "verification": {
+        "successCriteria": ["<Measurable criterion 1>", "<Criterion 2>", "<Criterion 3>"],
+        "checks": ["<Commands, tests, audits, or checks to run>"],
+        "evidence": ["<Evidence that must be produced>"],
+        "artifacts": ["<Required output artifacts>"]
+      },
+      "iteration": "<How the agent should work in checkpoints and recover from failures>",
+      "escalation": "<When to pause, retry limits, and how to report blockers>",
+      "output": "<Required final deliverable format>",
+      "stopCondition": "<When to stop autonomously>"
     }
   ]
 }
@@ -2309,17 +2336,15 @@ Respond with a JSON object in this exact format:
 Rules:
 - Every agent name, mission, and tool list must reflect the SPECIFIC business described in the interviews
 - Goals must reference the user's actual priorities, metrics, and systems
-- Each goal must be tagged with its primary 54321 horizon
-- Each subagent must specify which 54321 horizons it operates on
-- Do NOT use generic examples — if the user runs a DTC skincare brand, the agents and goals should be about skincare inventory, influencer outreach, and subscription churn, not generic "Revenue Ops"
-- If the user mentioned specific tools (e.g., HubSpot, Shopify, Meta Ads), reference those tools
-- If the user mentioned specific challenges (e.g., "churn is high", "pipeline is stalled"), create agents/goals that address those exact problems
-- Generate 3-5 subagents and 2-4 goals
-- Include at least one goal at the 2-day or 1-hour horizon (immediate action) and at least one at the 4-month horizon (strategic)
+- Do NOT use generic examples — if the user runs a DTC skincare brand, the goals should be about skincare inventory, influencer outreach, and subscription churn
+- If the user mentioned specific tools (e.g., HubSpot, Shopify, Meta Ads), reference those tools in scope and context
+- If the user mentioned specific challenges (e.g., "churn is high", "pipeline is stalled"), create goals that address those exact problems
+- Generate 3-5 subagents and 3-5 goals
+- Each goal must be a COMPLETE autonomous contract — an agent should be able to pick it up and execute without asking any questions
 - Only include APEX (VP Sales) activation recommendation if the user's business has sales pipeline needs
-- Format goals with the /goals command prefix to indicate they are formatted prompts for the goal functionality`;
+- Format goals with the /goal command prefix`;
 
-      const userPrompt = `## Company\nName: ${company?.name ?? "Unknown"}\nMission: ${company?.mission ?? "N/A"}\nIndustry: ${company?.industry ?? "N/A"}\nSize: ${(company as any)?.companySize ?? "N/A"}\nWebsite: ${company?.website ?? "N/A"}\n\n## Executive Onboarding Interviews\n${transcriptSummary}\n\nBased on this specific business's situation, generate personalized subagent and goal recommendations using the 54321 Time Framework.`;
+      const userPrompt = `## Company\nName: ${company?.name ?? "Unknown"}\nMission: ${company?.mission ?? "N/A"}\nIndustry: ${company?.industry ?? "N/A"}\nSize: ${(company as any)?.companySize ?? "N/A"}\nWebsite: ${company?.website ?? "N/A"}\n\n## Executive Onboarding Interviews\n${transcriptSummary}\n\nBased on this specific business's situation, generate personalized subagent recommendations and autonomous /goal contracts that agents can execute without user input.`;
 
       const response = await invokeLLM({
         messages: [
@@ -2357,13 +2382,48 @@ Rules:
                     type: "object",
                     properties: {
                       command: { type: "string" },
-                      horizon: { type: "string" },
-                      outcome: { type: "string" },
-                      context: { type: "array", items: { type: "string" } },
-                      success: { type: "array", items: { type: "string" } },
-                      finalDeliverable: { type: "string" },
+                      agentRole: { type: "string" },
+                      objective: { type: "string" },
+                      desiredState: { type: "string" },
+                      context: {
+                        type: "object",
+                        properties: {
+                          background: { type: "string" },
+                          resources: { type: "array", items: { type: "string" } },
+                          assumptions: { type: "array", items: { type: "string" } },
+                          nonGoals: { type: "array", items: { type: "string" } },
+                        },
+                        required: ["background", "resources", "assumptions", "nonGoals"],
+                        additionalProperties: false,
+                      },
+                      scope: {
+                        type: "object",
+                        properties: {
+                          allowed: { type: "array", items: { type: "string" } },
+                          forbidden: { type: "array", items: { type: "string" } },
+                          requiresConfirmation: { type: "array", items: { type: "string" } },
+                          invariants: { type: "array", items: { type: "string" } },
+                        },
+                        required: ["allowed", "forbidden", "requiresConfirmation", "invariants"],
+                        additionalProperties: false,
+                      },
+                      verification: {
+                        type: "object",
+                        properties: {
+                          successCriteria: { type: "array", items: { type: "string" } },
+                          checks: { type: "array", items: { type: "string" } },
+                          evidence: { type: "array", items: { type: "string" } },
+                          artifacts: { type: "array", items: { type: "string" } },
+                        },
+                        required: ["successCriteria", "checks", "evidence", "artifacts"],
+                        additionalProperties: false,
+                      },
+                      iteration: { type: "string" },
+                      escalation: { type: "string" },
+                      output: { type: "string" },
+                      stopCondition: { type: "string" },
                     },
-                    required: ["command", "horizon", "outcome", "context", "success", "finalDeliverable"],
+                    required: ["command", "agentRole", "objective", "desiredState", "context", "scope", "verification", "iteration", "escalation", "output", "stopCondition"],
                     additionalProperties: false,
                   },
                 },
@@ -2767,7 +2827,29 @@ const guestRouter = router({
         return `### ${e.type.toUpperCase()} Interview\nSummary: ${e.summary}\nContext: ${JSON.stringify(e.context)}\n\nRecent Transcript:\n${historyText}`;
       }).join("\n\n---\n\n");
 
-      const RECOMMENDATION_SYSTEM_PROMPT = `You are an expert AI systems architect for the OpenCommand platform. Based on the onboarding interviews, generate personalized subagent recommendations and /goals prompts.\n\nOpenCommand uses the 54321 Time Framework:\n- 5 = 5-year vision\n- 4 = 4-month strategic initiatives\n- 3 = 3-week sprint-level projects\n- 2 = 2-day tactical actions\n- 1 = 1-hour immediate execution\n\nRespond with a JSON object:\n{\n  "subagents": [{ "name": string, "mission": string, "tools": string, "guardrails": string, "autonomy": string, "horizons": string, "rationale": string }],\n  "goals": [{ "command": string, "horizon": string, "outcome": string, "context": string[], "success": string[], "finalDeliverable": string }]\n}\n\nGenerate 3-5 subagents and 4-6 goals. Make everything specific to this company's context.`;
+      const RECOMMENDATION_SYSTEM_PROMPT = `You are an expert AI systems architect for the OpenCommand platform. Based on the onboarding interviews, generate personalized subagent recommendations and autonomous /goal contracts.
+
+The core executive agents are: ARCH (CEO), SIGNAL (CMO), FORGE (CTO), LEDGER (COO), APEX (VP Sales, optional).
+
+Each /goal contract must be a COMPLETE autonomous completion contract following the 8-section master template:
+1. Primary Objective (what must become true + desired final state)
+2. Context (background, resources, assumptions, non-goals)
+3. Scope (allowed tools, forbidden actions, confirmation triggers, invariants)
+4. Verification (success criteria, checks, evidence, artifacts)
+5. Iteration (checkpoint workflow + failure recovery)
+6. Escalation (pause triggers, retry limits, blocker reporting)
+7. Output (deliverable format)
+8. Stop Condition (when to stop)
+
+The priority is FULL AUTONOMY — agents execute without requiring user input. Escalation rules exist only as safety guardrails.
+
+Respond with a JSON object:
+{
+  "subagents": [{ "name": string, "mission": string, "tools": string, "guardrails": string, "autonomy": string, "horizons": string, "rationale": string }],
+  "goals": [{ "command": string, "agentRole": string, "objective": string, "desiredState": string, "context": { "background": string, "resources": string[], "assumptions": string[], "nonGoals": string[] }, "scope": { "allowed": string[], "forbidden": string[], "requiresConfirmation": string[], "invariants": string[] }, "verification": { "successCriteria": string[], "checks": string[], "evidence": string[], "artifacts": string[] }, "iteration": string, "escalation": string, "output": string, "stopCondition": string }]
+}
+
+Generate 3-5 subagents and 3-5 goals. Make everything specific to this company's context. Each goal must be complete enough that an agent can execute it without asking any questions.`;
 
       const response = await invokeLLM({
         messages: [

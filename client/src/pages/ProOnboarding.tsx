@@ -898,16 +898,54 @@ export default function ProOnboarding() {
       });
     }
     if (recommendations?.goals?.length) {
-      lines.push("## /goals — Formatted Prompts");
+      lines.push("## /goal \u2014 Autonomous Contracts");
       recommendations.goals.forEach(g => {
         lines.push(`### ${g.command}`);
-        lines.push(`**Horizon:** ${g.horizon}`);
-        lines.push(`**Outcome:** ${g.outcome}`);
-        lines.push(`**Context:**`);
-        g.context.forEach((c: string) => lines.push(`  - ${c}`));
-        lines.push(`**Success Criteria:**`);
-        g.success.forEach((s: string) => lines.push(`  - ${s}`));
-        lines.push(`**Final Deliverable:** ${g.finalDeliverable}`);
+        if (g.agentRole) lines.push(`**Agent:** ${g.agentRole}`);
+        lines.push(``);
+        lines.push(`#### 1. Primary Objective`);
+        lines.push(g.objective ?? g.outcome ?? "");
+        if (g.desiredState) lines.push(`\n*Desired state:* ${g.desiredState}`);
+        lines.push(``);
+        lines.push(`#### 2. Context`);
+        if (typeof g.context === "object" && !Array.isArray(g.context)) {
+          if (g.context.background) lines.push(`- Background: ${g.context.background}`);
+          if (g.context.resources?.length) g.context.resources.forEach((r: string) => lines.push(`- Resource: ${r}`));
+          if (g.context.assumptions?.length) g.context.assumptions.forEach((a: string) => lines.push(`- Assumption: ${a}`));
+          if (g.context.nonGoals?.length) g.context.nonGoals.forEach((n: string) => lines.push(`- Non-goal: ${n}`));
+        } else if (Array.isArray(g.context)) {
+          g.context.forEach((c: string) => lines.push(`- ${c}`));
+        }
+        lines.push(``);
+        lines.push(`#### 3. Scope & Permissions`);
+        if (g.scope) {
+          if (g.scope.allowed?.length) lines.push(`- Allowed: ${g.scope.allowed.join(", ")}`);
+          if (g.scope.forbidden?.length) lines.push(`- Forbidden: ${g.scope.forbidden.join(", ")}`);
+          if (g.scope.requiresConfirmation?.length) lines.push(`- Requires confirmation: ${g.scope.requiresConfirmation.join(", ")}`);
+          if (g.scope.invariants?.length) lines.push(`- Invariants: ${g.scope.invariants.join(", ")}`);
+        }
+        lines.push(``);
+        lines.push(`#### 4. Verification & Success Criteria`);
+        if (g.verification?.successCriteria?.length) {
+          g.verification.successCriteria.forEach((s: string, i: number) => lines.push(`${i + 1}. ${s}`));
+        } else if (g.success?.length) {
+          g.success.forEach((s: string, i: number) => lines.push(`${i + 1}. ${s}`));
+        }
+        if (g.verification?.artifacts?.length) lines.push(`\n*Artifacts:* ${g.verification.artifacts.join(", ")}`);
+        lines.push(``);
+        lines.push(`#### 5. Iteration Policy`);
+        lines.push(g.iteration ?? "Work in checkpoints.");
+        lines.push(``);
+        lines.push(`#### 6. Escalation`);
+        lines.push(g.escalation ?? "Pause on ambiguity or missing access.");
+        lines.push(``);
+        lines.push(`#### 7. Output`);
+        lines.push(g.output ?? g.finalDeliverable ?? "Deliver final artifact.");
+        lines.push(``);
+        lines.push(`#### 8. Stop Condition`);
+        lines.push(g.stopCondition ?? "All success criteria verified.");
+        lines.push(``);
+        lines.push(`---`);
         lines.push("");
       });
     }
@@ -988,9 +1026,58 @@ export default function ProOnboarding() {
   }
 
   function handleCopyGoal(goal: any) {
-    const text = `${goal.command}\nHorizon: ${goal.horizon}\nOutcome: ${goal.outcome}\nContext:\n${goal.context.map((c: string) => `  - ${c}`).join("\n")}\nSuccess Criteria:\n${goal.success.map((s: string) => `  - ${s}`).join("\n")}\nFinal Deliverable: ${goal.finalDeliverable}`;
-    navigator.clipboard.writeText(text);
-    toast.success("Goal prompt copied to clipboard");
+    const lines: string[] = [];
+    lines.push(goal.command);
+    lines.push(`# Autonomous Goal`);
+    lines.push(``);
+    if (goal.agentRole) lines.push(`You are acting as ${goal.agentRole} with permission to work autonomously toward the objective below.`);
+    lines.push(``);
+    lines.push(`## 1. Primary Objective`);
+    lines.push(goal.objective ?? goal.outcome ?? "");
+    if (goal.desiredState) lines.push(`\nDesired final state: ${goal.desiredState}`);
+    lines.push(``);
+    lines.push(`## 2. Context and Starting Points`);
+    if (typeof goal.context === "object" && !Array.isArray(goal.context)) {
+      if (goal.context.background) lines.push(`- Background: ${goal.context.background}`);
+      if (goal.context.resources?.length) lines.push(`- Resources: ${goal.context.resources.join(", ")}`);
+      if (goal.context.assumptions?.length) lines.push(`- Assumptions: ${goal.context.assumptions.join("; ")}`);
+      if (goal.context.nonGoals?.length) lines.push(`- Non-goals: ${goal.context.nonGoals.join("; ")}`);
+    } else if (Array.isArray(goal.context)) {
+      goal.context.forEach((c: string) => lines.push(`- ${c}`));
+    }
+    lines.push(``);
+    lines.push(`## 3. Scope, Boundaries, and Permissions`);
+    if (goal.scope) {
+      if (goal.scope.allowed?.length) lines.push(`You may use: ${goal.scope.allowed.join(", ")}`);
+      if (goal.scope.forbidden?.length) lines.push(`You must not: ${goal.scope.forbidden.join(", ")}`);
+      if (goal.scope.requiresConfirmation?.length) lines.push(`Require human confirmation before: ${goal.scope.requiresConfirmation.join(", ")}`);
+      if (goal.scope.invariants?.length) lines.push(`Preserve: ${goal.scope.invariants.join(", ")}`);
+    }
+    lines.push(``);
+    lines.push(`## 4. Verification and Success Criteria`);
+    lines.push(`The goal is complete only when all of the following are true:`);
+    if (goal.verification?.successCriteria?.length) {
+      goal.verification.successCriteria.forEach((s: string, i: number) => lines.push(`${i + 1}. ${s}`));
+    } else if (goal.success?.length) {
+      goal.success.forEach((s: string, i: number) => lines.push(`${i + 1}. ${s}`));
+    }
+    if (goal.verification?.checks?.length) lines.push(`\nVerification checks: ${goal.verification.checks.join("; ")}`);
+    if (goal.verification?.evidence?.length) lines.push(`Required evidence: ${goal.verification.evidence.join("; ")}`);
+    if (goal.verification?.artifacts?.length) lines.push(`Required artifacts: ${goal.verification.artifacts.join("; ")}`);
+    lines.push(``);
+    lines.push(`## 5. Iteration Policy`);
+    lines.push(goal.iteration ?? "Work in checkpoints. Inspect evidence, decide smallest useful next action, execute, validate, record progress.");
+    lines.push(``);
+    lines.push(`## 6. Error Handling and Escalation`);
+    lines.push(goal.escalation ?? "Pause and ask for human input if requirements are ambiguous, access is missing, or the next action is destructive.");
+    lines.push(``);
+    lines.push(`## 7. Output Requirements`);
+    lines.push(goal.output ?? goal.finalDeliverable ?? "Deliver final artifact with summary, evidence, and next steps.");
+    lines.push(``);
+    lines.push(`## 8. Stop Condition`);
+    lines.push(goal.stopCondition ?? "Continue until all success criteria are verified or a blocker is reached.");
+    navigator.clipboard.writeText(lines.join("\n"));
+    toast.success("Goal contract copied to clipboard");
   }
 
   // ─── Derived ──────────────────────────────────────────────────────────────
@@ -1665,33 +1752,27 @@ export default function ProOnboarding() {
             </div>
           </TabsContent>
 
-          {/* /goals Tab */}
+          {/* /goal Tab */}
           <TabsContent value="goals" className="flex-1 overflow-y-auto m-0">
             <div className="w-full">
               {recsLoading ? (
                 <div className="flex items-center justify-center py-16 px-6">
                   <div className="text-center">
                     <Loader2 size={24} className="animate-spin text-emerald-400 mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">Generating personalized goal prompts...</p>
+                    <p className="text-sm text-muted-foreground">Generating autonomous goal contracts...</p>
                   </div>
                 </div>
               ) : recommendations?.goals?.length ? (
                 <div className="flex flex-col h-full">
-                  {/* Header + Horizon Subtabs */}
+                  {/* Header + Agent filter pills */}
                   <div className="border-b border-border px-4 sm:px-6 py-4 sticky top-0 bg-background z-10">
                     <div className="max-w-4xl mx-auto">
-                      <h3 className="text-base sm:text-lg font-medium text-foreground mb-1">/goals — Formatted Prompts</h3>
-                      <p className="text-xs text-muted-foreground mb-4">Ready-to-use goal prompts. Copy any goal to use it directly.</p>
-                      {/* Horizon filter pills */}
+                      <h3 className="text-base sm:text-lg font-medium text-foreground mb-1">/goal — Autonomous Contracts</h3>
+                      <p className="text-xs text-muted-foreground mb-4">Complete execution contracts your agents can run without user input. Copy any contract to deploy.</p>
+                      {/* Agent filter pills */}
                       <nav className="flex gap-2 overflow-x-auto scrollbar-none -mb-px pb-0">
                         {(() => {
-                          const horizons = Array.from(new Set(recommendations.goals.map((g: any) => g.horizon)));
-                          const horizonOrder = ["5", "4", "3", "2", "1"];
-                          const sorted = horizons.sort((a: string, b: string) => {
-                            const aIdx = horizonOrder.indexOf(a.charAt(0));
-                            const bIdx = horizonOrder.indexOf(b.charAt(0));
-                            return aIdx - bIdx;
-                          });
+                          const agents = Array.from(new Set(recommendations.goals.map((g: any) => g.agentRole ?? "Unknown")));
                           return (
                             <>
                               <button
@@ -1704,28 +1785,19 @@ export default function ProOnboarding() {
                               >
                                 All ({recommendations.goals.length})
                               </button>
-                              {sorted.map((h: string) => {
-                                const count = recommendations.goals.filter((g: any) => g.horizon === h).length;
-                                const num = h.charAt(0);
-                                const colorMap: Record<string, string> = {
-                                  "5": "border-purple-400/40 bg-purple-500/10 text-purple-300",
-                                  "4": "border-blue-400/40 bg-blue-500/10 text-blue-300",
-                                  "3": "border-amber-400/40 bg-amber-500/10 text-amber-300",
-                                  "2": "border-orange-400/40 bg-orange-500/10 text-orange-300",
-                                  "1": "border-red-400/40 bg-red-500/10 text-red-300",
-                                };
-                                const activeColor = colorMap[num] ?? "border-foreground/20 bg-foreground/10 text-foreground";
+                              {agents.map((agent: string) => {
+                                const count = recommendations.goals.filter((g: any) => (g.agentRole ?? "Unknown") === agent).length;
                                 return (
                                   <button
-                                    key={h}
-                                    onClick={() => setActiveGoalHorizon(h)}
+                                    key={agent}
+                                    onClick={() => setActiveGoalHorizon(agent)}
                                     className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium border transition-colors shrink-0 ${
-                                      activeGoalHorizon === h
-                                        ? activeColor
+                                      activeGoalHorizon === agent
+                                        ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-300"
                                         : "text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/50"
                                     }`}
                                   >
-                                    {h} ({count})
+                                    {agent} ({count})
                                   </button>
                                 );
                               })}
@@ -1736,58 +1808,259 @@ export default function ProOnboarding() {
                     </div>
                   </div>
 
-                  {/* Goal Cards */}
+                  {/* Goal Contract Cards */}
                   <div className="px-4 sm:px-6 py-6 flex-1 overflow-y-auto">
-                    <div className="max-w-4xl mx-auto grid gap-4">
+                    <div className="max-w-4xl mx-auto grid gap-5">
                       {recommendations.goals
-                        .filter((goal: any) => activeGoalHorizon === "all" || goal.horizon === activeGoalHorizon)
+                        .filter((goal: any) => activeGoalHorizon === "all" || (goal.agentRole ?? "Unknown") === activeGoalHorizon)
                         .map((goal: any, i: number) => (
-                          <div key={i} className="border border-border rounded-xl p-4 sm:p-5 bg-card/50 relative">
-                            {/* Copy button — always visible on mobile, hover on desktop */}
-                            <button
-                              onClick={() => handleCopyGoal(goal)}
-                              className="absolute top-3 right-3 sm:top-4 sm:right-4 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity p-1.5 rounded-md hover:bg-muted bg-muted/50 sm:bg-transparent group"
-                              title="Copy goal prompt"
-                            >
-                              <Copy size={13} className="text-muted-foreground" />
-                            </button>
-                            {/* Horizon badge + command */}
-                            <div className="flex flex-wrap items-center gap-2 mb-3 pr-8">
-                              <Badge variant="outline" className={`text-[9px] ${getHorizonColor(goal.horizon)}`}>{goal.horizon}</Badge>
-                              <code className="text-xs font-mono text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded break-all">{goal.command}</code>
+                          <div key={i} className="border border-border rounded-xl bg-card/50 relative overflow-hidden">
+                            {/* Contract header */}
+                            <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-3 border-b border-border/50">
+                              <div className="flex flex-wrap items-center gap-2 pr-8">
+                                <code className="text-xs font-mono text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded break-all">{goal.command}</code>
+                                {goal.agentRole && (
+                                  <Badge variant="outline" className="text-[9px] border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
+                                    {goal.agentRole}
+                                  </Badge>
+                                )}
+                              </div>
+                              {/* Copy button */}
+                              <button
+                                onClick={() => handleCopyGoal(goal)}
+                                className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 rounded-md hover:bg-muted bg-muted/50 sm:bg-transparent transition-opacity"
+                                title="Copy goal contract"
+                              >
+                                <Copy size={13} className="text-muted-foreground" />
+                              </button>
                             </div>
-                            {/* Card body */}
-                            <div className="space-y-3">
+
+                            {/* 8-section contract body */}
+                            <div className="px-4 sm:px-5 py-4 space-y-4">
+                              {/* 1. Primary Objective */}
                               <div>
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Outcome</span>
-                                <p className="text-sm text-foreground/90 mt-0.5">{goal.outcome}</p>
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">1. Primary Objective</span>
+                                </div>
+                                <p className="text-sm text-foreground/90">{goal.objective}</p>
+                                {goal.desiredState && (
+                                  <p className="text-xs text-muted-foreground mt-1"><span className="text-foreground/60">Desired state:</span> {goal.desiredState}</p>
+                                )}
                               </div>
-                              <div>
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Context</span>
-                                <ul className="mt-1 space-y-0.5">
-                                  {goal.context.map((c: string, j: number) => (
-                                    <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
-                                      <span className="text-muted-foreground mt-0.5 shrink-0">•</span>
-                                      <span className="break-words">{c}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Success Criteria</span>
-                                <ul className="mt-1 space-y-0.5">
-                                  {goal.success.map((s: string, j: number) => (
-                                    <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
-                                      <CheckCircle2 size={10} className="text-emerald-400 mt-0.5 shrink-0" />
-                                      <span className="break-words">{s}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Final Deliverable</span>
-                                <p className="text-xs text-foreground/80 mt-0.5 break-words">{goal.finalDeliverable}</p>
-                              </div>
+
+                              {/* 2. Context */}
+                              {goal.context && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">2. Context & Starting Points</span>
+                                  </div>
+                                  {typeof goal.context === "object" && !Array.isArray(goal.context) ? (
+                                    <div className="space-y-2">
+                                      {goal.context.background && (
+                                        <p className="text-xs text-foreground/70">{goal.context.background}</p>
+                                      )}
+                                      {goal.context.resources?.length > 0 && (
+                                        <div>
+                                          <span className="text-[9px] text-muted-foreground uppercase">Resources</span>
+                                          <ul className="mt-0.5 space-y-0.5">
+                                            {goal.context.resources.map((r: string, j: number) => (
+                                              <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                                                <span className="text-muted-foreground mt-0.5 shrink-0">•</span>
+                                                <span className="break-words">{r}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+                                      {goal.context.assumptions?.length > 0 && (
+                                        <div>
+                                          <span className="text-[9px] text-muted-foreground uppercase">Assumptions</span>
+                                          <ul className="mt-0.5 space-y-0.5">
+                                            {goal.context.assumptions.map((a: string, j: number) => (
+                                              <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                                                <span className="text-amber-400 mt-0.5 shrink-0">⚠</span>
+                                                <span className="break-words">{a}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+                                      {goal.context.nonGoals?.length > 0 && (
+                                        <div>
+                                          <span className="text-[9px] text-muted-foreground uppercase">Non-Goals</span>
+                                          <ul className="mt-0.5 space-y-0.5">
+                                            {goal.context.nonGoals.map((n: string, j: number) => (
+                                              <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                                                <span className="text-red-400 mt-0.5 shrink-0">✕</span>
+                                                <span className="break-words">{n}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : Array.isArray(goal.context) ? (
+                                    <ul className="space-y-0.5">
+                                      {goal.context.map((c: string, j: number) => (
+                                        <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                                          <span className="text-muted-foreground mt-0.5 shrink-0">•</span>
+                                          <span className="break-words">{c}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : null}
+                                </div>
+                              )}
+
+                              {/* 3. Scope */}
+                              {goal.scope && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">3. Scope & Permissions</span>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {goal.scope.allowed?.length > 0 && (
+                                      <div className="rounded-lg border border-emerald-800/20 bg-emerald-950/10 p-2.5">
+                                        <span className="text-[9px] text-emerald-400 uppercase font-medium">Allowed</span>
+                                        <ul className="mt-1 space-y-0.5">
+                                          {goal.scope.allowed.map((a: string, j: number) => (
+                                            <li key={j} className="text-xs text-foreground/70 flex items-start gap-1">
+                                              <span className="text-emerald-400 shrink-0">✓</span>
+                                              <span className="break-words">{a}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {goal.scope.forbidden?.length > 0 && (
+                                      <div className="rounded-lg border border-red-800/20 bg-red-950/10 p-2.5">
+                                        <span className="text-[9px] text-red-400 uppercase font-medium">Forbidden</span>
+                                        <ul className="mt-1 space-y-0.5">
+                                          {goal.scope.forbidden.map((f: string, j: number) => (
+                                            <li key={j} className="text-xs text-foreground/70 flex items-start gap-1">
+                                              <span className="text-red-400 shrink-0">✕</span>
+                                              <span className="break-words">{f}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {goal.scope.requiresConfirmation?.length > 0 && (
+                                      <div className="rounded-lg border border-amber-800/20 bg-amber-950/10 p-2.5">
+                                        <span className="text-[9px] text-amber-400 uppercase font-medium">Requires Confirmation</span>
+                                        <ul className="mt-1 space-y-0.5">
+                                          {goal.scope.requiresConfirmation.map((c: string, j: number) => (
+                                            <li key={j} className="text-xs text-foreground/70 flex items-start gap-1">
+                                              <span className="text-amber-400 shrink-0">⚠</span>
+                                              <span className="break-words">{c}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {goal.scope.invariants?.length > 0 && (
+                                      <div className="rounded-lg border border-blue-800/20 bg-blue-950/10 p-2.5">
+                                        <span className="text-[9px] text-blue-400 uppercase font-medium">Invariants</span>
+                                        <ul className="mt-1 space-y-0.5">
+                                          {goal.scope.invariants.map((inv: string, j: number) => (
+                                            <li key={j} className="text-xs text-foreground/70 flex items-start gap-1">
+                                              <span className="text-blue-400 shrink-0">●</span>
+                                              <span className="break-words">{inv}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 4. Verification */}
+                              {goal.verification && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">4. Verification & Success Criteria</span>
+                                  </div>
+                                  <div className="space-y-2">
+                                    {goal.verification.successCriteria?.length > 0 && (
+                                      <div>
+                                        <span className="text-[9px] text-muted-foreground uppercase">Complete when ALL true:</span>
+                                        <ol className="mt-1 space-y-0.5 list-decimal list-inside">
+                                          {goal.verification.successCriteria.map((s: string, j: number) => (
+                                            <li key={j} className="text-xs text-foreground/70 break-words">{s}</li>
+                                          ))}
+                                        </ol>
+                                      </div>
+                                    )}
+                                    {goal.verification.checks?.length > 0 && (
+                                      <div>
+                                        <span className="text-[9px] text-muted-foreground uppercase">Verification checks</span>
+                                        <ul className="mt-0.5 space-y-0.5">
+                                          {goal.verification.checks.map((c: string, j: number) => (
+                                            <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                                              <CheckCircle2 size={10} className="text-emerald-400 mt-0.5 shrink-0" />
+                                              <span className="break-words">{c}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {goal.verification.artifacts?.length > 0 && (
+                                      <div>
+                                        <span className="text-[9px] text-muted-foreground uppercase">Required artifacts</span>
+                                        <ul className="mt-0.5 space-y-0.5">
+                                          {goal.verification.artifacts.map((a: string, j: number) => (
+                                            <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                                              <span className="text-cyan-400 shrink-0">■</span>
+                                              <span className="break-words">{a}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 5. Iteration */}
+                              {goal.iteration && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">5. Iteration Policy</span>
+                                  </div>
+                                  <p className="text-xs text-foreground/70 break-words">{goal.iteration}</p>
+                                </div>
+                              )}
+
+                              {/* 6. Escalation */}
+                              {goal.escalation && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">6. Error Handling & Escalation</span>
+                                  </div>
+                                  <p className="text-xs text-foreground/70 break-words">{goal.escalation}</p>
+                                </div>
+                              )}
+
+                              {/* 7. Output */}
+                              {goal.output && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">7. Output Requirements</span>
+                                  </div>
+                                  <p className="text-xs text-foreground/70 break-words">{goal.output}</p>
+                                </div>
+                              )}
+
+                              {/* 8. Stop Condition */}
+                              {goal.stopCondition && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">8. Stop Condition</span>
+                                  </div>
+                                  <p className="text-xs text-foreground/70 break-words">{goal.stopCondition}</p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -1797,7 +2070,7 @@ export default function ProOnboarding() {
               ) : (
                 <div className="text-center py-16 px-6">
                   <Target size={24} className="text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">Goal prompts will appear here after generation.</p>
+                  <p className="text-sm text-muted-foreground">Autonomous goal contracts will appear here after generation.</p>
                 </div>
               )}
             </div>
