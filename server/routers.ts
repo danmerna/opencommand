@@ -2535,6 +2535,13 @@ const guestRouter = router({
         name: input.name,
         email: input.email,
       });
+      // Notify owner of new guest onboarding start
+      try {
+        await notifyOwner({
+          title: "New Guest Started Onboarding",
+          content: `${input.name} (${input.email}) just started the executive onboarding flow on /onboarding/pro.`,
+        });
+      } catch {}
       return { guestToken: input.guestToken, userId: user.id, resumed: false };
     }),
 
