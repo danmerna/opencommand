@@ -697,3 +697,4 @@
 - [x] Fix: "Begin Onboarding" and "Begin" buttons on /onboarding/pro landing page not working
 - [x] Fix: Guest onboarding fails to create FORGE/SIGNAL/LEDGER agents — "Please login (10001)" error for non-authenticated guests
 - [x] Add owner notification when someone fills out the email gate form on /onboarding/pro
+- [x] Fix: Guest flow "Failed to finalize" after ARCH interview — "Please login (10001)" error on finalize step

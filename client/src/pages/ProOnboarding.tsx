@@ -763,7 +763,12 @@ export default function ProOnboarding() {
     setIsCoreComplete(false);
     setIsSending(true);
     try {
-      const data = await respondMut.mutateAsync({ onboardingId, answer: "I'd like to answer the optional questions to give you more context." });
+      let data: { reply: string; isComplete: boolean; suggestedIntegrations?: string[] };
+      if (!user && guestSession) {
+        data = await guestRespondMut.mutateAsync({ guestToken: guestSession.token, onboardingId, answer: "I'd like to answer the optional questions to give you more context." });
+      } else {
+        data = await respondMut.mutateAsync({ onboardingId, answer: "I'd like to answer the optional questions to give you more context." });
+      }
       setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
       if (data.isComplete) { setIsOnboardingComplete(true); if ((data as any).suggestedIntegrations?.length) setSuggestedIntegrations((data as any).suggestedIntegrations); }
     } catch (err: any) { toast.error("Failed to continue", { description: err.message }); }
@@ -775,7 +780,12 @@ export default function ProOnboarding() {
     setIsCoreComplete(false);
     setIsSending(true);
     try {
-      const data = await respondMut.mutateAsync({ onboardingId, answer: "That's enough for now. Please finalize the onboarding with what you have." });
+      let data: { reply: string; isComplete: boolean; suggestedIntegrations?: string[] };
+      if (!user && guestSession) {
+        data = await guestRespondMut.mutateAsync({ guestToken: guestSession.token, onboardingId, answer: "That's enough for now. Please finalize the onboarding with what you have." });
+      } else {
+        data = await respondMut.mutateAsync({ onboardingId, answer: "That's enough for now. Please finalize the onboarding with what you have." });
+      }
       if (data.isComplete || (data as any).isCoreComplete) {
         setIsOnboardingComplete(true);
         if ((data as any).suggestedIntegrations?.length) setSuggestedIntegrations((data as any).suggestedIntegrations);
