@@ -6,7 +6,8 @@ import DashboardLayout from "@/components/DashboardLayout";
 import {
   Users, Activity, Eye, Clock, MessageSquare, Zap, ChevronRight,
   Search, Filter, ArrowLeft, Globe, Monitor, BarChart2, List,
-  CheckCircle, AlertCircle, Mail, Calendar, TrendingUp, X
+  CheckCircle, AlertCircle, Mail, Calendar, TrendingUp, X, UserCheck,
+  Building2, ThumbsUp, ThumbsDown
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -516,11 +517,253 @@ function DemoLoginButton() {
   );
 }
 
+// ─── Guest Sessions Panel ────────────────────────────────────────────────────
+type GuestRow = {
+  id: number;
+  guestToken: string;
+  name: string | null;
+  email: string | null;
+  companyId: number | null;
+  onboardingId: number | null;
+  surveyId: number | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  companyName: string | null;
+  companyIndustry: string | null;
+  companySize: string | null;
+  companyWebsite: string | null;
+  surveyThumbs: "up" | "down" | null;
+  surveyCreatedAt: Date | string | null;
+};
+
+function GuestProgressBadges({ companyId }: { companyId: number }) {
+  const AGENTS = ["ceo", "cto", "cmo", "cfo"] as const;
+  const agentLabels: Record<string, string> = { ceo: "ARCH", cto: "FORGE", cmo: "SIGNAL", cfo: "LEDGER" };
+  const { data: progress = [] } = trpc.admin.guestOnboardingProgress.useQuery(
+    { companyId },
+    { staleTime: 30_000 }
+  );
+  const completedTypes = new Set((progress as any[]).filter((p: any) => p.status === "completed").map((p: any) => p.agentType));
+  return (
+    <div className="flex items-center gap-1">
+      {AGENTS.map(a => (
+        <span key={a} className={`text-[10px] px-1.5 py-0.5 rounded border font-mono ${
+          completedTypes.has(a) ? "border-emerald-400/40 text-emerald-400 bg-emerald-400/5" : "border-border text-muted-foreground/50"
+        }`}>{agentLabels[a]}</span>
+      ))}
+    </div>
+  );
+}
+
+function GuestsPanel() {
+  const [search, setSearch] = useState("");
+  const [selectedGuest, setSelectedGuest] = useState<GuestRow | null>(null);
+  const { data: guests = [], isLoading } = trpc.admin.guestSessions.useQuery();
+
+  const filtered = useMemo(() => {
+    const rows = guests as GuestRow[];
+    if (!search.trim()) return rows;
+    const q = search.toLowerCase();
+    return rows.filter(g =>
+      g.name?.toLowerCase().includes(q) ||
+      g.email?.toLowerCase().includes(q) ||
+      g.companyName?.toLowerCase().includes(q)
+    );
+  }, [guests, search]);
+
+  const total = (guests as GuestRow[]).length;
+  const withCompany = (guests as GuestRow[]).filter(g => g.companyId).length;
+  const withSurvey = (guests as GuestRow[]).filter(g => g.surveyId).length;
+  const thumbsUp = (guests as GuestRow[]).filter(g => g.surveyThumbs === "up").length;
+
+  return (
+    <div className="space-y-6">
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard label="Total Guests" value={total} icon={UserCheck} color="bg-emerald-400/10 text-emerald-400" />
+        <KpiCard label="Started Onboarding" value={withCompany} icon={Building2} color="bg-blue-400/10 text-blue-400" />
+        <KpiCard label="Completed Survey" value={withSurvey} icon={MessageSquare} color="bg-purple-400/10 text-purple-400" />
+        <KpiCard label="Thumbs Up" value={thumbsUp} icon={ThumbsUp} color="bg-amber-400/10 text-amber-400" />
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Search by name, email, or company…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-400/50 transition-colors"
+        />
+      </div>
+
+      {/* Table */}
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-muted/20 border-b border-border text-xs text-muted-foreground font-medium uppercase tracking-wider">
+          <div className="col-span-3">Guest</div>
+          <div className="col-span-3">Company</div>
+          <div className="col-span-3">Progress</div>
+          <div className="col-span-2">Survey</div>
+          <div className="col-span-1">Joined</div>
+        </div>
+        {isLoading ? (
+          <div className="py-16 text-center text-sm text-muted-foreground">Loading guests…</div>
+        ) : filtered.length === 0 ? (
+          <div className="py-16 text-center text-sm text-muted-foreground">
+            {total === 0 ? "No guest sessions yet — share the /onboarding/pro link to get started." : "No guests match your search"}
+          </div>
+        ) : (
+          filtered.map(g => (
+            <div
+              key={g.id}
+              onClick={() => setSelectedGuest(g)}
+              className="grid grid-cols-12 gap-4 px-4 py-4 border-b border-border/50 last:border-0 hover:bg-muted/20 cursor-pointer transition-colors group"
+            >
+              {/* Name + Email */}
+              <div className="col-span-3 flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-blue-400/10 flex items-center justify-center text-blue-400 font-semibold text-sm shrink-0">
+                  {(g.name || g.email || "?")[0].toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{g.name || "Unnamed"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{g.email || "—"}</p>
+                </div>
+              </div>
+              {/* Company */}
+              <div className="col-span-3 flex items-center min-w-0">
+                {g.companyName ? (
+                  <div className="min-w-0">
+                    <p className="text-sm text-foreground truncate">{g.companyName}</p>
+                    <p className="text-xs text-muted-foreground">{g.companyIndustry || g.companySize || "—"}</p>
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground italic">Not started</span>
+                )}
+              </div>
+              {/* Progress */}
+              <div className="col-span-3 flex items-center">
+                {g.companyId ? (
+                  <GuestProgressBadges companyId={g.companyId} />
+                ) : (
+                  <span className="text-xs text-muted-foreground italic">—</span>
+                )}
+              </div>
+              {/* Survey */}
+              <div className="col-span-2 flex items-center">
+                {g.surveyThumbs ? (
+                  <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium ${
+                    g.surveyThumbs === "up" ? "border-emerald-400/40 text-emerald-400" : "border-red-400/40 text-red-400"
+                  }`}>
+                    {g.surveyThumbs === "up" ? <ThumbsUp size={10} /> : <ThumbsDown size={10} />}
+                    {g.surveyThumbs === "up" ? "Positive" : "Negative"}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </div>
+              {/* Joined */}
+              <div className="col-span-1 flex items-center text-xs text-muted-foreground">
+                {fmtDate(g.createdAt)}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Guest Detail Slide-over */}
+      {selectedGuest && (
+        <GuestDetail guest={selectedGuest} onClose={() => setSelectedGuest(null)} />
+      )}
+    </div>
+  );
+}
+
+function GuestDetail({ guest, onClose }: { guest: GuestRow; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="w-full max-w-lg bg-background border-l border-border flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="p-6 border-b border-border flex items-start justify-between gap-4 shrink-0">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-full bg-blue-400/10 flex items-center justify-center text-blue-400 font-semibold text-sm">
+                {(guest.name || guest.email || "?")[0].toUpperCase()}
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">{guest.name || "Unnamed Guest"}</h2>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-blue-400/40 text-blue-400">Guest</span>
+            </div>
+            <p className="text-sm text-muted-foreground">{guest.email || "No email"}</p>
+            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1"><Calendar size={11} /> Joined {fmtDate(guest.createdAt)}</span>
+              <span className="flex items-center gap-1"><Clock size={11} /> Updated {fmtRelative(guest.updatedAt)}</span>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          {/* Company */}
+          {guest.companyName && (
+            <div className="border border-border rounded-xl p-4 space-y-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Company</h3>
+              {[
+                { label: "Name", value: guest.companyName },
+                { label: "Industry", value: guest.companyIndustry },
+                { label: "Size", value: guest.companySize },
+                { label: "Website", value: guest.companyWebsite },
+              ].map(({ label, value }) => value ? (
+                <div key={label} className="flex gap-3">
+                  <span className="text-xs text-muted-foreground w-16 shrink-0 pt-0.5">{label}</span>
+                  <span className="text-sm text-foreground break-words flex-1">{value}</span>
+                </div>
+              ) : null)}
+            </div>
+          )}
+
+          {/* Onboarding Progress */}
+          {guest.companyId && (
+            <div className="border border-border rounded-xl p-4">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Executive Interviews</h3>
+              <GuestProgressBadges companyId={guest.companyId} />
+            </div>
+          )}
+
+          {/* Survey */}
+          {guest.surveyThumbs && (
+            <div className="border border-border rounded-xl p-4">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Survey</h3>
+              <div className={`flex items-center gap-2 text-sm font-medium ${
+                guest.surveyThumbs === "up" ? "text-emerald-400" : "text-red-400"
+              }`}>
+                {guest.surveyThumbs === "up" ? <ThumbsUp size={14} /> : <ThumbsDown size={14} />}
+                {guest.surveyThumbs === "up" ? "Found Value" : "Didn't Find Value"}
+              </div>
+              {guest.surveyCreatedAt && (
+                <p className="text-xs text-muted-foreground mt-1">{fmtTime(guest.surveyCreatedAt)}</p>
+              )}
+            </div>
+          )}
+
+          {/* Token (for debugging) */}
+          <div className="border border-border/50 rounded-xl p-4">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Guest Token</h3>
+            <p className="text-xs font-mono text-muted-foreground break-all">{guest.guestToken}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminUsers() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [mainView, setMainView] = useState<"users" | "funnel" | "waitlist" | "demo">("users");
+  const [mainView, setMainView] = useState<"users" | "funnel" | "waitlist" | "guests" | "demo">("users");
   const [demoSeedStatus, setDemoSeedStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [demoSeedMessage, setDemoSeedMessage] = useState("");
 
@@ -611,6 +854,15 @@ export default function AdminUsers() {
                   Waitlist
                 </button>
                 <button
+                  onClick={() => setMainView("guests")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    mainView === "guests" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <UserCheck size={12} />
+                  Guests
+                </button>
+                <button
                   onClick={() => setMainView("demo")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     mainView === "demo" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
@@ -676,6 +928,9 @@ export default function AdminUsers() {
 
         {/* Waitlist View */}
         {mainView === "waitlist" && <WaitlistPanel />}
+
+        {/* Guests View */}
+        {mainView === "guests" && <GuestsPanel />}
 
         {/* Demo User Panel */}
         {mainView === "demo" && (

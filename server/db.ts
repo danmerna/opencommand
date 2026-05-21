@@ -1584,3 +1584,50 @@ export async function updateGuestSession(guestToken: string, data: Partial<Inser
   const db = await getDb(); if (!db) return;
   await db.update(guestSessions).set({ ...data, updatedAt: new Date() }).where(eq(guestSessions.guestToken, guestToken));
 }
+
+// ─── Admin: Guest Sessions ────────────────────────────────────────────────────
+export async function adminGetAllGuestSessions() {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      id: guestSessions.id,
+      guestToken: guestSessions.guestToken,
+      name: guestSessions.name,
+      email: guestSessions.email,
+      companyId: guestSessions.companyId,
+      onboardingId: guestSessions.onboardingId,
+      surveyId: guestSessions.surveyId,
+      createdAt: guestSessions.createdAt,
+      updatedAt: guestSessions.updatedAt,
+      // Company info
+      companyName: companies.name,
+      companyIndustry: companies.industry,
+      companySize: companies.companySize,
+      companyWebsite: companies.website,
+      // Survey info
+      surveyThumbs: onboardingSurveys.thumbs,
+      surveyCreatedAt: onboardingSurveys.createdAt,
+    })
+    .from(guestSessions)
+    .leftJoin(companies, eq(guestSessions.companyId, companies.id))
+    .leftJoin(onboardingSurveys, eq(guestSessions.surveyId, onboardingSurveys.id))
+    .orderBy(desc(guestSessions.createdAt));
+  return rows;
+}
+
+export async function adminGetGuestOnboardingProgress(companyId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: agentOnboardings.id,
+      agentType: agentOnboardings.agentType,
+      status: agentOnboardings.status,
+      completedAt: agentOnboardings.completedAt,
+      createdAt: agentOnboardings.createdAt,
+    })
+    .from(agentOnboardings)
+    .where(eq(agentOnboardings.companyId, companyId))
+    .orderBy(agentOnboardings.createdAt);
+}

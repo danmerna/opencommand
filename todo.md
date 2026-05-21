@@ -683,3 +683,9 @@
 - [x] Wire entire ProOnboarding flow to use guest procedures when not authenticated
 - [x] Pre-fill waitlist email at the end with the email entered at the gate
 - [x] Logged-in users bypass the gate and use existing protected procedures
+- [x] Add Guests tab to /admin/users with KPIs (total, started onboarding, completed survey, thumbs up)
+- [x] Add adminGetAllGuestSessions DB helper with joined company and survey data
+- [x] Add admin.guestSessions and admin.guestOnboardingProgress tRPC procedures
+- [x] Build GuestsPanel component with search, table, and detail slide-over
+- [x] Fix progress counter bug showing "5 of 4 executives" — now filters to exec types only (ceo/cto/cmo/cfo)
+- [x] End-to-end test: guest.init, guest.setupCompany, guest.startInterview all verified working

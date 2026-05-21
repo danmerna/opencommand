@@ -67,6 +67,7 @@ import {
   getContextManifest, upsertContextManifest, getContextManifestsByUserId,
   createOnboardingSurvey, getOnboardingSurveyByCompanyId,
   adminGetAllSurveys, adminGetSurveyByUserId, adminGetUserCompany, adminGetUserOnboardings,
+  adminGetAllGuestSessions, adminGetGuestOnboardingProgress,
   createGuestSession, getGuestSession, updateGuestSession,
 } from "./db";
 import { nanoid } from "nanoid";
@@ -3412,6 +3413,11 @@ const adminRouter = router({
   userOnboardings: adminProcedure
     .input(z.object({ userId: z.number() }))
     .query(({ input }) => adminGetUserOnboardings(input.userId)),
+  // ─── Guest Sessions ──────────────────────────────────────────────────────
+  guestSessions: adminProcedure.query(() => adminGetAllGuestSessions()),
+  guestOnboardingProgress: adminProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(({ input }) => adminGetGuestOnboardingProgress(input.companyId)),
 });
 
 

@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, guestToken, name, email, companyId, surveyId, createdAt FROM guest_sessions ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id, guestToken, name, email, companyId, surveyId, createdAt FROM guest_sessions ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "guestToken": "b84ca825aa17476499a732f5ea846c46",
+      "name": "Test Guest",
+      "email": "testguest@example.com",
+      "companyId": "210001",
+      "surveyId": "NULL",
+      "createdAt": "2026-05-21 20:32:29"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tguestToken\tname\temail\tcompanyId\tsurveyId\tcreatedAt\n1\tb84ca825aa17476499a732f5ea846c46\tTest Guest\ttestguest@example.com\t210001\tNULL\t2026-05-21 20:32:29\n",
+  "stderr": "",
+  "execution_time_ms": 314
+}

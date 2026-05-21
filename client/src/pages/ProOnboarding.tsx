@@ -966,7 +966,10 @@ export default function ProOnboarding() {
   const onboardingProgress = (() => {
     if (!user || !onboardingStatusQ.data) return null;
     const agents = onboardingStatusQ.data.agents ?? [];
-    const completed = agents.filter((a: any) => a.isOnboarded).length;
+    // Only count the 4 executive types (ceo, cto, cmo, cfo) — not Σ synthesis
+    const execTypes = new Set(["ceo", "cto", "cmo", "cfo"]);
+    const execAgents = agents.filter((a: any) => execTypes.has(a.type));
+    const completed = Math.min(execAgents.filter((a: any) => a.isOnboarded).length, 4);
     return { completed, total: 4 };
   })();
 
