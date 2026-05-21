@@ -361,6 +361,7 @@ export default function ProOnboarding() {
   const [sigmaLoading, setSigmaLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<{ subagents: any[]; goals: any[] } | null>(null);
   const [recsLoading, setRecsLoading] = useState(false);
+  const [activeGoalHorizon, setActiveGoalHorizon] = useState<string>("all");
 
   // Feedback + survey state
   const [thumbs, setThumbs] = useState<"up" | "down" | null>(null);
@@ -1665,71 +1666,136 @@ export default function ProOnboarding() {
           </TabsContent>
 
           {/* /goals Tab */}
-          <TabsContent value="goals" className="flex-1 overflow-y-auto px-6 py-8 m-0">
-            <div className="max-w-4xl mx-auto w-full">
+          <TabsContent value="goals" className="flex-1 overflow-y-auto m-0">
+            <div className="w-full">
               {recsLoading ? (
-                <div className="flex items-center justify-center py-16">
+                <div className="flex items-center justify-center py-16 px-6">
                   <div className="text-center">
                     <Loader2 size={24} className="animate-spin text-emerald-400 mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">Generating personalized goal prompts...</p>
                   </div>
                 </div>
               ) : recommendations?.goals?.length ? (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium text-foreground mb-1">/goals — Formatted Prompts</h3>
-                    <p className="text-xs text-muted-foreground mb-6">These are ready-to-use goal prompts for the OpenCommand /goals system. Copy any goal to use it directly.</p>
+                <div className="flex flex-col h-full">
+                  {/* Header + Horizon Subtabs */}
+                  <div className="border-b border-border px-4 sm:px-6 py-4 sticky top-0 bg-background z-10">
+                    <div className="max-w-4xl mx-auto">
+                      <h3 className="text-base sm:text-lg font-medium text-foreground mb-1">/goals — Formatted Prompts</h3>
+                      <p className="text-xs text-muted-foreground mb-4">Ready-to-use goal prompts. Copy any goal to use it directly.</p>
+                      {/* Horizon filter pills */}
+                      <nav className="flex gap-2 overflow-x-auto scrollbar-none -mb-px pb-0">
+                        {(() => {
+                          const horizons = Array.from(new Set(recommendations.goals.map((g: any) => g.horizon)));
+                          const horizonOrder = ["5", "4", "3", "2", "1"];
+                          const sorted = horizons.sort((a: string, b: string) => {
+                            const aIdx = horizonOrder.indexOf(a.charAt(0));
+                            const bIdx = horizonOrder.indexOf(b.charAt(0));
+                            return aIdx - bIdx;
+                          });
+                          return (
+                            <>
+                              <button
+                                onClick={() => setActiveGoalHorizon("all")}
+                                className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium border transition-colors shrink-0 ${
+                                  activeGoalHorizon === "all"
+                                    ? "bg-foreground/10 text-foreground border-foreground/20"
+                                    : "text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/50"
+                                }`}
+                              >
+                                All ({recommendations.goals.length})
+                              </button>
+                              {sorted.map((h: string) => {
+                                const count = recommendations.goals.filter((g: any) => g.horizon === h).length;
+                                const num = h.charAt(0);
+                                const colorMap: Record<string, string> = {
+                                  "5": "border-purple-400/40 bg-purple-500/10 text-purple-300",
+                                  "4": "border-blue-400/40 bg-blue-500/10 text-blue-300",
+                                  "3": "border-amber-400/40 bg-amber-500/10 text-amber-300",
+                                  "2": "border-orange-400/40 bg-orange-500/10 text-orange-300",
+                                  "1": "border-red-400/40 bg-red-500/10 text-red-300",
+                                };
+                                const activeColor = colorMap[num] ?? "border-foreground/20 bg-foreground/10 text-foreground";
+                                return (
+                                  <button
+                                    key={h}
+                                    onClick={() => setActiveGoalHorizon(h)}
+                                    className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium border transition-colors shrink-0 ${
+                                      activeGoalHorizon === h
+                                        ? activeColor
+                                        : "text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/50"
+                                    }`}
+                                  >
+                                    {h} ({count})
+                                  </button>
+                                );
+                              })}
+                            </>
+                          );
+                        })()}
+                      </nav>
+                    </div>
                   </div>
-                  <div className="grid gap-4">
-                    {recommendations.goals.map((goal, i) => (
-                      <div key={i} className="border border-border rounded-xl p-5 bg-card/50 relative group">
-                        <button
-                          onClick={() => handleCopyGoal(goal)}
-                          className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-muted"
-                          title="Copy goal prompt"
-                        >
-                          <Copy size={13} className="text-muted-foreground" />
-                        </button>
-                        <div className="flex items-center gap-2 mb-3">
-                          <Badge variant="outline" className={`text-[9px] ${getHorizonColor(goal.horizon)}`}>{goal.horizon}</Badge>
-                          <code className="text-xs font-mono text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">{goal.command}</code>
-                        </div>
-                        <div className="space-y-3">
-                          <div>
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Outcome</span>
-                            <p className="text-sm text-foreground/90 mt-0.5">{goal.outcome}</p>
+
+                  {/* Goal Cards */}
+                  <div className="px-4 sm:px-6 py-6 flex-1 overflow-y-auto">
+                    <div className="max-w-4xl mx-auto grid gap-4">
+                      {recommendations.goals
+                        .filter((goal: any) => activeGoalHorizon === "all" || goal.horizon === activeGoalHorizon)
+                        .map((goal: any, i: number) => (
+                          <div key={i} className="border border-border rounded-xl p-4 sm:p-5 bg-card/50 relative">
+                            {/* Copy button — always visible on mobile, hover on desktop */}
+                            <button
+                              onClick={() => handleCopyGoal(goal)}
+                              className="absolute top-3 right-3 sm:top-4 sm:right-4 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity p-1.5 rounded-md hover:bg-muted bg-muted/50 sm:bg-transparent group"
+                              title="Copy goal prompt"
+                            >
+                              <Copy size={13} className="text-muted-foreground" />
+                            </button>
+                            {/* Horizon badge + command */}
+                            <div className="flex flex-wrap items-center gap-2 mb-3 pr-8">
+                              <Badge variant="outline" className={`text-[9px] ${getHorizonColor(goal.horizon)}`}>{goal.horizon}</Badge>
+                              <code className="text-xs font-mono text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded break-all">{goal.command}</code>
+                            </div>
+                            {/* Card body */}
+                            <div className="space-y-3">
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Outcome</span>
+                                <p className="text-sm text-foreground/90 mt-0.5">{goal.outcome}</p>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Context</span>
+                                <ul className="mt-1 space-y-0.5">
+                                  {goal.context.map((c: string, j: number) => (
+                                    <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                                      <span className="text-muted-foreground mt-0.5 shrink-0">•</span>
+                                      <span className="break-words">{c}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Success Criteria</span>
+                                <ul className="mt-1 space-y-0.5">
+                                  {goal.success.map((s: string, j: number) => (
+                                    <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                                      <CheckCircle2 size={10} className="text-emerald-400 mt-0.5 shrink-0" />
+                                      <span className="break-words">{s}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Final Deliverable</span>
+                                <p className="text-xs text-foreground/80 mt-0.5 break-words">{goal.finalDeliverable}</p>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Context</span>
-                            <ul className="mt-1 space-y-0.5">
-                              {goal.context.map((c: string, j: number) => (
-                                <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
-                                  <span className="text-muted-foreground mt-0.5">•</span>{c}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Success Criteria</span>
-                            <ul className="mt-1 space-y-0.5">
-                              {goal.success.map((s: string, j: number) => (
-                                <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
-                                  <CheckCircle2 size={10} className="text-emerald-400 mt-0.5 shrink-0" />{s}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Final Deliverable</span>
-                            <p className="text-xs text-foreground/80 mt-0.5">{goal.finalDeliverable}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        ))}
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-16">
+                <div className="text-center py-16 px-6">
                   <Target size={24} className="text-muted-foreground mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground">Goal prompts will appear here after generation.</p>
                 </div>
@@ -1738,19 +1804,19 @@ export default function ProOnboarding() {
           </TabsContent>
         </Tabs>
 
-        {/* Footer */}
-        <div className="border-t border-border px-6 py-4 shrink-0">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-            <p className="text-xs text-muted-foreground">Your results are saved. Powered by OpenCommand.</p>
-            <div className="flex items-center gap-2">
+        {/* Sticky Footer — always visible across all tabs */}
+        <div className="border-t border-border px-4 sm:px-6 py-3 sm:py-4 shrink-0 sticky bottom-0 bg-background/95 backdrop-blur-sm z-20">
+          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+            <p className="text-xs text-muted-foreground hidden sm:block">Your results are saved. Powered by OpenCommand.</p>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
               <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs" onClick={handleDownloadSummary}>
-                <Download size={12} />Download Summary
+                <Download size={12} /><span className="hidden sm:inline">Download</span><span className="sm:hidden">Save</span>
               </Button>
               <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs" onClick={handleShareResults}>
-                <Share2 size={12} />Share Results
+                <Share2 size={12} /><span className="hidden sm:inline">Share Results</span><span className="sm:hidden">Share</span>
               </Button>
               <Button size="sm" className="gap-1.5 h-9 text-xs" onClick={handleLaunch}>
-                Share Feedback &amp; Join Waitlist <ArrowRight size={12} />
+                <Star size={12} /><span className="hidden sm:inline">Share Feedback &amp; Join Waitlist</span><span className="sm:hidden">Feedback</span> <ArrowRight size={12} />
               </Button>
             </div>
           </div>

@@ -698,3 +698,6 @@
 - [x] Fix: Guest onboarding fails to create FORGE/SIGNAL/LEDGER agents — "Please login (10001)" error for non-authenticated guests
 - [x] Add owner notification when someone fills out the email gate form on /onboarding/pro
 - [x] Fix: Guest flow "Failed to finalize" after ARCH interview — "Please login (10001)" error on finalize step
+- [x] Fix: Agent names in chat don't match — FORGE shows "SAGE", SIGNAL shows "NOVA", LEDGER shows "TED"
+- [x] Make goals page mobile-friendly with subtabs by category (2-day tactical, 3-week sprint, etc.)
+- [x] Make feedback button sticky across all three result tabs (Strategy, Team, Goals)
