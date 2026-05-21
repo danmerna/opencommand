@@ -43,6 +43,7 @@ import {
   executiveContextManifests, InsertExecutiveContextManifest,
   websiteAudits, InsertWebsiteAudit,
   quickStartResults, InsertQuickStartResult,
+  onboardingSurveys, InsertOnboardingSurvey,
 } from "../drizzle/schema";
 import type { InsertChangelogEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -1480,4 +1481,18 @@ export async function adminGetAllQuickStartLeads() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(quickStartResults).orderBy(desc(quickStartResults.createdAt));
+}
+
+// ─── Onboarding Surveys ──────────────────────────────────────────────────────
+export async function createOnboardingSurvey(data: InsertOnboardingSurvey) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(onboardingSurveys).values(data);
+  return result[0].insertId;
+}
+export async function getOnboardingSurveyByCompanyId(companyId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(onboardingSurveys).where(eq(onboardingSurveys.companyId, companyId)).limit(1);
+  return rows[0];
 }

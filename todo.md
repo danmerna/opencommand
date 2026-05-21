@@ -636,3 +636,25 @@
 - [x] Wire flow: after all interviews complete → generate recommendations → show tabbed results
 - [x] Add 54321 visual legend at top of results page
 - [x] Store recommendations in DB for return visits
+
+## Post-Results Feedback Flow + Waitlist
+- [x] Add generateSurvey tRPC endpoint (LLM generates 5 questions based on thumbs + interview context)
+- [x] Add feedback/survey DB storage (thumbs value, survey responses, email)
+- [x] Build feedback step UI: thumbs up/down binary choice
+- [x] Build dynamic survey UI: 5 questions rendered after LLM generates them
+- [x] For thumbs-up: include briefing frequency as one of the survey questions
+- [x] Build waitlist CTA at the end (email capture for OpenCommand access)
+- [x] Remove "Launch Mission Control" from the results page footer
+- [x] Move briefing frequency question out of company setup step
+
+## OG Meta Tags + Tagline Readability
+- [x] Add OG meta tags (title, description, image) to index.html for social sharing
+- [x] Improve tagline readability on homepage and in OG description
+
+## Post-Onboarding Follow-ups (All Three)
+- [x] Add generateSurvey tRPC procedure (LLM generates 5 questions based on thumbs + interview context)
+- [x] Add submitSurvey tRPC procedure (saves thumbs + responses + email to DB)
+- [x] Build feedback step UI: thumbs binary → dynamic 5-question survey → waitlist CTA
+- [x] Move briefing frequency question out of company setup into thumbs-up survey
+- [x] Add Download Summary button to results page (exports Strategy + Team + Goals as markdown)
+- [x] Add Share Results link to results page (Web Share API or clipboard fallback)

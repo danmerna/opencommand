@@ -1055,3 +1055,18 @@ export const quickStartResults = mysqlTable("quick_start_results", {
 });
 export type QuickStartResult = typeof quickStartResults.$inferSelect;
 export type InsertQuickStartResult = typeof quickStartResults.$inferInsert;
+
+// ─── Onboarding Surveys (Post-Demo Feedback) ─────────────────────────────────
+export const onboardingSurveys = mysqlTable("onboarding_surveys", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  companyId: int("companyId"),
+  thumbs: mysqlEnum("thumbs", ["up", "down"]).notNull(),
+  questions: json("questions"), // LLM-generated questions array
+  responses: json("responses"), // user answers array
+  briefingFrequency: varchar("briefingFrequency", { length: 32 }),
+  email: varchar("email", { length: 320 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type OnboardingSurvey = typeof onboardingSurveys.$inferSelect;
+export type InsertOnboardingSurvey = typeof onboardingSurveys.$inferInsert;

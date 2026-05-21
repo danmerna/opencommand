@@ -4,6 +4,7 @@ import {
   ChevronRight, Loader2, Send, Building2, Users, Brain,
   SkipForward, Calendar, Clock, CalendarDays, CalendarRange,
   BarChart3, Link2, ExternalLink, Zap, Eye, Lock,
+  ThumbsUp, ThumbsDown, Download, Share2, Mail, Star,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -35,7 +36,10 @@ type OnboardingStep =
   | "sigma-calibration"
   | "generating-strategy"
   | "results"
+  | "feedback"
   | "complete";
+
+type SurveyQuestion = { id: string; text: string; type: string; options: string[]; placeholder: string };
 
 // ─── Static Data ──────────────────────────────────────────────────────────────
 
@@ -322,6 +326,16 @@ export default function ProOnboarding() {
   const [recommendations, setRecommendations] = useState<{ subagents: any[]; goals: any[] } | null>(null);
   const [recsLoading, setRecsLoading] = useState(false);
 
+  // Feedback + survey state
+  const [thumbs, setThumbs] = useState<"up" | "down" | null>(null);
+  const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
+  const [surveyResponses, setSurveyResponses] = useState<Record<string, string>>({});
+  const [surveyLoading, setSurveyLoading] = useState(false);
+  const [surveySubmitting, setSurveySubmitting] = useState(false);
+  const [surveySubmitted, setSurveySubmitted] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
 
@@ -340,6 +354,8 @@ export default function ProOnboarding() {
   const respondMut = trpc.onboarding.respond.useMutation();
   const generateStrategyMut = trpc.onboarding.generateStrategy.useMutation();
   const generateRecsMut = trpc.onboarding.generateRecommendations.useMutation();
+  const generateSurveyMut = trpc.onboarding.generateSurvey.useMutation();
+  const submitSurveyMut = trpc.onboarding.submitSurvey.useMutation();
   // sigmaCalibrate is handled via generateStrategy
   const liveContextualizeMut = trpc.context.liveContextualize.useMutation();
 
@@ -457,21 +473,20 @@ export default function ProOnboarding() {
           .catch(() => { /* non-fatal */ })
           .finally(() => setEnriching(false));
       }
-      setStep("briefing-frequency");
+      // Skip briefing-frequency step — it's now collected in the post-results survey
+      setStep("creating-agents");
+      await createAllAgents(company.id);
     } catch (err: any) {
       toast.error("Failed to set up company", { description: err.message });
     }
   }
 
   async function handleBriefingFrequencyConfirm() {
+    // Briefing frequency is now collected in the post-results survey.
+    // This function is kept for backwards compatibility but skips directly to creating agents.
     if (!companyId) return;
-    try {
-      await updateCompanyMut.mutateAsync({ id: companyId, briefingFrequency });
-      setStep("creating-agents");
-      await createAllAgents(companyId);
-    } catch (err: any) {
-      toast.error("Failed to save briefing preference", { description: err.message });
-    }
+    setStep("creating-agents");
+    await createAllAgents(companyId);
   }
 
   async function createAllAgents(cId: number) {
@@ -674,8 +689,106 @@ export default function ProOnboarding() {
   }
 
   function handleLaunch() {
-    setStep("complete");
-    setTimeout(() => navigate("/mission-control"), 1200);
+    setStep("feedback");
+  }
+
+  function handleDownloadSummary() {
+    if (!strategy && !recommendations) return;
+    const lines: string[] = [];
+    lines.push(`# OpenCommand Executive Intelligence Report`);
+    lines.push(`**Company:** ${companyName}`);
+    lines.push(`**Generated:** ${new Date().toLocaleDateString()}`);
+    lines.push("");
+    if (strategy) {
+      lines.push("## Strategy");
+      lines.push(strategy);
+      lines.push("");
+    }
+    if (recommendations?.subagents?.length) {
+      lines.push("## Recommended Subagents");
+      recommendations.subagents.forEach(a => {
+        lines.push(`### ${a.name}`);
+        lines.push(`**Mission:** ${a.mission}`);
+        lines.push(`**Horizons:** ${a.horizons}`);
+        lines.push(`**Tools:** ${a.tools}`);
+        lines.push(`**Autonomy:** ${a.autonomy}`);
+        lines.push(`**Guardrails:** ${a.guardrails}`);
+        lines.push(`**Why:** ${a.rationale}`);
+        lines.push("");
+      });
+    }
+    if (recommendations?.goals?.length) {
+      lines.push("## /goals — Formatted Prompts");
+      recommendations.goals.forEach(g => {
+        lines.push(`### ${g.command}`);
+        lines.push(`**Horizon:** ${g.horizon}`);
+        lines.push(`**Outcome:** ${g.outcome}`);
+        lines.push(`**Context:**`);
+        g.context.forEach((c: string) => lines.push(`  - ${c}`));
+        lines.push(`**Success Criteria:**`);
+        g.success.forEach((s: string) => lines.push(`  - ${s}`));
+        lines.push(`**Final Deliverable:** ${g.finalDeliverable}`);
+        lines.push("");
+      });
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `opencommand-${companyName.toLowerCase().replace(/\s+/g, "-")}-report.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Summary downloaded");
+  }
+
+  function handleShareResults() {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: `${companyName} — OpenCommand Executive Intelligence`, text: `I just built my AI executive team with OpenCommand. Here's my personalized strategy.`, url });
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard", { description: "Share this link to show your results." });
+    }
+  }
+
+  async function handleThumbsSelect(value: "up" | "down") {
+    if (!companyId) return;
+    setThumbs(value);
+    setSurveyLoading(true);
+    try {
+      const data = await generateSurveyMut.mutateAsync({ companyId, thumbs: value });
+      setSurveyQuestions(data.questions as SurveyQuestion[]);
+    } catch {
+      toast.error("Failed to generate survey questions");
+    } finally {
+      setSurveyLoading(false);
+    }
+  }
+
+  async function handleSurveySubmit() {
+    if (!companyId || !thumbs) return;
+    setSurveySubmitting(true);
+    try {
+      const responses = surveyQuestions.map(q => ({ questionId: q.id, answer: surveyResponses[q.id] ?? "" }));
+      // Extract briefing frequency from survey responses if thumbs up
+      const bfQuestion = surveyQuestions.find(q => q.id === "q4" && thumbs === "up");
+      const bfAnswer = bfQuestion ? (surveyResponses["q4"] ?? "") : undefined;
+      const bfMap: Record<string, string> = { "Daily": "daily", "Weekly": "weekly", "Monthly": "monthly", "Quarterly": "quarterly" };
+      const bfValue = bfAnswer ? (bfMap[bfAnswer] ?? bfAnswer.toLowerCase()) : briefingFrequency;
+      await submitSurveyMut.mutateAsync({
+        companyId,
+        thumbs,
+        questions: surveyQuestions,
+        responses,
+        briefingFrequency: bfValue,
+        email: waitlistEmail || undefined,
+      });
+      setSurveySubmitted(true);
+    } catch (err: any) {
+      toast.error("Failed to submit survey", { description: err.message });
+    } finally {
+      setSurveySubmitting(false);
+    }
   }
 
   function handleCopyGoal(goal: any) {
@@ -1376,10 +1489,213 @@ export default function ProOnboarding() {
 
         {/* Footer */}
         <div className="border-t border-border px-6 py-4 shrink-0">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Your results are saved. Next briefing: {freqLabel.toLowerCase()}.</p>
-            <Button className="gap-2 h-10" onClick={handleLaunch}>Launch Mission Control <ArrowRight size={13} /></Button>
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+            <p className="text-xs text-muted-foreground">Your results are saved. Powered by OpenCommand.</p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs" onClick={handleDownloadSummary}>
+                <Download size={12} />Download Summary
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs" onClick={handleShareResults}>
+                <Share2 size={12} />Share Results
+              </Button>
+              <Button size="sm" className="gap-1.5 h-9 text-xs" onClick={handleLaunch}>
+                Share Feedback &amp; Join Waitlist <ArrowRight size={12} />
+              </Button>
+            </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Feedback + Waitlist ─────────────────────────────────────────────────
+
+  if (step === "feedback") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-8">
+        <div className="max-w-lg w-full">
+          {!surveySubmitted ? (
+            <>
+              {/* Header */}
+              <div className="text-center mb-10">
+                <div className="w-12 h-12 rounded-full bg-foreground/5 border border-border flex items-center justify-center mx-auto mb-4">
+                  <Star size={20} className="text-amber-400" />
+                </div>
+                <h2 className="text-2xl font-light text-foreground tracking-tight mb-2">How was your experience?</h2>
+                <p className="text-muted-foreground text-sm">Your feedback shapes the future of OpenCommand.</p>
+              </div>
+
+              {/* Thumbs */}
+              {!thumbs && (
+                <div className="flex gap-4 justify-center mb-8">
+                  <button
+                    onClick={() => handleThumbsSelect("up")}
+                    className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/50 hover:border-emerald-400/50 hover:bg-emerald-950/20 transition-all p-8 w-44"
+                  >
+                    <ThumbsUp size={32} className="text-emerald-400" />
+                    <span className="text-sm font-medium text-foreground">Found value</span>
+                    <span className="text-xs text-muted-foreground text-center">The insights were relevant and useful</span>
+                  </button>
+                  <button
+                    onClick={() => handleThumbsSelect("down")}
+                    className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/50 hover:border-red-400/50 hover:bg-red-950/20 transition-all p-8 w-44"
+                  >
+                    <ThumbsDown size={32} className="text-red-400" />
+                    <span className="text-sm font-medium text-foreground">Didn't find value</span>
+                    <span className="text-xs text-muted-foreground text-center">The experience missed the mark</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Selected thumbs indicator */}
+              {thumbs && (
+                <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 mb-6 ${
+                  thumbs === "up" ? "border-emerald-800/40 bg-emerald-950/10" : "border-red-800/40 bg-red-950/10"
+                }`}>
+                  {thumbs === "up" ? <ThumbsUp size={14} className="text-emerald-400" /> : <ThumbsDown size={14} className="text-red-400" />}
+                  <span className="text-sm text-foreground">{thumbs === "up" ? "You found value" : "You didn't find value"}</span>
+                  <button onClick={() => { setThumbs(null); setSurveyQuestions([]); setSurveyResponses({}); }} className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors">Change</button>
+                </div>
+              )}
+
+              {/* Survey loading */}
+              {surveyLoading && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <Loader2 size={20} className="animate-spin text-muted-foreground mx-auto mb-3" />
+                    <p className="text-xs text-muted-foreground">Generating personalized questions...</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Survey questions */}
+              {!surveyLoading && surveyQuestions.length > 0 && (
+                <div className="space-y-6 mb-8">
+                  {surveyQuestions.map((q, i) => (
+                    <div key={q.id}>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        <span className="text-muted-foreground text-xs mr-2">{i + 1}.</span>{q.text}
+                      </label>
+                      {q.type === "text" && (
+                        <Textarea
+                          value={surveyResponses[q.id] ?? ""}
+                          onChange={e => setSurveyResponses(prev => ({ ...prev, [q.id]: e.target.value }))}
+                          placeholder={q.placeholder || "Your answer..."}
+                          className="resize-none min-h-[80px] text-sm"
+                        />
+                      )}
+                      {q.type === "select" && (
+                        <div className="space-y-2">
+                          {q.options.map(opt => (
+                            <button
+                              key={opt}
+                              onClick={() => setSurveyResponses(prev => ({ ...prev, [q.id]: opt }))}
+                              className={`w-full text-left rounded-lg border px-4 py-3 text-sm transition-all ${
+                                surveyResponses[q.id] === opt
+                                  ? "border-foreground/50 bg-foreground/5 text-foreground"
+                                  : "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground"
+                              }`}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {q.type === "rating" && (
+                        <div className="flex gap-2">
+                          {[1, 2, 3, 4, 5].map(n => (
+                            <button
+                              key={n}
+                              onClick={() => setSurveyResponses(prev => ({ ...prev, [q.id]: String(n) }))}
+                              className={`w-10 h-10 rounded-lg border text-sm font-medium transition-all ${
+                                surveyResponses[q.id] === String(n)
+                                  ? "border-foreground bg-foreground text-background"
+                                  : "border-border text-muted-foreground hover:border-foreground/30"
+                              }`}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Submit survey */}
+              {!surveyLoading && surveyQuestions.length > 0 && (
+                <Button
+                  className="w-full h-11 gap-2"
+                  onClick={handleSurveySubmit}
+                  disabled={surveySubmitting}
+                >
+                  {surveySubmitting ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
+                  Submit Feedback
+                </Button>
+              )}
+            </>
+          ) : (
+            /* Post-submit: Waitlist CTA */
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-400/10 border-2 border-emerald-400/30 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 size={28} className="text-emerald-400" />
+              </div>
+              <h2 className="text-2xl font-light text-foreground tracking-tight mb-2">Thank you for your feedback</h2>
+              <p className="text-muted-foreground text-sm mb-8">Your insights help us build the best AI executive platform for founders and operators.</p>
+
+              {/* Waitlist */}
+              <div className="rounded-2xl border border-border bg-card/50 p-6 mb-6">
+                <div className="flex items-center gap-2 justify-center mb-1">
+                  <Sparkles size={14} className="text-amber-400" />
+                  <span className="text-sm font-semibold text-foreground">Get Early Access to OpenCommand</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-5">Be first to know when full platform access opens. No spam — just the launch announcement.</p>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="email"
+                      value={waitlistEmail}
+                      onChange={e => setWaitlistEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/30"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    className="h-10 px-4 gap-1.5 shrink-0"
+                    onClick={async () => {
+                      if (!waitlistEmail.trim()) return;
+                      try {
+                        await submitSurveyMut.mutateAsync({
+                          companyId: companyId!,
+                          thumbs: thumbs!,
+                          questions: surveyQuestions,
+                          responses: surveyQuestions.map(q => ({ questionId: q.id, answer: surveyResponses[q.id] ?? "" })),
+                          email: waitlistEmail,
+                        });
+                        toast.success("You're on the waitlist!", { description: "We'll reach out when access opens." });
+                        setWaitlistEmail("");
+                      } catch { toast.error("Failed to join waitlist"); }
+                    }}
+                    disabled={!waitlistEmail.trim()}
+                  >
+                    Join Waitlist <ArrowRight size={12} />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-center">
+                <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs" onClick={() => setStep("results")}>
+                  Back to Results
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs" onClick={handleShareResults}>
+                  <Share2 size={12} />Share Results
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

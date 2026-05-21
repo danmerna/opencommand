@@ -65,6 +65,7 @@ import {
   createRalfLog, getRalfLogsByTask, getRalfLogsByAgent, updateRalfLogStatus,
   createSubAgentRecommendation, getSubAgentRecommendations, getSubAgentRecommendationsByExecutive, updateSubAgentRecommendationStatus,
   getContextManifest, upsertContextManifest, getContextManifestsByUserId,
+  createOnboardingSurvey, getOnboardingSurveyByCompanyId,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -2382,6 +2383,134 @@ Rules:
       await updateOnboarding(completed[0].id, { recommendations } as any);
 
       return recommendations;
+    }),
+
+  // Generate a personalized 5-question survey based on thumbs + interview context
+  generateSurvey: protectedProcedure
+    .input(z.object({ companyId: z.number(), thumbs: z.enum(["up", "down"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const onboardings = await getOnboardingsByCompanyId(input.companyId);
+      const completed = onboardings.filter(o => o.status === "completed");
+      const company = await getCompanyById(input.companyId);
+
+      const executiveSummaries = completed.map(o => `${o.agentType.toUpperCase()}: ${o.summary ?? "No summary"}`).join("\n");
+
+      const SURVEY_SYSTEM_PROMPT = `You are a product researcher for OpenCommand, an AI executive team platform. A business owner just completed an onboarding demo where they were interviewed by AI executives (ARCH, NOVA, SAGE, LEDGER). You need to generate a personalized 5-question survey to gather meaningful product feedback.
+
+The user gave a thumbs ${input.thumbs === "up" ? "UP (found value)" : "DOWN (did not find value)"}.
+
+${input.thumbs === "up" ? `For thumbs UP users, explore:
+- What specific insight or recommendation resonated most
+- Which executive felt most relevant to their business
+- What they would want the AI to do next for their company
+- One question about their preferred update cadence (daily/weekly/monthly/quarterly)
+- What feature would make them pay for this immediately` : `For thumbs DOWN users, explore:
+- What felt inaccurate or irrelevant about the recommendations
+- Which executive felt least useful and why
+- What they expected but didn't get
+- What would have made the experience more valuable
+- Whether they'd try again with different context`}
+
+IMPORTANT: Make questions specific to this company's context. Reference their actual industry, company size, and interview topics. Do NOT ask generic questions.
+
+Respond with a JSON array of exactly 5 questions. Each question must have:
+- id: string (q1-q5)
+- text: the question text (personalized to their business)
+- type: "text" | "select" | "rating"
+- options: array of strings (only for select type, 3-5 options)
+- placeholder: string (for text type, a helpful hint)`;
+
+      const userPrompt = `Company: ${company?.name ?? "Unknown"} | Industry: ${company?.industry ?? "N/A"} | Size: ${(company as any)?.companySize ?? "N/A"}
+
+Executive Interview Summaries:
+${executiveSummaries}
+
+Generate 5 personalized survey questions.`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: SURVEY_SYSTEM_PROMPT },
+          { role: "user" as const, content: userPrompt },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "survey_questions",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                questions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "string" },
+                      text: { type: "string" },
+                      type: { type: "string" },
+                      options: { type: "array", items: { type: "string" } },
+                      placeholder: { type: "string" },
+                    },
+                    required: ["id", "text", "type", "options", "placeholder"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["questions"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      const content = (response.choices[0]?.message?.content ?? "{}") as string;
+      let questions: { id: string; text: string; type: string; options: string[]; placeholder: string }[] = [];
+      try {
+        const parsed = JSON.parse(content);
+        questions = parsed.questions ?? [];
+      } catch {
+        questions = [];
+      }
+
+      return { questions };
+    }),
+
+  // Submit survey responses + waitlist email
+  submitSurvey: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      thumbs: z.enum(["up", "down"]),
+      questions: z.array(z.object({ id: z.string(), text: z.string(), type: z.string(), options: z.array(z.string()), placeholder: z.string() })),
+      responses: z.array(z.object({ questionId: z.string(), answer: z.string() })),
+      briefingFrequency: z.string().optional(),
+      email: z.string().email().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await createOnboardingSurvey({
+        userId: ctx.user.id,
+        companyId: input.companyId,
+        thumbs: input.thumbs,
+        questions: input.questions,
+        responses: input.responses,
+        briefingFrequency: input.briefingFrequency ?? null,
+        email: input.email ?? null,
+      });
+
+      // Update briefing frequency on company if provided
+      if (input.briefingFrequency) {
+        await updateCompany(input.companyId, { briefingFrequency: input.briefingFrequency as any });
+      }
+
+      // Notify owner
+      try {
+        const company = await getCompanyById(input.companyId);
+        await notifyOwner({
+          title: `Onboarding Survey — Thumbs ${input.thumbs === "up" ? "👍 UP" : "👎 DOWN"}`,
+          content: `${company?.name ?? "Unknown company"} (${ctx.user.email ?? ctx.user.name ?? "user"}) completed the onboarding survey.\n\nThumb: ${input.thumbs}\nBriefing frequency: ${input.briefingFrequency ?? "not set"}\n\nResponses:\n${input.responses.map(r => `• ${r.questionId}: ${r.answer}`).join("\n")}`,
+        });
+      } catch {}
+
+      return { success: true };
     }),
 });
 
