@@ -602,3 +602,13 @@
 
 ## ProOnboarding Page Restoration
 - [x] Restore /onboarding/pro to 'Build Your AI Executive Team' design: Beta Access banner, headline, 3-step flow (Connect Tools → Pull Context → Personalized Interviews), and executive agent cards (CEO/ARCH, CTO/FORGE, CMO/SIGNAL, CFO/LEDGER)
+
+## ProOnboarding Full Interview Flow Upgrade
+- [x] Remove email gate from /onboarding/pro — go straight into interview flow
+- [x] Add Σ as 5th card on the landing section ("After your interviews, Σ identifies your single highest-leverage move")
+- [x] Add sample question preview teaser (show ARCH's first Socratic question as a teaser)
+- [x] Wire "Begin Onboarding" / executive card CTAs into the actual Socratic interview flow (start, respond, complete)
+- [x] CTA checks auth: logged-in users go straight to company-setup, unauthenticated users are redirected via OAuth and returned to /onboarding/pro
+- [x] Show per-executive progress (questions answered, complete/incomplete state) — progress bar + question dots in interview header
+- [x] After all 4 executives complete, trigger Σ synthesis step (sigma-calibration screen)
+- [x] Show Σ synthesis result as the final screen, then strategy reveal, then launch Mission Control
