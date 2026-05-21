@@ -599,3 +599,6 @@
 - [x] Register /onboarding/pro route in App.tsx
 - [x] Add auth redirect suppression for public onboarding path
 - [x] Verify TypeScript compiles and tests pass
+
+## ProOnboarding Page Restoration
+- [x] Restore /onboarding/pro to 'Build Your AI Executive Team' design: Beta Access banner, headline, 3-step flow (Connect Tools → Pull Context → Personalized Interviews), and executive agent cards (CEO/ARCH, CTO/FORGE, CMO/SIGNAL, CFO/LEDGER)
