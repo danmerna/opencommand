@@ -668,3 +668,9 @@
 - [x] Add Survey Responses link from /admin/users header
 - [x] Build /admin/survey-responses page (thumbs split summary + flat table + expandable rows + CSV export)
 - [x] Register /admin/survey-responses route in App.tsx
+
+## Sticky CTA Bar on /onboarding/pro
+- [x] Add sticky floating CTA bar that appears after scrolling past the headline
+- [x] Bar contains "Begin Onboarding" button + one-line value prop
+- [x] Disappears when user clicks or scrolls back to top
+- [x] Smooth slide-in animation

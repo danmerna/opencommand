@@ -126,6 +126,17 @@ const STEP_TO_TYPE: Record<string, string> = {
 
 function LandingSection({ onBegin, progress }: { onBegin: () => void; progress?: { completed: number; total: number } | null }) {
   const loginUrl = typeof window !== "undefined" ? getLoginUrl("/onboarding/pro") : "#";
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const headlineRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0, rootMargin: "-80px 0px 0px 0px" }
+    );
+    if (headlineRef.current) observer.observe(headlineRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const sigma = {
     code: "Σ", title: "Synthesis Engine", subtitle: "Highest-Leverage Move",
@@ -165,7 +176,7 @@ function LandingSection({ onBegin, progress }: { onBegin: () => void; progress?:
         </div>
 
         {/* Main Headline */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-12" ref={headlineRef}>
           <h1 className="text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl leading-[1.1]">
             Build Your<br />AI Executive Team
           </h1>
@@ -272,7 +283,29 @@ function LandingSection({ onBegin, progress }: { onBegin: () => void; progress?:
           <p className="mt-4 text-xs text-white/30">Free during beta. No credit card required.</p>
         </div>
 
-        {/* Footer */}
+        {/* Sticky Floating CTA Bar */}
+      <div
+        className={`fixed bottom-6 left-1/2 z-50 -translate-x-1/2 transition-all duration-300 ease-out ${
+          showStickyBar ? "translate-y-0 opacity-100 pointer-events-auto" : "translate-y-4 opacity-0 pointer-events-none"
+        }`}
+        style={{ width: "min(calc(100vw - 2rem), 480px)" }}
+      >
+        <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/15 bg-black/80 px-5 py-3.5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white truncate">Build Your AI Executive Team</p>
+            <p className="text-xs text-white/45 truncate">5 min · Free during beta</p>
+          </div>
+          <button
+            onClick={onBegin}
+            className="group flex shrink-0 items-center gap-1.5 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-white/90 active:scale-95"
+          >
+            {progress && progress.completed > 0 ? "Resume" : "Begin"}
+            <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Footer */}
         <p className="mt-10 text-center text-xs text-white/25">
           OpenCommand — The OS for non-human labor.{" "}
           <a href="/" className="underline underline-offset-2 hover:text-white/50 transition-colors">Back to home</a>
