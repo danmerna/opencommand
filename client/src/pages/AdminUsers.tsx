@@ -100,7 +100,7 @@ function TimelineEvent({ event }: { event: { type: string; label: string; create
 
 // ─── User Detail Panel ────────────────────────────────────────────────────────
 function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void }) {
-  const [tab, setTab] = useState<"timeline" | "pages" | "sessions" | "feedback">("timeline");
+  const [tab, setTab] = useState<"timeline" | "pages" | "sessions" | "feedback" | "company" | "onboarding" | "survey">("timeline");
 
   const { data: kpis } = trpc.admin.userKpis.useQuery({ userId: user.id });
   const { data: timeline = [] } = trpc.admin.userTimeline.useQuery({ userId: user.id });
@@ -108,12 +108,18 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
   const { data: sessions = [] } = trpc.admin.userSessions.useQuery({ userId: user.id });
   const { data: feedback = [] } = trpc.admin.userFeedback.useQuery({ userId: user.id });
   const { data: dailyActivity = [] } = trpc.admin.userDailyActivity.useQuery({ userId: user.id });
+  const { data: company } = trpc.admin.userCompany.useQuery({ userId: user.id });
+  const { data: onboardings = [] } = trpc.admin.userOnboardings.useQuery({ userId: user.id });
+  const { data: survey } = trpc.admin.userSurvey.useQuery({ userId: user.id });
 
   const tabs = [
     { id: "timeline", label: "Activity", icon: Activity },
+    { id: "company", label: "Company", icon: BarChart2 },
+    { id: "onboarding", label: "Onboarding", icon: CheckCircle },
+    { id: "survey", label: "Survey", icon: MessageSquare },
     { id: "pages", label: "Pages", icon: Globe },
     { id: "sessions", label: "Sessions", icon: Monitor },
-    { id: "feedback", label: "Feedback", icon: MessageSquare },
+    { id: "feedback", label: "Feedback", icon: Filter },
   ] as const;
 
   return (
@@ -257,6 +263,114 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
                     <p className="text-sm text-foreground">{f.content}</p>
                   </div>
                 ))
+              )}
+            </div>
+          )}
+
+          {tab === "company" && (
+            <div className="space-y-4">
+              {!company ? (
+                <p className="text-sm text-muted-foreground text-center py-12">No company created yet</p>
+              ) : (
+                <>
+                  <div className="border border-border rounded-xl p-5 space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground mb-3">Company Info</h3>
+                    {[
+                      { label: "Name", value: (company as any).name },
+                      { label: "Industry", value: (company as any).industry },
+                      { label: "Website", value: (company as any).website },
+                      { label: "Company Size", value: (company as any).companySize },
+                      { label: "Mission", value: (company as any).mission },
+                    ].map(({ label, value }) => value ? (
+                      <div key={label} className="flex gap-3">
+                        <span className="text-xs text-muted-foreground w-24 shrink-0 pt-0.5">{label}</span>
+                        <span className="text-sm text-foreground break-words flex-1">{value}</span>
+                      </div>
+                    ) : null)}
+                    <div className="flex gap-3">
+                      <span className="text-xs text-muted-foreground w-24 shrink-0 pt-0.5">Created</span>
+                      <span className="text-sm text-foreground">{fmtDate((company as any).createdAt)}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {tab === "onboarding" && (
+            <div className="space-y-3">
+              {onboardings.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">No onboarding sessions yet</p>
+              ) : (
+                (onboardings as any[]).map((o: any) => (
+                  <div key={o.id} className="border border-border rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground capitalize">{o.agentType || "unknown"}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
+                          o.status === "completed" ? "border-emerald-400/40 text-emerald-400" :
+                          o.status === "in_progress" ? "border-blue-400/40 text-blue-400" :
+                          "border-border text-muted-foreground"
+                        }`}>{o.status}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{fmtDate(o.createdAt)}</span>
+                    </div>
+                    {o.questionsAsked != null && (
+                      <p className="text-xs text-muted-foreground">{o.questionsAsked} questions asked</p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {tab === "survey" && (
+            <div className="space-y-4">
+              {!survey ? (
+                <p className="text-sm text-muted-foreground text-center py-12">No survey submitted yet</p>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 p-4 border border-border rounded-xl">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
+                      (survey as any).thumbs === "up" ? "bg-emerald-400/10" : "bg-red-400/10"
+                    }`}>
+                      {(survey as any).thumbs === "up" ? "👍" : "👎"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {(survey as any).thumbs === "up" ? "Found Value" : "Didn't Find Value"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{fmtTime((survey as any).createdAt)}</p>
+                    </div>
+                    {(survey as any).briefingFrequency && (
+                      <div className="ml-auto text-right">
+                        <p className="text-xs text-muted-foreground">Briefing</p>
+                        <p className="text-sm font-medium text-foreground capitalize">{(survey as any).briefingFrequency}</p>
+                      </div>
+                    )}
+                  </div>
+                  {(survey as any).email && (
+                    <div className="flex items-center gap-2 p-3 bg-emerald-400/5 border border-emerald-400/20 rounded-lg">
+                      <Mail size={13} className="text-emerald-400" />
+                      <span className="text-sm text-foreground">{(survey as any).email}</span>
+                      <span className="text-xs text-emerald-400 ml-auto">Waitlist</span>
+                    </div>
+                  )}
+                  {Array.isArray((survey as any).questions) && (survey as any).questions.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Survey Responses</h4>
+                      {((survey as any).questions as string[]).map((q: string, i: number) => (
+                        <div key={i} className="border border-border rounded-xl p-4">
+                          <p className="text-xs text-muted-foreground mb-1">Q{i + 1}</p>
+                          <p className="text-sm font-medium text-foreground mb-2">{q}</p>
+                          <p className="text-sm text-foreground/80">
+                            {Array.isArray((survey as any).responses) ? ((survey as any).responses as string[])[i] || "—" : "—"}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -505,6 +619,15 @@ export default function AdminUsers() {
                   <Zap size={12} />
                   Demo
                 </button>
+              </div>
+              <a
+                href="/admin/survey-responses"
+                className="flex items-center gap-1.5 px-3 py-2 bg-muted/40 border border-border rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <MessageSquare size={12} />
+                Survey Responses
+              </a>
+              <div className="flex items-center gap-1 bg-muted/40 border border-border rounded-xl p-1 hidden">
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 border border-border rounded-lg px-3 py-2">
                 <Users size={13} />

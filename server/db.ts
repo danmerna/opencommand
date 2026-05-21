@@ -1496,3 +1496,71 @@ export async function getOnboardingSurveyByCompanyId(companyId: number) {
   const rows = await db.select().from(onboardingSurveys).where(eq(onboardingSurveys.companyId, companyId)).limit(1);
   return rows[0];
 }
+
+// ─── Admin Survey Helpers ─────────────────────────────────────────────────────
+export async function adminGetAllSurveys() {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: onboardingSurveys.id,
+      companyId: onboardingSurveys.companyId,
+      thumbs: onboardingSurveys.thumbs,
+      questions: onboardingSurveys.questions,
+      responses: onboardingSurveys.responses,
+      email: onboardingSurveys.email,
+      briefingFrequency: onboardingSurveys.briefingFrequency,
+      createdAt: onboardingSurveys.createdAt,
+      companyName: companies.name,
+      userName: users.name,
+      userEmail: users.email,
+      userId: users.id,
+    })
+    .from(onboardingSurveys)
+    .leftJoin(companies, eq(onboardingSurveys.companyId, companies.id))
+    .leftJoin(users, eq(companies.userId, users.id))
+    .orderBy(desc(onboardingSurveys.createdAt));
+}
+
+export async function adminGetSurveyByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select({
+      id: onboardingSurveys.id,
+      companyId: onboardingSurveys.companyId,
+      thumbs: onboardingSurveys.thumbs,
+      questions: onboardingSurveys.questions,
+      responses: onboardingSurveys.responses,
+      email: onboardingSurveys.email,
+      briefingFrequency: onboardingSurveys.briefingFrequency,
+      createdAt: onboardingSurveys.createdAt,
+      companyName: companies.name,
+    })
+    .from(onboardingSurveys)
+    .leftJoin(companies, eq(onboardingSurveys.companyId, companies.id))
+    .where(eq(companies.userId, userId))
+    .limit(1);
+  return rows[0];
+}
+
+export async function adminGetUserCompany(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(companies)
+    .where(eq(companies.userId, userId))
+    .limit(1);
+  return rows[0];
+}
+
+export async function adminGetUserOnboardings(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(agentOnboardings)
+    .where(eq(agentOnboardings.userId, userId))
+    .orderBy(desc(agentOnboardings.createdAt));
+}

@@ -66,6 +66,7 @@ import {
   createSubAgentRecommendation, getSubAgentRecommendations, getSubAgentRecommendationsByExecutive, updateSubAgentRecommendationStatus,
   getContextManifest, upsertContextManifest, getContextManifestsByUserId,
   createOnboardingSurvey, getOnboardingSurveyByCompanyId,
+  adminGetAllSurveys, adminGetSurveyByUserId, adminGetUserCompany, adminGetUserOnboardings,
 } from "./db";
 import { nanoid } from "nanoid";
 import { assembleContext } from "./integrations/contextAssembler";
@@ -3046,6 +3047,18 @@ const adminRouter = router({
       }
       return [];
     }),
+
+  // ─── Survey Responses ────────────────────────────────────────────────────
+  allSurveys: adminProcedure.query(() => adminGetAllSurveys()),
+  userSurvey: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => adminGetSurveyByUserId(input.userId)),
+  userCompany: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => adminGetUserCompany(input.userId)),
+  userOnboardings: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => adminGetUserOnboardings(input.userId)),
 });
 
 

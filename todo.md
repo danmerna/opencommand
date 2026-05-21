@@ -658,3 +658,13 @@
 - [x] Move briefing frequency question out of company setup into thumbs-up survey
 - [x] Add Download Summary button to results page (exports Strategy + Team + Goals as markdown)
 - [x] Add Share Results link to results page (Web Share API or clipboard fallback)
+
+## Admin Analytics Dashboard
+- [x] Audit existing schema for activity_events / feature_events tables (used existing featureEvents + pageViews + userSessions)
+- [x] Promote owner account to admin role in DB
+- [x] Add adminGetAllSurveys, adminGetSurveyByUserId, adminGetUserCompany, adminGetUserOnboardings DB helpers
+- [x] Add admin.allSurveys, admin.userSurvey, admin.userCompany, admin.userOnboardings tRPC procedures
+- [x] Enhance /admin/users UserDetail panel: add Company, Onboarding, and Survey tabs
+- [x] Add Survey Responses link from /admin/users header
+- [x] Build /admin/survey-responses page (thumbs split summary + flat table + expandable rows + CSV export)
+- [x] Register /admin/survey-responses route in App.tsx
