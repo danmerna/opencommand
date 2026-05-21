@@ -612,3 +612,8 @@
 - [x] Show per-executive progress (questions answered, complete/incomplete state) — progress bar + question dots in interview header
 - [x] After all 4 executives complete, trigger Σ synthesis step (sigma-calibration screen)
 - [x] Show Σ synthesis result as the final screen, then strategy reveal, then launch Mission Control
+
+## ProOnboarding UX Refinements
+- [x] Add "Company Website" field to Tell Us About Your Company page
+- [x] Lock all integration cards with "Coming Soon" badge (visible but not clickable)
+- [x] Add progress indicator on landing page for returning logged-in users mid-onboarding

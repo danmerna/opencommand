@@ -3,7 +3,7 @@ import {
   ArrowRight, CheckCircle2, Plug, Database, MessageSquare, Sparkles,
   ChevronRight, Loader2, Send, Building2, Users, Brain,
   SkipForward, Calendar, Clock, CalendarDays, CalendarRange,
-  BarChart3, Link2, ExternalLink, Zap, Eye,
+  BarChart3, Link2, ExternalLink, Zap, Eye, Lock,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -117,7 +117,7 @@ const STEP_TO_TYPE: Record<string, string> = {
 
 // ─── Landing Section ──────────────────────────────────────────────────────────
 
-function LandingSection({ onBegin }: { onBegin: () => void }) {
+function LandingSection({ onBegin, progress }: { onBegin: () => void; progress?: { completed: number; total: number } | null }) {
   const loginUrl = typeof window !== "undefined" ? getLoginUrl("/onboarding/pro") : "#";
 
   const sigma = {
@@ -235,6 +235,20 @@ function LandingSection({ onBegin }: { onBegin: () => void }) {
           </p>
         </div>
 
+        {/* Progress indicator for returning users */}
+        {progress && progress.completed > 0 && (
+          <div className="mb-8 rounded-2xl border border-indigo-400/20 bg-indigo-400/[0.04] p-5 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium text-white">Your Progress</p>
+              <span className="text-xs text-indigo-300">{progress.completed} of {progress.total} executives complete</span>
+            </div>
+            <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-full rounded-full bg-indigo-400 transition-all" style={{ width: `${Math.round((progress.completed / progress.total) * 100)}%` }} />
+            </div>
+            <p className="mt-3 text-xs text-white/50">Pick up where you left off — your progress is saved.</p>
+          </div>
+        )}
+
         {/* CTA — no email gate */}
         <div className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 backdrop-blur-xl text-center">
           <h2 className="text-xl font-semibold text-white mb-1">Start Your Executive Interviews</h2>
@@ -245,7 +259,7 @@ function LandingSection({ onBegin }: { onBegin: () => void }) {
             onClick={onBegin}
             className="group inline-flex min-h-12 items-center justify-center rounded-2xl bg-white px-8 text-sm font-semibold text-black transition hover:bg-white/90"
           >
-            Begin Onboarding
+            {progress && progress.completed > 0 ? "Resume Onboarding" : "Begin Onboarding"}
             <ArrowRight className="ml-2 transition group-hover:translate-x-0.5" size={15} />
           </button>
           <p className="mt-4 text-xs text-white/30">Free during beta. No credit card required.</p>
@@ -272,6 +286,7 @@ export default function ProOnboarding() {
   const [companyName, setCompanyName] = useState("");
   const [companyMission, setCompanyMission] = useState("");
   const [companyIndustry, setCompanyIndustry] = useState("");
+  const [companyWebsite, setCompanyWebsite] = useState("");
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [briefingFrequency, setBriefingFrequency] = useState<BriefingFrequency>("weekly");
   const [createdAgents, setCreatedAgents] = useState<{ id: number; type: string }[]>([]);
@@ -342,6 +357,7 @@ export default function ProOnboarding() {
     setCompanyName(existingCompany.name ?? "");
     setCompanyMission(existingCompany.mission ?? "");
     setCompanyIndustry(existingCompany.industry ?? "");
+    setCompanyWebsite((existingCompany as any).website ?? "");
     if ((existingCompany as any).briefingFrequency) {
       setBriefingFrequency((existingCompany as any).briefingFrequency as BriefingFrequency);
     }
@@ -387,7 +403,7 @@ export default function ProOnboarding() {
   async function handleCompanySetup() {
     if (!companyName.trim()) { toast.error("Please enter a company name"); return; }
     try {
-      await createCompanyMut.mutateAsync({ name: companyName.trim(), mission: companyMission.trim() || undefined, industry: companyIndustry.trim() || undefined });
+      await createCompanyMut.mutateAsync({ name: companyName.trim(), mission: companyMission.trim() || undefined, industry: companyIndustry.trim() || undefined, website: companyWebsite.trim() || undefined });
       await utils.companies.list.invalidate();
       const companies = await utils.companies.list.fetch();
       const company = companies[0];
@@ -616,8 +632,16 @@ export default function ProOnboarding() {
 
   // ─── Landing ──────────────────────────────────────────────────────────────
 
+  // Compute progress for returning users
+  const onboardingProgress = (() => {
+    if (!user || !onboardingStatusQ.data) return null;
+    const agents = onboardingStatusQ.data.agents ?? [];
+    const completed = agents.filter((a: any) => a.isOnboarded).length;
+    return { completed, total: 4 };
+  })();
+
   if (step === "landing") {
-    return <LandingSection onBegin={handleBegin} />;
+    return <LandingSection onBegin={handleBegin} progress={onboardingProgress} />;
   }
 
   // ─── Company Setup ────────────────────────────────────────────────────────
@@ -644,6 +668,10 @@ export default function ProOnboarding() {
             <div>
               <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-2">Industry</label>
               <Input value={companyIndustry} onChange={e => setCompanyIndustry(e.target.value)} placeholder="e.g. SaaS, E-commerce, Healthcare..." className="h-11" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-2">Company Website</label>
+              <Input value={companyWebsite} onChange={e => setCompanyWebsite(e.target.value)} placeholder="e.g. https://acme.com" className="h-11" />
             </div>
           </div>
           <Button className="w-full h-11 gap-2" onClick={handleCompanySetup} disabled={createCompanyMut.isPending}>
@@ -750,30 +778,19 @@ export default function ProOnboarding() {
           <h2 className="text-2xl font-light text-foreground tracking-tight mb-2">Power {integrationExec.roleTitle}'s Context Engine</h2>
           <p className="text-muted-foreground text-sm mb-6">Connected tools let us pull real data before the interview starts. Instead of generic questions, {integrationExec.name.split("—")[0].trim()} will reference your actual numbers.</p>
           <div className="space-y-3 mb-6">
-            {suggestions.map(s => {
-              const isConnected = connectedSlugs.has(s.slug);
-              const isConnecting = connectingProvider === s.slug;
-              return (
-                <div key={s.slug} className={`flex items-center gap-4 border rounded-xl p-4 transition-all ${isConnected ? "border-emerald-800/40 bg-emerald-950/10" : "border-border hover:border-foreground/30"}`}>
-                  <span className="text-xl shrink-0">{s.icon}</span>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">{s.name}</p>
-                      {isConnected && <Badge variant="outline" className="text-[9px] px-1.5 py-0 text-emerald-400 border-emerald-400/30">Connected</Badge>}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.description}</p>
+            {suggestions.map(s => (
+              <div key={s.slug} className="flex items-center gap-4 border border-border rounded-xl p-4 opacity-70">
+                <span className="text-xl shrink-0">{s.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-foreground">{s.name}</p>
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 text-amber-400 border-amber-400/30">Coming Soon</Badge>
                   </div>
-                  {isConnected ? (
-                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                  ) : (
-                    <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 shrink-0" onClick={() => handleConnectOAuth(s.slug)} disabled={isConnecting}>
-                      {isConnecting ? <Loader2 size={12} className="animate-spin" /> : <Link2 size={12} />}
-                      Connect
-                    </Button>
-                  )}
+                  <p className="text-xs text-muted-foreground mt-0.5">{s.description}</p>
                 </div>
-              );
-            })}
+                <Lock size={14} className="text-muted-foreground shrink-0" />
+              </div>
+            ))}
           </div>
           <div className="flex gap-3">
             {isSkippable && (
