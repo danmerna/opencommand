@@ -10,6 +10,8 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
+const PUBLIC_UNAUTHENTICATED_PATHS = ["/onboarding/pro", "/waitlist", "/creators"];
+
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
@@ -17,6 +19,9 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
 
   if (!isUnauthorized) return;
+
+  // Don't redirect on public pages that don't require auth
+  if (PUBLIC_UNAUTHENTICATED_PATHS.some(p => window.location.pathname.startsWith(p))) return;
 
   window.location.href = getLoginUrl();
 };

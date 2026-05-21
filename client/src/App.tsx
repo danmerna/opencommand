@@ -25,6 +25,7 @@ import Settings from "./pages/Settings";
 import AdminUsers from "./pages/AdminUsers";
 import Waitlist from "./pages/Waitlist";
 import AuthRelay from "./pages/AuthRelay";
+import ProOnboarding from "./pages/ProOnboarding";
 import { usePageTracking } from "./hooks/usePageTracking";
 import { LeadResponsePage } from "./pages/LeadResponsePage";
 import { LeadScoringDashboard } from "./pages/LeadScoringDashboard";
@@ -106,6 +107,7 @@ function Router() {
         <AppLayout><FeedbackAdmin /></AppLayout>
       </Route>
       <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/onboarding/pro" component={ProOnboarding} />
       <Route path="/onboarding/:agentId">
         <AppLayout><AgentOnboarding /></AppLayout>
       </Route>
