@@ -694,3 +694,4 @@
 - [x] Add post-onboarding results email via Resend after guest completes Σ synthesis
 - [x] Add "Copy shareable link" button to Guests detail slide-over
 - [x] Add "Convert to user" action in Guests tab with invite email
+- [x] Fix: "Begin Onboarding" and "Begin" buttons on /onboarding/pro landing page not working

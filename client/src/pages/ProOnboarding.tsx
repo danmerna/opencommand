@@ -4,7 +4,7 @@ import {
   ChevronRight, Loader2, Send, Building2, Users, Brain,
   SkipForward, Calendar, Clock, CalendarDays, CalendarRange,
   BarChart3, Link2, ExternalLink, Zap, Eye, Lock,
-  ThumbsUp, ThumbsDown, Download, Share2, Mail, Star,
+  ThumbsUp, ThumbsDown, Download, Share2, Mail, Star, X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -473,7 +473,6 @@ export default function ProOnboarding() {
   // ─── CTA handler: show email gate for guests, or proceed if logged in ────────
 
   function handleBegin() {
-    if (authLoading) return;
     if (user) {
       // Logged-in user: proceed directly
       setStep("company-setup");
@@ -485,6 +484,7 @@ export default function ProOnboarding() {
       setStep("company-setup");
       return;
     }
+    // If auth is still loading, treat as guest (don't block the button)
     // New guest: show email gate
     setShowEmailGate(true);
   }
@@ -974,7 +974,60 @@ export default function ProOnboarding() {
   })();
 
   if (step === "landing") {
-    return <LandingSection onBegin={handleBegin} progress={onboardingProgress} />;
+    return (
+      <>
+        <LandingSection onBegin={handleBegin} progress={onboardingProgress} />
+        {/* Email Gate Modal for new guests */}
+        {showEmailGate && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="relative w-full max-w-sm rounded-2xl border border-white/10 bg-[#111] p-8 shadow-2xl">
+              <button
+                onClick={() => setShowEmailGate(false)}
+                className="absolute top-4 right-4 text-white/40 hover:text-white/80 transition"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+              <h3 className="text-lg font-semibold text-white mb-1">Quick intro before we start</h3>
+              <p className="text-sm text-white/50 mb-6">We'll use this to personalize your executive team.</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-white/50 uppercase tracking-widest block mb-1.5">Your Name *</label>
+                  <Input
+                    value={guestName}
+                    onChange={e => { setGuestName(e.target.value); setGuestEmailError(""); }}
+                    placeholder="e.g. Taylor Smith"
+                    className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    onKeyDown={e => e.key === "Enter" && handleGuestSubmit()}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-white/50 uppercase tracking-widest block mb-1.5">Email *</label>
+                  <Input
+                    value={guestEmail}
+                    onChange={e => { setGuestEmail(e.target.value); setGuestEmailError(""); }}
+                    placeholder="you@company.com"
+                    type="email"
+                    className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    onKeyDown={e => e.key === "Enter" && handleGuestSubmit()}
+                  />
+                </div>
+                {guestEmailError && <p className="text-xs text-red-400">{guestEmailError}</p>}
+              </div>
+              <Button
+                onClick={handleGuestSubmit}
+                disabled={guestSubmitting}
+                className="w-full mt-6 h-11 bg-white text-black font-semibold hover:bg-white/90"
+              >
+                {guestSubmitting ? "Setting up..." : "Continue"}
+                <ArrowRight size={14} className="ml-2" />
+              </Button>
+              <p className="mt-4 text-center text-xs text-white/30">No account needed. Free during beta.</p>
+            </div>
+          </div>
+        )}
+      </>
+    );
   }
 
   // ─── Company Setup ────────────────────────────────────────────────────────
