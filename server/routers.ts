@@ -109,6 +109,42 @@ const companiesRouter = router({
     await createCompany({ userId: ctx.user.id, name: "OpenCommand HQ", mission: "Build the intent-to-outcome engine that powers zero-human companies.", industry: "AI / SaaS", monthlyBudget: "5000.00", status: "active" });
     return { success: true };
   }),
+
+  enrichWebsite: protectedProcedure
+    .input(z.object({ companyId: z.number(), url: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      try {
+        const { load } = await import("cheerio");
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(input.url, {
+          headers: { "User-Agent": "OpenCommand-Bot/1.0" },
+          signal: controller.signal,
+          redirect: "follow",
+        });
+        clearTimeout(timeout);
+        if (!res.ok) return { success: false, error: "Could not reach website" };
+        const html = await res.text();
+        const $ = load(html);
+        const title = $("title").first().text().trim() || $("meta[property='og:title']").attr("content")?.trim() || "";
+        const description = $("meta[name='description']").attr("content")?.trim() || $("meta[property='og:description']").attr("content")?.trim() || "";
+        const favicon = $("link[rel='icon']").attr("href") || $("link[rel='shortcut icon']").attr("href") || "/favicon.ico";
+        const ogImage = $("meta[property='og:image']").attr("content")?.trim() || "";
+        // Try to extract a tagline from h1
+        const h1 = $("h1").first().text().trim() || "";
+        const enrichment = { title, description, favicon, ogImage, h1 };
+        // Update company mission/industry if they were empty
+        const company = await getCompanyById(input.companyId);
+        if (company) {
+          const updates: Record<string, unknown> = {};
+          if (!company.mission && description) updates.mission = description;
+          if (Object.keys(updates).length > 0) await updateCompany(input.companyId, updates as any);
+        }
+        return { success: true, enrichment };
+      } catch (err: any) {
+        return { success: false, error: err.message ?? "Failed to fetch website" };
+      }
+    }),
 });
 
 // ─── Departments Router ──────────────────────────────────────────────────────

@@ -287,6 +287,9 @@ export default function ProOnboarding() {
   const [companyMission, setCompanyMission] = useState("");
   const [companyIndustry, setCompanyIndustry] = useState("");
   const [companyWebsite, setCompanyWebsite] = useState("");
+  const [websiteHint, setWebsiteHint] = useState("");
+  const [enrichment, setEnrichment] = useState<{ title?: string; description?: string; h1?: string } | null>(null);
+  const [enriching, setEnriching] = useState(false);
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [briefingFrequency, setBriefingFrequency] = useState<BriefingFrequency>("weekly");
   const [createdAgents, setCreatedAgents] = useState<{ id: number; type: string }[]>([]);
@@ -325,6 +328,7 @@ export default function ProOnboarding() {
   // Mutations
   const createCompanyMut = trpc.companies.create.useMutation();
   const updateCompanyMut = trpc.companies.update.useMutation();
+  const enrichWebsiteMut = trpc.companies.enrichWebsite.useMutation();
   const createAgentMut = trpc.agents.create.useMutation();
   const startOnboardingMut = trpc.onboarding.start.useMutation();
   const respondMut = trpc.onboarding.respond.useMutation();
@@ -400,15 +404,52 @@ export default function ProOnboarding() {
 
   // ─── Company Setup ────────────────────────────────────────────────────────
 
+  function normalizeUrl(raw: string): string {
+    let url = raw.trim();
+    if (!url) return "";
+    if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+    return url;
+  }
+
+  function validateWebsite(raw: string) {
+    if (!raw.trim()) { setWebsiteHint(""); return; }
+    const normalized = normalizeUrl(raw);
+    try {
+      new URL(normalized);
+      setWebsiteHint("");
+    } catch {
+      setWebsiteHint("This doesn\u2019t look like a valid URL. We\u2019ll try to auto-fix it.");
+    }
+  }
+
   async function handleCompanySetup() {
     if (!companyName.trim()) { toast.error("Please enter a company name"); return; }
+    const normalizedWebsite = normalizeUrl(companyWebsite);
+    if (normalizedWebsite) setCompanyWebsite(normalizedWebsite);
     try {
-      await createCompanyMut.mutateAsync({ name: companyName.trim(), mission: companyMission.trim() || undefined, industry: companyIndustry.trim() || undefined, website: companyWebsite.trim() || undefined });
+      await createCompanyMut.mutateAsync({ name: companyName.trim(), mission: companyMission.trim() || undefined, industry: companyIndustry.trim() || undefined, website: normalizedWebsite || undefined });
       await utils.companies.list.invalidate();
       const companies = await utils.companies.list.fetch();
       const company = companies[0];
       if (!company) throw new Error("Company not created");
       setCompanyId(company.id);
+      // Auto-enrich from website in background
+      if (normalizedWebsite) {
+        setEnriching(true);
+        enrichWebsiteMut.mutateAsync({ companyId: company.id, url: normalizedWebsite })
+          .then(result => {
+            if (result.success && result.enrichment) {
+              setEnrichment(result.enrichment);
+              // If mission was empty and we got a description, update local state
+              if (!companyMission.trim() && result.enrichment.description) {
+                setCompanyMission(result.enrichment.description);
+              }
+              toast.success("Website analyzed", { description: `Found: ${result.enrichment.title || result.enrichment.h1 || "metadata extracted"}` });
+            }
+          })
+          .catch(() => { /* non-fatal */ })
+          .finally(() => setEnriching(false));
+      }
       setStep("briefing-frequency");
     } catch (err: any) {
       toast.error("Failed to set up company", { description: err.message });
@@ -671,7 +712,20 @@ export default function ProOnboarding() {
             </div>
             <div>
               <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-2">Company Website</label>
-              <Input value={companyWebsite} onChange={e => setCompanyWebsite(e.target.value)} placeholder="e.g. https://acme.com" className="h-11" />
+              <Input
+                value={companyWebsite}
+                onChange={e => { setCompanyWebsite(e.target.value); validateWebsite(e.target.value); }}
+                onBlur={() => {
+                  if (companyWebsite.trim() && !/^https?:\/\//i.test(companyWebsite.trim())) {
+                    setCompanyWebsite(normalizeUrl(companyWebsite));
+                    setWebsiteHint("");
+                  }
+                }}
+                placeholder="e.g. https://acme.com"
+                className="h-11"
+              />
+              {websiteHint && <p className="text-[11px] text-amber-500 mt-1.5">{websiteHint}</p>}
+              {!websiteHint && companyWebsite.trim() && <p className="text-[11px] text-muted-foreground mt-1.5">We'll pull metadata from your site to pre-populate context for your executives.</p>}
             </div>
           </div>
           <Button className="w-full h-11 gap-2" onClick={handleCompanySetup} disabled={createCompanyMut.isPending}>
@@ -694,7 +748,23 @@ export default function ProOnboarding() {
             <span className="text-xs text-muted-foreground uppercase tracking-widest">Briefing Cadence</span>
           </div>
           <h2 className="text-2xl font-light text-foreground tracking-tight mb-2">How often should your executives brief you?</h2>
-          <p className="text-muted-foreground text-sm mb-8">Your executive team will deliver strategic briefings on this schedule.</p>
+          <p className="text-muted-foreground text-sm mb-6">Your executive team will deliver strategic briefings on this schedule.</p>
+          {enriching && (
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 mb-6">
+              <Loader2 size={12} className="animate-spin text-muted-foreground" />
+              <p className="text-[11px] text-muted-foreground">Analyzing your website for context...</p>
+            </div>
+          )}
+          {enrichment && !enriching && (
+            <div className="rounded-lg border border-emerald-800/30 bg-emerald-950/10 px-4 py-3 mb-6">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle2 size={12} className="text-emerald-400" />
+                <p className="text-[11px] font-medium text-emerald-300">Website context extracted</p>
+              </div>
+              {enrichment.title && <p className="text-xs text-foreground/80">{enrichment.title}</p>}
+              {enrichment.description && <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">{enrichment.description}</p>}
+            </div>
+          )}
           <div className="space-y-3 mb-6">
             {BRIEFING_OPTIONS.map(opt => (
               <button key={opt.value} onClick={() => setBriefingFrequency(opt.value)} className={`w-full flex items-center gap-4 rounded-xl border p-4 text-left transition-all ${briefingFrequency === opt.value ? "border-foreground/50 bg-foreground/5" : "border-border hover:border-foreground/20"}`}>

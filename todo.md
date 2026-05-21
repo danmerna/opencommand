@@ -617,3 +617,8 @@
 - [x] Add "Company Website" field to Tell Us About Your Company page
 - [x] Lock all integration cards with "Coming Soon" badge (visible but not clickable)
 - [x] Add progress indicator on landing page for returning logged-in users mid-onboarding
+
+## Website URL Validation + Auto-Enrichment
+- [x] Add URL validation on company website field with auto-prepend https:// and subtle hint
+- [x] Add server-side website metadata scraping endpoint (title, description, favicon)
+- [x] After company setup, auto-enrich company context from website metadata for executive interviews
