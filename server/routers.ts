@@ -69,6 +69,7 @@ import {
   createOnboardingSurvey, getOnboardingSurveyByCompanyId,
   adminGetAllSurveys, adminGetSurveyByUserId, adminGetUserCompany, adminGetUserOnboardings,
   adminGetAllGuestSessions, adminGetGuestOnboardingProgress,
+  adminGetOnboardingStats,
   createGuestSession, getGuestSession, updateGuestSession,
 } from "./db";
 import { nanoid } from "nanoid";
@@ -2478,9 +2479,11 @@ Rules:
       try {
         const execCount = completed.length;
         const agentTypes = completed.map(o => o.agentType.toUpperCase()).join(", ");
+        const origin = (ctx.req.headers.origin as string) || (ctx.req.headers.referer as string)?.replace(/\/[^/]*$/, "") || "https://opencommand.co";
+        const resultsUrl = `${origin}/onboarding/pro`;
         await notifyOwner({
           title: `✅ Onboarding Complete — ${company?.name ?? "Unknown Company"}`,
-          content: `${ctx.user.name || ctx.user.email} just completed the executive onboarding (${execCount} executive${execCount !== 1 ? "s" : ""}: ${agentTypes}). ${recommendations.subagents.length} subagents and ${recommendations.goals.length} /goal contracts generated.`,
+          content: `${ctx.user.name || ctx.user.email} just completed the executive onboarding (${execCount} executive${execCount !== 1 ? "s" : ""}: ${agentTypes}). ${recommendations.subagents.length} subagents and ${recommendations.goals.length} /goal contracts generated.\n\nView their results: ${resultsUrl}`,
         });
       } catch {}
 
@@ -2911,9 +2914,10 @@ Generate 3-5 subagents and 3-5 goals. Make everything specific to this company's
         const agentTypes = completed.map(o => o.agentType.toUpperCase()).join(", ");
         const guestName = session.name ?? "Anonymous";
         const guestEmail = session.email ?? "no email";
+        const resultsUrl = `https://opencommand.co/onboarding/pro?token=${input.guestToken}`;
         await notifyOwner({
           title: `✅ Guest Onboarding Complete — ${company?.name ?? "Unknown Company"}`,
-          content: `${guestName} (${guestEmail}) just completed the guest executive onboarding (${execCount} executive${execCount !== 1 ? "s" : ""}: ${agentTypes}). ${recommendations.subagents.length} subagents and ${recommendations.goals.length} /goal contracts generated.`,
+          content: `${guestName} (${guestEmail}) just completed the guest executive onboarding (${execCount} executive${execCount !== 1 ? "s" : ""}: ${agentTypes}). ${recommendations.subagents.length} subagents and ${recommendations.goals.length} /goal contracts generated.\n\nView their results: ${resultsUrl}`,
         });
       } catch {}
 
@@ -3581,6 +3585,8 @@ const adminRouter = router({
   guestOnboardingProgress: adminProcedure
     .input(z.object({ companyId: z.number() }))
     .query(({ input }) => adminGetGuestOnboardingProgress(input.companyId)),
+
+  onboardingStats: adminProcedure.query(() => adminGetOnboardingStats()),
 
   // Convert a guest session to a full user by sending an invite email
   convertGuestToUser: adminProcedure

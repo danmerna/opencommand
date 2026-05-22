@@ -7,7 +7,7 @@ import {
   Users, Activity, Eye, Clock, MessageSquare, Zap, ChevronRight,
   Search, Filter, ArrowLeft, Globe, Monitor, BarChart2, List,
   CheckCircle, AlertCircle, Mail, Calendar, TrendingUp, X, UserCheck,
-  Building2, ThumbsUp, ThumbsDown, Copy, Link, UserPlus, Loader2
+  Building2, ThumbsUp, ThumbsDown, Copy, Link, UserPlus, Loader2, Award
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -852,6 +852,10 @@ export default function AdminUsers() {
     enabled: user?.role === "admin",
   });
 
+  const { data: onboardingStats } = trpc.admin.onboardingStats.useQuery(undefined, {
+    enabled: user?.role === "admin",
+  });
+
   const filtered = useMemo(() => {
     if (!search.trim()) return allUsers as AdminUser[];
     const q = search.toLowerCase();
@@ -958,6 +962,20 @@ export default function AdminUsers() {
         {/* Summary KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <KpiCard label="Total Users" value={allUsers.length} icon={Users} color="bg-emerald-400/10 text-emerald-400" />
+          <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4 col-span-2 md:col-span-1">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-violet-400/10 text-violet-400 shrink-0">
+              <Award size={18} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-2xl font-semibold text-foreground">{onboardingStats?.total ?? 0}</p>
+              <p className="text-xs text-muted-foreground">Onboardings Complete</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-muted-foreground/70">{onboardingStats?.thisWeek ?? 0} this week</span>
+                <span className="text-muted-foreground/30">·</span>
+                <span className="text-xs text-muted-foreground/70">{onboardingStats?.guestTotal ?? 0} guest</span>
+              </div>
+            </div>
+          </div>
           <KpiCard
             label="Signed Up Today"
             value={(allUsers as AdminUser[]).filter(u => {

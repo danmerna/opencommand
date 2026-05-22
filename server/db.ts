@@ -1631,3 +1631,69 @@ export async function adminGetGuestOnboardingProgress(companyId: number) {
     .where(eq(agentOnboardings.companyId, companyId))
     .orderBy(agentOnboardings.createdAt);
 }
+
+// ─── Onboarding Completion Stats ─────────────────────────────────────────────
+export async function adminGetOnboardingStats() {
+  const db = await getDb(); if (!db) return null;
+
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Authenticated user completions: count distinct companies that have recommendations
+  // (recommendations are set when generateRecommendations fires = full onboarding done)
+  const [authTotal] = await db
+    .select({ count: sql<number>`count(distinct ${agentOnboardings.companyId})` })
+    .from(agentOnboardings)
+    .where(and(eq(agentOnboardings.status, "completed"), sql`${agentOnboardings.recommendations} IS NOT NULL`));
+
+  const [authThisWeek] = await db
+    .select({ count: sql<number>`count(distinct ${agentOnboardings.companyId})` })
+    .from(agentOnboardings)
+    .where(and(
+      eq(agentOnboardings.status, "completed"),
+      sql`${agentOnboardings.recommendations} IS NOT NULL`,
+      sql`${agentOnboardings.completedAt} >= ${startOfWeek.toISOString().slice(0, 19).replace('T', ' ')}`
+    ));
+
+  const [authThisMonth] = await db
+    .select({ count: sql<number>`count(distinct ${agentOnboardings.companyId})` })
+    .from(agentOnboardings)
+    .where(and(
+      eq(agentOnboardings.status, "completed"),
+      sql`${agentOnboardings.recommendations} IS NOT NULL`,
+      sql`${agentOnboardings.completedAt} >= ${startOfMonth.toISOString().slice(0, 19).replace('T', ' ')}`
+    ));
+
+  // Guest completions: guest sessions that have recommendations set
+  const [guestTotal] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(guestSessions)
+    .where(sql`${guestSessions.recommendations} IS NOT NULL`);
+
+  const [guestThisWeek] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(guestSessions)
+    .where(and(
+      sql`${guestSessions.recommendations} IS NOT NULL`,
+      sql`${guestSessions.createdAt} >= ${startOfWeek.toISOString().slice(0, 19).replace('T', ' ')}`
+    ));
+
+  const [guestThisMonth] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(guestSessions)
+    .where(and(
+      sql`${guestSessions.recommendations} IS NOT NULL`,
+      sql`${guestSessions.createdAt} >= ${startOfMonth.toISOString().slice(0, 19).replace('T', ' ')}`
+    ));
+
+  return {
+    total: Number(authTotal?.count ?? 0) + Number(guestTotal?.count ?? 0),
+    thisWeek: Number(authThisWeek?.count ?? 0) + Number(guestThisWeek?.count ?? 0),
+    thisMonth: Number(authThisMonth?.count ?? 0) + Number(guestThisMonth?.count ?? 0),
+    authTotal: Number(authTotal?.count ?? 0),
+    guestTotal: Number(guestTotal?.count ?? 0),
+  };
+}

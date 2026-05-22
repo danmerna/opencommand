@@ -715,3 +715,5 @@
 - [x] Add improved empty state for Your Team tab
 - [x] Send owner notification when authenticated user completes onboarding (fires on generateRecommendations, includes company name, user, exec count, subagent/goal counts)
 - [x] Send owner notification when guest user completes onboarding (fires on guest generateRecommendations, includes guest name, email, company, exec count)
+- [x] Add deep-link URL to onboarding completion notifications (auth + guest) so owner can click directly to their results
+- [x] Add onboarding completion counter to admin dashboard (total, this week, this month, auth vs guest breakdown)
