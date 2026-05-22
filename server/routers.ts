@@ -70,6 +70,7 @@ import {
   adminGetAllSurveys, adminGetSurveyByUserId, adminGetUserCompany, adminGetUserOnboardings,
   adminGetAllGuestSessions, adminGetGuestOnboardingProgress,
   adminGetOnboardingStats,
+  adminGetOnboardingTranscripts,
   createGuestSession, getGuestSession, updateGuestSession,
 } from "./db";
 import { nanoid } from "nanoid";
@@ -3587,6 +3588,9 @@ const adminRouter = router({
     .query(({ input }) => adminGetGuestOnboardingProgress(input.companyId)),
 
   onboardingStats: adminProcedure.query(() => adminGetOnboardingStats()),
+  onboardingTranscripts: adminProcedure
+    .input(z.object({ userId: z.number().optional(), companyId: z.number().optional() }))
+    .query(({ input }) => adminGetOnboardingTranscripts({ userId: input.userId, companyId: input.companyId })),
 
   // Convert a guest session to a full user by sending an invite email
   convertGuestToUser: adminProcedure

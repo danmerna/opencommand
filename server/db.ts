@@ -1697,3 +1697,31 @@ export async function adminGetOnboardingStats() {
     guestTotal: Number(guestTotal?.count ?? 0),
   };
 }
+
+// ─── Admin: Onboarding Transcripts ───────────────────────────────────────────
+export async function adminGetOnboardingTranscripts(params: { userId?: number; companyId?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = [];
+  if (params.userId != null) conditions.push(eq(agentOnboardings.userId, params.userId));
+  if (params.companyId != null) conditions.push(eq(agentOnboardings.companyId, params.companyId));
+  if (conditions.length === 0) return [];
+
+  const rows = await db
+    .select({
+      id: agentOnboardings.id,
+      agentType: agentOnboardings.agentType,
+      status: agentOnboardings.status,
+      conversationHistory: agentOnboardings.conversationHistory,
+      summary: agentOnboardings.summary,
+      recommendations: agentOnboardings.recommendations,
+      completedAt: agentOnboardings.completedAt,
+      createdAt: agentOnboardings.createdAt,
+    })
+    .from(agentOnboardings)
+    .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+    .orderBy(agentOnboardings.createdAt);
+
+  return rows;
+}

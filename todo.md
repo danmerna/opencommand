@@ -717,3 +717,8 @@
 - [x] Send owner notification when guest user completes onboarding (fires on guest generateRecommendations, includes guest name, email, company, exec count)
 - [x] Add deep-link URL to onboarding completion notifications (auth + guest) so owner can click directly to their results
 - [x] Add onboarding completion counter to admin dashboard (total, this week, this month, auth vs guest breakdown)
+- [x] Add adminGetOnboardingTranscripts db helper (returns conversationHistory + summary + recommendations per executive for userId or companyId)
+- [x] Add admin.onboardingTranscripts tRPC procedure (works for both userId and companyId/guest)
+- [x] Add "Interviews" tab to user detail panel showing full Q&A transcripts per executive
+- [x] Add "Interviews" section to guest detail slide-over showing full Q&A transcripts
+- [x] Add early CTA button below headline on /onboarding/pro start page (Option A)

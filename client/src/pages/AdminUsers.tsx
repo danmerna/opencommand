@@ -7,7 +7,8 @@ import {
   Users, Activity, Eye, Clock, MessageSquare, Zap, ChevronRight,
   Search, Filter, ArrowLeft, Globe, Monitor, BarChart2, List,
   CheckCircle, AlertCircle, Mail, Calendar, TrendingUp, X, UserCheck,
-  Building2, ThumbsUp, ThumbsDown, Copy, Link, UserPlus, Loader2, Award
+  Building2, ThumbsUp, ThumbsDown, Copy, Link, UserPlus, Loader2, Award,
+  Bot, User as UserIcon, ChevronDown as ChevronDownIcon, FileText
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -99,9 +100,87 @@ function TimelineEvent({ event }: { event: { type: string; label: string; create
   );
 }
 
+// ─── Interview Transcript Viewer ────────────────────────────────────────────
+const AGENT_LABELS: Record<string, { label: string; color: string }> = {
+  ceo: { label: "ARCH", color: "text-cyan-400 border-cyan-400/40 bg-cyan-400/5" },
+  cto: { label: "FORGE", color: "text-emerald-400 border-emerald-400/40 bg-emerald-400/5" },
+  cmo: { label: "SIGNAL", color: "text-amber-400 border-amber-400/40 bg-amber-400/5" },
+  cfo: { label: "LEDGER", color: "text-violet-400 border-violet-400/40 bg-violet-400/5" },
+  coo: { label: "APEX", color: "text-rose-400 border-rose-400/40 bg-rose-400/5" },
+};
+
+function InterviewTranscript({ transcript }: { transcript: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const history: { role: string; content: string }[] = transcript.conversationHistory ?? [];
+  const agentInfo = AGENT_LABELS[transcript.agentType] ?? { label: transcript.agentType?.toUpperCase() ?? "UNKNOWN", color: "text-muted-foreground border-border" };
+  const msgCount = history.filter(m => m.role === "user").length;
+
+  return (
+    <div className="border border-border rounded-xl overflow-hidden">
+      {/* Header */}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/20 transition-colors text-left"
+      >
+        <div className="flex items-center gap-3">
+          <span className={`text-[11px] px-2 py-0.5 rounded border font-mono font-semibold ${agentInfo.color}`}>
+            {agentInfo.label}
+          </span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${
+            transcript.status === "completed" ? "border-emerald-400/40 text-emerald-400" : "border-blue-400/40 text-blue-400"
+          }`}>{transcript.status}</span>
+          <span className="text-xs text-muted-foreground">{msgCount} exchange{msgCount !== 1 ? "s" : ""}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{fmtDate(transcript.createdAt)}</span>
+          <ChevronDownIcon size={14} className={`text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
+        </div>
+      </button>
+
+      {/* Transcript */}
+      {expanded && (
+        <div className="border-t border-border">
+          {history.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-6">No messages recorded</p>
+          ) : (
+            <div className="divide-y divide-border/50 max-h-[500px] overflow-y-auto">
+              {history.map((msg, i) => (
+                <div key={i} className={`flex gap-3 p-4 ${
+                  msg.role === "user" ? "bg-muted/10" : "bg-background"
+                }`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                    msg.role === "user" ? "bg-blue-400/10" : "bg-emerald-400/10"
+                  }`}>
+                    {msg.role === "user"
+                      ? <UserIcon size={11} className="text-blue-400" />
+                      : <Bot size={11} className="text-emerald-400" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-semibold text-muted-foreground mb-1">
+                      {msg.role === "user" ? "User" : agentInfo.label}
+                    </p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap break-words">{msg.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Summary */}
+          {transcript.summary && (
+            <div className="p-4 border-t border-border bg-muted/10">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Executive Summary</p>
+              <p className="text-sm text-foreground/80 whitespace-pre-wrap">{transcript.summary}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── User Detail Panel ────────────────────────────────────────────────────────
 function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void }) {
-  const [tab, setTab] = useState<"timeline" | "pages" | "sessions" | "feedback" | "company" | "onboarding" | "survey">("timeline");
+  const [tab, setTab] = useState<"timeline" | "pages" | "sessions" | "feedback" | "company" | "onboarding" | "survey" | "interviews">("timeline");
 
   const { data: kpis } = trpc.admin.userKpis.useQuery({ userId: user.id });
   const { data: timeline = [] } = trpc.admin.userTimeline.useQuery({ userId: user.id });
@@ -112,12 +191,17 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
   const { data: company } = trpc.admin.userCompany.useQuery({ userId: user.id });
   const { data: onboardings = [] } = trpc.admin.userOnboardings.useQuery({ userId: user.id });
   const { data: survey } = trpc.admin.userSurvey.useQuery({ userId: user.id });
+  const { data: transcripts = [] } = trpc.admin.onboardingTranscripts.useQuery(
+    { userId: user.id },
+    { enabled: tab === "interviews" }
+  );
 
   const tabs = [
     { id: "timeline", label: "Activity", icon: Activity },
     { id: "company", label: "Company", icon: BarChart2 },
     { id: "onboarding", label: "Onboarding", icon: CheckCircle },
     { id: "survey", label: "Survey", icon: MessageSquare },
+    { id: "interviews", label: "Interviews", icon: FileText },
     { id: "pages", label: "Pages", icon: Globe },
     { id: "sessions", label: "Sessions", icon: Monitor },
     { id: "feedback", label: "Feedback", icon: Filter },
@@ -320,6 +404,18 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
                       <p className="text-xs text-muted-foreground">{o.questionsAsked} questions asked</p>
                     )}
                   </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {tab === "interviews" && (
+            <div className="space-y-4">
+              {(transcripts as any[]).length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">No interview transcripts yet</p>
+              ) : (
+                (transcripts as any[]).map((t: any) => (
+                  <InterviewTranscript key={t.id} transcript={t} />
                 ))
               )}
             </div>
@@ -683,6 +779,11 @@ function GuestDetail({ guest, onClose }: { guest: GuestRow; onClose: () => void 
   const [copied, setCopied] = useState(false);
   const [converting, setConverting] = useState(false);
   const [convertResult, setConvertResult] = useState<string | null>(null);
+  const [showTranscripts, setShowTranscripts] = useState(false);
+  const { data: transcripts = [] } = trpc.admin.onboardingTranscripts.useQuery(
+    { companyId: guest.companyId ?? undefined },
+    { enabled: !!guest.companyId && showTranscripts }
+  );
   const convertMutation = trpc.admin.convertGuestToUser.useMutation({
     onSuccess: (data: any) => {
       setConvertResult(data.message || "Invite sent!");
@@ -755,8 +856,29 @@ function GuestDetail({ guest, onClose }: { guest: GuestRow; onClose: () => void 
           {/* Onboarding Progress */}
           {guest.companyId && (
             <div className="border border-border rounded-xl p-4">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Executive Interviews</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Executive Interviews</h3>
+                <button
+                  onClick={() => setShowTranscripts(v => !v)}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <FileText size={11} />
+                  {showTranscripts ? "Hide" : "View"} Transcripts
+                  <ChevronDownIcon size={11} className={`transition-transform ${showTranscripts ? "rotate-180" : ""}`} />
+                </button>
+              </div>
               <GuestProgressBadges companyId={guest.companyId} />
+              {showTranscripts && (
+                <div className="mt-4 space-y-3">
+                  {(transcripts as any[]).length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">No transcripts yet</p>
+                  ) : (
+                    (transcripts as any[]).map((t: any) => (
+                      <InterviewTranscript key={t.id} transcript={t} />
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           )}
 
