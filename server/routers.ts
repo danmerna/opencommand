@@ -2474,6 +2474,16 @@ Rules:
       // Store recommendations on the first completed onboarding for this company
       await updateOnboarding(completed[0].id, { recommendations } as any);
 
+      // Notify owner that a user has completed the full onboarding
+      try {
+        const execCount = completed.length;
+        const agentTypes = completed.map(o => o.agentType.toUpperCase()).join(", ");
+        await notifyOwner({
+          title: `✅ Onboarding Complete — ${company?.name ?? "Unknown Company"}`,
+          content: `${ctx.user.name || ctx.user.email} just completed the executive onboarding (${execCount} executive${execCount !== 1 ? "s" : ""}: ${agentTypes}). ${recommendations.subagents.length} subagents and ${recommendations.goals.length} /goal contracts generated.`,
+        });
+      } catch {}
+
       return recommendations;
     }),
 
@@ -2894,6 +2904,19 @@ Generate 3-5 subagents and 3-5 goals. Make everything specific to this company's
       } catch {}
 
       await updateGuestSession(input.guestToken, { recommendations });
+
+      // Notify owner that a guest has completed the full onboarding
+      try {
+        const execCount = completed.length;
+        const agentTypes = completed.map(o => o.agentType.toUpperCase()).join(", ");
+        const guestName = session.name ?? "Anonymous";
+        const guestEmail = session.email ?? "no email";
+        await notifyOwner({
+          title: `✅ Guest Onboarding Complete — ${company?.name ?? "Unknown Company"}`,
+          content: `${guestName} (${guestEmail}) just completed the guest executive onboarding (${execCount} executive${execCount !== 1 ? "s" : ""}: ${agentTypes}). ${recommendations.subagents.length} subagents and ${recommendations.goals.length} /goal contracts generated.`,
+        });
+      } catch {}
+
       return recommendations;
     }),
 

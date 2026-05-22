@@ -713,3 +713,5 @@
 - [x] Replace horizon badge with executive owner badge (ARCH/FORGE/SIGNAL/LEDGER/APEX) with color coding
 - [x] Add global CSS design tokens for agent cards (--a, --ad, --cr, --w, --b, --s2, --t2, --t3)
 - [x] Add improved empty state for Your Team tab
+- [x] Send owner notification when authenticated user completes onboarding (fires on generateRecommendations, includes company name, user, exec count, subagent/goal counts)
+- [x] Send owner notification when guest user completes onboarding (fires on guest generateRecommendations, includes guest name, email, company, exec count)
