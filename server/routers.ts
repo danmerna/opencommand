@@ -2294,10 +2294,14 @@ Respond with a JSON object in this exact format:
     {
       "name": "<Descriptive agent name relevant to their business>",
       "mission": "<1-2 sentences explaining what this agent does for THEIR specific business>",
-      "tools": "<Comma-separated list of actual tools/systems they mentioned or that logically connect>",
-      "guardrails": "<Specific safety constraint relevant to their industry/situation>",
+      "executiveOwner": "ARCH|SIGNAL|FORGE|LEDGER|APEX",
+      "tools": [
+        { "name": "<tool_name_snake_case>", "source": "<API or platform name>", "permission": "read|write|execute" }
+      ],
+      "guardrails": [
+        { "severity": "warning|standard|hard-stop", "title": "<Short rule title>", "description": "<What the agent must or must not do>" }
+      ],
       "autonomy": "Low|Medium|Medium-high|High",
-      "horizons": "<Which horizons this agent primarily operates on>",
       "rationale": "<Why this agent was recommended based on what they said>"
     }
   ],
@@ -2366,13 +2370,37 @@ Rules:
                     properties: {
                       name: { type: "string" },
                       mission: { type: "string" },
-                      tools: { type: "string" },
-                      guardrails: { type: "string" },
+                      executiveOwner: { type: "string" },
+                      tools: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            name: { type: "string" },
+                            source: { type: "string" },
+                            permission: { type: "string" },
+                          },
+                          required: ["name", "source", "permission"],
+                          additionalProperties: false,
+                        },
+                      },
+                      guardrails: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            severity: { type: "string" },
+                            title: { type: "string" },
+                            description: { type: "string" },
+                          },
+                          required: ["severity", "title", "description"],
+                          additionalProperties: false,
+                        },
+                      },
                       autonomy: { type: "string" },
-                      horizons: { type: "string" },
                       rationale: { type: "string" },
                     },
-                    required: ["name", "mission", "tools", "guardrails", "autonomy", "horizons", "rationale"],
+                    required: ["name", "mission", "executiveOwner", "tools", "guardrails", "autonomy", "rationale"],
                     additionalProperties: false,
                   },
                 },
@@ -2845,7 +2873,7 @@ The priority is FULL AUTONOMY — agents execute without requiring user input. E
 
 Respond with a JSON object:
 {
-  "subagents": [{ "name": string, "mission": string, "tools": string, "guardrails": string, "autonomy": string, "horizons": string, "rationale": string }],
+  "subagents": [{ "name": string, "mission": string, "executiveOwner": "ARCH|SIGNAL|FORGE|LEDGER|APEX", "tools": [{ "name": string, "source": string, "permission": "read|write|execute" }], "guardrails": [{ "severity": "warning|standard|hard-stop", "title": string, "description": string }], "autonomy": "Low|Medium|Medium-high|High", "rationale": string }],
   "goals": [{ "command": string, "agentRole": string, "objective": string, "desiredState": string, "context": { "background": string, "resources": string[], "assumptions": string[], "nonGoals": string[] }, "scope": { "allowed": string[], "forbidden": string[], "requiresConfirmation": string[], "invariants": string[] }, "verification": { "successCriteria": string[], "checks": string[], "evidence": string[], "artifacts": string[] }, "iteration": string, "escalation": string, "output": string, "stopCondition": string }]
 }
 

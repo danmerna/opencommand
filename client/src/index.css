@@ -42,6 +42,15 @@
   --radius-xl: 1rem;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", monospace;
+  /* Agent card design tokens */
+  --a: #22c55e;
+  --ad: rgba(34, 197, 94, 0.12);
+  --cr: #ef4444;
+  --w: #f59e0b;
+  --b: rgba(255, 255, 255, 0.1);
+  --s2: rgba(255, 255, 255, 0.04);
+  --t2: rgba(255, 255, 255, 0.75);
+  --t3: rgba(255, 255, 255, 0.45);
 }
 
 @layer base {

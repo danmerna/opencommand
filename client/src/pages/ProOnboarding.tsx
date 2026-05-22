@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Streamdown } from "streamdown";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Copy, Target, Bot, Layers, User } from "lucide-react";
+import { Copy, Target, Bot, Layers, User, ChevronDown, ChevronUp, Shield, AlertTriangle, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
@@ -315,6 +315,252 @@ function LandingSection({ onBegin, progress }: { onBegin: () => void; progress?:
         </p>
       </div>
     </main>
+  );
+}
+
+// ─── Agent Card Sub-Components ──────────────────────────────────────────────
+
+type AutonomyLevel = 0 | 1 | 2 | 3;
+
+const AUTONOMY_LEVELS: [string, string][] = [
+  ["L0", "You Ask AI"],
+  ["L1", "AI Asks You"],
+  ["L2", "AI Does, Tells"],
+  ["L3", "Full Auto"],
+];
+
+function mapAutonomyString(raw: string): AutonomyLevel {
+  const s = (raw ?? "").toLowerCase();
+  if (s.includes("full") || s.includes("autonomous")) return 3;
+  if (s.includes("high") && !s.includes("medium")) return 2;
+  if (s.includes("medium") || s.includes("high")) return 1;
+  return 0;
+}
+
+function getExecAccentColor(owner: string): { bg: string; text: string; border: string } {
+  switch ((owner ?? "").toUpperCase()) {
+    case "ARCH": return { bg: "rgba(251,191,36,0.12)", text: "#fbbf24", border: "rgba(251,191,36,0.35)" };
+    case "FORGE": return { bg: "rgba(96,165,250,0.12)", text: "#60a5fa", border: "rgba(96,165,250,0.35)" };
+    case "SIGNAL": return { bg: "rgba(244,114,182,0.12)", text: "#f472b6", border: "rgba(244,114,182,0.35)" };
+    case "LEDGER": return { bg: "rgba(52,211,153,0.12)", text: "#34d399", border: "rgba(52,211,153,0.35)" };
+    case "APEX": return { bg: "rgba(167,139,250,0.12)", text: "#a78bfa", border: "rgba(167,139,250,0.35)" };
+    default: return { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.6)", border: "rgba(255,255,255,0.15)" };
+  }
+}
+
+function getGuardrailColor(severity: string): string {
+  switch ((severity ?? "").toLowerCase()) {
+    case "hard-stop": return "#ef4444";
+    case "warning": return "#f59e0b";
+    default: return "#22c55e";
+  }
+}
+
+function AutonomyDial({ defaultLevel }: { defaultLevel: AutonomyLevel }) {
+  const [level, setLevel] = useState<AutonomyLevel>(defaultLevel);
+  const isRisky = level >= 2;
+
+  return (
+    <div>
+      <div style={{ display: "flex", marginBottom: 10 }}>
+        {AUTONOMY_LEVELS.map(([label, sub], i) => {
+          const lvl = i as AutonomyLevel;
+          const isActive = lvl === level;
+          const lvlRisky = lvl >= 2;
+          return (
+            <div
+              key={label}
+              onClick={() => setLevel(lvl)}
+              style={{
+                flex: 1,
+                padding: "10px 6px",
+                textAlign: "center",
+                border: "1px solid var(--b)",
+                fontFamily: "var(--font-mono)",
+                cursor: "pointer",
+                color: isActive ? (lvlRisky ? "var(--cr)" : "var(--a)") : "var(--t3)",
+                background: isActive ? (lvlRisky ? "rgba(239,68,68,.1)" : "var(--ad)") : "var(--s2)",
+                borderColor: isActive ? (lvlRisky ? "var(--cr)" : "var(--a)") : "var(--b)",
+                fontWeight: isActive ? 700 : 400,
+                borderRadius: i === 0 ? "8px 0 0 8px" : i === 3 ? "0 8px 8px 0" : 0,
+                transition: "background .2s, color .2s, border-color .2s",
+                userSelect: "none",
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 700, display: "block" }}>{label}</span>
+              <span style={{ fontSize: 9, display: "block", marginTop: 1, lineHeight: 1.3 }}>{sub}</span>
+            </div>
+          );
+        })}
+      </div>
+      {isRisky && (
+        <div style={{
+          background: "rgba(239,68,68,.08)",
+          border: "1px solid var(--cr)",
+          borderRadius: 8,
+          padding: "8px 12px",
+          fontSize: 11,
+          color: "var(--cr)",
+          lineHeight: 1.5,
+          marginBottom: 8,
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 6,
+        }}>
+          <span style={{ marginTop: 1 }}>⚠</span>
+          <span>Elevated autonomy selected. This level requires executive approval before activation in production.</span>
+        </div>
+      )}
+      <div style={{ fontSize: 11, color: "var(--t3)", lineHeight: 1.6 }}>
+        <strong style={{ color: "var(--t2)" }}>L2 unlocks:</strong> Fully autonomous execution without human review.
+        Requires minimum job history, approval rate threshold, and executive sign-off.
+      </div>
+    </div>
+  );
+}
+
+function AgentCard({ agent }: { agent: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const accent = getExecAccentColor(agent.executiveOwner);
+  const initials = (agent.name ?? "??").split(/[\s\-–—(]/)[0].slice(0, 2).toUpperCase();
+  const autonomyLevel = mapAutonomyString(agent.autonomy ?? "");
+
+  // Normalise tools — may be array of objects or legacy string
+  const tools: { name: string; source: string; permission: string }[] = Array.isArray(agent.tools)
+    ? agent.tools
+    : (agent.tools ?? "").split(",").map((t: string) => ({ name: t.trim(), source: "—", permission: "read" })).filter((t: any) => t.name);
+
+  // Normalise guardrails — may be array of objects or legacy string
+  const guardrails: { severity: string; title: string; description: string }[] = Array.isArray(agent.guardrails)
+    ? agent.guardrails
+    : [{ severity: "warning", title: "Safety constraint", description: agent.guardrails ?? "" }].filter(g => g.description);
+
+  return (
+    <div
+      style={{
+        background: "var(--s2)",
+        border: `1px solid var(--b)`,
+        borderRadius: 12,
+        padding: "16px 18px",
+        transition: "border-color .2s",
+      }}
+      onMouseEnter={e => (e.currentTarget.style.borderColor = accent.border)}
+      onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--b)")}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          {/* Avatar tile */}
+          <div style={{
+            width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+            background: accent.bg, border: `1px solid ${accent.border}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: accent.text,
+          }}>{initials}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 600, color: "var(--t2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {agent.name}
+            </div>
+            {agent.executiveOwner && (
+              <div style={{ fontSize: 11, color: "var(--t3)", marginTop: 1 }}>{agent.executiveOwner} Department</div>
+            )}
+          </div>
+        </div>
+        {/* Executive owner badge */}
+        {agent.executiveOwner && (
+          <span style={{
+            fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600,
+            padding: "3px 8px", borderRadius: 6,
+            background: accent.bg, color: accent.text, border: `1px solid ${accent.border}`,
+            whiteSpace: "nowrap", flexShrink: 0,
+          }}>{agent.executiveOwner}</span>
+        )}
+      </div>
+
+      {/* Mission */}
+      <p style={{ fontSize: 13, color: "var(--t2)", lineHeight: 1.6, marginBottom: 14 }}>{agent.mission}</p>
+
+      {/* Autonomy Dial — always visible */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600, color: "var(--t3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Autonomy</div>
+        <AutonomyDial defaultLevel={autonomyLevel} />
+      </div>
+
+      {/* Expand toggle */}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        style={{
+          display: "flex", alignItems: "center", gap: 5,
+          fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600,
+          color: "var(--t3)", textTransform: "uppercase", letterSpacing: "0.08em",
+          background: "none", border: "none", cursor: "pointer", padding: 0,
+          marginBottom: expanded ? 14 : 0,
+          transition: "color .15s",
+        }}
+        onMouseEnter={e => (e.currentTarget.style.color = "var(--t2)")}
+        onMouseLeave={e => (e.currentTarget.style.color = "var(--t3)")}
+      >
+        {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        {expanded ? "Hide details" : "View details"}
+      </button>
+
+      {/* Expanded details */}
+      {expanded && (
+        <div style={{ borderTop: "1px solid var(--b)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Tools */}
+          {tools.length > 0 && (
+            <div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600, color: "var(--t3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Tools</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                {tools.map((tool, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 600, color: "var(--t2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tool.name}</span>
+                      {tool.source && tool.source !== "—" && (
+                        <span style={{ fontSize: 11, color: "var(--t3)", whiteSpace: "nowrap" }}>{tool.source}</span>
+                      )}
+                    </div>
+                    <span style={{
+                      fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600,
+                      padding: "2px 7px", borderRadius: 4,
+                      background: tool.permission === "execute" ? "rgba(239,68,68,.1)" : tool.permission === "write" ? "rgba(245,158,11,.1)" : "rgba(34,197,94,.1)",
+                      color: tool.permission === "execute" ? "var(--cr)" : tool.permission === "write" ? "var(--w)" : "var(--a)",
+                      border: `1px solid ${tool.permission === "execute" ? "rgba(239,68,68,.3)" : tool.permission === "write" ? "rgba(245,158,11,.3)" : "rgba(34,197,94,.3)"}`,
+                      whiteSpace: "nowrap", flexShrink: 0,
+                    }}>{tool.permission ?? "read"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Guardrails */}
+          {guardrails.length > 0 && (
+            <div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600, color: "var(--t3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Guardrails</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {guardrails.map((g, i) => (
+                  <div key={i} style={{ display: "flex", gap: 10, paddingLeft: 10, borderLeft: `2px solid ${getGuardrailColor(g.severity)}` }}>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--t2)", marginBottom: 2 }}>{g.title}</div>
+                      <div style={{ fontSize: 11, color: "var(--t3)", lineHeight: 1.5 }}>{g.description}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Rationale */}
+          {agent.rationale && (
+            <div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600, color: "var(--t3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>Rationale</div>
+              <p style={{ fontSize: 12, color: "var(--t3)", lineHeight: 1.6, margin: 0 }}>{agent.rationale}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1704,42 +1950,11 @@ export default function ProOnboarding() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-medium text-foreground mb-1">Recommended Subagents</h3>
-                    <p className="text-xs text-muted-foreground mb-6">These specialized agents extend your core executive team based on your specific business needs.</p>
+                    <p className="text-xs text-muted-foreground mb-6">These specialized agents extend your core executive team. Each card shows the agent's autonomy level, tools, and guardrails — tap "View details" to expand.</p>
                   </div>
                   <div className="grid gap-4">
-                    {recommendations.subagents.map((agent, i) => (
-                      <div key={i} className="border border-border rounded-xl p-5 bg-card/50 hover:bg-card/80 transition-colors">
-                        <div className="flex items-start justify-between gap-4 mb-3">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <Bot size={14} className="text-blue-400" />
-                              <h4 className="text-sm font-semibold text-foreground">{agent.name}</h4>
-                            </div>
-                            <p className="text-xs text-muted-foreground">{agent.mission}</p>
-                          </div>
-                          <Badge variant="outline" className={`text-[9px] shrink-0 ${getHorizonColor(agent.horizons)}`}>
-                            <Layers size={9} className="mr-1" />{agent.horizons}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-border/50">
-                          <div>
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Tools</span>
-                            <p className="text-xs text-foreground/80 mt-0.5">{agent.tools}</p>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Autonomy</span>
-                            <p className="text-xs text-foreground/80 mt-0.5">{agent.autonomy}</p>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Guardrails</span>
-                            <p className="text-xs text-foreground/80 mt-0.5">{agent.guardrails}</p>
-                          </div>
-                        </div>
-                        <div className="mt-3 pt-3 border-t border-border/50">
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Why this agent</span>
-                          <p className="text-xs text-foreground/70 mt-0.5 italic">{agent.rationale}</p>
-                        </div>
-                      </div>
+                    {recommendations.subagents.map((agent: any, i: number) => (
+                      <AgentCard key={i} agent={agent} />
                     ))}
                   </div>
                 </div>
@@ -1747,6 +1962,7 @@ export default function ProOnboarding() {
                 <div className="text-center py-16">
                   <Bot size={24} className="text-muted-foreground mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground">Team recommendations will appear here after generation.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Complete the executive interviews to generate your personalized agent team.</p>
                 </div>
               )}
             </div>

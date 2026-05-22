@@ -707,3 +707,9 @@
 - [x] Remove 54321 horizon dependency from goals (horizons are upstream strategy context only)
 - [x] Update download summary to include new 8-section contract format
 - [x] Change subtabs from horizon-based to agent-role-based filtering
+- [x] Build AutonomyDial component (L0-L3 interactive selector with risk warning at L2/L3)
+- [x] Build AgentCard component with progressive disclosure (collapsed: name+mission+dial, expanded: tools+guardrails+rationale)
+- [x] Update LLM prompt to produce structured tools array (name/source/permission) and guardrails array (severity/title/description)
+- [x] Replace horizon badge with executive owner badge (ARCH/FORGE/SIGNAL/LEDGER/APEX) with color coding
+- [x] Add global CSS design tokens for agent cards (--a, --ad, --cr, --w, --b, --s2, --t2, --t3)
+- [x] Add improved empty state for Your Team tab
