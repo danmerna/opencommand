@@ -186,6 +186,18 @@ function LandingSection({ onBegin, progress }: { onBegin: () => void; progress?:
           <p className="mt-6 text-base leading-8 text-white/55 md:text-lg max-w-2xl mx-auto">
             OpenCommand's self-contextualizing engine connects to your existing tools, pulls real data, and uses it to personalize each executive agent. No copy-pasting. No manual setup. Your agents start informed.
           </p>
+
+          {/* Early CTA — visible without scrolling */}
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <button
+              onClick={onBegin}
+              className="group inline-flex min-h-12 items-center justify-center rounded-2xl bg-white px-8 text-sm font-semibold text-black transition hover:bg-white/90 active:scale-95"
+            >
+              {progress && progress.completed > 0 ? "Resume Onboarding" : "Begin Onboarding"}
+              <ArrowRight className="ml-2 transition group-hover:translate-x-0.5" size={15} />
+            </button>
+            <p className="text-xs text-white/30">5 min · Free during beta · No credit card required</p>
+          </div>
         </div>
 
         {/* 3-Step Flow */}
