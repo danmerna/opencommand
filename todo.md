@@ -722,3 +722,16 @@
 - [x] Add "Interviews" tab to user detail panel showing full Q&A transcripts per executive
 - [x] Add "Interviews" section to guest detail slide-over showing full Q&A transcripts
 - [x] Add early CTA button below headline on /onboarding/pro start page (Option A)
+
+## Σ Intent Engine & Blueprint System
+- [x] Design and create Blueprint database schema (blueprints, blueprint_agents, blueprint_workflows, blueprint_goals, blueprint_verifications, tickers)
+- [x] Build Σ chat interface (conversational intent engine that asks questions until blueprint can be generated)
+- [x] Build blueprint generation backend (LLM structured output → full blueprint with agents, workflows, tools, guardrails)
+- [x] Build React Flow visual builder canvas (nodes = agents/steps, edges = data flow, click-to-edit side panel)
+- [ ] Build dual-LLM verification system (two independent models must agree goal is complete before verified badge)
+- [x] Build blueprint persistence with ticker assignment and versioning
+- [x] Build "My Blueprints" dashboard with saved blueprints, tickers, and status
+- [x] Wire routing and navigation (Σ chat → blueprint generation → visual builder → My Blueprints)
+- [x] Marketplace-ready blueprint format (description, category, required agents, estimated runtime, price fields)
+- [x] Fix BlueprintBuilder.tsx TypeScript errors (React Flow typing, toast import, data access patterns)
+- [x] Fix BlueprintChat.tsx TypeScript errors (auth import, procedure name, message type)

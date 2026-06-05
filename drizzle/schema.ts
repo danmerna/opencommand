@@ -1086,3 +1086,268 @@ export const guestSessions = mysqlTable("guest_sessions", {
 });
 export type GuestSession = typeof guestSessions.$inferSelect;
 export type InsertGuestSession = typeof guestSessions.$inferInsert;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Σ INTENT ENGINE — BLUEPRINT SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Blueprint Templates (Reusable, Publishable, Marketplace-Ready) ──────────
+export const blueprintTemplates = mysqlTable("blueprint_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+
+  // Identity
+  ticker: varchar("ticker", { length: 32 }).notNull().unique(),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description"),
+  category: mysqlEnum("category", [
+    "growth", "brand", "retention", "launch", "performance",
+    "operations", "engineering", "sales", "support", "custom"
+  ]).default("custom").notNull(),
+  version: varchar("version", { length: 32 }).default("1.0.0").notNull(),
+
+  // Blueprint content (the full graph definition)
+  objective: text("objective").notNull(),
+  desiredFinalState: text("desiredFinalState"),
+  constraints: json("constraints").$type<string[]>(),
+  nonGoals: json("nonGoals").$type<string[]>(),
+  successMetrics: json("successMetrics").$type<{ metric: string; target: string; verificationMethod: string }[]>(),
+  estimatedRuntime: varchar("estimatedRuntime", { length: 64 }),
+
+  // Graph structure (React Flow serialized)
+  nodes: json("nodes").$type<{
+    id: string;
+    type: string; // 'agent' | 'workflow' | 'tool' | 'data' | 'guardrail' | 'gate'
+    position: { x: number; y: number };
+    data: Record<string, unknown>;
+  }[]>(),
+  edges: json("edges").$type<{
+    id: string;
+    source: string;
+    target: string;
+    type?: string;
+    label?: string;
+    data?: Record<string, unknown>;
+  }[]>(),
+
+  // Marketplace
+  visibility: mysqlEnum("visibility", ["private", "shared", "marketplace"]).default("private").notNull(),
+  price: int("price").default(0).notNull(), // cents
+  stripeProductId: varchar("stripeProductId", { length: 128 }),
+  stripePriceId: varchar("stripePriceId", { length: 128 }),
+  isApproved: boolean("isApproved").default(false).notNull(),
+  publishedAt: timestamp("publishedAt"),
+  usageCount: int("usageCount").default(0).notNull(),
+  rating: decimal("rating", { precision: 3, scale: 2 }).default("0"),
+  ratingCount: int("ratingCount").default(0).notNull(),
+
+  // Status
+  status: mysqlEnum("status", ["draft", "active", "archived"]).default("draft").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BlueprintTemplate = typeof blueprintTemplates.$inferSelect;
+export type InsertBlueprintTemplate = typeof blueprintTemplates.$inferInsert;
+
+// ─── Blueprint Agents (Nodes of type 'agent' in the graph) ───────────────────
+export const blueprintAgents = mysqlTable("blueprint_agents", {
+  id: int("id").autoincrement().primaryKey(),
+  blueprintId: int("blueprintId").notNull(),
+  nodeId: varchar("nodeId", { length: 64 }).notNull(), // matches React Flow node id
+
+  name: varchar("name", { length: 128 }).notNull(),
+  role: varchar("role", { length: 256 }).notNull(),
+  mission: text("mission"),
+
+  // Autonomy
+  autonomyLevel: mysqlEnum("autonomyLevel", ["L0", "L1", "L2", "L3"]).default("L1").notNull(),
+
+  // Tools (structured)
+  tools: json("tools").$type<{
+    name: string;
+    source: string;
+    permission: "read" | "write" | "execute";
+  }[]>(),
+
+  // Guardrails (structured)
+  guardrails: json("guardrails").$type<{
+    severity: "standard" | "warning" | "hard_stop";
+    title: string;
+    description: string;
+  }[]>(),
+
+  // Scope & Permissions
+  allowedActions: json("allowedActions").$type<string[]>(),
+  forbiddenActions: json("forbiddenActions").$type<string[]>(),
+  confirmationTriggers: json("confirmationTriggers").$type<string[]>(),
+  invariants: json("invariants").$type<string[]>(),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BlueprintAgent = typeof blueprintAgents.$inferSelect;
+export type InsertBlueprintAgent = typeof blueprintAgents.$inferInsert;
+
+// ─── Blueprint Workflows (Execution steps / edges with logic) ────────────────
+export const blueprintWorkflows = mysqlTable("blueprint_workflows", {
+  id: int("id").autoincrement().primaryKey(),
+  blueprintId: int("blueprintId").notNull(),
+  edgeId: varchar("edgeId", { length: 64 }).notNull(), // matches React Flow edge id
+
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description"),
+  triggerCondition: text("triggerCondition"), // when this workflow fires
+  inputSchema: json("inputSchema").$type<Record<string, unknown>>(),
+  outputSchema: json("outputSchema").$type<Record<string, unknown>>(),
+
+  // Execution order within the graph
+  sequenceOrder: int("sequenceOrder").default(0).notNull(),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BlueprintWorkflow = typeof blueprintWorkflows.$inferSelect;
+export type InsertBlueprintWorkflow = typeof blueprintWorkflows.$inferInsert;
+
+// ─── Blueprint Goals (/goal contracts assigned to agents within a blueprint) ─
+export const blueprintGoals = mysqlTable("blueprint_goals", {
+  id: int("id").autoincrement().primaryKey(),
+  blueprintId: int("blueprintId").notNull(),
+  agentNodeId: varchar("agentNodeId", { length: 64 }).notNull(), // which agent owns this goal
+
+  // 8-section /goal contract
+  agentRole: varchar("agentRole", { length: 256 }).notNull(),
+  objective: text("objective").notNull(),
+  desiredFinalState: text("desiredFinalState"),
+  context: json("context").$type<{
+    background: string;
+    resources: string[];
+    assumptions: string[];
+    nonGoals: string[];
+  }>(),
+  scope: json("scope").$type<{
+    allowed: string[];
+    forbidden: string[];
+    confirmationRequired: string[];
+    invariants: string[];
+  }>(),
+  verification: json("verification").$type<{
+    criteria: string[];
+    commands: string[];
+    evidence: string[];
+    artifacts: string[];
+  }>(),
+  iterationPolicy: text("iterationPolicy"),
+  escalation: json("escalation").$type<{
+    retryLimit: number;
+    pauseTriggers: string[];
+    maxIterations: number;
+  }>(),
+  outputRequirements: json("outputRequirements").$type<{
+    format: string;
+    includes: string[];
+    style: string;
+  }>(),
+  stopCondition: json("stopCondition").$type<string[]>(),
+
+  // Verification status
+  verificationStatus: mysqlEnum("verificationStatus", [
+    "unverified", "pending_review", "verified", "rejected"
+  ]).default("unverified").notNull(),
+  verifier1Result: json("verifier1Result").$type<{
+    model: string;
+    passed: boolean;
+    reasoning: string;
+    verifiedAt: string;
+  }>(),
+  verifier2Result: json("verifier2Result").$type<{
+    model: string;
+    passed: boolean;
+    reasoning: string;
+    verifiedAt: string;
+  }>(),
+
+  status: mysqlEnum("status", ["draft", "active", "in_progress", "completed", "failed"]).default("draft").notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BlueprintGoal = typeof blueprintGoals.$inferSelect;
+export type InsertBlueprintGoal = typeof blueprintGoals.$inferInsert;
+
+// ─── Blueprint Chat Sessions (Σ interview to generate a blueprint) ───────────
+export const blueprintChatSessions = mysqlTable("blueprint_chat_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  blueprintId: int("blueprintId"), // null until blueprint is generated
+
+  // Conversation
+  messages: json("messages").$type<{ role: "user" | "assistant" | "system"; content: string; timestamp: string }[]>(),
+
+  // Σ internal state
+  populatedFields: json("populatedFields").$type<Record<string, unknown>>(),
+  inferredValues: json("inferredValues").$type<Record<string, unknown>>(),
+  confidenceScores: json("confidenceScores").$type<Record<string, number>>(),
+  completionPercent: int("completionPercent").default(0).notNull(),
+
+  status: mysqlEnum("status", ["interviewing", "generating", "complete", "abandoned"]).default("interviewing").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BlueprintChatSession = typeof blueprintChatSessions.$inferSelect;
+export type InsertBlueprintChatSession = typeof blueprintChatSessions.$inferInsert;
+
+// ─── Blueprint Purchases (Marketplace transactions) ──────────────────────────
+export const blueprintPurchases = mysqlTable("blueprint_purchases", {
+  id: int("id").autoincrement().primaryKey(),
+  blueprintId: int("blueprintId").notNull(),
+  buyerUserId: int("buyerUserId").notNull(),
+  sellerUserId: int("sellerUserId").notNull(),
+  price: int("price").notNull(), // cents at time of purchase
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 128 }),
+  status: mysqlEnum("status", ["pending", "completed", "refunded"]).default("pending").notNull(),
+  purchasedAt: timestamp("purchasedAt").defaultNow().notNull(),
+});
+
+export type BlueprintPurchase = typeof blueprintPurchases.$inferSelect;
+export type InsertBlueprintPurchase = typeof blueprintPurchases.$inferInsert;
+
+// ─── Blueprint Instances (A user's active copy of a template) ────────────────
+export const blueprintInstances = mysqlTable("blueprint_instances", {
+  id: int("id").autoincrement().primaryKey(),
+  templateId: int("templateId").notNull(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+
+  // Instance-specific overrides (user edits after generation)
+  title: varchar("title", { length: 256 }),
+  nodes: json("nodes").$type<{
+    id: string;
+    type: string;
+    position: { x: number; y: number };
+    data: Record<string, unknown>;
+  }[]>(),
+  edges: json("edges").$type<{
+    id: string;
+    source: string;
+    target: string;
+    type?: string;
+    label?: string;
+    data?: Record<string, unknown>;
+  }[]>(),
+
+  // Execution state
+  status: mysqlEnum("status", ["configuring", "ready", "running", "paused", "completed", "failed"]).default("configuring").notNull(),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BlueprintInstance = typeof blueprintInstances.$inferSelect;
+export type InsertBlueprintInstance = typeof blueprintInstances.$inferInsert;

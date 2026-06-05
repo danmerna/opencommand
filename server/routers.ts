@@ -8,6 +8,7 @@ import { invokeLLM } from "./_core/llm";
 import { dispatchToConnector, testConnector } from "./connectors/dispatcher";
 import { leadResponseRouter } from "./routers/leadResponse";
 import { intentEngineRouter } from "./routers/intentEngine";
+import { blueprintEngineRouter } from "./routers/blueprintEngine";
 import { templatesRouter } from "./routers/templates";
 import { workspaceRouter } from "./routers/workspace";
 import { goalsRouter } from "./routers/goals";
@@ -3663,6 +3664,7 @@ export const appRouter = router({
   subAgents: subAgentRouter,
   leadResponse: leadResponseRouter,
   intentEngine: intentEngineRouter,
+  blueprintEngine: blueprintEngineRouter,
   templates: templatesRouter,
   workspace: workspaceRouter,
   goals: goalsRouter,
