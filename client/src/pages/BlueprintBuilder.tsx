@@ -847,8 +847,8 @@ export default function BlueprintBuilder() {
                   Council
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs max-w-[200px]">
-                LLM Council: {councilSize} models vote on task completion. Premium verification layer.
+              <TooltipContent side="bottom" className="text-xs max-w-[250px]">
+                LLM Council Add-on: Upgrade any verification step to {councilSize} independent models voting. Available on any task with a verifier.
               </TooltipContent>
             </Tooltip>
 
@@ -1161,9 +1161,18 @@ export default function BlueprintBuilder() {
                         </Button>
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-1">
-                        3 independent models vote on this agent's output quality. Majority rules.
+                        Add-on: When this agent's output is verified by another LLM, upgrade to a
+                        council of 3 independent models voting on quality. Majority rules.
                         Eliminates single-model hallucination bias.
                       </p>
+                      {Boolean(selectedNode.data.councilEnabled) && (
+                        <div className="mt-2 p-2 rounded bg-yellow-500/5 border border-yellow-500/20">
+                          <p className="text-[10px] text-yellow-300/80">
+                            Council active: Any verification step targeting this agent's output
+                            will use 3 models instead of 1. Cost: ~3x verification layer only.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div>

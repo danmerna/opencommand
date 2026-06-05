@@ -759,3 +759,4 @@
 - [x] Rename HITL checkpoint modes: "Pre-execution Gate" → "Ask Permission", "Post-completion Review" → "Notify Complete"
 - [x] Regenerate blueprint framework infographic: swap Layer 2/3 (Workflow before Agent) and Layer 4/5 (Verification before HITL)
 - [x] Redesign infographic with McKinsey/Blue Ace management consulting theme (navy/white/gold, serif typography, clean geometric)
+- [x] Make LLM Council available as an add-on toggle on any task/agent that has a verifier (not just goal-level)
