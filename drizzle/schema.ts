@@ -1477,3 +1477,67 @@ export const llmCouncilConfigs = mysqlTable("llm_council_configs", {
 });
 export type LlmCouncilConfig = typeof llmCouncilConfigs.$inferSelect;
 export type InsertLlmCouncilConfig = typeof llmCouncilConfigs.$inferInsert;
+
+// ─── Blueprint Runs (Execution instances) ────────────────────────────────────
+export const blueprintRuns = mysqlTable("blueprint_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  blueprintId: int("blueprintId").notNull(),
+  userId: int("userId").notNull(),
+  status: mysqlEnum("status", ["queued", "running", "paused", "completed", "failed", "cancelled"]).default("queued").notNull(),
+  triggeredBy: mysqlEnum("triggeredBy", ["manual", "scheduled", "api"]).default("manual").notNull(),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  currentNodeId: varchar("currentNodeId", { length: 64 }),
+  summary: text("summary"),
+  error: text("error"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BlueprintRun = typeof blueprintRuns.$inferSelect;
+export type InsertBlueprintRun = typeof blueprintRuns.$inferInsert;
+
+// ─── Blueprint Run Events (Step-by-step execution log) ───────────────────────
+export const blueprintRunEvents = mysqlTable("blueprint_run_events", {
+  id: int("id").autoincrement().primaryKey(),
+  runId: int("runId").notNull(),
+  blueprintId: int("blueprintId").notNull(),
+  nodeId: varchar("nodeId", { length: 64 }).notNull(),
+  nodeType: varchar("nodeType", { length: 32 }).notNull(),
+  nodeLabel: varchar("nodeLabel", { length: 256 }),
+  eventType: mysqlEnum("eventType", [
+    "node_started", "node_completed", "node_failed",
+    "agent_thinking", "agent_output",
+    "verification_started", "verification_passed", "verification_failed",
+    "hitl_requested", "hitl_approved", "hitl_dismissed",
+    "goal_updated", "run_completed", "run_failed"
+  ]).notNull(),
+  message: text("message"),
+  output: json("output").$type<Record<string, unknown>>(),
+  durationMs: int("durationMs"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BlueprintRunEvent = typeof blueprintRunEvents.$inferSelect;
+export type InsertBlueprintRunEvent = typeof blueprintRunEvents.$inferInsert;
+
+// ─── HITL Notifications (Human-in-the-loop approval requests) ────────────────
+export const hitlNotifications = mysqlTable("hitl_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  runId: int("runId").notNull(),
+  blueprintId: int("blueprintId").notNull(),
+  userId: int("userId").notNull(),
+  nodeId: varchar("nodeId", { length: 64 }).notNull(),
+  nodeLabel: varchar("nodeLabel", { length: 256 }),
+  agentName: varchar("agentName", { length: 128 }),
+  blueprintTicker: varchar("blueprintTicker", { length: 32 }),
+  mode: mysqlEnum("mode", ["ask_permission", "notify_complete"]).default("ask_permission").notNull(),
+  urgency: mysqlEnum("urgency", ["low", "medium", "high", "critical"]).default("medium").notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  body: text("body"),
+  context: json("context").$type<Record<string, unknown>>(),
+  status: mysqlEnum("status", ["pending", "approved", "dismissed", "expired"]).default("pending").notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type HitlNotification = typeof hitlNotifications.$inferSelect;
+export type InsertHitlNotification = typeof hitlNotifications.$inferInsert;

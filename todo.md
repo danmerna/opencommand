@@ -806,3 +806,12 @@
 - [x] Landing page: add prominent signup/login CTA button (top nav + hero section)
 - [x] Quick onboarding flow: 3-step modal after first login (Welcome → Choose start → Launch)
 - [x] Notify owner when a new user completes onboarding
+
+## Blueprint Templates + Execution Layer
+- [x] Seed 3 fully pre-populated blueprint templates in DB (Prediction Market Trader, Content Engine, Market Intelligence) with all 6 layers as React Flow nodes/edges
+- [x] Wire onboarding template selection to open the specific pre-built blueprint in the visual builder
+- [x] Add Deploy button to BlueprintBuilder toolbar that triggers a blueprint run
+- [x] Create blueprint_runs, blueprint_run_events, hitl_notifications tables in schema + migration
+- [x] Add deployBlueprint, getRunStatus, getRuns, resolveHitl, getPendingHitl procedures to execution router
+- [x] Build Execution page with live run log: step-by-step agent activity, verification results, HITL checkpoint events
+- [x] Wire HITL swipe cards on home dashboard to real hitl_notifications via execution.getPendingHitl (polls every 5s)

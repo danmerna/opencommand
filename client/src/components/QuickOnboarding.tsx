@@ -16,7 +16,7 @@ const TEMPLATES = [
     color: "text-cyan-400",
     borderColor: "border-cyan-500/30",
     bgColor: "bg-cyan-500/5",
-    href: "/blueprints",
+    href: "/blueprints/1/builder",
   },
   {
     id: "content",
@@ -26,7 +26,7 @@ const TEMPLATES = [
     color: "text-purple-400",
     borderColor: "border-purple-500/30",
     bgColor: "bg-purple-500/5",
-    href: "/blueprints",
+    href: "/blueprints/2/builder",
   },
   {
     id: "research",
@@ -36,7 +36,7 @@ const TEMPLATES = [
     color: "text-amber-400",
     borderColor: "border-amber-500/30",
     bgColor: "bg-amber-500/5",
-    href: "/blueprints",
+    href: "/blueprints/30001/builder",
   },
 ];
 

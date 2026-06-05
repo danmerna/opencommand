@@ -230,85 +230,76 @@ export default function Dashboard() {
   const briefingsQ = trpc.briefings.list.useQuery({}, { enabled: isAuthenticated });
   const latestBriefing = briefingsQ.data?.[0] ?? null;
 
-  // ── HITL cards (seeded from blueprint checkpoints + inbox) ──
-  // We build a local demo deck from real blueprint data + static examples
-  const [hitlCards, setHitlCards] = useState<HITLCard[]>([]);
+  // ── HITL cards — real data from execution.getPendingHitl ──
+  const hitlQ = trpc.execution.getPendingHitl.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchInterval: 5000,
+  });
+  const resolveHitl = trpc.execution.resolveHitl.useMutation({
+    onSuccess: () => hitlQ.refetch(),
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Local dismissed/approved for demo cards (no real run)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [approved, setApproved] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    // Build cards from real blueprints + static examples for demo
-    const cards: HITLCard[] = [];
+  // Convert real HITL notifications to HITLCard format
+  const realCards: HITLCard[] = (hitlQ.data ?? []).map((n: any) => ({
+    id: `hitl-${n.id}`,
+    type: n.mode === "ask_permission" ? "approval" : "review",
+    agent: n.agentName ?? n.nodeLabel ?? "Agent",
+    title: n.title,
+    body: n.body ?? "",
+    urgency: (n.urgency === "critical" ? "high" : n.urgency) as "low" | "medium" | "high",
+    blueprintTicker: n.blueprintTicker ?? undefined,
+    createdAt: new Date(n.createdAt).toISOString(),
+    _realId: n.id,
+  }));
 
-    // Cards from user's blueprints
-    blueprints.slice(0, 2).forEach((bp: any, i: number) => {
-      cards.push({
+  // Demo cards shown only when no real HITL notifications exist
+  const demoCards: HITLCard[] = realCards.length > 0 ? [] : blueprints.length > 0
+    ? blueprints.slice(0, 2).map((bp: any, i: number) => ({
         id: `bp-${bp.id}-${i}`,
-        type: "approval",
+        type: "approval" as const,
         agent: bp.title?.split(" ")[0] ?? "Agent",
-        title: i === 0
-          ? `Position sizing decision required`
-          : `Content batch ready for review`,
+        title: i === 0 ? "Position sizing decision required" : "Content batch ready for review",
         body: i === 0
-          ? `Market Scanner identified 3 high-confidence trades on Polymarket. Combined exposure: $340. Requires approval before execution.`
-          : `Content Writer completed 3 posts for today's schedule. Review before publishing to Twitter, LinkedIn, and newsletter.`,
-        urgency: i === 0 ? "high" : "medium",
+          ? "Market Scanner identified 3 high-confidence trades on Polymarket. Combined exposure: $340. Requires approval before execution."
+          : "Content Writer completed 3 posts for today's schedule. Review before publishing to Twitter, LinkedIn, and newsletter.",
+        urgency: (i === 0 ? "high" : "medium") as "low" | "medium" | "high",
         blueprintTicker: bp.ticker,
         createdAt: new Date(Date.now() - i * 1800000).toISOString(),
-      });
-    });
-
-    // Static demo cards if no blueprints yet
-    if (blueprints.length === 0) {
-      cards.push(
-        {
-          id: "demo-1",
-          type: "approval",
-          agent: "Market Scanner",
-          title: "Position sizing decision required",
+      }))
+    : [
+        { id: "demo-1", type: "approval" as const, agent: "Market Scanner", title: "Position sizing decision required",
           body: "3 high-confidence Polymarket trades identified. Combined exposure $340. Confidence: 78%. Approve to execute.",
-          urgency: "high",
-          blueprintTicker: "POLYMARKET-ALPHA",
-          createdAt: new Date(Date.now() - 900000).toISOString(),
-        },
-        {
-          id: "demo-2",
-          type: "review",
-          agent: "Content Writer",
-          title: "Content batch ready for review",
-          body: "3 posts drafted for today's schedule. Twitter thread on AI agents, LinkedIn article on automation ROI, newsletter intro. Approve to publish.",
-          urgency: "medium",
-          blueprintTicker: "CONTENT-ENGINE",
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-        },
-        {
-          id: "demo-3",
-          type: "alert",
-          agent: "Risk Guardrail",
-          title: "Drawdown threshold approaching",
-          body: "Portfolio down 11.2% from peak. Guardrail threshold is 15%. Consider reducing position sizes or pausing trading until market stabilizes.",
-          urgency: "high",
-          blueprintTicker: "POLYMARKET-ALPHA",
-          createdAt: new Date(Date.now() - 7200000).toISOString(),
-        }
-      );
-    }
+          urgency: "high" as const, blueprintTicker: "POLYMARKET-ALPHA", createdAt: new Date(Date.now() - 900000).toISOString() },
+        { id: "demo-2", type: "review" as const, agent: "Content Writer", title: "Content batch ready for review",
+          body: "3 posts drafted for today's schedule. Twitter thread on AI agents, LinkedIn article on automation ROI, newsletter intro.",
+          urgency: "medium" as const, blueprintTicker: "CONTENT-ENGINE", createdAt: new Date(Date.now() - 3600000).toISOString() },
+      ];
 
-    setHitlCards(cards);
-  }, [isAuthenticated, blueprints.length]);
-
-  const visibleCards = hitlCards.filter(c => !dismissed.has(c.id) && !approved.has(c.id));
+  const allCards = [...realCards, ...demoCards];
+  const visibleCards = allCards.filter(c => !dismissed.has(c.id) && !approved.has(c.id));
 
   const handleApprove = useCallback((id: string) => {
+    const card = allCards.find(c => c.id === id) as any;
+    if (card?._realId) {
+      resolveHitl.mutate({ notificationId: card._realId, action: "approved" });
+    }
     setApproved(prev => new Set(prev).add(id));
     toast.success("Approved — agent will proceed");
-  }, []);
+  }, [allCards]);
 
   const handleDismiss = useCallback((id: string) => {
+    const card = allCards.find(c => c.id === id) as any;
+    if (card?._realId) {
+      resolveHitl.mutate({ notificationId: card._realId, action: "dismissed" });
+    }
     setDismissed(prev => new Set(prev).add(id));
     toast.info("Skipped");
-  }, []);
+  }, [allCards]);
 
   // ── Greeting ──
   const hour = new Date().getHours();

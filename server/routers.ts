@@ -13,6 +13,7 @@ import { templatesRouter } from "./routers/templates";
 import { workspaceRouter } from "./routers/workspace";
 import { goalsRouter } from "./routers/goals";
 import { modelRouter } from "./routers/modelRouter";
+import { executionRouter } from "./routers/execution";
 import { encryptConnectorConfig, maskApiKey } from "./connectors/encrypt";
 import { notifyOwner } from "./_core/notification";
 import {
@@ -3676,6 +3677,7 @@ export const appRouter = router({
   workspace: workspaceRouter,
   goals: goalsRouter,
   models: modelRouter,
+  execution: executionRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -232,6 +232,13 @@
       "when": 1780679012393,
       "tag": "0032_tranquil_sphinx",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1780680513465,
+      "tag": "0033_faithful_excalibur",
+      "breakpoints": true
     }
   ]
 }

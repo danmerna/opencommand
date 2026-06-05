@@ -19,7 +19,7 @@ import AgentOnboarding from "./pages/AgentOnboarding";
 import AgentDetail from "./pages/AgentDetail";
 import Creators from "./pages/Creators";
 import Briefings from "./pages/Briefings";
-import ExecutionDashboard from "./pages/ExecutionDashboard";
+import Execution from "./pages/Execution";
 import Analytics from "./pages/Analytics";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
 import Settings from "./pages/Settings";
@@ -103,7 +103,7 @@ function Router() {
         <AppLayout><AgentDetail /></AppLayout>
       </Route>
       <Route path="/execution">
-        <AppLayout><ExecutionDashboard /></AppLayout>
+        <AppLayout><Execution /></AppLayout>
       </Route>
       <Route path="/briefings" component={Briefings} />
       <Route path="/analytics">
