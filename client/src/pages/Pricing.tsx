@@ -32,7 +32,7 @@ export default function Pricing() {
       <div className="mb-12">
         <div className="flex items-center gap-3 mb-3">
           <p className="text-xs text-muted-foreground tracking-widest uppercase">Pricing</p>
-          <span className="text-[10px] font-medium tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-emerald-400/40 text-emerald-400">Beta</span>
+          <span className="text-[10px] font-medium tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-accent/40 text-accent">Beta</span>
         </div>
         <h1 className="text-4xl font-light text-foreground tracking-tight mb-3">
           Free during beta. Full access.
@@ -45,8 +45,8 @@ export default function Pricing() {
       {/* Single card */}
       <div className="border border-border rounded-xl p-8 md:p-10 bg-white/[0.02] max-w-2xl mb-10">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-emerald-400/10 flex items-center justify-center">
-            <Zap size={18} className="text-emerald-400" />
+          <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+            <Zap size={18} className="text-accent" />
           </div>
           <div>
             <h3 className="text-lg font-medium text-foreground">Full Access</h3>
@@ -60,7 +60,7 @@ export default function Pricing() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
           {FEATURES.map((feature) => (
             <div key={feature} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-              <Check size={13} className="text-emerald-400 shrink-0" />
+              <Check size={13} className="text-accent shrink-0" />
               {feature}
             </div>
           ))}

@@ -81,7 +81,7 @@ export default function AICeo() {
       {/* Status Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
-          { label: "Active Agents", value: `${activeAgents}/${agents.length}`, color: "text-emerald-400" },
+          { label: "Active Agents", value: `${activeAgents}/${agents.length}`, color: "text-accent" },
           { label: "OKRs Tracked", value: okrs.length.toString(), color: "text-blue-400" },
           { label: "Decisions", value: decisionLogQ.data?.length.toString() ?? "—", color: "text-amber-400" },
           { label: "Value Created", value: `$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 0 })}`, color: "text-foreground" },
@@ -118,8 +118,8 @@ export default function AICeo() {
                   </div>
                   <div>
                     <div className="text-sm font-medium text-foreground">ARCH — AI Chief Executive Officer</div>
-                    <div className="text-[10px] text-emerald-400 flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" /> Online · Memory active
+                    <div className="text-[10px] text-accent flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" /> Online · Memory active
                     </div>
                   </div>
                 </div>
@@ -191,7 +191,7 @@ export default function AICeo() {
             <div className="card-minimal p-4 space-y-3">
               {agents.slice(0, 5).map(agent => (
                 <div key={agent.id} className="flex items-center gap-3">
-                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${agent.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-zinc-600"}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${agent.status === "active" ? "bg-accent animate-pulse" : "bg-zinc-600"}`} />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium text-foreground truncate">{agent.name}</div>
                     <div className="text-[10px] text-muted-foreground">{agent.status} · {agent.tasksCompleted} tasks</div>
@@ -212,7 +212,7 @@ export default function AICeo() {
                       <span className="text-xs text-muted-foreground tabular-nums">{progress.toFixed(0)}%</span>
                     </div>
                     <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${progress >= 100 ? "bg-emerald-400" : "bg-foreground/60"}`} style={{ width: `${progress}%` }} />
+                      <div className={`h-full rounded-full transition-all ${progress >= 100 ? "bg-accent" : "bg-foreground/60"}`} style={{ width: `${progress}%` }} />
                     </div>
                   </div>
                 );
@@ -277,8 +277,8 @@ export default function AICeo() {
                 </div>
                 <div className="h-px bg-border mt-4" />
                 <div className="mt-3 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-                  <span className="text-[10px] text-emerald-400">Logged to decision record</span>
+                  <div className="w-1.5 h-1.5 bg-accent rounded-full" />
+                  <span className="text-[10px] text-accent">Logged to decision record</span>
                 </div>
               </div>
             ) : (
@@ -314,7 +314,7 @@ export default function AICeo() {
                       <div className="text-sm font-medium text-foreground mt-2">{entry.decision.substring(0, 100)}{entry.decision.length > 100 ? "..." : ""}</div>
                     </div>
                     <div className="flex items-center gap-1.5 ml-4">
-                      {entry.wasSuccessful === true && <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      {entry.wasSuccessful === true && <div className="w-1.5 h-1.5 bg-accent rounded-full" />}
                       {entry.wasSuccessful === false && <div className="w-1.5 h-1.5 bg-red-400 rounded-full" />}
                       <span className="text-[10px] text-muted-foreground">{new Date(entry.createdAt).toLocaleDateString()}</span>
                     </div>

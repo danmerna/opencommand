@@ -68,7 +68,7 @@ export default function Blueprints() {
         <div className="flex items-end justify-between">
           <div>
             <h1 className="text-4xl font-light text-foreground tracking-tight">Company Blueprints</h1>
-            <p className="text-muted-foreground text-sm mt-2 max-w-xl">Deploy pre-configured zero-human companies in one click. Each blueprint includes the full agent org chart, budget allocations, OKRs, and execution playbooks.</p>
+            <p className="text-muted-foreground text-sm mt-2 max-w-xl">Deploy pre-configured automated operations in one click. Each blueprint includes the full agent org chart, budget allocations, OKRs, and execution playbooks.</p>
           </div>
           <Button onClick={() => setShowCreate(true)} size="sm" className="gap-1.5">
             <Plus size={12} /> Publish Blueprint
@@ -93,7 +93,7 @@ export default function Blueprints() {
             {[
               { label: "Total Blueprints", value: blueprints.length, color: "text-foreground" },
               { label: "Industries", value: industries.length, color: "text-blue-400" },
-              { label: "Total Deployments", value: blueprints.reduce((sum, b) => sum + (b.totalDeployments ?? 0), 0), color: "text-emerald-400" },
+              { label: "Total Deployments", value: blueprints.reduce((sum, b) => sum + (b.totalDeployments ?? 0), 0), color: "text-accent" },
             ].map((s, i) => (
               <div key={i} className="card-minimal p-4">
                 <div className="text-[10px] text-muted-foreground tracking-widest uppercase mb-1">{s.label}</div>
@@ -107,7 +107,7 @@ export default function Blueprints() {
               <div key={bp.id} className="card-minimal p-5 flex flex-col hover:border-foreground/20 transition-colors">
                 <div className="flex items-start justify-between mb-3">
                   <Badge variant="outline" className="text-[10px]">{bp.pricingModel.replace("_", " ")}</Badge>
-                  {bp.isCertified && <Shield size={13} className="text-emerald-400" />}
+                  {bp.isCertified && <Shield size={13} className="text-accent" />}
                 </div>
                 <div className="text-base font-medium text-foreground mb-1">{bp.name}</div>
                 {bp.category && <div className="text-[10px] text-muted-foreground mb-2">{bp.category}</div>}
@@ -116,7 +116,7 @@ export default function Blueprints() {
                 <div className="grid grid-cols-3 gap-2 text-xs mb-4 pt-3 border-t border-border">
                   <div><div className="text-[10px] text-muted-foreground">Agents</div><div className="text-foreground flex items-center gap-1"><Cpu size={10} /> {bp.agentCount}</div></div>
                   <div><div className="text-[10px] text-muted-foreground">Est. Cost</div><div className="text-amber-400">${Number(bp.estimatedMonthlyCost ?? 0).toFixed(0)}/mo</div></div>
-                  <div><div className="text-[10px] text-muted-foreground">Value Gen</div><div className="text-emerald-400">${Number(bp.totalValueGenerated ?? 0).toFixed(0)}</div></div>
+                  <div><div className="text-[10px] text-muted-foreground">Value Gen</div><div className="text-accent">${Number(bp.totalValueGenerated ?? 0).toFixed(0)}</div></div>
                 </div>
 
                 <div className="flex items-center justify-between mb-4">
@@ -124,7 +124,7 @@ export default function Blueprints() {
                     <div className="flex items-center gap-1"><Star size={10} className="text-amber-400" /><span className="text-xs text-muted-foreground">{Number(bp.avgRating ?? 0).toFixed(1)}</span></div>
                     <div className="flex items-center gap-1"><Download size={10} className="text-muted-foreground" /><span className="text-xs text-muted-foreground">{bp.totalDeployments ?? 0}</span></div>
                   </div>
-                  {Number(bp.price ?? 0) > 0 ? <span className="text-sm font-medium">${Number(bp.price).toLocaleString()}</span> : <span className="text-sm text-emerald-400">Free</span>}
+                  {Number(bp.price ?? 0) > 0 ? <span className="text-sm font-medium">${Number(bp.price).toLocaleString()}</span> : <span className="text-sm text-accent">Free</span>}
                 </div>
 
                 <Button
@@ -147,7 +147,7 @@ export default function Blueprints() {
             <div className="card-minimal p-8 text-center">
               <Package size={28} className="text-muted-foreground mx-auto mb-3 opacity-50" />
               <div className="text-base font-medium text-muted-foreground">No blueprints yet</div>
-              <p className="text-muted-foreground text-sm mt-2">Create and publish your first zero-human company blueprint.</p>
+              <p className="text-muted-foreground text-sm mt-2">Create and publish your first automated operation blueprint.</p>
               <Button onClick={() => setShowCreate(true)} size="sm" className="mt-4 gap-1.5">
                 <Plus size={12} /> Create Blueprint
               </Button>
@@ -167,7 +167,7 @@ export default function Blueprints() {
                     <div className="text-sm text-foreground">{bp.totalDeployments ?? 0} deploys</div>
                     <div className="text-xs text-muted-foreground">{Number(bp.avgRating ?? 0).toFixed(1)} rating</div>
                   </div>
-                  <div className="text-sm text-emerald-400">${Number(bp.totalValueGenerated ?? 0).toFixed(0)}</div>
+                  <div className="text-sm text-accent">${Number(bp.totalValueGenerated ?? 0).toFixed(0)}</div>
                 </div>
               ))}
             </div>
@@ -227,7 +227,7 @@ export default function Blueprints() {
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <span>{selectedBp.agentCount} agents</span>
                   <span className="text-amber-400">${Number(selectedBp.estimatedMonthlyCost ?? 0).toFixed(0)}/mo cost</span>
-                  <span className="text-emerald-400">${Number(selectedBp.estimatedMonthlyRevenue ?? 0).toFixed(0)}/mo rev</span>
+                  <span className="text-accent">${Number(selectedBp.estimatedMonthlyRevenue ?? 0).toFixed(0)}/mo rev</span>
                 </div>
               </div>
               <div><label className="text-xs text-muted-foreground mb-1.5 block">Company Name</label><Input value={deployName} onChange={e => setDeployName(e.target.value)} /></div>

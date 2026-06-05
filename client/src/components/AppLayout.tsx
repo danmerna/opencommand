@@ -202,7 +202,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </button>
             <div className="flex items-center gap-1.5 px-3 py-1 mt-0.5">
               {connected ? (
-                <><Wifi size={10} className="text-emerald-500" /><span className="text-mono text-[10px] text-emerald-500">LIVE</span></>
+                <><Wifi size={10} className="text-accent" /><span className="text-mono text-[10px] text-accent">LIVE</span></>
               ) : (
                 <><WifiOff size={10} className="text-zinc-600" /><span className="text-mono text-[10px] text-zinc-600">OFFLINE</span></>
               )}

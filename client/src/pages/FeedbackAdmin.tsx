@@ -22,7 +22,7 @@ const TYPE_META: Record<string, { icon: typeof Bug; color: string; label: string
 const STATUS_META: Record<string, { icon: typeof Clock; color: string; label: string; badgeClass: string }> = {
   new: { icon: Clock, color: "text-amber-400", label: "New", badgeClass: "border-amber-400/30 text-amber-400 bg-amber-400/5" },
   reviewed: { icon: Eye, color: "text-blue-400", label: "Reviewed", badgeClass: "border-blue-400/30 text-blue-400 bg-blue-400/5" },
-  resolved: { icon: CheckCircle2, color: "text-emerald-400", label: "Resolved", badgeClass: "border-emerald-400/30 text-emerald-400 bg-emerald-400/5" },
+  resolved: { icon: CheckCircle2, color: "text-accent", label: "Resolved", badgeClass: "border-accent/30 text-accent bg-accent/5" },
 };
 
 export default function FeedbackAdmin() {
@@ -101,9 +101,9 @@ export default function FeedbackAdmin() {
           <p className="text-xs text-blue-400/70 uppercase tracking-wider mb-1">Reviewed</p>
           <p className="text-2xl font-light text-blue-400">{counts.reviewed}</p>
         </div>
-        <div className="border border-emerald-400/20 rounded-xl p-4 bg-emerald-400/[0.02]">
-          <p className="text-xs text-emerald-400/70 uppercase tracking-wider mb-1">Resolved</p>
-          <p className="text-2xl font-light text-emerald-400">{counts.resolved}</p>
+        <div className="border border-accent/20 rounded-xl p-4 bg-accent/[0.02]">
+          <p className="text-xs text-accent/70 uppercase tracking-wider mb-1">Resolved</p>
+          <p className="text-2xl font-light text-accent">{counts.resolved}</p>
         </div>
       </div>
 
@@ -202,7 +202,7 @@ export default function FeedbackAdmin() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 text-[11px] gap-1 text-muted-foreground hover:text-emerald-400"
+                          className="h-7 text-[11px] gap-1 text-muted-foreground hover:text-accent"
                           onClick={() => updateStatus.mutate({ id: item.id, status: "resolved" })}
                           disabled={updateStatus.isPending}
                         >

@@ -200,7 +200,7 @@ export function CompletedWork() {
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="sent" fill="#3b82f6" name="Sent" />
-                <Bar dataKey="opened" fill="#10b981" name="Opened" />
+                <Bar dataKey="opened" fill="oklch(0.72 0.12 250)" name="Opened" />
                 <Bar dataKey="replied" fill="#f59e0b" name="Replied" />
               </BarChart>
             </ResponsiveContainer>

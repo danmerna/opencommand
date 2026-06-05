@@ -53,7 +53,7 @@ export default function FeedbackWidget() {
         className={`fixed bottom-5 right-5 z-50 w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg ${
           open
             ? "bg-muted text-foreground rotate-0"
-            : "bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105"
+            : "bg-accent text-white hover:bg-accent hover:scale-105"
         }`}
         aria-label="Send feedback"
       >
@@ -65,8 +65,8 @@ export default function FeedbackWidget() {
         <div className="fixed bottom-20 right-5 z-50 w-80 bg-popover text-popover-foreground border border-border rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
           {submitted ? (
             <div className="p-8 text-center">
-              <div className="w-10 h-10 rounded-full bg-emerald-400/10 flex items-center justify-center mx-auto mb-3">
-                <Check size={18} className="text-emerald-400" />
+              <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
+                <Check size={18} className="text-accent" />
               </div>
               <p className="text-sm font-medium">Thanks for your feedback!</p>
               <p className="text-xs text-muted-foreground mt-1">We read every submission.</p>

@@ -97,7 +97,7 @@ export default function IntentEngine() {
     reading: { label: "Reading pipeline data...", icon: <Database className="w-3 h-3 animate-pulse" />, color: "text-blue-400" },
     analyzing: { label: "Analyzing patterns...", icon: <Eye className="w-3 h-3 animate-pulse" />, color: "text-purple-400" },
     building: { label: "Building context...", icon: <Sparkles className="w-3 h-3 animate-pulse" />, color: "text-orange-400" },
-    ready: { label: "Context ready", icon: <CheckCircle2 className="w-3 h-3" />, color: "text-emerald-400" },
+    ready: { label: "Context ready", icon: <CheckCircle2 className="w-3 h-3" />, color: "text-accent" },
   };
 
   const sendMessage = async () => {
@@ -213,8 +213,8 @@ export default function IntentEngine() {
             const isDone = currentPhaseIdx > i || livePhase === "ready";
             return (
               <div key={phase} className="flex items-center gap-2">
-                {i > 0 && <ArrowRight className={`w-3 h-3 ${isDone ? "text-emerald-400" : "text-zinc-700"}`} />}
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${isActive ? "bg-zinc-800 " + PHASE_CONFIG[phase].color : isDone ? "text-emerald-400" : "text-zinc-600"}`}>
+                {i > 0 && <ArrowRight className={`w-3 h-3 ${isDone ? "text-accent" : "text-zinc-700"}`} />}
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${isActive ? "bg-zinc-800 " + PHASE_CONFIG[phase].color : isDone ? "text-accent" : "text-zinc-600"}`}>
                   {isDone && !isActive ? <CheckCircle2 className="w-3 h-3" /> : PHASE_CONFIG[phase].icon}
                   {phase === "connecting" ? "Connect" : phase === "reading" ? "Read" : phase === "analyzing" ? "Analyze" : "Build"}
                 </div>
@@ -226,7 +226,7 @@ export default function IntentEngine() {
               <Plug className="w-3 h-3 mr-1" /> {connectedCount} tools
             </Badge>
             {liveContext?.hasLiveData && (
-              <Badge variant="outline" className="border-emerald-800 text-emerald-400 text-[10px]">
+              <Badge variant="outline" className="border-accent/30 text-accent text-[10px]">
                 <BarChart3 className="w-3 h-3 mr-1" /> Live data
               </Badge>
             )}
@@ -309,16 +309,16 @@ export default function IntentEngine() {
                 {/* Context card — shown above messages when live data is ready */}
                 {liveContext?.hasLiveData && liveContext.contextSummary && messages.length > 0 && (
                   <div className="flex justify-start">
-                    <div className="max-w-[90%] rounded-lg border border-emerald-800/40 bg-emerald-950/20 px-4 py-3">
+                    <div className="max-w-[90%] rounded-lg border border-accent/30/40 bg-accent/20 px-4 py-3">
                       <div className="flex items-center gap-2 mb-1.5">
-                        <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wide">Context assembled</span>
+                        <BarChart3 className="w-3.5 h-3.5 text-accent" />
+                        <span className="text-[11px] font-semibold text-accent uppercase tracking-wide">Context assembled</span>
                       </div>
-                      <p className="text-xs text-emerald-200/80 leading-relaxed">{liveContext.contextSummary}</p>
+                      <p className="text-xs text-accent/80 leading-relaxed">{liveContext.contextSummary}</p>
                       {liveContext.connectedProviders.length > 0 && (
                         <div className="flex gap-1 mt-2 flex-wrap">
                           {liveContext.connectedProviders.map(p => (
-                            <Badge key={p} variant="outline" className="border-emerald-800/50 text-emerald-500 text-[9px] px-1.5 py-0 capitalize">{p}</Badge>
+                            <Badge key={p} variant="outline" className="border-accent/30/50 text-accent text-[9px] px-1.5 py-0 capitalize">{p}</Badge>
                           ))}
                         </div>
                       )}
@@ -391,7 +391,7 @@ export default function IntentEngine() {
                   <div className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
                     <Layers className="w-3 h-3" /> Context Object
                   </div>
-                  <Badge variant="outline" className={`text-[10px] ${liveContext.hasLiveData ? "border-emerald-800 text-emerald-400" : "border-zinc-700 text-zinc-400"}`}>
+                  <Badge variant="outline" className={`text-[10px] ${liveContext.hasLiveData ? "border-accent/30 text-accent" : "border-zinc-700 text-zinc-400"}`}>
                     {liveContext.hasLiveData ? "Live data" : "Generic"}
                   </Badge>
                 </div>
@@ -402,7 +402,7 @@ export default function IntentEngine() {
                     <ul className="space-y-1.5">
                       {liveContext.insights.map((ins, i) => (
                         <li key={i} className="flex items-start gap-2 text-xs text-zinc-300">
-                          <span className="text-emerald-500 mt-0.5 flex-shrink-0">•</span>
+                          <span className="text-accent mt-0.5 flex-shrink-0">•</span>
                           <span>{ins}</span>
                         </li>
                       ))}
@@ -476,7 +476,7 @@ export default function IntentEngine() {
                 <div className="space-y-1">
                   {connectedCategories.map(c => (
                     <div key={c.id} className="flex items-center gap-2 text-xs">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      <CheckCircle2 className="w-3 h-3 text-accent" />
                       <span className="text-zinc-300">{c.name}</span>
                     </div>
                   ))}
@@ -532,7 +532,7 @@ export default function IntentEngine() {
 
             <div className="space-y-1.5 max-h-96 overflow-y-auto">
               {tasks.map(task => {
-                const statusColors: Record<string, string> = { pending: "text-muted-foreground", in_progress: "text-yellow-400", completed: "text-emerald-400", failed: "text-red-400", awaiting_human: "text-blue-400" };
+                const statusColors: Record<string, string> = { pending: "text-muted-foreground", in_progress: "text-yellow-400", completed: "text-accent", failed: "text-red-400", awaiting_human: "text-blue-400" };
                 return (
                   <button
                     key={task.id}
@@ -624,7 +624,7 @@ export default function IntentEngine() {
                     </Button>
                   )}
                   {selectedTask.status === "completed" && (
-                    <div className="flex items-center gap-2 text-emerald-400">
+                    <div className="flex items-center gap-2 text-accent">
                       <CheckCircle2 className="w-4 h-4" />
                       <span className="text-sm font-medium">Task completed — PoO receipt issued</span>
                     </div>

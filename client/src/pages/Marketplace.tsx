@@ -74,7 +74,7 @@ export default function Marketplace() {
       <section className="px-6 pt-20 pb-12 max-w-5xl mx-auto">
         <p className="text-xs text-muted-foreground tracking-widest uppercase mb-3">OpenCommand Marketplace</p>
         <h1 className="text-5xl lg:text-6xl font-light text-foreground tracking-tight leading-[1.1] mb-5">
-          Deploy your<br /><span className="text-muted-foreground">zero-human workforce</span>
+          Deploy your<br /><span className="text-muted-foreground">agent fleet</span>
         </h1>
         <p className="text-muted-foreground text-lg max-w-xl leading-relaxed">
           AI agents, company blueprints, and skills — everything you need to build and scale autonomous businesses with verified Proof of Outcome.
@@ -126,7 +126,7 @@ export default function Marketplace() {
                     <p className="text-muted-foreground text-sm leading-relaxed mb-5 flex-1">{listing.description}</p>
                     <ul className="space-y-2 mb-5">
                       {features.map((f, fi) => (
-                        <li key={fi} className="flex items-start gap-2 text-sm text-foreground"><Check size={13} className="text-emerald-400 flex-shrink-0 mt-0.5" />{f}</li>
+                        <li key={fi} className="flex items-start gap-2 text-sm text-foreground"><Check size={13} className="text-accent flex-shrink-0 mt-0.5" />{f}</li>
                       ))}
                     </ul>
                     {listing.endorsedBy && (
@@ -198,7 +198,7 @@ export default function Marketplace() {
               <div key={bp.id} className="card-minimal p-5 flex flex-col hover:border-foreground/20 transition-colors">
                 <div className="flex items-start justify-between mb-3">
                   <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">{bp.pricingModel.replace("_", " ")}</Badge>
-                  {bp.isCertified && <Shield size={13} className="text-emerald-400" />}
+                  {bp.isCertified && <Shield size={13} className="text-accent" />}
                 </div>
                 <div className="text-base font-medium text-foreground mb-1">{bp.name}</div>
                 {bp.category && <div className="text-[10px] text-muted-foreground mb-2">{bp.category}</div>}
@@ -206,14 +206,14 @@ export default function Marketplace() {
                 <div className="grid grid-cols-3 gap-2 text-xs mb-4 pt-3 border-t border-border">
                   <div><div className="text-[10px] text-muted-foreground">Agents</div><div className="text-foreground flex items-center gap-1"><Cpu size={10} /> {bp.agentCount}</div></div>
                   <div><div className="text-[10px] text-muted-foreground">Est. Cost</div><div className="text-amber-400">${Number(bp.estimatedMonthlyCost ?? 0).toFixed(0)}/mo</div></div>
-                  <div><div className="text-[10px] text-muted-foreground">Value Gen</div><div className="text-emerald-400">${Number(bp.totalValueGenerated ?? 0).toFixed(0)}</div></div>
+                  <div><div className="text-[10px] text-muted-foreground">Value Gen</div><div className="text-accent">${Number(bp.totalValueGenerated ?? 0).toFixed(0)}</div></div>
                 </div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1"><Star size={10} className="text-amber-400" /><span className="text-xs text-muted-foreground">{Number(bp.avgRating ?? 0).toFixed(1)}</span></div>
                     <div className="flex items-center gap-1"><Download size={10} className="text-muted-foreground" /><span className="text-xs text-muted-foreground">{bp.totalDeployments ?? 0}</span></div>
                   </div>
-                  {Number(bp.price ?? 0) > 0 ? <span className="text-sm font-medium text-foreground">${Number(bp.price).toLocaleString()}</span> : <span className="text-sm text-emerald-400">Free</span>}
+                  {Number(bp.price ?? 0) > 0 ? <span className="text-sm font-medium text-foreground">${Number(bp.price).toLocaleString()}</span> : <span className="text-sm text-accent">Free</span>}
                 </div>
                 {bp.endorsedBy && (
                   <div className="border border-border rounded-lg p-2 mb-4">
@@ -273,7 +273,7 @@ export default function Marketplace() {
                   <p className="text-muted-foreground text-xs leading-relaxed mb-4 line-clamp-2">{skill.description}</p>
                   <div className="flex items-center justify-between text-xs pt-3 border-t border-border">
                     <span className="text-muted-foreground">{skill.totalInstalls ?? 0} installs</span>
-                    {Number(skill.price ?? 0) > 0 ? <span className="text-sm font-medium text-foreground">${Number(skill.price).toFixed(0)}</span> : <span className="text-emerald-400">Free</span>}
+                    {Number(skill.price ?? 0) > 0 ? <span className="text-sm font-medium text-foreground">${Number(skill.price).toFixed(0)}</span> : <span className="text-accent">Free</span>}
                   </div>
                 </div>
               ))}
@@ -307,11 +307,11 @@ export default function Marketplace() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-light text-emerald-400">${Number(bp.totalValueGenerated ?? 0).toLocaleString()}</div>
+                    <div className="text-lg font-light text-accent">${Number(bp.totalValueGenerated ?? 0).toLocaleString()}</div>
                     <div className="text-[10px] text-muted-foreground">value generated</div>
                   </div>
                   <div className="flex items-center gap-1"><Star size={10} className="text-amber-400" /><span className="text-xs text-muted-foreground">{Number(bp.avgRating ?? 0).toFixed(1)}</span></div>
-                  {bp.isCertified && <Shield size={13} className="text-emerald-400" />}
+                  {bp.isCertified && <Shield size={13} className="text-accent" />}
                 </div>
               ))}
             </div>

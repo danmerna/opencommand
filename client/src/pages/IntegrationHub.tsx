@@ -44,7 +44,7 @@ function getProviderTier(slug: string): ProviderTier {
 }
 
 const TIER_CONFIG: Record<ProviderTier, { label: string; color: string; borderColor: string; bgColor: string; icon: React.ReactNode }> = {
-  live: { label: "Live", color: "text-emerald-400", borderColor: "border-emerald-500/30", bgColor: "bg-emerald-500/10", icon: <CheckCircle2 size={10} className="text-emerald-400" /> },
+  live: { label: "Live", color: "text-accent", borderColor: "border-accent/30", bgColor: "bg-accent/10", icon: <CheckCircle2 size={10} className="text-accent" /> },
   coming_soon: { label: "Coming Soon", color: "text-amber-400", borderColor: "border-amber-500/30", bgColor: "bg-amber-500/10", icon: <Clock size={10} className="text-amber-400" /> },
   planned: { label: "Planned", color: "text-muted-foreground", borderColor: "border-border", bgColor: "bg-secondary", icon: <Sparkles size={10} className="text-muted-foreground" /> },
 };
@@ -208,12 +208,12 @@ export default function IntegrationHub() {
     const isCompact = size === "compact";
 
     return (
-      <div className={`card-minimal p-${isCompact ? "3" : "4"} transition-all ${conn ? "border-emerald-500/20 bg-emerald-500/[0.02]" : tier === "planned" ? "opacity-60" : ""}`}>
+      <div className={`card-minimal p-${isCompact ? "3" : "4"} transition-all ${conn ? "border-accent/20 bg-accent/[0.02]" : tier === "planned" ? "opacity-60" : ""}`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className={`text-sm font-medium text-foreground ${tier === "planned" ? "opacity-70" : ""}`}>{provider.name}</span>
             {conn ? (
-              <span className="text-[10px] text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0 rounded-full flex items-center gap-0.5">
+              <span className="text-[10px] text-accent border border-accent/30 bg-accent/10 px-1.5 py-0 rounded-full flex items-center gap-0.5">
                 <CheckCircle2 size={8} /> Connected
               </span>
             ) : (
@@ -226,7 +226,7 @@ export default function IntegrationHub() {
         {!isCompact && <p className="text-muted-foreground text-xs mb-3">{provider.description}</p>}
         {conn ? (
           <div className="flex items-center justify-between">
-            <span className="text-emerald-400 text-xs">{conn.accountName ?? "Connected"}</span>
+            <span className="text-accent text-xs">{conn.accountName ?? "Connected"}</span>
             <Button size="sm" variant="outline" className="text-xs h-7" onClick={e => { e.stopPropagation(); disconnectMutation.mutate({ connectionId: conn.id }); }}>
               <Unplug size={10} className="mr-1" /> Disconnect
             </Button>
@@ -260,7 +260,7 @@ export default function IntegrationHub() {
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><CheckCircle2 size={10} className="text-emerald-400" /> {liveProviders.length} live</span>
+              <span className="flex items-center gap-1"><CheckCircle2 size={10} className="text-accent" /> {liveProviders.length} live</span>
               <span className="text-border">|</span>
               <span className="flex items-center gap-1"><Clock size={10} className="text-amber-400" /> {comingSoonProviders.length} coming soon</span>
               <span className="text-border">|</span>
@@ -291,7 +291,7 @@ export default function IntegrationHub() {
           {/* Live Integrations */}
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
               <h2 className="text-lg font-medium text-foreground">Live Integrations</h2>
               <span className="text-xs text-muted-foreground">Ready to connect now</span>
             </div>
@@ -356,19 +356,19 @@ export default function IntegrationHub() {
                     className={`card-minimal p-4 cursor-pointer transition-colors hover:border-foreground/20 ${selectedCategory === cat.id ? "border-foreground/30" : ""}`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded flex items-center justify-center ${isConnected ? "bg-emerald-500/10 text-emerald-400" : "bg-secondary text-muted-foreground"}`}>
+                        <div className={`w-8 h-8 rounded flex items-center justify-center ${isConnected ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground"}`}>
                           {CATEGORY_ICONS[cat.slug] ?? <Globe size={16} />}
                         </div>
                         <span className="text-sm font-medium text-foreground">{cat.name}</span>
                       </div>
-                      {isConnected ? <CheckCircle2 size={12} className="text-emerald-400" /> : null}
+                      {isConnected ? <CheckCircle2 size={12} className="text-accent" /> : null}
                     </div>
                     <p className="text-muted-foreground text-xs mb-2">{cat.description}</p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                      {liveCatProviders.length > 0 && <span className="text-emerald-400">{liveCatProviders.length} live</span>}
+                      {liveCatProviders.length > 0 && <span className="text-accent">{liveCatProviders.length} live</span>}
                       {comingSoonCatProviders.length > 0 && <span className="text-amber-400">{comingSoonCatProviders.length} soon</span>}
                       <span>{catProviders.length} total</span>
-                      {catConnections.length > 0 && <span className="text-emerald-400 ml-auto">{catConnections.length} connected</span>}
+                      {catConnections.length > 0 && <span className="text-accent ml-auto">{catConnections.length} connected</span>}
                     </div>
                   </div>
                 );
@@ -428,7 +428,7 @@ export default function IntegrationHub() {
                             <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0 rounded">{category?.name}</span>
                           </div>
                           <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
-                            <span className={`flex items-center gap-1 ${conn.status === "connected" ? "text-emerald-400" : conn.status === "error" ? "text-red-400" : "text-muted-foreground"}`}>
+                            <span className={`flex items-center gap-1 ${conn.status === "connected" ? "text-accent" : conn.status === "error" ? "text-red-400" : "text-muted-foreground"}`}>
                               {conn.status === "connected" ? <CheckCircle2 size={10} /> : conn.status === "error" ? <AlertTriangle size={10} /> : <XCircle size={10} />}
                               {conn.status}
                             </span>
@@ -436,7 +436,7 @@ export default function IntegrationHub() {
                             {conn.lastSyncAt && (() => {
                               const lastSync = new Date(conn.lastSyncAt);
                               const hours = (Date.now() - lastSync.getTime()) / (1000 * 60 * 60);
-                              const freshColor = hours < 24 ? "text-emerald-400" : hours < 72 ? "text-amber-400" : "text-red-400";
+                              const freshColor = hours < 24 ? "text-accent" : hours < 72 ? "text-amber-400" : "text-red-400";
                               const freshLabel = hours < 1 ? "just now" : hours < 24 ? `${Math.round(hours)}h ago` : hours < 168 ? `${Math.round(hours / 24)}d ago` : lastSync.toLocaleDateString();
                               return <span className={freshColor}>Synced {freshLabel}</span>;
                             })()}
@@ -496,7 +496,7 @@ export default function IntegrationHub() {
                       <div className="flex items-center gap-2">
                         {CATEGORY_ICONS[cat.slug] ?? <Globe size={14} />}
                         <span className="text-sm font-medium text-foreground">{cat.name}</span>
-                        {isConnected && <CheckCircle2 size={10} className="text-emerald-400" />}
+                        {isConnected && <CheckCircle2 size={10} className="text-accent" />}
                       </div>
                       <span className="text-xs text-muted-foreground">{catProviders.length} providers</span>
                     </div>
@@ -505,7 +505,7 @@ export default function IntegrationHub() {
                         const conn = connections.find(c => c.providerId === p.id && c.status === "connected");
                         const tier = getProviderTier(p.slug);
                         return (
-                          <span key={p.id} className={`text-[10px] px-1.5 py-0 border rounded ${conn ? "border-emerald-500/30 text-emerald-400" : tier === "coming_soon" ? "border-amber-500/20 text-amber-400/70" : "border-border text-muted-foreground"}`}>
+                          <span key={p.id} className={`text-[10px] px-1.5 py-0 border rounded ${conn ? "border-accent/30 text-accent" : tier === "coming_soon" ? "border-amber-500/20 text-amber-400/70" : "border-border text-muted-foreground"}`}>
                             {p.name}
                           </span>
                         );

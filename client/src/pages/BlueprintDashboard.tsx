@@ -123,10 +123,10 @@ function DashboardContent() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: Download, label: "Total Deployments", value: String(totalDeploys), sub: "+39% this month", subColor: "text-emerald-400" },
-          { icon: DollarSign, label: "Total Revenue", value: `$${(totalRevenue || 61876).toLocaleString()}`, sub: "+28% this month", subColor: "text-emerald-400" },
+          { icon: Download, label: "Total Deployments", value: String(totalDeploys), sub: "+39% this month", subColor: "text-accent" },
+          { icon: DollarSign, label: "Total Revenue", value: `$${(totalRevenue || 61876).toLocaleString()}`, sub: "+28% this month", subColor: "text-accent" },
           { icon: Star, label: "Avg Rating", value: String(avgRating), sub: `${reviews?.length ?? 89} reviews`, subColor: "text-muted-foreground" },
-          { icon: TrendingUp, label: "PoO-Verified ROI", value: "312%", sub: "Avg across deployments", subColor: "text-emerald-400" },
+          { icon: TrendingUp, label: "PoO-Verified ROI", value: "312%", sub: "Avg across deployments", subColor: "text-accent" },
         ].map((kpi, i) => (
           <div key={i} className="card-minimal p-5">
             <div className="flex items-center gap-2 mb-3">

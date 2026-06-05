@@ -10,14 +10,14 @@ import { toast } from "sonner";
 import { Plus, FolderOpen, Target, Clock, CheckCircle2, PauseCircle } from "lucide-react";
 
 const PROJECT_COLORS = [
-  "#6366f1", "#8b5cf6", "#06b6d4", "#10b981",
+  "#6366f1", "#8b5cf6", "#06b6d4", "oklch(0.72 0.12 250)",
   "#f59e0b", "#ef4444", "#ec4899", "#14b8a6",
 ];
 
 const STATUS_CONFIG = {
   active:    { label: "Active",    icon: Clock,        cls: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" },
   paused:    { label: "Paused",    icon: PauseCircle,  cls: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  completed: { label: "Completed", icon: CheckCircle2, cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  completed: { label: "Completed", icon: CheckCircle2, cls: "bg-accent/10 text-accent border-accent/20" },
   archived:  { label: "Archived",  icon: FolderOpen,   cls: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20" },
 };
 

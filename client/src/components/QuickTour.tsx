@@ -220,7 +220,7 @@ export function QuickTour({ isFirstTime }: QuickTourProps) {
                 <div
                   key={i}
                   className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    i === currentStep ? "bg-blue-400 scale-125" : i < currentStep ? "bg-emerald-400" : "bg-border"
+                    i === currentStep ? "bg-blue-400 scale-125" : i < currentStep ? "bg-accent" : "bg-border"
                   }`}
                 />
               ))}

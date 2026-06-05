@@ -80,8 +80,8 @@ const EXEC_AGENTS = [
     description: "Sets budget logic, unit economics, and investment thresholds so every recommendation stays grounded.",
     capabilities: ["financial-modeling", "budget-tracking", "revenue-analysis", "risk-assessment"],
     tools: ["stripe", "quickbooks", "analytics"],
-    accent: "border-emerald-400/30", badgeColor: "bg-emerald-400/15 text-emerald-200 border-emerald-400/30",
-    dotColor: "bg-emerald-400", color: "text-emerald-400", icon: "◈", skippable: true,
+    accent: "border-accent/30", badgeColor: "bg-accent/15 text-accent border-accent/30",
+    dotColor: "bg-accent", color: "text-accent", icon: "◈", skippable: true,
   },
 ] as const;
 
@@ -144,8 +144,8 @@ function LandingSection({ onBegin, progress }: { onBegin: () => void; progress?:
   const sigma = {
     code: "Σ", title: "Synthesis Engine", subtitle: "Highest-Leverage Move",
     description: "After all four interviews, Σ synthesizes every executive perspective into one immediate, highest-leverage action.",
-    accent: "border-[#00D4AA]/30", badgeColor: "bg-[#00D4AA]/10 text-[#00D4AA] border-[#00D4AA]/30",
-    dotColor: "bg-[#00D4AA]",
+    accent: "border-[oklch(0.72 0.12 250)]/30", badgeColor: "bg-[oklch(0.72 0.12 250)]/10 text-[oklch(0.72 0.12 250)] border-[oklch(0.72 0.12 250)]/30",
+    dotColor: "bg-[oklch(0.72 0.12 250)]",
   };
 
   return (
@@ -172,8 +172,8 @@ function LandingSection({ onBegin, progress }: { onBegin: () => void; progress?:
 
         {/* Beta Access Banner */}
         <div className="flex justify-center mb-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-2 text-sm font-medium text-emerald-200">
-            <Sparkles size={14} className="text-emerald-300" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-5 py-2 text-sm font-medium text-accent">
+            <Sparkles size={14} className="text-accent" />
             Beta Access — Full Features Unlocked
           </div>
         </div>
@@ -239,7 +239,7 @@ function LandingSection({ onBegin, progress }: { onBegin: () => void; progress?:
               </div>
             ))}
             {/* Σ card — spans full width */}
-            <div className={`col-span-2 rounded-2xl border ${sigma.accent} bg-[#00D4AA]/[0.04] p-4 backdrop-blur-sm`}>
+            <div className={`col-span-2 rounded-2xl border ${sigma.accent} bg-[oklch(0.72 0.12 250)]/[0.04] p-4 backdrop-blur-sm`}>
               <div className="flex items-start justify-between mb-3">
                 <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${sigma.badgeColor}`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${sigma.dotColor}`} />
@@ -322,7 +322,7 @@ function LandingSection({ onBegin, progress }: { onBegin: () => void; progress?:
 
       {/* Footer */}
         <p className="mt-10 text-center text-xs text-white/25">
-          OpenCommand — The OS for non-human labor.{" "}
+          OpenCommand — The orchestration layer for AI work.{" "}
           <a href="/" className="underline underline-offset-2 hover:text-white/50 transition-colors">Back to home</a>
         </p>
       </div>
@@ -364,7 +364,7 @@ function getGuardrailColor(severity: string): string {
   switch ((severity ?? "").toLowerCase()) {
     case "hard-stop": return "#ef4444";
     case "warning": return "#f59e0b";
-    default: return "#22c55e";
+    default: return "oklch(0.72 0.12 250)";
   }
 }
 
@@ -1501,10 +1501,10 @@ export default function ProOnboarding() {
             </div>
           )}
           {enrichment && !enriching && (
-            <div className="rounded-lg border border-emerald-800/30 bg-emerald-950/10 px-4 py-3 mb-6">
+            <div className="rounded-lg border border-accent/30/30 bg-accent/10 px-4 py-3 mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <CheckCircle2 size={12} className="text-emerald-400" />
-                <p className="text-[11px] font-medium text-emerald-300">Website context extracted</p>
+                <CheckCircle2 size={12} className="text-accent" />
+                <p className="text-[11px] font-medium text-accent">Website context extracted</p>
               </div>
               {enrichment.title && <p className="text-xs text-foreground/80">{enrichment.title}</p>}
               {enrichment.description && <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">{enrichment.description}</p>}
@@ -1555,7 +1555,7 @@ export default function ProOnboarding() {
                     <p className="text-xs text-foreground">{a.name}</p>
                     <p className="text-[10px] text-muted-foreground">{a.roleTitle}</p>
                   </div>
-                  {isDone ? <CheckCircle2 size={14} className="text-emerald-400 shrink-0" /> : <Loader2 size={14} className="animate-spin text-muted-foreground shrink-0" />}
+                  {isDone ? <CheckCircle2 size={14} className="text-accent shrink-0" /> : <Loader2 size={14} className="animate-spin text-muted-foreground shrink-0" />}
                 </div>
               );
             })}
@@ -1586,7 +1586,7 @@ export default function ProOnboarding() {
             </div>
             <div className="flex items-center gap-1.5">
               {EXEC_AGENTS.map((a, i) => (
-                <div key={a.type} className={`w-2 h-2 rounded-full transition-all ${i < completedIntIdx ? "bg-emerald-400" : i === completedIntIdx ? "bg-foreground scale-125" : "bg-border"}`} />
+                <div key={a.type} className={`w-2 h-2 rounded-full transition-all ${i < completedIntIdx ? "bg-accent" : i === completedIntIdx ? "bg-foreground scale-125" : "bg-border"}`} />
               ))}
             </div>
           </div>
@@ -1669,17 +1669,17 @@ export default function ProOnboarding() {
               )}
               <div className="flex items-center gap-1.5">
                 {EXEC_AGENTS.map((a, i) => (
-                  <div key={a.type} className={`w-2 h-2 rounded-full transition-all ${i < completedCount ? "bg-emerald-400" : i === completedCount ? "bg-foreground scale-125" : "bg-border"}`} />
+                  <div key={a.type} className={`w-2 h-2 rounded-full transition-all ${i < completedCount ? "bg-accent" : i === completedCount ? "bg-foreground scale-125" : "bg-border"}`} />
                 ))}
               </div>
             </div>
           </div>
           <div className="h-1 bg-border/30 w-full">
-            <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500 ease-out" style={{ width: `${progressPercent}%` }} />
+            <div className="h-full bg-gradient-to-r from-accent to-accent transition-all duration-500 ease-out" style={{ width: `${progressPercent}%` }} />
           </div>
           <div className="px-6 py-2 flex items-center gap-1.5">
             {Array.from({ length: coreOnlyMode ? 3 : totalQuestions }).map((_, i) => (
-              <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i < displayQuestionCount ? "bg-emerald-400 w-6" : i === displayQuestionCount && !isOnboardingComplete && !isCoreComplete ? "bg-foreground/60 w-4" : i < 3 ? "bg-border w-3" : "bg-border/40 w-3"}`} />
+              <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i < displayQuestionCount ? "bg-accent w-6" : i === displayQuestionCount && !isOnboardingComplete && !isCoreComplete ? "bg-foreground/60 w-4" : i < 3 ? "bg-border w-3" : "bg-border/40 w-3"}`} />
             ))}
             <span className="text-[10px] text-muted-foreground/50 ml-2">
               {coreOnlyMode ? `${Math.max(0, 3 - displayQuestionCount)} required left` : displayQuestionCount <= 3 ? `${3 - displayQuestionCount} required left` : `${totalQuestions - displayQuestionCount} optional left`}
@@ -1696,24 +1696,24 @@ export default function ProOnboarding() {
             </div>
           )}
           {agentContext?.hasLiveData && !agentContextLoading && (
-            <div className="rounded-lg border border-emerald-800/40 bg-emerald-950/20 px-4 py-3">
+            <div className="rounded-lg border border-accent/30/40 bg-accent/20 px-4 py-3">
               <div className="flex items-center gap-2 mb-1.5">
-                <BarChart3 size={14} className="text-emerald-400" />
-                <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wide">Live context assembled</span>
+                <BarChart3 size={14} className="text-accent" />
+                <span className="text-[11px] font-semibold text-accent uppercase tracking-wide">Live context assembled</span>
               </div>
-              <p className="text-xs text-emerald-200/80 leading-relaxed mb-2">{agentContext.contextSummary}</p>
+              <p className="text-xs text-accent/80 leading-relaxed mb-2">{agentContext.contextSummary}</p>
               {agentContext.insights.length > 0 && (
                 <ul className="space-y-1 mb-2">
                   {agentContext.insights.slice(0, 3).map((insight, i) => (
-                    <li key={i} className="text-[11px] text-emerald-300/70 flex items-start gap-1.5">
-                      <Eye size={10} className="mt-0.5 shrink-0 text-emerald-500" />{insight}
+                    <li key={i} className="text-[11px] text-accent/70 flex items-start gap-1.5">
+                      <Eye size={10} className="mt-0.5 shrink-0 text-accent" />{insight}
                     </li>
                   ))}
                 </ul>
               )}
               {agentContext.connectedProviders.length > 0 && (
                 <div className="flex gap-1 flex-wrap">
-                  {agentContext.connectedProviders.map(p => <Badge key={p} variant="outline" className="border-emerald-800/50 text-emerald-500 text-[9px] px-1.5 py-0 capitalize">{p}</Badge>)}
+                  {agentContext.connectedProviders.map(p => <Badge key={p} variant="outline" className="border-accent/30/50 text-accent text-[9px] px-1.5 py-0 capitalize">{p}</Badge>)}
                 </div>
               )}
             </div>
@@ -1749,7 +1749,7 @@ export default function ProOnboarding() {
           {/* Completion */}
           {isOnboardingComplete && (
             <div className="flex flex-col items-center gap-4 py-6">
-              <CheckCircle2 size={28} className="text-emerald-400" />
+              <CheckCircle2 size={28} className="text-accent" />
               <p className="text-sm text-foreground font-medium">{currentExec.name} is fully onboarded.</p>
               {suggestedIntegrations.length > 0 && (
                 <div className="w-full max-w-md mt-2">
@@ -1819,8 +1819,8 @@ export default function ProOnboarding() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-8">
         <div className="max-w-lg w-full text-center">
-          <div className="w-16 h-16 rounded-full bg-[#00D4AA]/10 border-2 border-[#00D4AA]/40 flex items-center justify-center mx-auto mb-6">
-            <span className="text-2xl font-bold text-[#00D4AA]">Σ</span>
+          <div className="w-16 h-16 rounded-full bg-[oklch(0.72 0.12 250)]/10 border-2 border-[oklch(0.72 0.12 250)]/40 flex items-center justify-center mx-auto mb-6">
+            <span className="text-2xl font-bold text-[oklch(0.72 0.12 250)]">Σ</span>
           </div>
           {sigmaLoading ? (
             <>
@@ -1838,9 +1838,9 @@ export default function ProOnboarding() {
             <>
               <h2 className="text-xl font-light text-foreground mb-2">Σ Calibration Complete</h2>
               <p className="text-muted-foreground text-xs mb-6">Here's Σ's first synthesis — combining all executive perspectives into one highest-leverage recommendation:</p>
-              <div className="text-left border border-[#00D4AA]/30 rounded-xl bg-[#00D4AA]/5 p-5 mb-8">
+              <div className="text-left border border-[oklch(0.72 0.12 250)]/30 rounded-xl bg-[oklch(0.72 0.12 250)]/5 p-5 mb-8">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-sm font-semibold text-[#00D4AA]">Σ Highest-Leverage Move</span>
+                  <span className="text-sm font-semibold text-[oklch(0.72 0.12 250)]">Σ Highest-Leverage Move</span>
                 </div>
                 <div className="text-sm text-foreground/90 leading-relaxed prose prose-invert prose-sm max-w-none">
                   <Streamdown>{sigmaSynthesis}</Streamdown>
@@ -1901,7 +1901,7 @@ export default function ProOnboarding() {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-muted-foreground border-border text-[10px] gap-1"><Calendar size={10} />{freqLabel} briefings</Badge>
-            <Badge variant="outline" className="text-emerald-400 border-emerald-400/30 text-[10px]">Powered by OpenCommand</Badge>
+            <Badge variant="outline" className="text-accent border-accent/30 text-[10px]">Powered by OpenCommand</Badge>
           </div>
         </div>
 
@@ -1931,7 +1931,7 @@ export default function ProOnboarding() {
               <TabsTrigger value="team" className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-400 data-[state=active]:text-foreground text-muted-foreground px-0 pb-3 pt-3 text-sm gap-2">
                 <Bot size={13} />Your Team
               </TabsTrigger>
-              <TabsTrigger value="goals" className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-400 data-[state=active]:text-foreground text-muted-foreground px-0 pb-3 pt-3 text-sm gap-2">
+              <TabsTrigger value="goals" className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:text-foreground text-muted-foreground px-0 pb-3 pt-3 text-sm gap-2">
                 <Target size={13} />/goals
               </TabsTrigger>
             </TabsList>
@@ -1986,7 +1986,7 @@ export default function ProOnboarding() {
               {recsLoading ? (
                 <div className="flex items-center justify-center py-16 px-6">
                   <div className="text-center">
-                    <Loader2 size={24} className="animate-spin text-emerald-400 mx-auto mb-3" />
+                    <Loader2 size={24} className="animate-spin text-accent mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">Generating autonomous goal contracts...</p>
                   </div>
                 </div>
@@ -2021,7 +2021,7 @@ export default function ProOnboarding() {
                                     onClick={() => setActiveGoalHorizon(agent)}
                                     className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium border transition-colors shrink-0 ${
                                       activeGoalHorizon === agent
-                                        ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-300"
+                                        ? "border-accent/40 bg-accent/10 text-accent"
                                         : "text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/50"
                                     }`}
                                   >
@@ -2046,7 +2046,7 @@ export default function ProOnboarding() {
                             {/* Contract header */}
                             <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-3 border-b border-border/50">
                               <div className="flex flex-wrap items-center gap-2 pr-8">
-                                <code className="text-xs font-mono text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded break-all">{goal.command}</code>
+                                <code className="text-xs font-mono text-accent bg-accent/10 px-2 py-0.5 rounded break-all">{goal.command}</code>
                                 {goal.agentRole && (
                                   <Badge variant="outline" className="text-[9px] border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
                                     {goal.agentRole}
@@ -2068,7 +2068,7 @@ export default function ProOnboarding() {
                               {/* 1. Primary Objective */}
                               <div>
                                 <div className="flex items-center gap-2 mb-1.5">
-                                  <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">1. Primary Objective</span>
+                                  <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">1. Primary Objective</span>
                                 </div>
                                 <p className="text-sm text-foreground/90">{goal.objective}</p>
                                 {goal.desiredState && (
@@ -2080,7 +2080,7 @@ export default function ProOnboarding() {
                               {goal.context && (
                                 <div>
                                   <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">2. Context & Starting Points</span>
+                                    <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">2. Context & Starting Points</span>
                                   </div>
                                   {typeof goal.context === "object" && !Array.isArray(goal.context) ? (
                                     <div className="space-y-2">
@@ -2144,16 +2144,16 @@ export default function ProOnboarding() {
                               {goal.scope && (
                                 <div>
                                   <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">3. Scope & Permissions</span>
+                                    <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">3. Scope & Permissions</span>
                                   </div>
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {goal.scope.allowed?.length > 0 && (
-                                      <div className="rounded-lg border border-emerald-800/20 bg-emerald-950/10 p-2.5">
-                                        <span className="text-[9px] text-emerald-400 uppercase font-medium">Allowed</span>
+                                      <div className="rounded-lg border border-accent/30/20 bg-accent/10 p-2.5">
+                                        <span className="text-[9px] text-accent uppercase font-medium">Allowed</span>
                                         <ul className="mt-1 space-y-0.5">
                                           {goal.scope.allowed.map((a: string, j: number) => (
                                             <li key={j} className="text-xs text-foreground/70 flex items-start gap-1">
-                                              <span className="text-emerald-400 shrink-0">✓</span>
+                                              <span className="text-accent shrink-0">✓</span>
                                               <span className="break-words">{a}</span>
                                             </li>
                                           ))}
@@ -2207,7 +2207,7 @@ export default function ProOnboarding() {
                               {goal.verification && (
                                 <div>
                                   <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">4. Verification & Success Criteria</span>
+                                    <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">4. Verification & Success Criteria</span>
                                   </div>
                                   <div className="space-y-2">
                                     {goal.verification.successCriteria?.length > 0 && (
@@ -2226,7 +2226,7 @@ export default function ProOnboarding() {
                                         <ul className="mt-0.5 space-y-0.5">
                                           {goal.verification.checks.map((c: string, j: number) => (
                                             <li key={j} className="text-xs text-foreground/70 flex items-start gap-1.5">
-                                              <CheckCircle2 size={10} className="text-emerald-400 mt-0.5 shrink-0" />
+                                              <CheckCircle2 size={10} className="text-accent mt-0.5 shrink-0" />
                                               <span className="break-words">{c}</span>
                                             </li>
                                           ))}
@@ -2254,7 +2254,7 @@ export default function ProOnboarding() {
                               {goal.iteration && (
                                 <div>
                                   <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">5. Iteration Policy</span>
+                                    <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">5. Iteration Policy</span>
                                   </div>
                                   <p className="text-xs text-foreground/70 break-words">{goal.iteration}</p>
                                 </div>
@@ -2264,7 +2264,7 @@ export default function ProOnboarding() {
                               {goal.escalation && (
                                 <div>
                                   <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">6. Error Handling & Escalation</span>
+                                    <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">6. Error Handling & Escalation</span>
                                   </div>
                                   <p className="text-xs text-foreground/70 break-words">{goal.escalation}</p>
                                 </div>
@@ -2274,7 +2274,7 @@ export default function ProOnboarding() {
                               {goal.output && (
                                 <div>
                                   <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">7. Output Requirements</span>
+                                    <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">7. Output Requirements</span>
                                   </div>
                                   <p className="text-xs text-foreground/70 break-words">{goal.output}</p>
                                 </div>
@@ -2284,7 +2284,7 @@ export default function ProOnboarding() {
                               {goal.stopCondition && (
                                 <div>
                                   <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">8. Stop Condition</span>
+                                    <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">8. Stop Condition</span>
                                   </div>
                                   <p className="text-xs text-foreground/70 break-words">{goal.stopCondition}</p>
                                 </div>
@@ -2348,9 +2348,9 @@ export default function ProOnboarding() {
                 <div className="flex gap-4 justify-center mb-8">
                   <button
                     onClick={() => handleThumbsSelect("up")}
-                    className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/50 hover:border-emerald-400/50 hover:bg-emerald-950/20 transition-all p-8 w-44"
+                    className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/50 hover:border-accent/50 hover:bg-accent/20 transition-all p-8 w-44"
                   >
-                    <ThumbsUp size={32} className="text-emerald-400" />
+                    <ThumbsUp size={32} className="text-accent" />
                     <span className="text-sm font-medium text-foreground">Found value</span>
                     <span className="text-xs text-muted-foreground text-center">The insights were relevant and useful</span>
                   </button>
@@ -2368,9 +2368,9 @@ export default function ProOnboarding() {
               {/* Selected thumbs indicator */}
               {thumbs && (
                 <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 mb-6 ${
-                  thumbs === "up" ? "border-emerald-800/40 bg-emerald-950/10" : "border-red-800/40 bg-red-950/10"
+                  thumbs === "up" ? "border-accent/30/40 bg-accent/10" : "border-red-800/40 bg-red-950/10"
                 }`}>
-                  {thumbs === "up" ? <ThumbsUp size={14} className="text-emerald-400" /> : <ThumbsDown size={14} className="text-red-400" />}
+                  {thumbs === "up" ? <ThumbsUp size={14} className="text-accent" /> : <ThumbsDown size={14} className="text-red-400" />}
                   <span className="text-sm text-foreground">{thumbs === "up" ? "You found value" : "You didn't find value"}</span>
                   <button onClick={() => { setThumbs(null); setSurveyQuestions([]); setSurveyResponses({}); }} className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors">Change</button>
                 </div>
@@ -2456,8 +2456,8 @@ export default function ProOnboarding() {
           ) : (
             /* Post-submit: Waitlist CTA */
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-emerald-400/10 border-2 border-emerald-400/30 flex items-center justify-center mx-auto mb-6">
-                <CheckCircle2 size={28} className="text-emerald-400" />
+              <div className="w-16 h-16 rounded-full bg-accent/10 border-2 border-accent/30 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 size={28} className="text-accent" />
               </div>
               <h2 className="text-2xl font-light text-foreground tracking-tight mb-2">Thank you for your feedback</h2>
               <p className="text-muted-foreground text-sm mb-8">Your insights help us build the best AI executive platform for founders and operators.</p>
@@ -2525,7 +2525,7 @@ export default function ProOnboarding() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-8">
         <div className="text-center">
-          <CheckCircle2 size={32} className="text-emerald-400 mx-auto mb-4" />
+          <CheckCircle2 size={32} className="text-accent mx-auto mb-4" />
           <h2 className="text-xl font-light text-foreground mb-2">Launching Mission Control...</h2>
           <p className="text-xs text-muted-foreground">Your executive team is ready.</p>
         </div>

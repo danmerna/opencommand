@@ -30,7 +30,7 @@ const typeColors: Record<string, string> = {
   ceo: "text-amber-400 border-amber-400/30 bg-amber-400/10",
   cto: "text-blue-400 border-blue-400/30 bg-blue-400/10",
   cmo: "text-pink-400 border-pink-400/30 bg-pink-400/10",
-  cfo: "text-emerald-400 border-emerald-400/30 bg-emerald-400/10",
+  cfo: "text-accent border-accent/30 bg-accent/10",
   vp: "text-violet-400 border-violet-400/30 bg-violet-400/10",
   manager: "text-cyan-400 border-cyan-400/30 bg-cyan-400/10",
   specialist: "text-orange-400 border-orange-400/30 bg-orange-400/10",
@@ -43,7 +43,7 @@ const typeColors: Record<string, string> = {
 
 const statusConfig: Record<string, { color: string; icon: React.ElementType; label: string }> = {
   idle:       { color: "text-zinc-400",   icon: Clock,          label: "Idle" },
-  active:     { color: "text-emerald-400", icon: Play,           label: "Active" },
+  active:     { color: "text-accent", icon: Play,           label: "Active" },
   paused:     { color: "text-amber-400",   icon: Pause,          label: "Paused" },
   error:      { color: "text-red-400",     icon: AlertTriangle,  label: "Error" },
   terminated: { color: "text-zinc-600",    icon: XCircle,        label: "Terminated" },
@@ -154,7 +154,7 @@ export default function AgentDetail() {
 
           {/* Status dot */}
           <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-            agent.status === "active" ? "bg-emerald-400" :
+            agent.status === "active" ? "bg-accent" :
             agent.status === "error" ? "bg-red-400" :
             agent.status === "paused" ? "bg-amber-400" :
             "bg-zinc-500"
@@ -228,7 +228,7 @@ export default function AgentDetail() {
               </div>
               <div className="rounded-xl border border-border bg-white/[0.02] p-4">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Value Created</div>
-                <div className="text-xl font-bold text-emerald-400">${Number(agent.totalValueCreated).toLocaleString()}</div>
+                <div className="text-xl font-bold text-accent">${Number(agent.totalValueCreated).toLocaleString()}</div>
               </div>
               <div className="rounded-xl border border-border bg-white/[0.02] p-4">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Cost Incurred</div>
@@ -279,7 +279,7 @@ export default function AgentDetail() {
               return (
                 <div className="rounded-xl border border-border/50 bg-card/30 p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Wifi size={14} className="text-emerald-400" />
+                    <Wifi size={14} className="text-accent" />
                     <span className="text-xs font-medium text-muted-foreground">Connected integrations</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -293,7 +293,7 @@ export default function AgentDetail() {
                       const tokenExpired = conn.tokenExpiresAt ? new Date(conn.tokenExpiresAt) < now : false;
                       return (
                         <div key={conn.id} className="flex items-center gap-2 rounded-lg border border-border/30 bg-secondary/30 px-3 py-2">
-                          <div className={`w-2 h-2 rounded-full ${tokenExpired ? "bg-red-400" : isStale ? "bg-amber-400" : isFresh ? "bg-emerald-400" : "bg-zinc-400"}`} />
+                          <div className={`w-2 h-2 rounded-full ${tokenExpired ? "bg-red-400" : isStale ? "bg-amber-400" : isFresh ? "bg-accent" : "bg-zinc-400"}`} />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium text-foreground truncate">{provider?.name ?? "Unknown"}</p>
                             <p className="text-[10px] text-muted-foreground">
@@ -455,7 +455,7 @@ export default function AgentDetail() {
               <div className="space-y-2">
                 {(heartbeatLog as any[]).slice(0, 20).map((entry: any) => (
                   <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-white/[0.02] px-4 py-2.5">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${entry.status === "success" ? "bg-emerald-400" : "bg-red-400"}`} />
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${entry.status === "success" ? "bg-accent" : "bg-red-400"}`} />
                     <div className="flex-1 min-w-0">
                       <div className="text-xs text-foreground">
                         Checked {entry.tasksChecked} tasks, acted on {entry.tasksActedOn}
@@ -464,7 +464,7 @@ export default function AgentDetail() {
                         {new Date(entry.createdAt).toLocaleString()} · {entry.duration}ms · {entry.tokenCost} tokens
                       </div>
                     </div>
-                    <Badge variant="outline" className={`text-[10px] ${entry.status === "success" ? "text-emerald-400 border-emerald-400/30" : "text-red-400 border-red-400/30"}`}>
+                    <Badge variant="outline" className={`text-[10px] ${entry.status === "success" ? "text-accent border-accent/30" : "text-red-400 border-red-400/30"}`}>
                       {entry.status}
                     </Badge>
                   </div>
@@ -492,7 +492,7 @@ export default function AgentDetail() {
               </div>
               <div className="rounded-xl border border-border bg-white/[0.02] p-4">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Budget Utilization</div>
-                <div className={`text-xl font-bold ${budgetPercent >= budgetThreshold ? "text-amber-400" : "text-emerald-400"}`}>
+                <div className={`text-xl font-bold ${budgetPercent >= budgetThreshold ? "text-amber-400" : "text-accent"}`}>
                   {budgetPercent.toFixed(1)}%
                 </div>
               </div>
@@ -508,7 +508,7 @@ export default function AgentDetail() {
                 <div className="h-2 rounded-full bg-white/[0.05] overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
-                      budgetPercent >= budgetThreshold ? "bg-amber-400" : "bg-emerald-400"
+                      budgetPercent >= budgetThreshold ? "bg-amber-400" : "bg-accent"
                     }`}
                     style={{ width: `${budgetPercent}%` }}
                   />
@@ -522,7 +522,7 @@ export default function AgentDetail() {
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-xl border border-border bg-white/[0.02] p-4">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total Value Created</div>
-                <div className="text-lg font-bold text-emerald-400">${Number(agent.totalValueCreated).toLocaleString()}</div>
+                <div className="text-lg font-bold text-accent">${Number(agent.totalValueCreated).toLocaleString()}</div>
               </div>
               <div className="rounded-xl border border-border bg-white/[0.02] p-4">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total Cost Incurred</div>
@@ -658,7 +658,7 @@ export default function AgentDetail() {
 
 /* ─── Connector (BYOA) Tab ─────────────────────────────────────────────── */
 const CONNECTOR_OPTIONS = [
-  { value: "internal",   label: "OpenCommand AI", desc: "Powered by OpenCommand's built-in AI — no key required",  badge: "Managed",   color: "text-emerald-400", logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/WP82CNZ6C5SdwCUYfYptJQ/opencommand-ai-owl-icon-e3SxVtUebh4P2Phx8gqNjM.webp" },
+  { value: "internal",   label: "OpenCommand AI", desc: "Powered by OpenCommand's built-in AI — no key required",  badge: "Managed",   color: "text-accent", logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/WP82CNZ6C5SdwCUYfYptJQ/opencommand-ai-owl-icon-e3SxVtUebh4P2Phx8gqNjM.webp" },
   { value: "openai",     label: "OpenAI",         desc: "GPT-4o, GPT-4 Turbo, or any OpenAI model",                badge: "BYOA",      color: "text-blue-400" },
   { value: "anthropic",  label: "Anthropic",      desc: "Claude 3.5 Sonnet, Claude 3 Opus, and more",              badge: "BYOA",      color: "text-violet-400" },
   { value: "gemini",     label: "Gemini",         desc: "Google Gemini Pro or Ultra — get key at aistudio.google.com/apikey", badge: "BYOA", color: "text-amber-400", keyLink: "https://aistudio.google.com/apikey" },
@@ -764,7 +764,7 @@ function ConnectorTab({ agentId, currentType, hasConfig }: { agentId: number; cu
             <Plug size={14} className="text-muted-foreground" />
             <h3 className="text-sm font-semibold text-foreground">Credentials</h3>
             {configSaved && (
-              <span className="ml-auto flex items-center gap-1 text-[10px] text-emerald-400">
+              <span className="ml-auto flex items-center gap-1 text-[10px] text-accent">
                 <CheckCircle2 size={10} /> Saved
               </span>
             )}
@@ -893,7 +893,7 @@ function ConnectorTab({ agentId, currentType, hasConfig }: { agentId: number; cu
 
 /* ─── Autonomy & RALF Tab ──────────────────────────────────────────────── */
 const AUTONOMY_LEVELS = [
-  { value: "full_auto", label: "Full Auto", desc: "Agent acts independently, no approvals needed", color: "text-emerald-400" },
+  { value: "full_auto", label: "Full Auto", desc: "Agent acts independently, no approvals needed", color: "text-accent" },
   { value: "supervised", label: "Supervised", desc: "Agent acts but logs everything for review", color: "text-blue-400" },
   { value: "approval_required", label: "Approval Required", desc: "Agent proposes, human approves before execution", color: "text-amber-400" },
   { value: "manual_only", label: "Manual Only", desc: "Agent only responds when directly asked", color: "text-red-400" },
@@ -1001,7 +1001,7 @@ function AutonomyTab({ agentId, agentName }: { agentId: number; agentName: strin
             <button
               onClick={() => updateMutation.mutate({ agentId, crossModelVerification: !settings.crossModelVerification })}
               className={`relative w-10 h-5 rounded-full transition-colors ${
-                settings.crossModelVerification ? "bg-emerald-500" : "bg-zinc-700"
+                settings.crossModelVerification ? "bg-accent" : "bg-zinc-700"
               }`}
             >
               <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
@@ -1022,7 +1022,7 @@ function AutonomyTab({ agentId, agentName }: { agentId: number; agentName: strin
           <button
             onClick={() => updateMutation.mutate({ agentId, ralfEnabled: !settings.ralfEnabled })}
             className={`relative w-10 h-5 rounded-full transition-colors ${
-              settings.ralfEnabled ? "bg-emerald-500" : "bg-zinc-700"
+              settings.ralfEnabled ? "bg-accent" : "bg-zinc-700"
             }`}
           >
             <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
@@ -1040,7 +1040,7 @@ function AutonomyTab({ agentId, agentName }: { agentId: number; agentName: strin
             {ralfLogs.slice(0, 10).map((log: any) => {
               const phaseColors: Record<string, string> = {
                 reason: "text-blue-400 bg-blue-400/10 border-blue-400/20",
-                act: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+                act: "text-accent bg-accent/10 border-accent/20",
                 learn: "text-amber-400 bg-amber-400/10 border-amber-400/20",
                 feedback: "text-purple-400 bg-purple-400/10 border-purple-400/20",
               };
@@ -1057,7 +1057,7 @@ function AutonomyTab({ agentId, agentName }: { agentId: number; agentName: strin
                     {log.phase}
                   </Badge>
                   <span className="flex-1 text-xs text-muted-foreground truncate">{log.output?.slice(0, 80) ?? "—"}</span>
-                  <StatusIcon size={13} className={log.status === "completed" ? "text-emerald-400" : log.status === "failed" ? "text-red-400" : "text-muted-foreground"} />
+                  <StatusIcon size={13} className={log.status === "completed" ? "text-accent" : log.status === "failed" ? "text-red-400" : "text-muted-foreground"} />
                   <span className="text-[10px] text-muted-foreground">
                     {log.confidence ? `${(Number(log.confidence) * 100).toFixed(0)}%` : "—"}
                   </span>

@@ -21,7 +21,7 @@ const DASH_TABS: { id: DashTab; label: string; icon: React.ElementType }[] = [
 
 const statusColors: Record<string, string> = {
   idle: "text-zinc-400",
-  active: "text-emerald-400",
+  active: "text-accent",
   paused: "text-amber-400",
   error: "text-red-400",
   terminated: "text-zinc-600",
@@ -29,7 +29,7 @@ const statusColors: Record<string, string> = {
 
 const phaseColors: Record<string, string> = {
   reason: "text-blue-400 bg-blue-400/10 border-blue-400/20",
-  act: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+  act: "text-accent bg-accent/10 border-accent/20",
   learn: "text-amber-400 bg-amber-400/10 border-amber-400/20",
   feedback: "text-purple-400 bg-purple-400/10 border-purple-400/20",
 };
@@ -143,7 +143,7 @@ export default function ExecutionDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
           <div className="rounded-xl border border-border bg-white/[0.02] p-4">
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Active Agents</div>
-            <div className="text-xl font-bold text-emerald-400">{activeAgents.length}</div>
+            <div className="text-xl font-bold text-accent">{activeAgents.length}</div>
             <div className="text-[10px] text-muted-foreground">{agents.length} total</div>
           </div>
           <div className="rounded-xl border border-border bg-white/[0.02] p-4">
@@ -212,7 +212,7 @@ export default function ExecutionDashboard() {
                     >
                       {/* Status dot */}
                       <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                        agent.status === "active" ? "bg-emerald-400 animate-pulse" :
+                        agent.status === "active" ? "bg-accent animate-pulse" :
                         agent.status === "error" ? "bg-red-400" :
                         agent.status === "paused" ? "bg-amber-400" :
                         "bg-zinc-600"
@@ -230,7 +230,7 @@ export default function ExecutionDashboard() {
                           <span>·</span>
                           <span>{agent.tasksCompleted} completed</span>
                           <span>·</span>
-                          <span className="text-emerald-400">${Number(agent.totalValueCreated).toLocaleString()} value</span>
+                          <span className="text-accent">${Number(agent.totalValueCreated).toLocaleString()} value</span>
                         </div>
                       </div>
 
@@ -248,7 +248,7 @@ export default function ExecutionDashboard() {
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Active Tasks</p>
                             {activeTasks.map(task => (
                               <div key={task.id} className="flex items-center gap-3 rounded-lg border border-border/50 bg-white/[0.01] px-3 py-2">
-                                <Play size={11} className="text-emerald-400 shrink-0" />
+                                <Play size={11} className="text-accent shrink-0" />
                                 <span className="flex-1 text-xs text-foreground truncate">{task.title}</span>
                                 <Badge variant="outline" className="text-[9px]">{task.priority}</Badge>
                                 <Badge variant="outline" className="text-[9px]">{task.status}</Badge>
@@ -277,7 +277,7 @@ export default function ExecutionDashboard() {
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Recently Completed</p>
                             {recentCompleted.map(task => (
                               <div key={task.id} className="flex items-center gap-3 px-3 py-1.5 text-xs text-muted-foreground">
-                                <CheckCircle2 size={11} className="text-emerald-400/50" />
+                                <CheckCircle2 size={11} className="text-accent/50" />
                                 <span className="truncate">{task.title}</span>
                               </div>
                             ))}
@@ -423,7 +423,7 @@ export default function ExecutionDashboard() {
                       key={rec.id}
                       className={`rounded-xl border p-4 transition-all ${
                         isDeployed
-                          ? "border-emerald-400/20 bg-emerald-400/5"
+                          ? "border-accent/20 bg-accent/5"
                           : isDismissed
                           ? "border-border/50 bg-white/[0.01] opacity-50"
                           : "border-border bg-white/[0.02]"
@@ -433,7 +433,7 @@ export default function ExecutionDashboard() {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-sm font-medium text-foreground">{rec.recommendedName}</span>
-                            {isDeployed && <CheckCircle2 size={12} className="text-emerald-400" />}
+                            {isDeployed && <CheckCircle2 size={12} className="text-accent" />}
                           </div>
                           <Badge variant="outline" className="text-[9px] uppercase tracking-wider">
                             {rec.roleTitle ?? rec.recommendedType}
@@ -459,7 +459,7 @@ export default function ExecutionDashboard() {
                       )}
 
                       {rec.estimatedImpact && (
-                        <div className="flex items-center gap-1 text-[11px] text-emerald-400 mb-3">
+                        <div className="flex items-center gap-1 text-[11px] text-accent mb-3">
                           <TrendingUp size={10} />
                           {rec.estimatedImpact}
                         </div>
@@ -470,7 +470,7 @@ export default function ExecutionDashboard() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="flex-1 h-7 text-[10px] gap-1 text-emerald-400 border-emerald-400/30 hover:bg-emerald-400/10"
+                            className="flex-1 h-7 text-[10px] gap-1 text-accent border-accent/30 hover:bg-accent/10"
                             disabled={deployRecMutation.isPending}
                             onClick={() => companyId && deployRecMutation.mutate({ id: rec.id, companyId })}
                           >

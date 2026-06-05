@@ -24,7 +24,7 @@ import {
 
 // Provider badge config — used on agent cards and BYOA selector
 const PROVIDER_BADGE: Record<string, { label: string; color: string; logo?: string }> = {
-  internal:   { label: "OpenCommand AI", color: "text-emerald-400",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/WP82CNZ6C5SdwCUYfYptJQ/opencommand-ai-owl-icon-e3SxVtUebh4P2Phx8gqNjM.webp" },
+  internal:   { label: "OpenCommand AI", color: "text-accent",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663354746985/WP82CNZ6C5SdwCUYfYptJQ/opencommand-ai-owl-icon-e3SxVtUebh4P2Phx8gqNjM.webp" },
   openai:     { label: "OpenAI",         color: "text-blue-400" },
   anthropic:  { label: "Anthropic",      color: "text-violet-400" },
   gemini:     { label: "Gemini",         color: "text-amber-400" },
@@ -50,7 +50,7 @@ const typeColors: Record<string, string> = {
   ceo: "text-amber-400 border-amber-400/30",
   cto: "text-blue-400 border-blue-400/30",
   cmo: "text-pink-400 border-pink-400/30",
-  cfo: "text-emerald-400 border-emerald-400/30",
+  cfo: "text-accent border-accent/30",
   vp: "text-violet-400 border-violet-400/30",
   manager: "text-cyan-400 border-cyan-400/30",
   specialist: "text-orange-400 border-orange-400/30",
@@ -78,7 +78,7 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
     ceo: { text: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/30", ring: "ring-amber-400/20" },
     cto: { text: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/30", ring: "ring-blue-400/20" },
     cmo: { text: "text-pink-400", bg: "bg-pink-400/10", border: "border-pink-400/30", ring: "ring-pink-400/20" },
-    cfo: { text: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/30", ring: "ring-emerald-400/20" },
+    cfo: { text: "text-accent", bg: "bg-accent/10", border: "border-accent/30", ring: "ring-accent/20" },
   };
 
   const progressPct = Math.round((data.completed / data.total) * 100);
@@ -86,14 +86,14 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
   // All onboarded — show completion state
   if (data.allOnboarded) {
     return (
-      <div className="mb-6 border border-emerald-500/20 rounded-xl p-5 bg-emerald-500/5">
+      <div className="mb-6 border border-accent/20 rounded-xl p-5 bg-accent/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <CheckCircle2 size={20} className="text-emerald-400" />
+            <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
+              <CheckCircle2 size={20} className="text-accent" />
             </div>
             <div>
-              <p className="text-sm font-medium text-emerald-400">All agents onboarded</p>
+              <p className="text-sm font-medium text-accent">All agents onboarded</p>
               <p className="text-xs text-muted-foreground">Baseline context established for {data.total} C-suite agents.</p>
             </div>
           </div>
@@ -117,7 +117,7 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
       {/* Progress bar */}
       <div className="h-1 bg-border/50">
         <div
-          className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-700"
+          className="h-full bg-gradient-to-r from-amber-500 to-accent transition-all duration-700"
           style={{ width: `${progressPct}%` }}
         />
       </div>
@@ -156,19 +156,19 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
                 onClick={() => a.isOnboarded ? undefined : navigate(`/onboarding/${a.agentId}`)}
                 className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-left transition-all ${
                   a.isOnboarded
-                    ? "bg-emerald-500/5 border-emerald-500/20 cursor-default"
+                    ? "bg-accent/5 border-accent/20 cursor-default"
                     : `${colors.bg} ${colors.border} hover:ring-1 ${colors.ring} cursor-pointer`
                 }`}
               >
                 <span className="text-sm">{icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-medium truncate ${a.isOnboarded ? "text-emerald-400" : colors.text}`}>
+                  <p className={`text-xs font-medium truncate ${a.isOnboarded ? "text-accent" : colors.text}`}>
                     {a.agentName}
                   </p>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{a.agentType}</p>
                 </div>
                 {a.isOnboarded ? (
-                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                  <CheckCircle2 size={14} className="text-accent shrink-0" />
                 ) : (
                   <ArrowRight size={12} className={`${colors.text} shrink-0 opacity-60`} />
                 )}
@@ -179,7 +179,7 @@ function OnboardingBanner({ companyId, navigate }: { companyId: number | null; n
 
         {/* Context explanation */}
         <div className="mt-3 flex items-center gap-4 text-[10px] text-muted-foreground/60">
-          <span className="flex items-center gap-1"><CheckCircle2 size={9} className="text-emerald-400" /> Contextualized</span>
+          <span className="flex items-center gap-1"><CheckCircle2 size={9} className="text-accent" /> Contextualized</span>
           <span className="flex items-center gap-1"><ArrowRight size={9} /> Awaiting interview</span>
           <span className="ml-auto">Each interview takes ~2 min</span>
         </div>
@@ -294,7 +294,7 @@ export default function MissionControl() {
     return (
       <div key={agent.id} style={{ marginLeft: depth * 28 }} className="animate-fade-in">
         <div className="card-minimal flex items-center gap-3 mb-1.5">
-          <div className={`w-2 h-2 rounded-full ${agent.status === "active" ? "bg-emerald-500 animate-pulse-subtle" : "bg-zinc-700"}`} />
+          <div className={`w-2 h-2 rounded-full ${agent.status === "active" ? "bg-accent animate-pulse-subtle" : "bg-zinc-700"}`} />
           <span className={`text-mono text-xs border px-1.5 py-0.5 rounded ${typeColors[agent.type] ?? "text-foreground border-border"}`}>{agent.type}</span>
           <span className="font-medium text-sm text-foreground">{agent.name}</span>
           {(agent as any).roleTitle && <span className="text-muted-foreground text-xs">— {(agent as any).roleTitle}</span>}
@@ -332,7 +332,7 @@ export default function MissionControl() {
   const deleteGoalMut = trpc.goals.delete.useMutation({ onSuccess: () => goalsQ.refetch() });
 
   const TEMPLATE_ICONS: Record<string, any> = { TrendingUp, BarChart3, Search, DollarSign, Heart, Code };
-  const TEMPLATE_COLORS: Record<string, string> = { emerald: "text-emerald-400 border-emerald-400/30 bg-emerald-400/5", blue: "text-blue-400 border-blue-400/30 bg-blue-400/5", violet: "text-violet-400 border-violet-400/30 bg-violet-400/5", amber: "text-amber-400 border-amber-400/30 bg-amber-400/5", pink: "text-pink-400 border-pink-400/30 bg-pink-400/5", cyan: "text-cyan-400 border-cyan-400/30 bg-cyan-400/5" };
+  const TEMPLATE_COLORS: Record<string, string> = { emerald: "text-accent border-accent/30 bg-accent/5", blue: "text-blue-400 border-blue-400/30 bg-blue-400/5", violet: "text-violet-400 border-violet-400/30 bg-violet-400/5", amber: "text-amber-400 border-amber-400/30 bg-amber-400/5", pink: "text-pink-400 border-pink-400/30 bg-pink-400/5", cyan: "text-cyan-400 border-cyan-400/30 bg-cyan-400/5" };
 
   return (
     <div className="p-6 lg:p-10 max-w-6xl mx-auto">
@@ -384,7 +384,7 @@ export default function MissionControl() {
               </Select>
             )}
             <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-subtle" />
+              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-subtle" />
               <span className="text-label text-[10px]">ARCH Online</span>
             </div>
           </div>
@@ -395,7 +395,7 @@ export default function MissionControl() {
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
         {[
-          { label: "Value Created", value: `$${totalValue.toLocaleString()}`, color: "text-emerald-400" },
+          { label: "Value Created", value: `$${totalValue.toLocaleString()}`, color: "text-accent" },
           { label: "Total Costs", value: `$${totalCosts.toFixed(2)}`, color: "text-amber-400" },
           { label: "Hours Saved", value: `${totalHours.toFixed(0)} hrs`, color: "text-blue-400" },
           { label: "PoO Receipts", value: totalReceipts.toString(), color: "text-violet-400" },
@@ -541,7 +541,7 @@ export default function MissionControl() {
               {agents.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
                   <div className="card-minimal text-center py-3">
-                    <div className="text-xl font-bold text-emerald-400">{agents.filter(a => a.status === "active").length}</div>
+                    <div className="text-xl font-bold text-accent">{agents.filter(a => a.status === "active").length}</div>
                     <div className="text-label text-[10px] mt-0.5">Active</div>
                   </div>
                   <div className="card-minimal text-center py-3">
@@ -579,7 +579,7 @@ export default function MissionControl() {
                       <div className="flex items-start justify-between mb-3">
                         <span className={`text-mono text-xs border px-1.5 py-0.5 rounded ${typeColors[agent.type] ?? "text-foreground border-border"}`}>{agent.type}</span>
                         <div className="flex items-center gap-1.5">
-                          <div className={`w-1.5 h-1.5 rounded-full ${agent.status === "active" ? "bg-emerald-500 animate-pulse-subtle" : agent.status === "error" ? "bg-red-500" : "bg-zinc-600"}`} />
+                          <div className={`w-1.5 h-1.5 rounded-full ${agent.status === "active" ? "bg-accent animate-pulse-subtle" : agent.status === "error" ? "bg-red-500" : "bg-zinc-600"}`} />
                           <span className="text-mono text-[11px] text-muted-foreground">{agent.status}</span>
                         </div>
                       </div>
@@ -601,7 +601,7 @@ export default function MissionControl() {
                       <p className="text-muted-foreground text-xs leading-relaxed mb-4 line-clamp-2">{agent.description}</p>
                       <div className="grid grid-cols-3 gap-2 text-xs mb-3">
                         <div><span className="text-label text-[10px]">Tasks</span><div className="font-semibold text-foreground">{agent.tasksCompleted}</div></div>
-                        <div><span className="text-label text-[10px]">Value</span><div className="font-semibold text-emerald-400">${Number(agent.totalValueCreated ?? 0).toFixed(0)}</div></div>
+                        <div><span className="text-label text-[10px]">Value</span><div className="font-semibold text-accent">${Number(agent.totalValueCreated ?? 0).toFixed(0)}</div></div>
                         <div><span className="text-label text-[10px]">Cost</span><div className="font-semibold text-amber-400">${Number((agent as any).totalCostIncurred ?? 0).toFixed(2)}</div></div>
                       </div>
                       {Number((agent as any).monthlyBudget ?? 0) > 0 && (
@@ -659,7 +659,7 @@ export default function MissionControl() {
                         {tmpl.tools.length > 3 && <span className="text-[9px] text-muted-foreground/60">+{tmpl.tools.length - 3} more</span>}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-emerald-400 font-medium">{tmpl.estimatedROI}</span>
+                        <span className="text-[10px] text-accent font-medium">{tmpl.estimatedROI}</span>
                         <Button
                           size="sm"
                           className="btn-primary text-xs h-7 gap-1"
@@ -809,7 +809,7 @@ export default function MissionControl() {
           <div className="space-y-2">
             {agents.map(agent => (
               <div key={agent.id} className="card-minimal flex items-center gap-4">
-                <Heart size={16} className={agent.status === "active" ? "text-emerald-500 animate-pulse-subtle" : "text-muted-foreground"} strokeWidth={1.5} />
+                <Heart size={16} className={agent.status === "active" ? "text-accent animate-pulse-subtle" : "text-muted-foreground"} strokeWidth={1.5} />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm text-foreground">{agent.name}</div>
                   <div className="flex items-center gap-3 mt-0.5">
@@ -817,7 +817,7 @@ export default function MissionControl() {
                     {(agent as any).lastHeartbeat && <span className="text-mono text-[10px] text-muted-foreground">Last: {new Date((agent as any).lastHeartbeat).toLocaleString()}</span>}
                   </div>
                 </div>
-                <span className={`badge-minimal text-[10px] ${(agent as any).heartbeatEnabled ? "!text-emerald-400 !border-emerald-400/30 !bg-emerald-400/10" : ""}`}>
+                <span className={`badge-minimal text-[10px] ${(agent as any).heartbeatEnabled ? "!text-accent !border-accent/30 !bg-accent/10" : ""}`}>
                   {(agent as any).heartbeatEnabled ? "Enabled" : "Disabled"}
                 </span>
                 <button onClick={() => triggerHeartbeat.mutate({ agentId: agent.id })} disabled={triggerHeartbeat.isPending} className="btn-outline text-xs px-3 py-1.5 gap-1">
@@ -834,9 +834,9 @@ export default function MissionControl() {
         <div className="animate-fade-in">
           <h2 className="text-heading text-lg mb-5">Profit & Loss</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
-            <div className="stat-card"><div className="stat-label">Total Revenue</div><div className="stat-value text-emerald-400">${Number(pnlQ.data?.totalRevenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</div></div>
+            <div className="stat-card"><div className="stat-label">Total Revenue</div><div className="stat-value text-accent">${Number(pnlQ.data?.totalRevenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</div></div>
             <div className="stat-card"><div className="stat-label">Total Costs</div><div className="stat-value text-amber-400">${Number(pnlQ.data?.totalCosts ?? 0).toFixed(2)}</div></div>
-            <div className="stat-card"><div className="stat-label">Net Profit</div><div className={`stat-value ${Number(pnlQ.data?.netProfit ?? 0) >= 0 ? "text-emerald-400" : "text-red-400"}`}>${Number(pnlQ.data?.netProfit ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</div></div>
+            <div className="stat-card"><div className="stat-label">Net Profit</div><div className={`stat-value ${Number(pnlQ.data?.netProfit ?? 0) >= 0 ? "text-accent" : "text-red-400"}`}>${Number(pnlQ.data?.netProfit ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</div></div>
           </div>
           <p className="text-label mb-3">Agent Cost Breakdown</p>
           <div className="space-y-2">
@@ -851,10 +851,10 @@ export default function MissionControl() {
                     <span className="text-label text-[10px]">{agent.type}</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-mono text-xs text-emerald-400">+${value.toFixed(2)}</div>
+                    <div className="text-mono text-xs text-accent">+${value.toFixed(2)}</div>
                     <div className="text-mono text-xs text-amber-400">-${cost.toFixed(2)}</div>
                   </div>
-                  <div className={`font-semibold text-sm min-w-[60px] text-right ${roi >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                  <div className={`font-semibold text-sm min-w-[60px] text-right ${roi >= 0 ? "text-accent" : "text-red-400"}`}>
                     {roi.toFixed(0)}% ROI
                   </div>
                 </div>
@@ -904,7 +904,7 @@ export default function MissionControl() {
                   </div>
                   <p className="text-muted-foreground text-sm mb-4 leading-relaxed">{receipt.outcome}</p>
                   <div className="grid grid-cols-4 gap-4 pt-3 border-t border-border">
-                    <div><div className="text-label text-[10px] mb-1">Value</div><div className="font-semibold text-lg text-emerald-400">${Number(receipt.dollarValueCreated).toLocaleString()}</div></div>
+                    <div><div className="text-label text-[10px] mb-1">Value</div><div className="font-semibold text-lg text-accent">${Number(receipt.dollarValueCreated).toLocaleString()}</div></div>
                     <div><div className="text-label text-[10px] mb-1">Cost</div><div className="font-semibold text-lg text-amber-400">${Number((receipt as any).costIncurred ?? 0).toFixed(4)}</div></div>
                     <div><div className="text-label text-[10px] mb-1">Hours Saved</div><div className="font-semibold text-lg text-foreground">{Number(receipt.laborHoursSaved).toFixed(1)}</div></div>
                     <div><div className="text-label text-[10px] mb-1">Issued</div><div className="text-mono text-xs text-muted-foreground mt-1">{new Date(receipt.createdAt).toLocaleDateString()}</div></div>
@@ -945,7 +945,7 @@ export default function MissionControl() {
                         <button onClick={() => dismissInbox.mutate({ id: item.id })} className="btn-outline text-xs py-1.5 px-4 gap-1"><X size={12} /> Dismiss</button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5 text-emerald-400"><CheckCircle2 size={13} /><span className="text-xs font-medium">Resolved</span></div>
+                      <div className="flex items-center gap-1.5 text-accent"><CheckCircle2 size={13} /><span className="text-xs font-medium">Resolved</span></div>
                     )}
                   </div>
                 );
@@ -1049,7 +1049,7 @@ export default function MissionControl() {
               <div className="flex gap-3 mt-8 pt-6 border-t border-border">
                 <Button
                   size="sm"
-                  className="gap-1.5 text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+                  className="gap-1.5 text-xs bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20"
                   onClick={() => {
                     if (latestProposal && effectiveCompanyId) {
                       acceptStrategyMut.mutate({ proposalId: latestProposal.id, companyId: effectiveCompanyId });
@@ -1102,7 +1102,7 @@ export default function MissionControl() {
             <div className="space-y-2 mb-6">
               {gates.map(gate => (
                 <div key={gate.id} className="card-minimal flex items-center gap-4">
-                  <Shield size={15} className={gate.isActive ? "text-emerald-400" : "text-muted-foreground"} strokeWidth={1.5} />
+                  <Shield size={15} className={gate.isActive ? "text-accent" : "text-muted-foreground"} strokeWidth={1.5} />
                   <div className="flex-1">
                     <div className="font-medium text-sm text-foreground capitalize">{gate.gateType} Gate</div>
                     <p className="text-muted-foreground text-xs">{gate.description}</p>
@@ -1121,7 +1121,7 @@ export default function MissionControl() {
               <div key={tool.id} className="stat-card">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="font-medium text-sm text-foreground">{tool.name}</span>
-                  <Wrench size={13} className={tool.isActive ? "text-emerald-400" : "text-muted-foreground"} strokeWidth={1.5} />
+                  <Wrench size={13} className={tool.isActive ? "text-accent" : "text-muted-foreground"} strokeWidth={1.5} />
                 </div>
                 <span className="text-label text-[10px]">{tool.category}</span>
                 <p className="text-muted-foreground text-xs mt-1">{tool.description}</p>

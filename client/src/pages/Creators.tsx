@@ -45,7 +45,7 @@ export default function Creators() {
           <span className="text-muted-foreground">Sell forever.</span>
         </h1>
         <p className="text-muted-foreground text-lg text-body max-w-xl mx-auto mb-10">
-          Package your zero-human company setup as a Blueprint and sell it to founders worldwide. Earn revenue share on every deployment.
+          Package your automated operation setup as a Blueprint and sell it to founders worldwide. Earn revenue share on every deployment.
         </p>
         <div className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-full text-xs text-muted-foreground font-medium uppercase tracking-wider mb-12">
           <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
@@ -140,7 +140,7 @@ export default function Creators() {
       <div className="accent-line" />
       <footer className="px-8 py-8 flex items-center justify-between max-w-7xl mx-auto">
         <span className="text-base text-foreground font-semibold tracking-tight">OpenCommand</span>
-        <div className="text-label">Personal Intelligence Engine · {new Date().getFullYear()}</div>
+        <div className="text-label">The orchestration layer · {new Date().getFullYear()}</div>
       </footer>
     </div>
   );

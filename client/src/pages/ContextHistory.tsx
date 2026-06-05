@@ -12,7 +12,7 @@ import {
   BarChart3, Layers, Database,
 } from "lucide-react";
 
-const CONFIDENCE_COLOR = (score: number) => score >= 0.8 ? "text-emerald-400" : score >= 0.5 ? "text-amber-400" : "text-red-400";
+const CONFIDENCE_COLOR = (score: number) => score >= 0.8 ? "text-accent" : score >= 0.5 ? "text-amber-400" : "text-red-400";
 
 export default function ContextHistory() {
   const { isAuthenticated } = useAuth();
@@ -51,7 +51,7 @@ export default function ContextHistory() {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
-          <p className="text-xs text-muted-foreground tracking-widest uppercase mb-2">Personal Intelligence Engine</p>
+          <p className="text-xs text-muted-foreground tracking-widest uppercase mb-2">The orchestration layer</p>
           <h1 className="text-4xl font-light text-foreground tracking-tight">Context History</h1>
           <p className="text-muted-foreground text-sm mt-2">Full context engineering chain — Interpret → Gather → Contextualize.</p>
         </div>
@@ -125,7 +125,7 @@ export default function ContextHistory() {
 
               return (
                 <div key={ctx.id} className="relative">
-                  <div className={`absolute -left-[38px] top-5 w-2.5 h-2.5 rounded-full ${confidence >= 0.8 ? "bg-emerald-400" : confidence >= 0.5 ? "bg-amber-400" : "bg-red-400"}`} />
+                  <div className={`absolute -left-[38px] top-5 w-2.5 h-2.5 rounded-full ${confidence >= 0.8 ? "bg-accent" : confidence >= 0.5 ? "bg-amber-400" : "bg-red-400"}`} />
                   <div className="card-minimal p-4 transition-all">
                     <div className="flex items-start justify-between gap-4 cursor-pointer" onClick={() => setExpandedId(prev => prev === ctx.id ? null : ctx.id)}>
                       <div className="flex-1 min-w-0">
@@ -145,7 +145,7 @@ export default function ContextHistory() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="w-20 h-1.5 rounded-full bg-secondary overflow-hidden">
-                          <div className={`h-full rounded-full ${confidence >= 0.8 ? "bg-emerald-400" : confidence >= 0.5 ? "bg-amber-400" : "bg-red-400"}`} style={{ width: `${confidence * 100}%` }} />
+                          <div className={`h-full rounded-full ${confidence >= 0.8 ? "bg-accent" : confidence >= 0.5 ? "bg-amber-400" : "bg-red-400"}`} style={{ width: `${confidence * 100}%` }} />
                         </div>
                         {isExpanded ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />}
                       </div>
@@ -198,10 +198,10 @@ export default function ContextHistory() {
                         </div>
 
                         {/* Step 3: Contextualize */}
-                        <div className="p-4 rounded-md border border-emerald-500/20 bg-emerald-500/5">
+                        <div className="p-4 rounded-md border border-accent/20 bg-accent/5">
                           <div className="flex items-center gap-2 mb-3">
-                            <Layers size={14} className="text-emerald-400" />
-                            <span className="text-sm font-medium text-emerald-300">Step 3 — Contextualize</span>
+                            <Layers size={14} className="text-accent" />
+                            <span className="text-sm font-medium text-accent">Step 3 — Contextualize</span>
                             <ArrowRight size={10} className="text-muted-foreground" />
                             <span className="text-muted-foreground text-xs">Enriches parameters with real data</span>
                           </div>
@@ -209,7 +209,7 @@ export default function ContextHistory() {
                             <div className="space-y-1.5">
                               {Object.entries(enrichedParams).map(([key, value]) => (
                                 <div key={key} className="flex items-start gap-3 p-2 rounded bg-background border border-border">
-                                  <span className="text-emerald-400 text-xs font-mono shrink-0">{key}</span>
+                                  <span className="text-accent text-xs font-mono shrink-0">{key}</span>
                                   <pre className="text-foreground text-xs font-mono overflow-x-auto whitespace-pre-wrap flex-1">{typeof value === "object" ? JSON.stringify(value, null, 2) : String(value)}</pre>
                                 </div>
                               ))}
@@ -222,10 +222,10 @@ export default function ContextHistory() {
                                 <span className={`text-sm font-medium ${CONFIDENCE_COLOR(confidence)}`}>{(confidence * 100).toFixed(0)}%</span>
                               </div>
                               <div className="w-full h-1.5 rounded-full bg-secondary overflow-hidden">
-                                <div className={`h-full rounded-full ${confidence >= 0.8 ? "bg-emerald-400" : confidence >= 0.5 ? "bg-amber-400" : "bg-red-400"}`} style={{ width: `${confidence * 100}%` }} />
+                                <div className={`h-full rounded-full ${confidence >= 0.8 ? "bg-accent" : confidence >= 0.5 ? "bg-amber-400" : "bg-red-400"}`} style={{ width: `${confidence * 100}%` }} />
                               </div>
                             </div>
-                            <span className={`text-xs px-2 py-0.5 rounded border ${confidence >= 0.8 ? "border-emerald-500/30 text-emerald-400" : confidence >= 0.5 ? "border-amber-500/30 text-amber-400" : "border-red-500/30 text-red-400"}`}>
+                            <span className={`text-xs px-2 py-0.5 rounded border ${confidence >= 0.8 ? "border-accent/30 text-accent" : confidence >= 0.5 ? "border-amber-500/30 text-amber-400" : "border-red-500/30 text-red-400"}`}>
                               {confidence >= 0.8 ? "High" : confidence >= 0.5 ? "Medium" : "Low"}
                             </span>
                           </div>
@@ -248,12 +248,12 @@ export default function ContextHistory() {
                               </div>
                             </div>
                             <div>
-                              <p className="text-xs text-emerald-400 mb-2">Self-Contextualized</p>
-                              <div className="p-3 rounded-md bg-background border border-emerald-500/20">
+                              <p className="text-xs text-accent mb-2">Self-Contextualized</p>
+                              <div className="p-3 rounded-md bg-background border border-accent/20">
                                 <p className="text-muted-foreground text-xs italic">"{ctx.requestText}"</p>
-                                <p className="text-emerald-400 text-xs mt-2">→ Context-aware questions with your data</p>
-                                <p className="text-emerald-400 text-xs">→ {inferredCats.length} categories pre-loaded</p>
-                                <p className="text-emerald-400 text-xs">→ {(confidence * 100).toFixed(0)}% confidence pre-filled</p>
+                                <p className="text-accent text-xs mt-2">→ Context-aware questions with your data</p>
+                                <p className="text-accent text-xs">→ {inferredCats.length} categories pre-loaded</p>
+                                <p className="text-accent text-xs">→ {(confidence * 100).toFixed(0)}% confidence pre-filled</p>
                               </div>
                             </div>
                           </div>

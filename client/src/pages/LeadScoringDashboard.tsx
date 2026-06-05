@@ -23,7 +23,7 @@ export function LeadScoringDashboard() {
 
   // Prepare chart data
   const tierData = [
-    { name: "High Priority", value: distribution.high, fill: "#10b981" },
+    { name: "High Priority", value: distribution.high, fill: "oklch(0.72 0.12 250)" },
     { name: "Medium Priority", value: distribution.medium, fill: "#f59e0b" },
     { name: "Low Priority", value: distribution.low, fill: "#ef4444" },
   ];

@@ -82,7 +82,7 @@ export default function CreatorProgram() {
 
           {/* Floor + Flow */}
           <div className="card-minimal p-8 border-foreground/20">
-            <p className="text-xs text-emerald-400 tracking-widest uppercase mb-5">Floor + Flow — The New Way</p>
+            <p className="text-xs text-accent tracking-widest uppercase mb-5">Floor + Flow — The New Way</p>
             <div className="space-y-3">
               {[
                 "Guaranteed monthly floor — paid regardless of performance",
@@ -93,7 +93,7 @@ export default function CreatorProgram() {
                 "Treated as a co-founder, not a traffic source",
               ].map((p, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <Check size={13} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <Check size={13} className="text-accent flex-shrink-0 mt-0.5" />
                   <span className="text-foreground text-sm">{p}</span>
                 </div>
               ))}
@@ -116,7 +116,7 @@ export default function CreatorProgram() {
             },
           ].map((t, i) => (
             <div key={i} className={`card-minimal p-8 ${t.featured ? "border-foreground/20" : ""}`}>
-              {t.featured && <p className="text-[10px] text-emerald-400 tracking-widest uppercase mb-2">Most Popular</p>}
+              {t.featured && <p className="text-[10px] text-accent tracking-widest uppercase mb-2">Most Popular</p>}
               <div className="text-2xl font-light text-foreground mb-1">{t.tier}</div>
               <p className="text-xs text-muted-foreground mb-5">{t.audience} audience</p>
               <div className="mb-5">
@@ -125,7 +125,7 @@ export default function CreatorProgram() {
                   {t.floor !== "Custom" && <span className="text-muted-foreground text-sm mb-1">/mo floor</span>}
                 </div>
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <TrendingUp size={13} className="text-emerald-400" />
+                  <TrendingUp size={13} className="text-accent" />
                   <span>{t.flow} revenue share</span>
                 </div>
               </div>
@@ -189,7 +189,7 @@ export default function CreatorProgram() {
                 {creator.totalEarned && Number(creator.totalEarned) > 0 && (
                   <div className="border-t border-border pt-3">
                     <div className="text-xs text-muted-foreground mb-0.5">Total Earnings</div>
-                    <div className="text-lg font-light text-emerald-400">${Number(creator.totalEarned).toLocaleString("en-US", { minimumFractionDigits: 2 })}</div>
+                    <div className="text-lg font-light text-accent">${Number(creator.totalEarned).toLocaleString("en-US", { minimumFractionDigits: 2 })}</div>
                   </div>
                 )}
               </div>

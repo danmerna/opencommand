@@ -10,7 +10,7 @@ type FunnelStage = {
 
 // ─── Colour palette per stage index ──────────────────────────────────────────
 const STAGE_COLORS = [
-  { bar: "bg-emerald-400", text: "text-emerald-400", border: "border-emerald-400/30", bg: "bg-emerald-400/10" },
+  { bar: "bg-accent", text: "text-accent", border: "border-accent/30", bg: "bg-accent/10" },
   { bar: "bg-teal-400",    text: "text-teal-400",    border: "border-teal-400/30",    bg: "bg-teal-400/10"    },
   { bar: "bg-cyan-400",    text: "text-cyan-400",    border: "border-cyan-400/30",    bg: "bg-cyan-400/10"    },
   { bar: "bg-sky-400",     text: "text-sky-400",     border: "border-sky-400/30",     bg: "bg-sky-400/10"     },
@@ -101,7 +101,7 @@ function FunnelRow({
 
         {/* Completion badge for last stage */}
         {isLast && stage.count > 0 && (
-          <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+          <CheckCircle2 size={16} className="text-accent shrink-0" />
         )}
       </div>
     </div>
@@ -129,7 +129,7 @@ function FunnelSummary({ stages }: { stages: FunnelStage[] }) {
   return (
     <div className="grid grid-cols-3 gap-4 mb-6">
       <div className="bg-card border border-border rounded-xl p-4 text-center">
-        <p className="text-2xl font-bold text-emerald-400">{overallConversion}%</p>
+        <p className="text-2xl font-bold text-accent">{overallConversion}%</p>
         <p className="text-xs text-muted-foreground mt-1">Overall Conversion</p>
         <p className="text-xs text-muted-foreground">{bottom.toLocaleString()} of {top.toLocaleString()} users</p>
       </div>

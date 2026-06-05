@@ -119,7 +119,7 @@ export default function AgentOnboarding() {
     ceo: "text-amber-400",
     cto: "text-blue-400",
     cmo: "text-pink-400",
-    cfo: "text-emerald-400",
+    cfo: "text-accent",
     vp: "text-purple-400",
   };
 
@@ -152,7 +152,7 @@ export default function AgentOnboarding() {
         </div>
         <div className="flex items-center gap-2">
           {isComplete && (
-            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            <Badge className="bg-accent/20 text-accent border-accent/30">
               <CheckCircle2 size={12} className="mr-1" /> Onboarded
             </Badge>
           )}
@@ -229,10 +229,10 @@ export default function AgentOnboarding() {
         )}
 
         {isComplete && messages.length > 0 && (
-          <div className="border border-emerald-500/20 rounded-xl p-5 bg-emerald-500/5 mt-6">
+          <div className="border border-accent/20 rounded-xl p-5 bg-accent/5 mt-6">
             <div className="flex items-center gap-2 mb-3">
-              <CheckCircle2 size={16} className="text-emerald-400" />
-              <span className="text-sm font-medium text-emerald-400">Onboarding Complete</span>
+              <CheckCircle2 size={16} className="text-accent" />
+              <span className="text-sm font-medium text-accent">Onboarding Complete</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {agent?.name ?? "This agent"} now has the baseline context needed to operate. The context is stored permanently and will inform all future decisions and task execution.

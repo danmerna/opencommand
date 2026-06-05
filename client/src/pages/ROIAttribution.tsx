@@ -168,7 +168,7 @@ export function ROIAttribution() {
                 <YAxis />
                 <Tooltip formatter={(value) => formatCurrency(value as number)} />
                 <Legend />
-                <Line type="monotone" dataKey="revenue" stroke="#10b981" name="Revenue" />
+                <Line type="monotone" dataKey="revenue" stroke="oklch(0.72 0.12 250)" name="Revenue" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -208,7 +208,7 @@ export function ROIAttribution() {
                 <YAxis />
                 <Tooltip formatter={(value) => formatPercent(value as number)} />
                 <Legend />
-                <Bar dataKey="openRate" fill="#10b981" name="Open Rate %" />
+                <Bar dataKey="openRate" fill="oklch(0.72 0.12 250)" name="Open Rate %" />
                 <Bar dataKey="clickRate" fill="#3b82f6" name="Click Rate %" />
                 <Bar dataKey="conversionRate" fill="#f59e0b" name="Conversion Rate %" />
               </BarChart>

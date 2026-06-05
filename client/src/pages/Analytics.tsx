@@ -130,7 +130,7 @@ export default function Analytics() {
               return (
                 <div key={day} className="flex-1 group relative">
                   <div
-                    className="bg-emerald-400/60 rounded-t-sm transition-colors group-hover:bg-emerald-400"
+                    className="bg-accent/60 rounded-t-sm transition-colors group-hover:bg-accent"
                     style={{ height: `${Math.max(height, 4)}%` }}
                   />
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-popover text-popover-foreground text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap z-10">
@@ -161,7 +161,7 @@ export default function Analytics() {
                 <span className="text-xs text-muted-foreground w-36 truncate shrink-0">{feature}</span>
                 <div className="flex-1 bg-muted/20 rounded-full h-5 overflow-hidden">
                   <div
-                    className="h-full bg-emerald-400/40 rounded-full transition-all"
+                    className="h-full bg-accent/40 rounded-full transition-all"
                     style={{ width: `${(count / maxCount) * 100}%` }}
                   />
                 </div>

@@ -61,7 +61,7 @@ function ActivityChart({ data }: { data: { date: string; count: number }[] }) {
       {data.map((d, i) => (
         <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
           <div
-            className="w-full bg-emerald-400/70 rounded-sm transition-all group-hover:bg-emerald-400"
+            className="w-full bg-accent/70 rounded-sm transition-all group-hover:bg-accent"
             style={{ height: `${(d.count / max) * 100}%`, minHeight: d.count > 0 ? 4 : 0 }}
           />
           <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-popover border border-border text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none">
@@ -79,8 +79,8 @@ function TimelineEvent({ event }: { event: { type: string; label: string; create
   const [feature, action] = isFeature ? (event.label as string).split(":") : ["", ""];
   return (
     <div className="flex items-start gap-3 py-2 border-b border-border/50 last:border-0">
-      <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${isFeature ? "bg-emerald-400/10" : "bg-blue-400/10"}`}>
-        {isFeature ? <Zap size={11} className="text-emerald-400" /> : <Eye size={11} className="text-blue-400" />}
+      <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${isFeature ? "bg-accent/10" : "bg-blue-400/10"}`}>
+        {isFeature ? <Zap size={11} className="text-accent" /> : <Eye size={11} className="text-blue-400" />}
       </div>
       <div className="flex-1 min-w-0">
         {isFeature ? (
@@ -93,7 +93,7 @@ function TimelineEvent({ event }: { event: { type: string; label: string; create
         )}
         <p className="text-xs text-muted-foreground">{fmtTime(event.createdAt)}</p>
       </div>
-      <span className={`text-[10px] px-1.5 py-0.5 rounded-full border shrink-0 ${isFeature ? "border-emerald-400/30 text-emerald-400" : "border-blue-400/30 text-blue-400"}`}>
+      <span className={`text-[10px] px-1.5 py-0.5 rounded-full border shrink-0 ${isFeature ? "border-accent/30 text-accent" : "border-blue-400/30 text-blue-400"}`}>
         {isFeature ? "event" : "view"}
       </span>
     </div>
@@ -103,7 +103,7 @@ function TimelineEvent({ event }: { event: { type: string; label: string; create
 // ─── Interview Transcript Viewer ────────────────────────────────────────────
 const AGENT_LABELS: Record<string, { label: string; color: string }> = {
   ceo: { label: "ARCH", color: "text-cyan-400 border-cyan-400/40 bg-cyan-400/5" },
-  cto: { label: "FORGE", color: "text-emerald-400 border-emerald-400/40 bg-emerald-400/5" },
+  cto: { label: "FORGE", color: "text-accent border-accent/40 bg-accent/5" },
   cmo: { label: "SIGNAL", color: "text-amber-400 border-amber-400/40 bg-amber-400/5" },
   cfo: { label: "LEDGER", color: "text-violet-400 border-violet-400/40 bg-violet-400/5" },
   coo: { label: "APEX", color: "text-rose-400 border-rose-400/40 bg-rose-400/5" },
@@ -127,7 +127,7 @@ function InterviewTranscript({ transcript }: { transcript: any }) {
             {agentInfo.label}
           </span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${
-            transcript.status === "completed" ? "border-emerald-400/40 text-emerald-400" : "border-blue-400/40 text-blue-400"
+            transcript.status === "completed" ? "border-accent/40 text-accent" : "border-blue-400/40 text-blue-400"
           }`}>{transcript.status}</span>
           <span className="text-xs text-muted-foreground">{msgCount} exchange{msgCount !== 1 ? "s" : ""}</span>
         </div>
@@ -149,11 +149,11 @@ function InterviewTranscript({ transcript }: { transcript: any }) {
                   msg.role === "user" ? "bg-muted/10" : "bg-background"
                 }`}>
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                    msg.role === "user" ? "bg-blue-400/10" : "bg-emerald-400/10"
+                    msg.role === "user" ? "bg-blue-400/10" : "bg-accent/10"
                   }`}>
                     {msg.role === "user"
                       ? <UserIcon size={11} className="text-blue-400" />
-                      : <Bot size={11} className="text-emerald-400" />}
+                      : <Bot size={11} className="text-accent" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-semibold text-muted-foreground mb-1">
@@ -217,12 +217,12 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
         <div className="p-6 border-b border-border flex items-start justify-between gap-4 shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-full bg-emerald-400/10 flex items-center justify-center text-emerald-400 font-semibold text-sm">
+              <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-semibold text-sm">
                 {(user.name || user.email || "?")[0].toUpperCase()}
               </div>
               <h2 className="text-lg font-semibold text-foreground">{user.name || "Unnamed User"}</h2>
               {user.role === "admin" && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-emerald-400/40 text-emerald-400">Admin</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-accent/40 text-accent">Admin</span>
               )}
             </div>
             <p className="text-sm text-muted-foreground">{user.email || "No email"}</p>
@@ -267,7 +267,7 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-sm transition-colors border-b-2 ${tab === t.id ? "border-emerald-400 text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm transition-colors border-b-2 ${tab === t.id ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
             >
               <t.icon size={13} />
               {t.label}
@@ -296,7 +296,7 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
                   <div key={i} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                     <span className="text-xs text-muted-foreground w-5 text-right">{i + 1}</span>
                     <span className="flex-1 text-sm text-foreground font-mono truncate">{p.path}</span>
-                    <span className="text-sm font-semibold text-emerald-400">{Number(p.count)}</span>
+                    <span className="text-sm font-semibold text-accent">{Number(p.count)}</span>
                     <span className="text-xs text-muted-foreground">views</span>
                   </div>
                 ))
@@ -339,7 +339,7 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
                       <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
                         f.type === "bug" ? "border-red-400/40 text-red-400" :
                         f.type === "feature" ? "border-blue-400/40 text-blue-400" :
-                        f.type === "praise" ? "border-emerald-400/40 text-emerald-400" :
+                        f.type === "praise" ? "border-accent/40 text-accent" :
                         "border-border text-muted-foreground"
                       }`}>{f.type}</span>
                       <span className="text-xs text-muted-foreground">{fmtTime(f.createdAt)}</span>
@@ -393,7 +393,7 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground capitalize">{o.agentType || "unknown"}</span>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
-                          o.status === "completed" ? "border-emerald-400/40 text-emerald-400" :
+                          o.status === "completed" ? "border-accent/40 text-accent" :
                           o.status === "in_progress" ? "border-blue-400/40 text-blue-400" :
                           "border-border text-muted-foreground"
                         }`}>{o.status}</span>
@@ -429,7 +429,7 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
                 <>
                   <div className="flex items-center gap-3 p-4 border border-border rounded-xl">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
-                      (survey as any).thumbs === "up" ? "bg-emerald-400/10" : "bg-red-400/10"
+                      (survey as any).thumbs === "up" ? "bg-accent/10" : "bg-red-400/10"
                     }`}>
                       {(survey as any).thumbs === "up" ? "👍" : "👎"}
                     </div>
@@ -447,10 +447,10 @@ function UserDetail({ user, onClose }: { user: AdminUser; onClose: () => void })
                     )}
                   </div>
                   {(survey as any).email && (
-                    <div className="flex items-center gap-2 p-3 bg-emerald-400/5 border border-emerald-400/20 rounded-lg">
-                      <Mail size={13} className="text-emerald-400" />
+                    <div className="flex items-center gap-2 p-3 bg-accent/5 border border-accent/20 rounded-lg">
+                      <Mail size={13} className="text-accent" />
                       <span className="text-sm text-foreground">{(survey as any).email}</span>
-                      <span className="text-xs text-emerald-400 ml-auto">Waitlist</span>
+                      <span className="text-xs text-accent ml-auto">Waitlist</span>
                     </div>
                   )}
                   {Array.isArray((survey as any).questions) && (survey as any).questions.length > 0 && (
@@ -505,7 +505,7 @@ function WaitlistPanel() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard label="Total Waitlist" value={waitlistUsers.length} icon={Users} color="bg-blue-400/10 text-blue-400" />
         <KpiCard label="Pending" value={pending.length} icon={Clock} color="bg-amber-400/10 text-amber-400" />
-        <KpiCard label="Approved" value={approved.length} icon={CheckCircle} color="bg-emerald-400/10 text-emerald-400" />
+        <KpiCard label="Approved" value={approved.length} icon={CheckCircle} color="bg-accent/10 text-accent" />
         <KpiCard label="Rejected" value={rejected.length} icon={AlertCircle} color="bg-red-400/10 text-red-400" />
       </div>
 
@@ -543,7 +543,7 @@ function WaitlistPanel() {
                   <button
                     onClick={() => approveMut.mutate({ userId: u.id })}
                     disabled={approveMut.isPending}
-                    className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                    className="px-3 py-1.5 bg-accent/10 text-accent border border-accent/20 rounded-lg text-xs font-medium hover:bg-accent/20 transition-colors disabled:opacity-50"
                   >
                     Approve
                   </button>
@@ -571,7 +571,7 @@ function WaitlistPanel() {
             {approved.map((u: any) => (
               <div key={u.id} className="grid grid-cols-12 gap-4 px-4 py-3 items-center">
                 <div className="col-span-4 flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-xs font-medium text-emerald-400 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent shrink-0">
                     {u.name ? u.name.charAt(0).toUpperCase() : "?"}
                   </div>
                   <div className="min-w-0">
@@ -582,7 +582,7 @@ function WaitlistPanel() {
                 <div className="col-span-3 text-xs text-muted-foreground">{fmtDate(u.createdAt)}</div>
                 <div className="col-span-2 text-xs text-muted-foreground">{u.referralCount ?? 0} referrals</div>
                 <div className="col-span-3 flex items-center justify-end">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-md text-xs">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-md text-xs">
                     <CheckCircle size={11} /> Approved
                   </span>
                 </div>
@@ -644,7 +644,7 @@ function GuestProgressBadges({ companyId }: { companyId: number }) {
     <div className="flex items-center gap-1">
       {AGENTS.map(a => (
         <span key={a} className={`text-[10px] px-1.5 py-0.5 rounded border font-mono ${
-          completedTypes.has(a) ? "border-emerald-400/40 text-emerald-400 bg-emerald-400/5" : "border-border text-muted-foreground/50"
+          completedTypes.has(a) ? "border-accent/40 text-accent bg-accent/5" : "border-border text-muted-foreground/50"
         }`}>{agentLabels[a]}</span>
       ))}
     </div>
@@ -676,7 +676,7 @@ function GuestsPanel() {
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard label="Total Guests" value={total} icon={UserCheck} color="bg-emerald-400/10 text-emerald-400" />
+        <KpiCard label="Total Guests" value={total} icon={UserCheck} color="bg-accent/10 text-accent" />
         <KpiCard label="Started Onboarding" value={withCompany} icon={Building2} color="bg-blue-400/10 text-blue-400" />
         <KpiCard label="Completed Survey" value={withSurvey} icon={MessageSquare} color="bg-purple-400/10 text-purple-400" />
         <KpiCard label="Thumbs Up" value={thumbsUp} icon={ThumbsUp} color="bg-amber-400/10 text-amber-400" />
@@ -690,7 +690,7 @@ function GuestsPanel() {
           placeholder="Search by name, email, or company…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-400/50 transition-colors"
+          className="w-full pl-9 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
         />
       </div>
 
@@ -749,7 +749,7 @@ function GuestsPanel() {
               <div className="col-span-2 flex items-center">
                 {g.surveyThumbs ? (
                   <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium ${
-                    g.surveyThumbs === "up" ? "border-emerald-400/40 text-emerald-400" : "border-red-400/40 text-red-400"
+                    g.surveyThumbs === "up" ? "border-accent/40 text-accent" : "border-red-400/40 text-red-400"
                   }`}>
                     {g.surveyThumbs === "up" ? <ThumbsUp size={10} /> : <ThumbsDown size={10} />}
                     {g.surveyThumbs === "up" ? "Positive" : "Negative"}
@@ -887,7 +887,7 @@ function GuestDetail({ guest, onClose }: { guest: GuestRow; onClose: () => void 
             <div className="border border-border rounded-xl p-4">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Survey</h3>
               <div className={`flex items-center gap-2 text-sm font-medium ${
-                guest.surveyThumbs === "up" ? "text-emerald-400" : "text-red-400"
+                guest.surveyThumbs === "up" ? "text-accent" : "text-red-400"
               }`}>
                 {guest.surveyThumbs === "up" ? <ThumbsUp size={14} /> : <ThumbsDown size={14} />}
                 {guest.surveyThumbs === "up" ? "Found Value" : "Didn't Find Value"}
@@ -907,7 +907,7 @@ function GuestDetail({ guest, onClose }: { guest: GuestRow; onClose: () => void 
               </div>
               <button
                 onClick={handleCopy}
-                className={`shrink-0 p-2 rounded-lg border transition-all ${copied ? "border-emerald-400/50 bg-emerald-400/10 text-emerald-400" : "border-border hover:bg-muted text-muted-foreground hover:text-foreground"}`}
+                className={`shrink-0 p-2 rounded-lg border transition-all ${copied ? "border-accent/50 bg-accent/10 text-accent" : "border-border hover:bg-muted text-muted-foreground hover:text-foreground"}`}
                 title="Copy link"
               >
                 {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
@@ -928,7 +928,7 @@ function GuestDetail({ guest, onClose }: { guest: GuestRow; onClose: () => void 
               <button
                 onClick={handleConvert}
                 disabled={converting || !!convertResult}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-lg text-sm font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/30 text-accent rounded-lg text-sm font-medium hover:bg-accent/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {converting ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
                 {converting ? "Sending…" : convertResult || "Send Invite Email"}
@@ -1083,7 +1083,7 @@ export default function AdminUsers() {
 
         {/* Summary KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <KpiCard label="Total Users" value={allUsers.length} icon={Users} color="bg-emerald-400/10 text-emerald-400" />
+          <KpiCard label="Total Users" value={allUsers.length} icon={Users} color="bg-accent/10 text-accent" />
           <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4 col-span-2 md:col-span-1">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-violet-400/10 text-violet-400 shrink-0">
               <Award size={18} />
@@ -1142,8 +1142,8 @@ export default function AdminUsers() {
         {mainView === "demo" && (
           <div className="bg-card border border-border rounded-2xl p-6 max-w-2xl">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-emerald-400/10 flex items-center justify-center">
-                <Zap size={18} className="text-emerald-400" />
+              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Zap size={18} className="text-accent" />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-foreground">Demo User</h2>
@@ -1159,7 +1159,7 @@ export default function AdminUsers() {
                   <p className="text-xs text-muted-foreground mt-0.5">Meridian Software — B2B SaaS demo account</p>
                 </div>
                 <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
-                  demoInfo?.exists ? "bg-emerald-400/10 text-emerald-400" : "bg-muted text-muted-foreground"
+                  demoInfo?.exists ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"
                 }`}>
                   {demoInfo?.exists ? <><CheckCircle size={11} /> Active</> : <><AlertCircle size={11} /> Not seeded</>}
                 </div>
@@ -1176,7 +1176,7 @@ export default function AdminUsers() {
                 { label: "HubSpot", detail: "47 open deals · $612K pipeline", color: "text-orange-400" },
                 { label: "Meta Ads", detail: "4 campaigns · $11.3K spend/30d", color: "text-purple-400" },
                 { label: "Google Ads", detail: "5 campaigns · $17.1K spend/30d", color: "text-yellow-400" },
-                { label: "GA4", detail: "28.4K users · 2.72% conv rate", color: "text-emerald-400" },
+                { label: "GA4", detail: "28.4K users · 2.72% conv rate", color: "text-accent" },
               ].map(item => (
                 <div key={item.label} className="bg-muted/20 border border-border rounded-lg p-3">
                   <p className={`text-xs font-semibold ${item.color} mb-0.5`}>{item.label}</p>
@@ -1187,7 +1187,7 @@ export default function AdminUsers() {
 
             {/* Seed button */}
             {demoSeedStatus === "success" && (
-              <div className="flex items-center gap-2 text-sm text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-lg px-4 py-3 mb-4">
+              <div className="flex items-center gap-2 text-sm text-accent bg-accent/10 border border-accent/20 rounded-lg px-4 py-3 mb-4">
                 <CheckCircle size={15} />
                 <span>{demoSeedMessage}</span>
               </div>
@@ -1205,7 +1205,7 @@ export default function AdminUsers() {
                 seedDemoUserMutation.mutate();
               }}
               disabled={demoSeedStatus === "loading"}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-sm font-medium px-4 py-3 rounded-xl transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent disabled:opacity-50 text-white text-sm font-medium px-4 py-3 rounded-xl transition-colors"
             >
               <Zap size={15} />
               {demoSeedStatus === "loading" ? "Seeding…" : demoInfo?.exists ? "Reset Demo User" : "Seed Demo User"}
@@ -1234,7 +1234,7 @@ export default function AdminUsers() {
             placeholder="Search by name or email…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-400/50 transition-colors"
+            className="w-full pl-9 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
           />
         </div>
 
@@ -1262,7 +1262,7 @@ export default function AdminUsers() {
               >
                 {/* Name + Email */}
                 <div className="col-span-4 flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-emerald-400/10 flex items-center justify-center text-emerald-400 font-semibold text-sm shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-semibold text-sm shrink-0">
                     {(u.name || u.email || "?")[0].toUpperCase()}
                   </div>
                   <div className="min-w-0">
@@ -1286,7 +1286,7 @@ export default function AdminUsers() {
                 </div>
                 {/* Role */}
                 <div className="col-span-1 flex items-center">
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${u.role === "admin" ? "border-emerald-400/40 text-emerald-400" : "border-border text-muted-foreground"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${u.role === "admin" ? "border-accent/40 text-accent" : "border-border text-muted-foreground"}`}>
                     {u.role}
                   </span>
                 </div>

@@ -31,7 +31,7 @@ export function OnboardingSigma() {
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-gradient-to-br from-[#00D4AA] to-[#00A888] text-white flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded bg-gradient-to-br from-[oklch(0.72 0.12 250)] to-[oklch(0.60 0.10 250)] text-white flex items-center justify-center font-bold">
               Σ
             </div>
             <h1 className="text-xl font-bold text-foreground">Sigma → OpenCommand</h1>
@@ -47,12 +47,12 @@ export function OnboardingSigma() {
         <div className="grid md:grid-cols-3 gap-8 mb-12">
           {/* Step 1: Discover */}
           <Card className="relative">
-            <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-[#00D4AA] text-black font-bold flex items-center justify-center text-sm">
+            <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-[oklch(0.72 0.12 250)] text-black font-bold flex items-center justify-center text-sm">
               1
             </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-gradient-to-br from-[#00D4AA] to-[#00A888] text-white flex items-center justify-center text-xs font-bold">
+                <div className="w-5 h-5 rounded bg-gradient-to-br from-[oklch(0.72 0.12 250)] to-[oklch(0.60 0.10 250)] text-white flex items-center justify-center text-xs font-bold">
                   Σ
                 </div>
                 Discover Your Agent
@@ -69,7 +69,7 @@ export function OnboardingSigma() {
                 rel="noopener noreferrer"
                 className="inline-block"
               >
-                <Button className="w-full bg-[#00D4AA] hover:bg-[#00A888] text-black">
+                <Button className="w-full bg-[oklch(0.72 0.12 250)] hover:bg-[oklch(0.60 0.10 250)] text-black">
                   Open Sigma Agent Builder
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -87,12 +87,12 @@ export function OnboardingSigma() {
 
           {/* Step 2: Import */}
           <Card className="relative">
-            <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-[#00D4AA] text-black font-bold flex items-center justify-center text-sm">
+            <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-[oklch(0.72 0.12 250)] text-black font-bold flex items-center justify-center text-sm">
               2
             </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#00D4AA]" />
+                <CheckCircle2 className="w-5 h-5 text-[oklch(0.72 0.12 250)]" />
                 Import to OpenCommand
               </CardTitle>
               <CardDescription>Deploy your agent</CardDescription>
@@ -109,8 +109,8 @@ export function OnboardingSigma() {
                 Import Agent Spec
               </Button>
               {importedAgent && (
-                <div className="p-3 rounded bg-[#00D4AA]/10 border border-[#00D4AA]/20">
-                  <p className="text-sm text-[#00D4AA] font-medium">✓ Agent imported successfully</p>
+                <div className="p-3 rounded bg-[oklch(0.72 0.12 250)]/10 border border-[oklch(0.72 0.12 250)]/20">
+                  <p className="text-sm text-[oklch(0.72 0.12 250)] font-medium">✓ Agent imported successfully</p>
                 </div>
               )}
             </CardContent>
@@ -123,12 +123,12 @@ export function OnboardingSigma() {
 
           {/* Step 3: Execute */}
           <Card className="relative">
-            <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-[#00D4AA] text-black font-bold flex items-center justify-center text-sm">
+            <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-[oklch(0.72 0.12 250)] text-black font-bold flex items-center justify-center text-sm">
               3
             </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-[#00D4AA]" />
+                <Zap className="w-5 h-5 text-[oklch(0.72 0.12 250)]" />
                 Execute & Monitor
               </CardTitle>
               <CardDescription>Watch it work</CardDescription>
@@ -138,7 +138,7 @@ export function OnboardingSigma() {
                 Your agent is now live. Configure autonomy levels, set up heartbeats, and monitor performance in real-time.
               </p>
               <Link href="/mission-control">
-                <Button className="w-full bg-[#00D4AA] hover:bg-[#00A888] text-black">
+                <Button className="w-full bg-[oklch(0.72 0.12 250)] hover:bg-[oklch(0.60 0.10 250)] text-black">
                   Go to Mission Control
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

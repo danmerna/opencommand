@@ -22,13 +22,13 @@ export function SigmaBadge({ size = "md", showLabel = true }: SigmaBadgeProps) {
     <div className="flex items-center gap-2">
       {/* Σ Icon with green gradient */}
       <div
-        className={`${sizeClasses[size]} rounded flex items-center justify-center bg-gradient-to-br from-[#00D4AA] to-[#00A888] text-white font-bold flex-shrink-0`}
+        className={`${sizeClasses[size]} rounded flex items-center justify-center bg-accent text-white font-bold flex-shrink-0`}
         title="Built with Σ Agent Builder"
       >
         <span className="text-[0.6em]">Σ</span>
       </div>
       {showLabel && (
-        <span className={`${labelClasses[size]} text-[#00D4AA] font-medium whitespace-nowrap`}>
+        <span className={`${labelClasses[size]} text-accent font-medium whitespace-nowrap`}>
           Built with Σ
         </span>
       )}

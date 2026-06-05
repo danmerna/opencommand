@@ -91,7 +91,7 @@ function SurveyTableRow({ survey }: { survey: SurveyRow }) {
         {/* Thumbs */}
         <div className="col-span-1 flex items-center">
           {survey.thumbs === "up" ? (
-            <div className="flex items-center gap-1 text-emerald-400">
+            <div className="flex items-center gap-1 text-accent">
               <ThumbsUp size={14} />
             </div>
           ) : (
@@ -117,7 +117,7 @@ function SurveyTableRow({ survey }: { survey: SurveyRow }) {
         {/* Waitlist Email */}
         <div className="col-span-2 flex items-center gap-1 min-w-0">
           {survey.email ? (
-            <span className="flex items-center gap-1 text-xs text-emerald-400 truncate">
+            <span className="flex items-center gap-1 text-xs text-accent truncate">
               <Mail size={11} />
               {survey.email}
             </span>
@@ -241,8 +241,8 @@ export default function AdminSurveyResponses() {
           </div>
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-1">
-              <ThumbsUp size={14} className="text-emerald-400" />
-              <p className="text-2xl font-semibold text-emerald-400">{upCount}</p>
+              <ThumbsUp size={14} className="text-accent" />
+              <p className="text-2xl font-semibold text-accent">{upCount}</p>
             </div>
             <p className="text-xs text-muted-foreground">{upPct}% found value</p>
           </div>
@@ -275,7 +275,7 @@ export default function AdminSurveyResponses() {
             <div className="flex h-3 rounded-full overflow-hidden gap-0.5">
               {upCount > 0 && (
                 <div
-                  className="bg-emerald-400 rounded-l-full transition-all"
+                  className="bg-accent rounded-l-full transition-all"
                   style={{ width: `${upPct}%` }}
                   title={`${upCount} thumbs up (${upPct}%)`}
                 />
@@ -290,7 +290,7 @@ export default function AdminSurveyResponses() {
             </div>
             <div className="flex items-center gap-6 mt-3">
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-accent inline-block" />
                 Found value — {upCount} ({upPct}%)
               </span>
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -310,7 +310,7 @@ export default function AdminSurveyResponses() {
               placeholder="Search by name, email, or company…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-muted/30 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-400/50 transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-muted/30 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
             />
           </div>
           <div className="flex items-center gap-1 bg-muted/40 border border-border rounded-xl p-1">

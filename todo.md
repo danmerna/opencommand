@@ -766,3 +766,11 @@
 - [x] Remove agent personas and projects from main sidebar nav
 - [x] Remove Goals from nav
 - [x] New nav order: Σ (Intent Engine) → Blueprints → Execution → Analytics → Model Performance → Settings
+
+## Brand Rebuild v2 (First Principles)
+- [x] Update index.css: new color tokens (slate-blue accent, adjusted surfaces), remove gradient utilities
+- [x] Update index.html: new meta title/description, remove old taglines
+- [x] Rewrite Home.tsx: minimal hero, no animation, product-focused messaging
+- [x] Update AppLayout.tsx: apply new surface colors and accent
+- [x] Remove ContextEngineHero.tsx (no longer imported — dead code)
+- [x] Update all accent-line and gradient utilities to solid borders

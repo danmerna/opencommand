@@ -77,7 +77,7 @@ export default function CompatibilityChecker() {
     }, 800);
   };
 
-  const scoreColor = (score: number) => score >= 80 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
+  const scoreColor = (score: number) => score >= 80 ? "text-accent" : score >= 50 ? "text-amber-400" : "text-red-400";
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -133,7 +133,7 @@ export default function CompatibilityChecker() {
               <div className="space-y-1">
                 {connectedCatNames.map(name => (
                   <div key={name} className="flex items-center gap-2 text-xs">
-                    <CheckCircle2 size={10} className="text-emerald-400" />
+                    <CheckCircle2 size={10} className="text-accent" />
                     <span className="text-foreground font-mono">{name}</span>
                   </div>
                 ))}
@@ -163,7 +163,7 @@ export default function CompatibilityChecker() {
                     <div className={`text-5xl font-light ${scoreColor(result.overallScore)}`}>{result.overallScore}%</div>
                     <div className="mt-1">
                       {result.canDeploy ? (
-                        <span className="text-xs text-emerald-400 flex items-center gap-1 justify-end"><CheckCircle2 size={10} /> Deploy Ready</span>
+                        <span className="text-xs text-accent flex items-center gap-1 justify-end"><CheckCircle2 size={10} /> Deploy Ready</span>
                       ) : (
                         <span className="text-xs text-red-400 flex items-center gap-1 justify-end"><XCircle size={10} /> Not Ready</span>
                       )}
@@ -174,15 +174,15 @@ export default function CompatibilityChecker() {
 
               {/* Category Breakdown */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="card-minimal p-4 border-emerald-500/20">
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-400 mb-3">
+                <div className="card-minimal p-4 border-accent/20">
+                  <div className="flex items-center gap-1.5 text-xs text-accent mb-3">
                     <CheckCircle2 size={10} /> Connected ({result.connectedCategories.length})
                   </div>
                   {result.connectedCategories.length === 0 ? (
                     <p className="text-muted-foreground text-xs">None</p>
                   ) : (
                     <div className="space-y-1">
-                      {result.connectedCategories.map(cat => <div key={cat} className="text-xs text-emerald-400 font-mono">{cat}</div>)}
+                      {result.connectedCategories.map(cat => <div key={cat} className="text-xs text-accent font-mono">{cat}</div>)}
                     </div>
                   )}
                 </div>

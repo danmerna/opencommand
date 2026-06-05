@@ -8,7 +8,7 @@ import { Link } from "wouter";
 const TYPE_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   feature: {
     label: "New Feature",
-    color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    color: "bg-accent/10 text-accent border-accent/20",
     icon: <Star className="w-3 h-3" />,
   },
   improvement: {
@@ -65,7 +65,7 @@ export default function WhatsNew() {
           </Link>
           <Separator orientation="vertical" className="h-4" />
           <div className="flex items-center gap-2">
-            <Megaphone className="w-4 h-4 text-emerald-400" />
+            <Megaphone className="w-4 h-4 text-accent" />
             <h1 className="text-sm font-semibold">What's New</h1>
           </div>
         </div>
@@ -75,8 +75,8 @@ export default function WhatsNew() {
       <div className="max-w-3xl mx-auto px-6 py-12">
         {/* Hero */}
         <div className="mb-12">
-          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 text-xs text-emerald-400 mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-full px-3 py-1 text-xs text-accent mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
             Beta — shipping fast
           </div>
           <h2 className="text-3xl font-light tracking-tight text-foreground mb-3">
@@ -116,7 +116,7 @@ export default function WhatsNew() {
                   <div className="flex flex-col items-center flex-shrink-0 w-4">
                     <div
                       className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 transition-all group-hover:scale-125 ${
-                        idx === 0 ? "bg-emerald-400 shadow-[0_0_8px_2px_rgba(34,197,94,0.3)]" : "bg-border"
+                        idx === 0 ? "bg-accent shadow-[0_0_8px_2px_rgba(34,197,94,0.3)]" : "bg-border"
                       }`}
                     />
                     {idx < entries.length - 1 && (
@@ -164,7 +164,7 @@ export default function WhatsNew() {
         <div className="mt-8 pt-8 border-t border-border/30 text-center">
           <p className="text-xs text-muted-foreground">
             OpenCommand is in active beta. Features ship weekly.{" "}
-            <span className="text-emerald-400">Use the feedback button to suggest what to build next.</span>
+            <span className="text-accent">Use the feedback button to suggest what to build next.</span>
           </p>
         </div>
       </div>

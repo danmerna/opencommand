@@ -36,7 +36,7 @@ export interface IntentEngineCardProps {
 const getRiskColor = (level: "low" | "medium" | "high") => {
   switch (level) {
     case "low":
-      return "text-emerald-400 bg-emerald-400/10 border-emerald-400/30";
+      return "text-accent bg-accent/10 border-accent/30";
     case "medium":
       return "text-amber-400 bg-amber-400/10 border-amber-400/30";
     case "high":

@@ -115,7 +115,7 @@ export default function ModelPerformance() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-card border-border/50">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <DollarSign className="w-4 h-4 text-accent" />
             <span className="text-xs font-medium">Total Cost</span>
           </div>
           <p className="text-2xl font-bold text-foreground">
@@ -155,7 +155,7 @@ export default function ModelPerformance() {
         </Card>
         <Card className="p-4 bg-card border-border/50">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-accent" />
             <span className="text-xs font-medium">Success Rate</span>
           </div>
           <p className="text-2xl font-bold text-foreground">
@@ -246,7 +246,7 @@ export default function ModelPerformance() {
                       <td className="py-2.5 px-2 text-right text-foreground font-mono">
                         {ms.totalCalls.toLocaleString()}
                       </td>
-                      <td className="py-2.5 px-2 text-right text-emerald-400 font-mono">
+                      <td className="py-2.5 px-2 text-right text-accent font-mono">
                         ${ms.totalCost.toFixed(4)}
                       </td>
                       <td className="py-2.5 px-2 text-right text-muted-foreground font-mono">
@@ -259,7 +259,7 @@ export default function ModelPerformance() {
                         <span
                           className={
                             parseFloat(ms.successRate) >= 95
-                              ? "text-emerald-400"
+                              ? "text-accent"
                               : parseFloat(ms.successRate) >= 80
                                 ? "text-amber-400"
                                 : "text-red-400"

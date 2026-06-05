@@ -46,8 +46,8 @@ export default function Waitlist() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "OpenCommand — Personal Intelligence Engine",
-          text: "Deploy your zero-human workforce. Join me on OpenCommand.",
+          title: "OpenCommand — The orchestration layer",
+          text: "Deploy your agent fleet. Join me on OpenCommand.",
           url: referralLink,
         });
       } catch {}
@@ -89,7 +89,7 @@ export default function Waitlist() {
       <nav className="px-6 md:px-8 py-5 max-w-7xl mx-auto flex items-center justify-between">
         <a href="/" className="font-semibold text-foreground text-xl tracking-tight hover:opacity-80 transition-opacity flex items-center gap-2">
           OpenCommand
-          <span className="text-[9px] font-medium tracking-wider uppercase px-1.5 py-0.5 rounded-full border border-emerald-400/40 text-emerald-400">Beta</span>
+          <span className="text-[9px] font-medium tracking-wider uppercase px-1.5 py-0.5 rounded-full border border-accent/40 text-accent">Beta</span>
         </a>
         <span className="text-xs text-muted-foreground">
           {user?.name || user?.email}
@@ -100,8 +100,8 @@ export default function Waitlist() {
       <div className="px-6 md:px-8 max-w-2xl mx-auto pt-16 pb-24">
         {/* Status badge */}
         <div className="fade-up fade-up-1 flex items-center gap-2 mb-8">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">You're on the list</span>
+          <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+          <span className="text-xs font-medium text-accent uppercase tracking-wider">You're on the list</span>
         </div>
 
         {/* Position display */}
@@ -127,8 +127,8 @@ export default function Waitlist() {
         {/* Referral section */}
         <div className="fade-up fade-up-4 border border-border rounded-xl p-6 md:p-8 bg-white/[0.02]">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-emerald-400/10 flex items-center justify-center">
-              <Zap size={18} className="text-emerald-400" />
+            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Zap size={18} className="text-accent" />
             </div>
             <div>
               <h3 className="text-sm font-medium text-foreground">Move up faster</h3>
@@ -146,7 +146,7 @@ export default function Waitlist() {
               className="shrink-0 p-3 rounded-lg border border-border hover:border-foreground/20 transition-colors"
               title="Copy link"
             >
-              {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} className="text-muted-foreground" />}
+              {copied ? <Check size={16} className="text-accent" /> : <Copy size={16} className="text-muted-foreground" />}
             </button>
             <button
               onClick={handleShare}

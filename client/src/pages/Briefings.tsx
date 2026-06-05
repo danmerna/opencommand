@@ -10,7 +10,7 @@ const FREQ_COLORS: Record<string, string> = {
   daily:     "text-blue-400 border-blue-400/30 bg-blue-400/5",
   weekly:    "text-violet-400 border-violet-400/30 bg-violet-400/5",
   monthly:   "text-amber-400 border-amber-400/30 bg-amber-400/5",
-  quarterly: "text-emerald-400 border-emerald-400/30 bg-emerald-400/5",
+  quarterly: "text-accent border-accent/30 bg-accent/5",
 };
 
 async function downloadBriefingPdf(log: any) {
@@ -29,7 +29,7 @@ async function downloadBriefingPdf(log: any) {
 
   doc.setFontSize(7);
   doc.setTextColor(100, 100, 100);
-  doc.text("OpenCommand — Personal Intelligence Engine", margin, 11);
+  doc.text("OpenCommand — The orchestration layer", margin, 11);
 
   const freqLabel = (log.frequency as string).charAt(0).toUpperCase() + (log.frequency as string).slice(1);
   const dateStr = new Date(log.deliveredAt).toLocaleDateString(undefined, {
@@ -179,7 +179,7 @@ function BriefingCard({ log, companyId }: { log: any; companyId?: number }) {
                         variant="outline"
                         disabled={isApproved || approveMutation.isPending}
                         onClick={() => companyId && approveMutation.mutate({ briefingId: log.id, actionText: action, companyId })}
-                        className={`shrink-0 text-[10px] gap-1 h-6 ${isApproved ? "text-emerald-400 border-emerald-400/30" : "text-amber-400 border-amber-400/30 hover:bg-amber-400/10"}`}
+                        className={`shrink-0 text-[10px] gap-1 h-6 ${isApproved ? "text-accent border-accent/30" : "text-amber-400 border-amber-400/30 hover:bg-amber-400/10"}`}
                       >
                         {isApproved ? <><CheckCircle2 size={10} /> Approved</> : "Approve"}
                       </Button>

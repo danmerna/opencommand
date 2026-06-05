@@ -12,11 +12,11 @@ export default function PaymentSuccess() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-8">
       <div className="max-w-md w-full text-center">
-        <div className="inline-flex items-center gap-2 border border-emerald-500/30 rounded-full px-4 py-1.5 text-xs text-emerald-400 mb-6">
+        <div className="inline-flex items-center gap-2 border border-accent/30 rounded-full px-4 py-1.5 text-xs text-accent mb-6">
           <Sparkles size={11} />
           Beta Access — Full Features Unlocked
         </div>
-        <CheckCircle size={40} className="text-emerald-400 mx-auto mb-4" />
+        <CheckCircle size={40} className="text-accent mx-auto mb-4" />
         <h1 className="text-3xl font-light text-foreground tracking-tight mb-3">Welcome to OpenCommand</h1>
         <p className="text-muted-foreground text-sm mb-8">
           Your account is ready. Let's build your AI agent team — we'll connect to your tools, pull your context, and personalize each agent to your business.

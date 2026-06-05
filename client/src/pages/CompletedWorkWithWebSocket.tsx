@@ -210,7 +210,7 @@ export function CompletedWorkWithWebSocket() {
               <Tooltip />
               <Legend />
               <Line type="monotone" dataKey="sent" stroke="#3b82f6" name="Sent" />
-              <Line type="monotone" dataKey="opened" stroke="#10b981" name="Opened" />
+              <Line type="monotone" dataKey="opened" stroke="oklch(0.72 0.12 250)" name="Opened" />
               <Line type="monotone" dataKey="clicked" stroke="#8b5cf6" name="Clicked" />
             </LineChart>
           </ResponsiveContainer>

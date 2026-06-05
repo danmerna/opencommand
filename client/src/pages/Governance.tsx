@@ -122,7 +122,7 @@ export default function Governance() {
                 <div className="space-y-2">
                   {gates.map(g => (
                     <div key={g.id} className="card-minimal p-4 flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded flex items-center justify-center ${g.isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-secondary text-muted-foreground"}`}><Shield size={14} /></div>
+                      <div className={`w-8 h-8 rounded flex items-center justify-center ${g.isActive ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground"}`}><Shield size={14} /></div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-foreground capitalize">{g.gateType.replace("_", " ")} Gate</div>
                         <div className="flex items-center gap-3 mt-0.5">
@@ -131,7 +131,7 @@ export default function Governance() {
                           {g.requiresApproval && <span className="text-[10px] text-amber-400 border border-amber-400/30 px-1.5 py-0 rounded">Human Required</span>}
                         </div>
                       </div>
-                      <span className={`text-xs ${g.isActive ? "text-emerald-400" : "text-muted-foreground"}`}>{g.isActive ? "Active" : "Disabled"}</span>
+                      <span className={`text-xs ${g.isActive ? "text-accent" : "text-muted-foreground"}`}>{g.isActive ? "Active" : "Disabled"}</span>
                       <button onClick={() => deleteGateMut.mutate({ id: g.id })} className="text-muted-foreground hover:text-foreground transition-colors"><Trash2 size={14} /></button>
                     </div>
                   ))}
@@ -184,7 +184,7 @@ export default function Governance() {
                     <div key={tool.id} className="card-minimal p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <Wrench size={13} className={tool.isActive ? "text-emerald-400" : "text-muted-foreground"} />
+                          <Wrench size={13} className={tool.isActive ? "text-accent" : "text-muted-foreground"} />
                           <span className="text-sm font-medium text-foreground">{tool.name}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ export default function Governance() {
                 <div className="space-y-2">
                   {webhooksList.map(wh => (
                     <div key={wh.id} className="card-minimal p-4 flex items-center gap-4">
-                      <div className={`w-2.5 h-2.5 rounded-full ${wh.isActive ? "bg-emerald-400" : "bg-muted-foreground"}`} />
+                      <div className={`w-2.5 h-2.5 rounded-full ${wh.isActive ? "bg-accent" : "bg-muted-foreground"}`} />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-foreground">{wh.name}</div>
                         <div className="text-xs text-muted-foreground truncate font-mono">{wh.url}</div>

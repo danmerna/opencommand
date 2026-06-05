@@ -13,7 +13,7 @@ const formatCurrency = (val: string | null) => {
 };
 
 const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; label: string }> = {
-  verified: { icon: CheckCircle2, color: "text-emerald-400", label: "Verified" },
+  verified: { icon: CheckCircle2, color: "text-accent", label: "Verified" },
   pending: { icon: Clock, color: "text-amber-400", label: "Pending Verification" },
   disputed: { icon: XCircle, color: "text-red-400", label: "Disputed" },
 };
@@ -131,7 +131,7 @@ export default function ReceiptViewer() {
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5">
               <ExternalLink size={12} /> ROI
             </div>
-            <div className="text-2xl font-light text-emerald-400">{roi}%</div>
+            <div className="text-2xl font-light text-accent">{roi}%</div>
           </div>
         </div>
 
@@ -160,7 +160,7 @@ export default function ReceiptViewer() {
               </div>
               <div>
                 <span className="text-muted-foreground text-xs">Net Value</span>
-                <p className="text-emerald-400 mt-1">{formatCurrency(String(dollarValue - cost))}</p>
+                <p className="text-accent mt-1">{formatCurrency(String(dollarValue - cost))}</p>
               </div>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function ReceiptViewer() {
         {/* Footer */}
         <div className="text-center pt-8 border-t border-border">
           <p className="text-xs text-muted-foreground mb-4">
-            This Proof of Outcome receipt was generated and verified by OpenCommand — Personal Intelligence Engine.
+            This Proof of Outcome receipt was generated and verified by OpenCommand — The orchestration layer.
           </p>
           <Link href="/">
             <Button variant="outline" size="sm" className="gap-2 text-xs">

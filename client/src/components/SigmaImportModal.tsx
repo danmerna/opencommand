@@ -56,7 +56,7 @@ export function SigmaImportModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-gradient-to-br from-[#00D4AA] to-[#00A888] text-white flex items-center justify-center text-xs font-bold">
+            <div className="w-5 h-5 rounded bg-gradient-to-br from-[oklch(0.72 0.12 250)] to-[oklch(0.60 0.10 250)] text-white flex items-center justify-center text-xs font-bold">
               Σ
             </div>
             Import Agent from Σ Agent Builder
@@ -96,7 +96,7 @@ export function SigmaImportModal({
             <Button
               onClick={handleImport}
               disabled={isLoading || !jsonInput.trim()}
-              className="bg-[#00D4AA] hover:bg-[#00A888] text-black"
+              className="bg-[oklch(0.72 0.12 250)] hover:bg-[oklch(0.60 0.10 250)] text-black"
             >
               {isLoading ? "Importing..." : "Import Agent"}
             </Button>

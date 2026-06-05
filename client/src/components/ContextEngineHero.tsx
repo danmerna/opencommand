@@ -92,9 +92,9 @@ export function ContextEngineHero() {
         <defs>
           {/* Radial glow for center */}
           <radialGradient id="brain-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#22c55e" stopOpacity="0.3" />
-            <stop offset="60%" stopColor="#22c55e" stopOpacity="0.05" />
-            <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
+            <stop offset="0%" stopColor="oklch(0.72 0.12 250)" stopOpacity="0.3" />
+            <stop offset="60%" stopColor="oklch(0.72 0.12 250)" stopOpacity="0.05" />
+            <stop offset="100%" stopColor="oklch(0.72 0.12 250)" stopOpacity="0" />
           </radialGradient>
 
           {/* Orbit ring gradient */}
@@ -194,21 +194,21 @@ export function ContextEngineHero() {
         <circle
           cx={cx} cy={cy} r={32}
           fill="#0a0a0a"
-          stroke="#22c55e"
+          stroke="oklch(0.72 0.12 250)"
           strokeWidth="2"
           opacity={0.95}
         />
         <circle
           cx={cx} cy={cy} r={36}
           fill="none"
-          stroke="#22c55e"
+          stroke="oklch(0.72 0.12 250)"
           strokeWidth="0.5"
           opacity={0.2 + 0.15 * Math.sin((pulsePhase * Math.PI) / 180)}
         />
         <circle
           cx={cx} cy={cy} r={42}
           fill="none"
-          stroke="#22c55e"
+          stroke="oklch(0.72 0.12 250)"
           strokeWidth="0.3"
           opacity={0.1 + 0.1 * Math.sin(((pulsePhase + 90) * Math.PI) / 180)}
         />
@@ -216,22 +216,22 @@ export function ContextEngineHero() {
         {/* Brain icon (simplified neural network) */}
         <g transform={`translate(${cx - 12}, ${cy - 12})`} opacity={0.9}>
           {/* Neural nodes */}
-          <circle cx="12" cy="4" r="2" fill="#22c55e" />
-          <circle cx="4" cy="12" r="2" fill="#22c55e" />
-          <circle cx="20" cy="12" r="2" fill="#22c55e" />
-          <circle cx="8" cy="20" r="2" fill="#22c55e" />
-          <circle cx="16" cy="20" r="2" fill="#22c55e" />
-          <circle cx="12" cy="12" r="2.5" fill="#22c55e" />
+          <circle cx="12" cy="4" r="2" fill="oklch(0.72 0.12 250)" />
+          <circle cx="4" cy="12" r="2" fill="oklch(0.72 0.12 250)" />
+          <circle cx="20" cy="12" r="2" fill="oklch(0.72 0.12 250)" />
+          <circle cx="8" cy="20" r="2" fill="oklch(0.72 0.12 250)" />
+          <circle cx="16" cy="20" r="2" fill="oklch(0.72 0.12 250)" />
+          <circle cx="12" cy="12" r="2.5" fill="oklch(0.72 0.12 250)" />
           {/* Connections */}
-          <line x1="12" y1="4" x2="4" y2="12" stroke="#22c55e" strokeWidth="0.5" opacity={0.5} />
-          <line x1="12" y1="4" x2="20" y2="12" stroke="#22c55e" strokeWidth="0.5" opacity={0.5} />
-          <line x1="12" y1="4" x2="12" y2="12" stroke="#22c55e" strokeWidth="0.5" opacity={0.5} />
-          <line x1="4" y1="12" x2="12" y2="12" stroke="#22c55e" strokeWidth="0.5" opacity={0.5} />
-          <line x1="20" y1="12" x2="12" y2="12" stroke="#22c55e" strokeWidth="0.5" opacity={0.5} />
-          <line x1="4" y1="12" x2="8" y2="20" stroke="#22c55e" strokeWidth="0.5" opacity={0.5} />
-          <line x1="20" y1="12" x2="16" y2="20" stroke="#22c55e" strokeWidth="0.5" opacity={0.5} />
-          <line x1="12" y1="12" x2="8" y2="20" stroke="#22c55e" strokeWidth="0.5" opacity={0.5} />
-          <line x1="12" y1="12" x2="16" y2="20" stroke="#22c55e" strokeWidth="0.5" opacity={0.5} />
+          <line x1="12" y1="4" x2="4" y2="12" stroke="oklch(0.72 0.12 250)" strokeWidth="0.5" opacity={0.5} />
+          <line x1="12" y1="4" x2="20" y2="12" stroke="oklch(0.72 0.12 250)" strokeWidth="0.5" opacity={0.5} />
+          <line x1="12" y1="4" x2="12" y2="12" stroke="oklch(0.72 0.12 250)" strokeWidth="0.5" opacity={0.5} />
+          <line x1="4" y1="12" x2="12" y2="12" stroke="oklch(0.72 0.12 250)" strokeWidth="0.5" opacity={0.5} />
+          <line x1="20" y1="12" x2="12" y2="12" stroke="oklch(0.72 0.12 250)" strokeWidth="0.5" opacity={0.5} />
+          <line x1="4" y1="12" x2="8" y2="20" stroke="oklch(0.72 0.12 250)" strokeWidth="0.5" opacity={0.5} />
+          <line x1="20" y1="12" x2="16" y2="20" stroke="oklch(0.72 0.12 250)" strokeWidth="0.5" opacity={0.5} />
+          <line x1="12" y1="12" x2="8" y2="20" stroke="oklch(0.72 0.12 250)" strokeWidth="0.5" opacity={0.5} />
+          <line x1="12" y1="12" x2="16" y2="20" stroke="oklch(0.72 0.12 250)" strokeWidth="0.5" opacity={0.5} />
         </g>
 
         {/* Center label */}

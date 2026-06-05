@@ -221,7 +221,7 @@ function GoalNode({ data, selected }: NodeProps<Node<Record<string, unknown>>>) 
         </p>
       </div>
       {data.verified ? (
-        <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 mt-1 border-emerald-500/30 text-emerald-400">
+        <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 mt-1 border-accent/30 text-accent">
           <CheckCircle2 className="w-2 h-2 mr-0.5" /> Verified
         </Badge>
       ) : null}
@@ -325,7 +325,7 @@ function ModelSelector({
           </Badge>
         )}
         {m.id === recommendedId && m.id !== popularId && (
-          <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 border-emerald-500/30 text-emerald-400 ml-1">
+          <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 border-accent/30 text-accent ml-1">
             REC
           </Badge>
         )}
@@ -450,9 +450,9 @@ function CostEstimatorPanel({
   return (
     <Card className="p-3 bg-card/90 backdrop-blur-sm border-border/50 w-[260px]">
       <div className="flex items-center gap-2 mb-2">
-        <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+        <DollarSign className="w-3.5 h-3.5 text-accent" />
         <span className="text-xs font-semibold text-foreground">Cost Estimator</span>
-        <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-emerald-500/30 text-emerald-400 ml-auto">
+        <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-accent/30 text-accent ml-auto">
           ~${totalCost.toFixed(4)}/run
         </Badge>
       </div>
@@ -479,7 +479,7 @@ function CostEstimatorPanel({
       </div>
       <div className="border-t border-border/30 mt-2 pt-2 flex items-center justify-between">
         <span className="text-[10px] text-muted-foreground">Total per run</span>
-        <span className="text-xs font-bold text-emerald-400">${totalCost.toFixed(4)}</span>
+        <span className="text-xs font-bold text-accent">${totalCost.toFixed(4)}</span>
       </div>
     </Card>
   );
@@ -802,7 +802,7 @@ export default function BlueprintBuilder() {
             {/* Cost estimate badge */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-emerald-500/30 text-emerald-400 gap-1 cursor-help">
+                <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-accent/30 text-accent gap-1 cursor-help">
                   <DollarSign className="w-2.5 h-2.5" />
                   ~${estimatedCostPerRun.toFixed(4)}/run
                 </Badge>
@@ -1022,7 +1022,7 @@ export default function BlueprintBuilder() {
                         </span>
                         {/* Real-time cost for this agent */}
                         {typeof selectedNode.data.modelId === "string" && selectedNode.data.modelId && (
-                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-emerald-500/30 text-emerald-400 ml-auto">
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-accent/30 text-accent ml-auto">
                             ${estimateCost(selectedNode.data.modelId, 2000, 1000).toFixed(5)}/call
                           </Badge>
                         )}
@@ -1069,7 +1069,7 @@ export default function BlueprintBuilder() {
                             </SelectItem>
                             <SelectItem value="fixer" className="text-xs">
                               <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                <span className="w-2 h-2 rounded-full bg-accent" />
                                 Fixer/Synthesizer — reconciles feedback
                               </div>
                             </SelectItem>

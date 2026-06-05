@@ -404,7 +404,7 @@ export default function ProjectDetail() {
                 allTasks.slice(0, 20).map(task => {
                   const statusIcon = task.status === "completed" ? CheckCircle2 : task.status === "in_progress" ? Clock : AlertCircle;
                   const StatusIcon = statusIcon;
-                  const statusColor = task.status === "completed" ? "text-emerald-400" : task.status === "in_progress" ? "text-amber-400" : "text-muted-foreground";
+                  const statusColor = task.status === "completed" ? "text-accent" : task.status === "in_progress" ? "text-amber-400" : "text-muted-foreground";
                   const agent = agents.find(a => a.id === task.agentId);
                   return (
                     <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg border border-border bg-white/[0.02] hover:bg-white/[0.04] transition-colors">

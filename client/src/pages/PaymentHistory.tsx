@@ -16,7 +16,7 @@ const formatCurrency = (amount: number, currency: string) => {
 };
 
 const STATUS_STYLE: Record<string, { color: string; label: string }> = {
-  paid: { color: "text-emerald-400", label: "Paid" },
+  paid: { color: "text-accent", label: "Paid" },
   unpaid: { color: "text-amber-400", label: "Pending" },
   no_payment_required: { color: "text-muted-foreground", label: "Free" },
 };
