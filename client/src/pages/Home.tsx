@@ -291,11 +291,12 @@ export default function Home() {
               </span>
             </p>
             <h1 className="hero-h1 text-4xl md:text-5xl lg:text-[3.25rem] font-semibold text-foreground leading-[1.1] tracking-tight mb-6">
-              The execution layer<br />
-              for AI agents.
+              Deploy agents.<br />
+              Set goals.<br />
+              Verify outcomes.
             </h1>
             <p className="hero-sub text-muted-foreground text-lg leading-relaxed max-w-lg mb-10">
-              Design multi-agent workflows visually. Route tasks to the right model. Approve decisions with a swipe. Know exactly what your agents did and what it cost.
+              OpenCommand orchestrates your AI agents across every function — routing tasks to the right model, enforcing human checkpoints, and proving what was done.
             </p>
             <div className="hero-cta space-y-4">
               {!isAuthenticated ? (
