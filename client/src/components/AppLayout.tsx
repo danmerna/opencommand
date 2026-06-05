@@ -241,6 +241,31 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <span className="text-amber-400/70">You are viewing a simulated account with mock integration data.</span>
             </div>
           )}
+          {/* ── Dashboard content-area menu ─────────────────────────── */}
+          <div className="hidden lg:flex items-center gap-1 px-6 py-2 border-b border-border bg-[oklch(0.03_0_0)]">
+            {coreNavItems.map(item => {
+              const isActive = location === item.href || location.startsWith(item.href + "/");
+              return (
+                <Link key={item.href} href={item.href}>
+                  <button className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                    isActive ? "bg-white/[0.08] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                  }`}>
+                    {item.label}
+                  </button>
+                </Link>
+              );
+            })}
+            <div className="flex-1" />
+            <Link href={settingsNavItem.href}>
+              <button className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                isSettingsActive ? "bg-white/[0.08] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+              }`}>
+                <settingsNavItem.icon size={12} className="inline mr-1" />
+                {settingsNavItem.label}
+              </button>
+            </Link>
+          </div>
+
           <main className="flex-1 overflow-auto">
             {children}
           </main>

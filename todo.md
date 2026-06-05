@@ -774,3 +774,10 @@
 - [x] Update AppLayout.tsx: apply new surface colors and accent
 - [x] Remove ContextEngineHero.tsx (no longer imported — dead code)
 - [x] Update all accent-line and gradient utilities to solid borders
+
+## Dashboard Menu & Intent Engine Visual Builder
+- [x] Add contextual menu/navigation inside the dashboard content area
+- [x] Rework Intent Engine (Σ) into a visual blueprint builder using React Flow
+- [x] Intent Engine should ask questions and output a fully editable blueprint
+- [x] Blueprint includes: agent team, workflows, data, tools, guardrails
+- [x] Visual builder uses canvas-style React Flow interface
