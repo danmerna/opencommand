@@ -785,3 +785,9 @@
 ## Menu Button + Example Blueprints
 - [x] Add menu button (hamburger/options) to the Σ interview screen header
 - [x] Seed 2 example blueprints into user's account via SQL
+
+## Home Screen Dashboard (Morning Briefing / Swipe UX)
+- [x] Create /dashboard route with AppLayout
+- [x] Swipe-card deck: HITL notifications (approve/dismiss), briefing items, blueprint status, quick actions
+- [x] Redirect authenticated users from / to /dashboard after login
+- [x] Seed demo HITL checkpoint notifications for evaluation (built from live blueprint data)

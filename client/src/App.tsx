@@ -1,3 +1,4 @@
+import { useAuth } from "./_core/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -35,12 +36,19 @@ import GoalsDashboard from "./pages/GoalsDashboard";
 import BlueprintChat from "./pages/BlueprintChat";
 import BlueprintBuilder from "./pages/BlueprintBuilder";
 import ModelPerformance from "./pages/ModelPerformance";
+import Dashboard from "./pages/Dashboard";
 
 function Router() {
   usePageTracking();
+  const { isAuthenticated } = useAuth();
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/">
+        {isAuthenticated ? <Redirect to="/dashboard" /> : <Home />}
+      </Route>
+      <Route path="/dashboard">
+        <AppLayout><Dashboard /></AppLayout>
+      </Route>
       <Route path="/auth/relay" component={AuthRelay} />
       <Route path="/waitlist" component={Waitlist} />
       <Route path="/mission-control">
