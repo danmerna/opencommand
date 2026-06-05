@@ -803,8 +803,9 @@ export default function Home() {
                   </Link>
                 )
               ) : (
-                <a href={getLoginUrl()} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
-                  Login
+                <a href={getLoginUrl("/mission-control")} className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground bg-white/10 hover:bg-white/15 border border-border rounded-lg px-5 py-2.5 transition-all hover:border-emerald-400/40">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                  Log In
                 </a>
               )}
             </div>
@@ -1180,7 +1181,7 @@ export default function Home() {
         </p>
         <div className="flex flex-col items-center gap-4 max-w-md mx-auto w-full">
           <HeroEmailInput />
-          <a href={getLoginUrl()} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <a href={getLoginUrl("/mission-control")} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
             Already have an account? Sign in <ArrowRight size={10} className="inline ml-0.5" />
           </a>
         </div>

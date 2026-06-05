@@ -735,3 +735,4 @@
 - [x] Marketplace-ready blueprint format (description, category, required agents, estimated runtime, price fields)
 - [x] Fix BlueprintBuilder.tsx TypeScript errors (React Flow typing, toast import, data access patterns)
 - [x] Fix BlueprintChat.tsx TypeScript errors (auth import, procedure name, message type)
+- [x] Add login button to homepage dropdown menu (working with Manus OAuth)
