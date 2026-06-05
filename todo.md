@@ -781,3 +781,7 @@
 - [x] Intent Engine should ask questions and output a fully editable blueprint
 - [x] Blueprint includes: agent team, workflows, data, tools, guardrails
 - [x] Visual builder uses canvas-style React Flow interface
+
+## Menu Button + Example Blueprints
+- [x] Add menu button (hamburger/options) to the Σ interview screen header
+- [x] Seed 2 example blueprints into user's account via SQL

@@ -3,12 +3,16 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Send, Loader2, Sparkles, ArrowRight, Bot, User, Zap,
-  Plus, Save, Trash2, Play,
+  Plus, Save, Trash2, Play, Menu, RotateCcw, History, FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { useAnalytics } from "@/hooks/useAnalytics";
@@ -290,10 +294,32 @@ export default function IntentEngine() {
     return (
       <div className="flex flex-col h-[calc(100vh-7rem)]">
         {/* Header */}
-        <div className="border-b border-border px-6 py-4 flex items-center justify-between shrink-0">
-          <div>
-            <h1 className="text-lg font-semibold text-foreground tracking-tight">Σ</h1>
-            <p className="text-xs text-muted-foreground">Describe what you want to build. I'll generate an editable blueprint.</p>
+        <div className="border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            {/* Menu button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  <Menu size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem onClick={() => { setSessionId(null); setMessages([]); setCompletionPercent(0); setIsReadyToGenerate(false); startSession.mutateAsync({}).then((res) => { setSessionId(res.sessionId); setMessages(res.messages as ChatMessage[]); }); }}>
+                  <RotateCcw size={13} className="mr-2" /> New Session
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/blueprints")}>
+                  <FileText size={13} className="mr-2" /> My Blueprints
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => toast.info("Session history coming soon")}>
+                  <History size={13} className="mr-2" /> Session History
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground tracking-tight">Σ</h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">Describe what you want to build. I'll generate an editable blueprint.</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {completionPercent > 0 && (
