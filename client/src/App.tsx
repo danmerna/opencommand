@@ -61,6 +61,7 @@ function Router() {
         <AppLayout><Blueprints /></AppLayout>
       </Route>
       <Route path="/blueprints/chat" component={BlueprintChat} />
+      <Route path="/blueprints/new/builder" component={BlueprintBuilder} />
       <Route path="/blueprints/:id/builder" component={BlueprintBuilder} />
       <Route path="/model-performance">
         <AppLayout><ModelPerformance /></AppLayout>

@@ -598,6 +598,34 @@ export const blueprintEngineRouter = router({
     }),
 
   /**
+   * Create a blank blueprint (scratch visual builder)
+   */
+  createBlank: protectedProcedure
+    .input(z.object({
+      title: z.string().default("Untitled Blueprint"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const ticker = generateTicker(input.title);
+      const [inserted] = await (await getDbOrThrow()).insert(blueprintTemplates).values({
+        userId: ctx.user.id,
+        ticker,
+        title: input.title,
+        description: "",
+        category: "custom",
+        objective: "",
+        desiredFinalState: "",
+        constraints: [],
+        nonGoals: [],
+        successMetrics: [],
+        estimatedRuntime: "",
+        nodes: [],
+        edges: [],
+        status: "draft",
+      }).$returningId();
+      return { blueprintId: inserted.id, ticker, title: input.title };
+    }),
+
+  /**
    * Delete a blueprint
    */
   deleteBlueprint: protectedProcedure

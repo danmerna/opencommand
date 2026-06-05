@@ -791,3 +791,10 @@
 - [x] Swipe-card deck: HITL notifications (approve/dismiss), briefing items, blueprint status, quick actions
 - [x] Redirect authenticated users from / to /dashboard after login
 - [x] Seed demo HITL checkpoint notifications for evaluation (built from live blueprint data)
+
+## Visual Builder — Primary Nav + Scratch Canvas
+- [x] Add "Visual Builder" to primary nav sidebar linking to /blueprints/new/builder
+- [x] /blueprints/new/builder opens a blank React Flow canvas (no blueprint ID required)
+- [x] Node palette sidebar with all 6 framework layers: Trigger, Workflow, Agent, Verification (LLM Council), HITL Checkpoint, Goal Tracking
+- [x] Each node type has distinct icon, color, and editable fields matching the blueprint framework
+- [x] Save blank canvas as new blueprint_template with auto-generated ticker via createBlank mutation

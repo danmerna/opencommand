@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import {
   ReactFlow,
@@ -73,6 +73,9 @@ import {
   TrendingDown,
   Plus,
   Trash2,
+  Clock,
+  ShieldCheck,
+  GripVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -275,12 +278,119 @@ function CheckpointNode({ data, selected }: NodeProps<Node<Record<string, unknow
   );
 }
 
+// ─── Trigger Node (Layer 1) ─────────────────────────────────────────────────
+
+function TriggerNode({ data, selected }: NodeProps<Node<Record<string, unknown>>>) {
+  return (
+    <div
+      className={`px-3 py-2 rounded-lg border-2 bg-card/80 shadow-md min-w-[160px] max-w-[220px] transition-all ${
+        selected ? "border-violet-500 shadow-violet-500/20" : "border-border/40"
+      }`}
+    >
+      <Handle type="source" position={Position.Bottom} className="!bg-violet-500 !w-2.5 !h-2.5 !border-2 !border-background" />
+      <div className="flex items-center gap-2">
+        <Zap className="w-4 h-4 text-violet-400 shrink-0" />
+        <p className="text-xs font-medium text-foreground truncate">
+          {(data.label as string) || "Trigger"}
+        </p>
+      </div>
+      {data.schedule ? (
+        <p className="text-[10px] text-muted-foreground mt-1 truncate">
+          {String(data.schedule)}
+        </p>
+      ) : null}
+      {data.triggerType ? (
+        <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 mt-1 border-violet-500/30 text-violet-400">
+          {String(data.triggerType)}
+        </Badge>
+      ) : null}
+    </div>
+  );
+}
+
+// ─── Verification Node (Layer 4 — LLM Council) ───────────────────────────────
+
+function VerificationNode({ data, selected }: NodeProps<Node<Record<string, unknown>>>) {
+  return (
+    <div
+      className={`px-3 py-2 rounded-lg border-2 bg-card/80 shadow-md min-w-[160px] max-w-[240px] transition-all ${
+        selected ? "border-yellow-500 shadow-yellow-500/20 bg-yellow-950/20" : "border-yellow-500/50 bg-yellow-950/10"
+      }`}
+    >
+      <Handle type="target" position={Position.Top} className="!bg-yellow-500 !w-2.5 !h-2.5 !border-2 !border-background" />
+      <div className="flex items-center gap-2 mb-1">
+        <ShieldCheck className="w-4 h-4 text-yellow-400 shrink-0" />
+        <p className="text-xs font-medium text-yellow-300 truncate">
+          {(data.label as string) || "Verification"}
+        </p>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-yellow-500/30 text-yellow-400 gap-0.5">
+          <Users className="w-2.5 h-2.5" />
+          {data.quorum ? `${data.quorum}-model council` : "LLM Council"}
+        </Badge>
+      </div>
+      {data.criteria ? (
+        <p className="text-[9px] text-yellow-400/60 mt-1 line-clamp-2">{String(data.criteria)}</p>
+      ) : null}
+      <Handle type="source" position={Position.Bottom} className="!bg-yellow-500 !w-2.5 !h-2.5 !border-2 !border-background" />
+    </div>
+  );
+}
+
 const nodeTypes = {
   agent: AgentNode,
   workflow: WorkflowNode,
   goal: GoalNode,
   checkpoint: CheckpointNode,
+  trigger: TriggerNode,
+  verification: VerificationNode,
 };
+
+// ─── Node Palette (drag-to-canvas) ───────────────────────────────────────────
+
+const PALETTE_NODES = [
+  { type: "trigger",      label: "Trigger",        icon: Zap,          color: "#8b5cf6", desc: "Event-driven or scheduled start" },
+  { type: "workflow",     label: "Workflow",        icon: GitBranch,    color: "#06b6d4", desc: "Task dependency graph" },
+  { type: "agent",        label: "Agent",           icon: Bot,          color: "#3b82f6", desc: "Role-assigned AI agent" },
+  { type: "verification", label: "Verification",    icon: ShieldCheck,  color: "#eab308", desc: "LLM Council vote" },
+  { type: "checkpoint",   label: "HITL",            icon: Flag,         color: "#f97316", desc: "Human-in-the-loop gate" },
+  { type: "goal",         label: "Goal Tracking",   icon: Target,       color: "#f59e0b", desc: "Measurable outcome + KPIs" },
+];
+
+function NodePalette({ onAddNode }: { onAddNode: (type: string) => void }) {
+  return (
+    <div className="w-48 bg-card/95 border-r border-border/50 flex flex-col">
+      <div className="px-3 py-2.5 border-b border-border/30">
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Blueprint Layers</p>
+      </div>
+      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        {PALETTE_NODES.map((node) => (
+          <button
+            key={node.type}
+            onClick={() => onAddNode(node.type)}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left group"
+          >
+            <div
+              className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
+              style={{ backgroundColor: node.color + "22", border: `1px solid ${node.color}44` }}
+            >
+              <node.icon size={13} style={{ color: node.color }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-foreground leading-none mb-0.5">{node.label}</p>
+              <p className="text-[10px] text-muted-foreground leading-tight line-clamp-1">{node.desc}</p>
+            </div>
+            <Plus size={12} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-auto" />
+          </button>
+        ))}
+      </div>
+      <div className="px-3 py-2 border-t border-border/30">
+        <p className="text-[9px] text-muted-foreground">Click to add · drag to reposition</p>
+      </div>
+    </div>
+  );
+}
 
 // ─── Model Selector with Community Popularity ───────────────────────────────
 
@@ -490,15 +600,16 @@ function CostEstimatorPanel({
 export default function BlueprintBuilder() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
-  const blueprintId = Number(params.id);
+  const isNew = params.id === "new";
+  const blueprintId = isNew ? 0 : Number(params.id);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<Record<string, unknown>>>([] as Node<Record<string, unknown>>[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([] as Edge[]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [editPanelOpen, setEditPanelOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [blueprintTitle, setBlueprintTitle] = useState("");
-  const [blueprintTicker, setBlueprintTicker] = useState("");
+  const [blueprintTitle, setBlueprintTitle] = useState(isNew ? "Untitled Blueprint" : "");
+  const [blueprintTicker, setBlueprintTicker] = useState(isNew ? "NEW" : "");
   const [councilEnabled, setCouncilEnabled] = useState(false);
   const [councilSize, setCouncilSize] = useState(3);
 
@@ -523,6 +634,10 @@ export default function BlueprintBuilder() {
   const recordSelection = trpc.models.recordModelSelection.useMutation();
   const saveCheckpointMut = trpc.models.saveCheckpoint.useMutation();
   const deleteCheckpointMut = trpc.models.deleteCheckpoint.useMutation();
+  const createBlankMut = trpc.blueprintEngine.createBlank.useMutation();
+  const updateGraphMut = trpc.blueprintEngine.updateGraph.useMutation();
+  const [savedBlueprintId, setSavedBlueprintId] = useState<number | null>(null);
+  const effectiveBlueprintId = savedBlueprintId || blueprintId;
 
   // Convert blueprint data to React Flow nodes/edges
   useEffect(() => {
@@ -639,46 +754,68 @@ export default function BlueprintBuilder() {
     setEditPanelOpen(true);
   }, []);
 
-  // Add HITL Checkpoint node
-  const addCheckpointNode = useCallback(() => {
-    const id = `checkpoint-${Date.now()}`;
+  // Add any node type to canvas
+  const addNode = useCallback((type: string) => {
+    const id = `${type}-${Date.now()}`;
+    const defaults: Record<string, Record<string, unknown>> = {
+      trigger:      { label: "Trigger", triggerType: "scheduled", schedule: "daily at 9am" },
+      workflow:     { label: "Workflow Step", trigger: "" },
+      agent:        { label: "New Agent", role: "", mission: "", color: "#3b82f6", modelId: ROLE_DEFAULTS.implementer, workflowRole: "implementer" },
+      verification: { label: "Verification", quorum: 3, criteria: "" },
+      checkpoint:   { label: "HITL Checkpoint", triggerMode: "before_agent", interfaceType: "notification_swipe", defaultRule: "", linkedAgentNodeId: "" },
+      goal:         { label: "Goal...", objective: "", desiredFinalState: "", verified: false },
+    };
     const newNode: Node = {
       id,
-      type: "checkpoint",
-      position: { x: 400, y: 300 },
-      data: {
-        label: "HITL Checkpoint",
-        triggerMode: "before_agent",
-        interfaceType: "notification_swipe",
-        defaultRule: "",
-        linkedAgentNodeId: "",
-      },
+      type,
+      position: { x: 200 + Math.random() * 300, y: 150 + Math.random() * 200 },
+      data: defaults[type] || { label: type },
     };
     setNodes((nds) => [...nds, newNode]);
-    toast.success("Checkpoint added — drag it between agents");
+    toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} node added`);
   }, [setNodes]);
+
+  // Add HITL Checkpoint node (kept for toolbar button)
+  const addCheckpointNode = useCallback(() => addNode("checkpoint"), [addNode]);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      let activeBlueprintId = effectiveBlueprintId;
+
+      // If blank canvas, create the blueprint first
+      if (isNew && !savedBlueprintId) {
+        const result = await createBlankMut.mutateAsync({ title: blueprintTitle || "Untitled Blueprint" });
+        setSavedBlueprintId(result.blueprintId);
+        setBlueprintTicker(result.ticker);
+        activeBlueprintId = result.blueprintId;
+        // Update URL without reload
+        navigate(`/blueprints/${result.blueprintId}/builder`, { replace: true });
+      }
+
+      // Always persist the full graph (nodes + edges)
+      await updateGraphMut.mutateAsync({
+        blueprintId: activeBlueprintId,
+        nodes: nodes as any[],
+        edges: edges as any[],
+      });
+
       // Save model configurations for all agent nodes
       const agentNodes = nodes.filter((n) => n.type === "agent");
-      const configs = agentNodes.map((n) => ({
-        nodeId: n.id,
-        modelId: (n.data.modelId as string) || ROLE_DEFAULTS.implementer,
-        workflowRole: (n.data.workflowRole as WorkflowRole) || undefined,
-      }));
-
-      await saveModelConfigs.mutateAsync({
-        blueprintId,
-        configs,
-      });
+      if (agentNodes.length > 0) {
+        const configs = agentNodes.map((n) => ({
+          nodeId: n.id,
+          modelId: (n.data.modelId as string) || ROLE_DEFAULTS.implementer,
+          workflowRole: (n.data.workflowRole as WorkflowRole) || undefined,
+        }));
+        await saveModelConfigs.mutateAsync({ blueprintId: activeBlueprintId, configs });
+      }
 
       // Save checkpoint nodes
       const checkpointNodes = nodes.filter((n) => n.type === "checkpoint");
       for (const cp of checkpointNodes) {
         await saveCheckpointMut.mutateAsync({
-          blueprintId,
+          blueprintId: activeBlueprintId,
           nodeId: cp.id,
           triggerMode: (cp.data.triggerMode as "before_agent" | "after_agent") || "before_agent",
           linkedAgentNodeId: (cp.data.linkedAgentNodeId as string) || undefined,
@@ -687,7 +824,7 @@ export default function BlueprintBuilder() {
         });
       }
 
-      toast.success("Blueprint, model configs & checkpoints saved");
+      toast.success("Blueprint saved");
     } catch {
       toast.error("Could not save blueprint.");
     } finally {
@@ -760,7 +897,7 @@ export default function BlueprintBuilder() {
     return totalCost;
   }, [nodes, councilEnabled, councilSize]);
 
-  if (isLoading) {
+  if (isLoading && !isNew) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="flex flex-col items-center gap-3">
@@ -880,8 +1017,10 @@ export default function BlueprintBuilder() {
           </div>
         </div>
 
-        {/* Canvas */}
-        <div className="flex-1">
+        {/* Canvas + Palette */}
+        <div className="flex-1 flex">
+          <NodePalette onAddNode={addNode} />
+          <div className="flex-1">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -906,6 +1045,8 @@ export default function BlueprintBuilder() {
                 if (node.type === "workflow") return "#06b6d4";
                 if (node.type === "goal") return "#f59e0b";
                 if (node.type === "checkpoint") return "#f97316";
+                if (node.type === "trigger") return "#8b5cf6";
+                if (node.type === "verification") return "#eab308";
                 return "#64748b";
               }}
             />
@@ -939,10 +1080,19 @@ export default function BlueprintBuilder() {
                     <div className="w-3 h-3 rounded bg-orange-500" />
                     <span>HITL</span>
                   </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-violet-500" />
+                    <span>Trigger</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-yellow-500" />
+                    <span>Verify</span>
+                  </div>
                 </div>
               </Card>
             </Panel>
           </ReactFlow>
+          </div>
         </div>
 
         {/* Edit Panel (Sheet) */}

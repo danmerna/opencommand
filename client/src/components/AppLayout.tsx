@@ -5,7 +5,7 @@ import { ReactNode, useState, useEffect, useRef, useCallback, createContext, use
 import {
   Cpu, Menu, X, LogOut,
   FileStack, BarChart3, Wifi, WifiOff, CheckSquare,
-  Activity, Settings, MessageSquare,
+  Activity, Settings, MessageSquare, PenLine,
 } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { toast } from "sonner";
@@ -22,8 +22,9 @@ export function useActiveCompany() { return useContext(CompanyContext); }
 // ─── Nav items (simplified — 5 primary + Settings) ───────────────────────────
 const coreNavItems = [
   { href: "/dashboard",         label: "Home",              icon: MessageSquare },
-  { href: "/intent-engine",     label: "Σ",                icon: Cpu },
+  { href: "/intent-engine",     label: "\u03a3",                icon: Cpu },
   { href: "/blueprints",        label: "Blueprints",        icon: FileStack },
+  { href: "/blueprints/new/builder", label: "Visual Builder",   icon: PenLine },
   { href: "/execution",         label: "Execution",         icon: CheckSquare },
   { href: "/analytics",         label: "Analytics",         icon: Activity },
   { href: "/model-performance", label: "Model Performance", icon: BarChart3 },
