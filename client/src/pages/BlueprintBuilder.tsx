@@ -255,7 +255,7 @@ function CheckpointNode({ data, selected }: NodeProps<Node<Record<string, unknow
             {(data.label as string) || "HITL Checkpoint"}
           </p>
           <p className="text-[9px] text-orange-400/70">
-            {triggerMode === "before_agent" ? "Approve before" : "Review after"}
+            {triggerMode === "before_agent" ? "Ask Permission" : "Notify Complete"}
           </p>
         </div>
       </div>
@@ -1326,13 +1326,13 @@ export default function BlueprintBuilder() {
                           <SelectItem value="before_agent" className="text-xs">
                             <div className="flex items-center gap-2">
                               <Flag className="w-3 h-3 text-orange-400" />
-                              Approve before agent works
+                              Ask Permission
                             </div>
                           </SelectItem>
                           <SelectItem value="after_agent" className="text-xs">
                             <div className="flex items-center gap-2">
                               <CheckCircle2 className="w-3 h-3 text-orange-400" />
-                              Review after agent completes
+                              Notify Complete
                             </div>
                           </SelectItem>
                         </SelectContent>

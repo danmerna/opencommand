@@ -756,3 +756,6 @@
 - [x] Design checkpoint interface options (push notification swipe, voice call, file upload watch, email approval)
 - [x] Default HITL rule example: swipe-approve before any message sent from user's account
 - [x] Create blueprint framework infographic explaining all adjustable components
+- [x] Rename HITL checkpoint modes: "Pre-execution Gate" → "Ask Permission", "Post-completion Review" → "Notify Complete"
+- [x] Regenerate blueprint framework infographic: swap Layer 2/3 (Workflow before Agent) and Layer 4/5 (Verification before HITL)
+- [x] Redesign infographic with McKinsey/Blue Ace management consulting theme (navy/white/gold, serif typography, clean geometric)
