@@ -257,30 +257,8 @@ export default function Dashboard() {
     _realId: n.id,
   }));
 
-  // Demo cards shown only when no real HITL notifications exist
-  const demoCards: HITLCard[] = realCards.length > 0 ? [] : blueprints.length > 0
-    ? blueprints.slice(0, 2).map((bp: any, i: number) => ({
-        id: `bp-${bp.id}-${i}`,
-        type: "approval" as const,
-        agent: bp.title?.split(" ")[0] ?? "Agent",
-        title: i === 0 ? "Position sizing decision required" : "Content batch ready for review",
-        body: i === 0
-          ? "Market Scanner identified 3 high-confidence trades on Polymarket. Combined exposure: $340. Requires approval before execution."
-          : "Content Writer completed 3 posts for today's schedule. Review before publishing to Twitter, LinkedIn, and newsletter.",
-        urgency: (i === 0 ? "high" : "medium") as "low" | "medium" | "high",
-        blueprintTicker: bp.ticker,
-        createdAt: new Date(Date.now() - i * 1800000).toISOString(),
-      }))
-    : [
-        { id: "demo-1", type: "approval" as const, agent: "Market Scanner", title: "Position sizing decision required",
-          body: "3 high-confidence Polymarket trades identified. Combined exposure $340. Confidence: 78%. Approve to execute.",
-          urgency: "high" as const, blueprintTicker: "POLYMARKET-ALPHA", createdAt: new Date(Date.now() - 900000).toISOString() },
-        { id: "demo-2", type: "review" as const, agent: "Content Writer", title: "Content batch ready for review",
-          body: "3 posts drafted for today's schedule. Twitter thread on AI agents, LinkedIn article on automation ROI, newsletter intro.",
-          urgency: "medium" as const, blueprintTicker: "CONTENT-ENGINE", createdAt: new Date(Date.now() - 3600000).toISOString() },
-      ];
-
-  const allCards = [...realCards, ...demoCards];
+  // No demo cards — only show real HITL notifications from actual blueprint runs
+  const allCards = [...realCards];
   const visibleCards = allCards.filter(c => !dismissed.has(c.id) && !approved.has(c.id));
 
   const handleApprove = useCallback((id: string) => {
@@ -331,7 +309,7 @@ export default function Dashboard() {
 
         {/* ── Stats row ── */}
         <div className="grid grid-cols-3 gap-2">
-          <StatPill label="Blueprints" value={blueprints.length || 2} />
+          <StatPill label="Blueprints" value={blueprints.length} />
           <StatPill label="Awaiting" value={visibleCards.length} accent={visibleCards.length > 0} />
           <StatPill label="Approved today" value={approved.size} />
         </div>
