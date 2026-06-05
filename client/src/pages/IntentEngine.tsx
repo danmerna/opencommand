@@ -1,9 +1,10 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import {
-  Send, Loader2, Sparkles, ArrowRight, Bot, User, Zap,
-  Plus, Save, Trash2, Play, Menu, RotateCcw, History, FileText,
+  Send, Loader2, ArrowRight, Bot, User, Zap,
+  Menu, RotateCcw, History, FileText, Mic, MicOff, ChevronDown,
+  Layers, Monitor, Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,9 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { trpc } from "@/lib/trpc";
+import { MODEL_REGISTRY } from "@shared/modelRegistry";
 import { useLocation } from "wouter";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import {
@@ -117,6 +119,10 @@ const nodeTypes = {
 /*  MAIN COMPONENT                                                        */
 /* ═══════════════════════════════════════════════════════════════════════ */
 
+// Available models for the dropdown — pulled from shared registry
+const SIGMA_AUTO = { id: "auto", name: "Σ Auto", provider: "anthropic" as const, tier: "premium" as const, strengths: "Best model selected automatically for each task" };
+const MODELS = [SIGMA_AUTO, ...MODEL_REGISTRY];
+
 export default function IntentEngine() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
@@ -124,6 +130,9 @@ export default function IntentEngine() {
 
   // View state
   const [mode, setMode] = useState<ViewMode>("interview");
+
+  // Model selection
+  const [selectedModel, setSelectedModel] = useState<typeof MODELS[number]>(MODELS[0]);
 
   // Interview state
   const [sessionId, setSessionId] = useState<number | null>(null);
@@ -142,10 +151,17 @@ export default function IntentEngine() {
   const [blueprintId, setBlueprintId] = useState<number | null>(null);
   const [blueprintName, setBlueprintName] = useState("");
 
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
   // tRPC
   const startSession = trpc.blueprintEngine.startSession.useMutation();
   const sendMessage = trpc.blueprintEngine.sendMessage.useMutation();
   const generateBlueprint = trpc.blueprintEngine.generateBlueprint.useMutation();
+  const transcribeAudio = trpc.blueprintEngine.transcribeVoice.useMutation();
 
   // Auto-scroll
   useEffect(() => {
@@ -285,6 +301,57 @@ export default function IntentEngine() {
     }
   };
 
+  // ── Voice recording ──────────────────────────────────────────────────
+  const handleVoiceToggle = async () => {
+    if (isRecording) {
+      // Stop recording
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        if (blob.size < 1000) return; // too short
+
+        setIsTranscribing(true);
+        try {
+          // Upload audio to S3 then transcribe
+          const formData = new FormData();
+          formData.append("file", blob, "voice.webm");
+          const uploadRes = await fetch("/api/upload-audio", { method: "POST", body: formData });
+          if (!uploadRes.ok) throw new Error("Upload failed");
+          const { url } = await uploadRes.json() as { url: string };
+          const result = await transcribeAudio.mutateAsync({ audioUrl: url });
+          if (result.text) {
+            setInput(prev => prev ? prev + " " + result.text : result.text);
+            toast.success("Voice transcribed");
+          }
+        } catch {
+          toast.error("Transcription failed — please try again");
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+    } catch {
+      toast.error("Microphone access denied");
+    }
+  };
+
   const handleOpenInFullBuilder = () => {
     if (blueprintId) navigate(`/blueprints/${blueprintId}/builder`);
   };
@@ -293,17 +360,17 @@ export default function IntentEngine() {
   if (mode === "interview") {
     return (
       <div className="flex flex-col h-[calc(100vh-7rem)]">
-        {/* Header */}
-        <div className="border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            {/* Menu button */}
+        {/* Header — matches mockup: menu | Σ Intent Engine + model dropdown | actions */}
+        <div className="border-b border-border px-4 py-3 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            {/* Hamburger menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                  <Menu size={16} />
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0">
+                  <Menu size={18} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuContent align="start" className="w-52">
                 <DropdownMenuItem onClick={() => { setSessionId(null); setMessages([]); setCompletionPercent(0); setIsReadyToGenerate(false); startSession.mutateAsync({}).then((res) => { setSessionId(res.sessionId); setMessages(res.messages as ChatMessage[]); }); }}>
                   <RotateCcw size={13} className="mr-2" /> New Session
                 </DropdownMenuItem>
@@ -316,28 +383,66 @@ export default function IntentEngine() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <div>
-              <h1 className="text-lg font-semibold text-foreground tracking-tight">Σ</h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">Describe what you want to build. I'll generate an editable blueprint.</p>
-            </div>
+
+            {/* Model selector dropdown — "Σ Intent Engine ▾" */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1.5 text-foreground hover:text-foreground/80 transition-colors">
+                  <span className="text-accent font-bold text-base">Σ</span>
+                  <span className="font-semibold text-sm tracking-tight">
+                    {selectedModel.id === "auto" ? "Intent Engine" : (selectedModel as any).name}
+                  </span>
+                  <ChevronDown size={14} className="text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Model</DropdownMenuLabel>
+                {MODELS.map((m) => (
+                  <DropdownMenuItem
+                    key={m.id}
+                    onClick={() => setSelectedModel(m)}
+                    className={`flex items-start gap-2 py-2 ${selectedModel.id === m.id ? "bg-accent/10" : ""}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-foreground">
+                          {m.id === "auto" ? "Σ Auto" : (m as any).name}
+                        </span>
+                        {m.id !== "auto" && (
+                          <span className={`text-[9px] px-1 py-0.5 rounded font-medium ${
+                            (m as any).tier === "premium" ? "bg-yellow-500/20 text-yellow-400" :
+                            (m as any).tier === "standard" ? "bg-blue-500/20 text-blue-400" :
+                            "bg-muted text-muted-foreground"
+                          }`}>{(m as any).tier}</span>
+                        )}
+                        {selectedModel.id === m.id && <span className="ml-auto text-accent text-[10px]">✓</span>}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{m.strengths}</p>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <div className="flex items-center gap-3">
+
+          {/* Right side actions */}
+          <div className="flex items-center gap-2">
             {completionPercent > 0 && (
               <div className="flex items-center gap-2">
-                <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className="w-16 h-1 bg-muted rounded-full overflow-hidden">
                   <div className="h-full bg-accent rounded-full transition-all duration-500" style={{ width: `${completionPercent}%` }} />
                 </div>
                 <span className="text-[10px] text-muted-foreground font-mono">{completionPercent}%</span>
               </div>
             )}
             {isReadyToGenerate && !isGenerating && (
-              <Button onClick={handleGenerate} size="sm" className="gap-1.5 bg-accent hover:bg-accent/80 text-white">
-                <Zap size={12} /> Generate Blueprint
+              <Button onClick={handleGenerate} size="sm" className="gap-1.5 bg-accent hover:bg-accent/80 text-white h-8 text-xs">
+                <Zap size={11} /> Generate
               </Button>
             )}
             {isGenerating && (
-              <Button disabled size="sm" className="gap-1.5">
-                <Loader2 size={12} className="animate-spin" /> Generating...
+              <Button disabled size="sm" className="gap-1.5 h-8 text-xs">
+                <Loader2 size={11} className="animate-spin" /> Generating...
               </Button>
             )}
           </div>
@@ -403,26 +508,72 @@ export default function IntentEngine() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className="border-t border-border px-6 py-4 shrink-0">
-          <div className="flex gap-2 items-end max-w-3xl">
+        {/* Input — mockup-style bottom bar */}
+        <div className="border-t border-border px-4 py-3 shrink-0">
+          <div className="bg-muted/30 border border-border rounded-2xl px-4 pt-3 pb-2">
+            {/* Text input */}
             <Textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={messages.length <= 1 ? "Describe what you want to build..." : "Answer Σ's question..."}
-              className="min-h-[44px] max-h-[120px] resize-none bg-muted/30 border-border focus:border-accent/50"
+              placeholder={messages.length <= 1 ? "Message Σ..." : "Answer Σ's question..."}
+              className="min-h-[36px] max-h-[120px] resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 text-sm placeholder:text-muted-foreground/60"
               rows={1}
             />
-            <Button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
-              size="icon"
-              className="bg-accent hover:bg-accent/80 text-white h-[44px] w-[44px] shrink-0"
-            >
-              <Send size={16} />
-            </Button>
+            {/* Bottom action row */}
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-2">
+                {/* + button */}
+                <button className="h-7 w-7 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
+                  <span className="text-base leading-none">+</span>
+                </button>
+                {/* Blueprint chip */}
+                <button
+                  onClick={() => navigate("/blueprints/new/builder")}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+                >
+                  <Layers size={11} />
+                  Blueprint
+                </button>
+                {/* Visual builder chip */}
+                <button
+                  onClick={() => navigate("/blueprints/new/builder")}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors hidden sm:flex"
+                >
+                  <Monitor size={11} />
+                  Builder
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Voice button */}
+                <button
+                  onClick={handleVoiceToggle}
+                  disabled={isTranscribing}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
+                    isRecording
+                      ? "bg-red-500/20 text-red-400 animate-pulse"
+                      : isTranscribing
+                      ? "text-muted-foreground cursor-wait"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {isTranscribing ? <Loader2 size={16} className="animate-spin" /> : isRecording ? <MicOff size={16} /> : <Mic size={16} />}
+                </button>
+                {/* Send button */}
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || isLoading}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
+                    input.trim() && !isLoading
+                      ? "bg-accent text-white hover:bg-accent/80"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                  }`}
+                >
+                  {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

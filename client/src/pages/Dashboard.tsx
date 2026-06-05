@@ -224,7 +224,7 @@ export default function Dashboard() {
   }, [user]);
 
   // ── Data queries ──
-  const blueprintsQ = trpc.blueprints.myBlueprints.useQuery(undefined, { enabled: isAuthenticated });
+  const blueprintsQ = trpc.blueprintEngine.listMyBlueprints.useQuery(undefined, { enabled: isAuthenticated });
   const blueprints = blueprintsQ.data ?? [];
 
   const briefingsQ = trpc.briefings.list.useQuery({}, { enabled: isAuthenticated });

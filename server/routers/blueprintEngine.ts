@@ -626,6 +626,22 @@ export const blueprintEngineRouter = router({
     }),
 
   /**
+   * Transcribe voice audio to text using Whisper
+   */
+  transcribeVoice: protectedProcedure
+    .input(z.object({ audioUrl: z.string(), language: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const { transcribeAudio } = await import("../_core/voiceTranscription");
+      const result = await transcribeAudio({
+        audioUrl: input.audioUrl,
+        language: input.language ?? "en",
+        prompt: "Transcribe user intent for an AI agent blueprint builder",
+      });
+      const text = "text" in result ? result.text : "";
+      return { text };
+    }),
+
+  /**
    * Delete a blueprint
    */
   deleteBlueprint: protectedProcedure

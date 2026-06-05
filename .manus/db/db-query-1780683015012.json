@@ -1,0 +1,25 @@
+{
+  "query": "SELECT id, ticker, title FROM blueprint_templates WHERE userId = 1 ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute SELECT id, ticker, title FROM blueprint_templates WHERE userId = 1 ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "ticker": "POLYMARKET-ALPHA",
+      "title": "Prediction Market Trading Engine"
+    },
+    {
+      "id": "2",
+      "ticker": "CONTENT-ENGINE",
+      "title": "Multi-Platform Content Engine"
+    },
+    {
+      "id": "30001",
+      "ticker": "MARKET-INTEL",
+      "title": "Market Intelligence Engine"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tticker\ttitle\n1\tPOLYMARKET-ALPHA\tPrediction Market Trading Engine\n2\tCONTENT-ENGINE\tMulti-Platform Content Engine\n30001\tMARKET-INTEL\tMarket Intelligence Engine\n",
+  "stderr": "",
+  "execution_time_ms": 272
+}

@@ -1,0 +1,106 @@
+{
+  "query": "DESCRIBE blueprint_runs;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute DESCRIBE blueprint_runs;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "blueprintId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "userId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('queued','running','paused','completed','failed','cancelled')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "queued",
+      "Extra": ""
+    },
+    {
+      "Field": "triggeredBy",
+      "Type": "enum('manual','scheduled','api')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "manual",
+      "Extra": ""
+    },
+    {
+      "Field": "startedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "completedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "currentNodeId",
+      "Type": "varchar(64)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "summary",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "error",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nblueprintId\tint\tNO\t\tNULL\t\nuserId\tint\tNO\t\tNULL\t\nstatus\tenum('queued','running','paused','completed','failed','cancelled')\tNO\t\tqueued\t\ntriggeredBy\tenum('manual','scheduled','api')\tNO\t\tmanual\t\nstartedAt\ttimestamp\tYES\t\tNULL\t\ncompletedAt\ttimestamp\tYES\t\tNULL\t\ncurrentNodeId\tvarchar(64)\tYES\t\tNULL\t\nsummary\ttext\tYES\t\tNULL\t\nerror\ttext\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\n",
+  "stderr": "",
+  "execution_time_ms": 259
+}

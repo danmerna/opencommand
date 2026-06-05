@@ -1,9 +1,11 @@
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
-  Package, Plus, Rocket, Star, Download, Cpu, Building2, Shield
+  Package, Plus, Rocket, Star, Download, Cpu, Building2, Shield,
+  Play, Clock, CheckCircle2, AlertCircle, Pause, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,11 +15,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
-type Tab = "browse" | "my-blueprints" | "create";
+type Tab = "my-blueprints" | "browse" | "create";
 
 export default function Blueprints() {
   const { user, isAuthenticated } = useAuth();
-  const [tab, setTab] = useState<Tab>("browse");
+  const [, navigate] = useLocation();
+  const [tab, setTab] = useState<Tab>("my-blueprints");
   const [showDeploy, setShowDeploy] = useState(false);
   const [selectedBp, setSelectedBp] = useState<any>(null);
   const [deployName, setDeployName] = useState("");
@@ -29,13 +32,22 @@ export default function Blueprints() {
 
   const { track } = useAnalytics();
   const utils = trpc.useUtils();
+
+  // My templates (blueprint_templates table)
+  const myTemplatesQ = trpc.blueprintEngine.listMyBlueprints.useQuery(undefined, { enabled: isAuthenticated });
+  const myTemplates = myTemplatesQ.data ?? [];
+
+  // Runs for status tracking
+  const runsQ = trpc.execution.getAllRuns.useQuery(undefined, { enabled: isAuthenticated });
+  const runs = runsQ.data ?? [];
+
+  // Marketplace blueprints
   const blueprintsQ = trpc.blueprints.list.useQuery();
-  const myBpQ = trpc.blueprints.myBlueprints.useQuery(undefined, { enabled: isAuthenticated });
+  const blueprints = blueprintsQ.data ?? [];
 
   const createBpMut = trpc.blueprints.create.useMutation({
     onSuccess: () => {
       utils.blueprints.list.invalidate();
-      utils.blueprints.myBlueprints.invalidate();
       setShowCreate(false);
       setNewBp({ name: "", description: "", industry: "", agentCount: "", estimatedMonthlyCost: "", estimatedMonthlyRevenue: "", pricingModel: "one_time", price: "" });
       toast.success("Blueprint published");
@@ -50,54 +62,183 @@ export default function Blueprints() {
     }
   });
 
-  const blueprints = blueprintsQ.data ?? [];
-  const myBlueprints = myBpQ.data ?? [];
   const industries = Array.from(new Set(blueprints.map(b => b.category).filter(Boolean)));
 
+  // Helper: get last run for a blueprint template
+  function getLastRun(blueprintId: number) {
+    return runs.find((r: any) => r.blueprintId === blueprintId);
+  }
+
+  function getStatusBadge(blueprintId: number) {
+    const lastRun = getLastRun(blueprintId);
+    if (!lastRun) return { label: "Draft", color: "text-muted-foreground bg-muted-foreground/10 border-muted-foreground/20", icon: Pencil };
+    switch (lastRun.status) {
+      case "running": return { label: "Active", color: "text-accent bg-accent/10 border-accent/30", icon: Play };
+      case "paused": return { label: "Paused", color: "text-amber-400 bg-amber-400/10 border-amber-400/30", icon: Pause };
+      case "completed": return { label: "Completed", color: "text-green-400 bg-green-400/10 border-green-400/30", icon: CheckCircle2 };
+      case "failed": return { label: "Failed", color: "text-red-400 bg-red-400/10 border-red-400/30", icon: AlertCircle };
+      default: return { label: "Queued", color: "text-blue-400 bg-blue-400/10 border-blue-400/30", icon: Clock };
+    }
+  }
+
+  function formatRelativeTime(dateStr: string | Date | null) {
+    if (!dateStr) return null;
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  }
+
   const tabs: { id: Tab; label: string; icon: typeof Package }[] = [
-    { id: "browse", label: "Browse", icon: Package },
     { id: "my-blueprints", label: "My Blueprints", icon: Building2 },
-    { id: "create", label: "Create", icon: Plus },
+    { id: "browse", label: "Marketplace", icon: Package },
+    { id: "create", label: "Publish", icon: Plus },
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-4 md:p-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <p className="text-xs text-muted-foreground tracking-widest uppercase mb-2">OpenCommand</p>
+      <div className="mb-6 md:mb-8">
         <div className="flex items-end justify-between">
           <div>
-            <h1 className="text-4xl font-light text-foreground tracking-tight">Company Blueprints</h1>
-            <p className="text-muted-foreground text-sm mt-2 max-w-xl">Deploy pre-configured automated operations in one click. Each blueprint includes the full agent org chart, budget allocations, OKRs, and execution playbooks.</p>
+            <h1 className="text-2xl md:text-3xl font-light text-foreground tracking-tight">Blueprints</h1>
+            <p className="text-muted-foreground text-sm mt-1">Build, deploy, and manage your agent blueprints.</p>
           </div>
-          <Button onClick={() => setShowCreate(true)} size="sm" className="gap-1.5">
-            <Plus size={12} /> Publish Blueprint
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate("/blueprints/new/builder")} size="sm" variant="outline" className="gap-1.5">
+              <Pencil size={12} /> New Canvas
+            </Button>
+            <Button onClick={() => navigate("/intent-engine")} size="sm" className="gap-1.5">
+              <Plus size={12} /> New with Σ
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border mb-6">
+      <div className="flex border-b border-border mb-6 overflow-x-auto">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${tab === t.id ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${tab === t.id ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <t.icon size={13} /> {t.label}
           </button>
         ))}
       </div>
 
-      {/* BROWSE */}
+      {/* MY BLUEPRINTS */}
+      {tab === "my-blueprints" && (
+        <div>
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {[
+              { label: "Total", value: myTemplates.length, color: "text-foreground" },
+              { label: "Active", value: myTemplates.filter(t => getLastRun(t.id)?.status === "running").length, color: "text-accent" },
+              { label: "Runs", value: runs.length, color: "text-blue-400" },
+            ].map((s, i) => (
+              <div key={i} className="card-minimal p-3 md:p-4">
+                <div className="text-[10px] text-muted-foreground tracking-widest uppercase mb-1">{s.label}</div>
+                <div className={`text-xl md:text-2xl font-light ${s.color}`}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {myTemplates.length === 0 ? (
+            <div className="card-minimal p-8 text-center">
+              <Package size={28} className="text-muted-foreground mx-auto mb-3 opacity-50" />
+              <div className="text-base font-medium text-muted-foreground">No blueprints yet</div>
+              <p className="text-muted-foreground text-sm mt-2">Create your first blueprint with Σ or the visual builder.</p>
+              <div className="flex gap-2 justify-center mt-4">
+                <Button onClick={() => navigate("/intent-engine")} size="sm" className="gap-1.5">
+                  <Plus size={12} /> Build with Σ
+                </Button>
+                <Button onClick={() => navigate("/blueprints/new/builder")} size="sm" variant="outline" className="gap-1.5">
+                  <Pencil size={12} /> Blank Canvas
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {myTemplates.map((bp: any) => {
+                const status = getStatusBadge(bp.id);
+                const lastRun = getLastRun(bp.id);
+                const StatusIcon = status.icon;
+                return (
+                  <div
+                    key={bp.id}
+                    className="card-minimal p-4 flex items-center gap-3 md:gap-4 hover:border-foreground/20 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/blueprints/${bp.id}/builder`)}
+                  >
+                    {/* Status icon */}
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${status.color}`}>
+                      <StatusIcon size={14} />
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-sm font-medium text-foreground truncate">{bp.title}</span>
+                        <span className="text-[10px] font-mono text-muted-foreground">{bp.ticker}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${status.color}`}>{status.label}</Badge>
+                        {bp.category && <span className="capitalize">{bp.category}</span>}
+                        {lastRun && (
+                          <span className="flex items-center gap-1">
+                            <Clock size={10} />
+                            {formatRelativeTime(lastRun.startedAt || lastRun.createdAt)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1 hidden md:flex"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/blueprints/${bp.id}/builder`);
+                        }}
+                      >
+                        <Pencil size={10} /> Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/execution?deploy=${bp.id}`);
+                        }}
+                      >
+                        <Play size={10} /> Deploy
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* BROWSE MARKETPLACE */}
       {tab === "browse" && (
         <div>
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-3 gap-3 mb-6">
             {[
               { label: "Total Blueprints", value: blueprints.length, color: "text-foreground" },
               { label: "Industries", value: industries.length, color: "text-blue-400" },
               { label: "Total Deployments", value: blueprints.reduce((sum, b) => sum + (b.totalDeployments ?? 0), 0), color: "text-accent" },
             ].map((s, i) => (
-              <div key={i} className="card-minimal p-4">
+              <div key={i} className="card-minimal p-3 md:p-4">
                 <div className="text-[10px] text-muted-foreground tracking-widest uppercase mb-1">{s.label}</div>
-                <div className={`text-2xl font-light ${s.color}`}>{s.value}</div>
+                <div className={`text-xl md:text-2xl font-light ${s.color}`}>{s.value}</div>
               </div>
             ))}
           </div>
@@ -139,46 +280,10 @@ export default function Blueprints() {
         </div>
       )}
 
-      {/* MY BLUEPRINTS */}
-      {tab === "my-blueprints" && (
-        <div>
-          <p className="text-xs text-muted-foreground mb-4">Your published blueprints</p>
-          {myBlueprints.length === 0 ? (
-            <div className="card-minimal p-8 text-center">
-              <Package size={28} className="text-muted-foreground mx-auto mb-3 opacity-50" />
-              <div className="text-base font-medium text-muted-foreground">No blueprints yet</div>
-              <p className="text-muted-foreground text-sm mt-2">Create and publish your first automated operation blueprint.</p>
-              <Button onClick={() => setShowCreate(true)} size="sm" className="mt-4 gap-1.5">
-                <Plus size={12} /> Create Blueprint
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {myBlueprints.map(bp => (
-                <div key={bp.id} className="card-minimal p-4 flex items-center gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-foreground">{bp.name}</span>
-                      <Badge variant="outline" className="text-[10px]">{bp.pricingModel.replace("_", " ")}</Badge>
-                    </div>
-                    <div className="text-muted-foreground text-xs">{bp.description}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-foreground">{bp.totalDeployments ?? 0} deploys</div>
-                    <div className="text-xs text-muted-foreground">{Number(bp.avgRating ?? 0).toFixed(1)} rating</div>
-                  </div>
-                  <div className="text-sm text-accent">${Number(bp.totalValueGenerated ?? 0).toFixed(0)}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* CREATE TAB */}
+      {/* CREATE/PUBLISH TAB */}
       {tab === "create" && (
         <div className="max-w-2xl">
-          <p className="text-xs text-muted-foreground mb-4">Build a company blueprint</p>
+          <p className="text-xs text-muted-foreground mb-4">Publish a blueprint to the marketplace</p>
           <div className="card-minimal p-6 space-y-5">
             <div><label className="text-xs text-muted-foreground mb-1.5 block">Company Name</label><Input value={newBp.name} onChange={e => setNewBp(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Content Marketing Agency" /></div>
             <div><label className="text-xs text-muted-foreground mb-1.5 block">Description</label><Textarea value={newBp.description} onChange={e => setNewBp(p => ({ ...p, description: e.target.value }))} placeholder="What does this company do? What outcomes does it produce?" className="resize-none" rows={3} /></div>
@@ -243,31 +348,6 @@ export default function Blueprints() {
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Create Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle className="text-xl font-light">Publish Blueprint</DialogTitle></DialogHeader>
-          <div className="space-y-4 mt-2">
-            <div><label className="text-xs text-muted-foreground mb-1.5 block">Name</label><Input value={newBp.name} onChange={e => setNewBp(p => ({ ...p, name: e.target.value }))} placeholder="Content Marketing Agency" /></div>
-            <div><label className="text-xs text-muted-foreground mb-1.5 block">Description</label><Textarea value={newBp.description} onChange={e => setNewBp(p => ({ ...p, description: e.target.value }))} className="resize-none" rows={2} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs text-muted-foreground mb-1.5 block">Industry</label><Input value={newBp.industry} onChange={e => setNewBp(p => ({ ...p, industry: e.target.value }))} /></div>
-              <div><label className="text-xs text-muted-foreground mb-1.5 block">Agents</label><Input type="number" value={newBp.agentCount} onChange={e => setNewBp(p => ({ ...p, agentCount: e.target.value }))} /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs text-muted-foreground mb-1.5 block">Price ($)</label><Input type="number" value={newBp.price} onChange={e => setNewBp(p => ({ ...p, price: e.target.value }))} /></div>
-              <div><label className="text-xs text-muted-foreground mb-1.5 block">Model</label>
-                <Select value={newBp.pricingModel} onValueChange={v => setNewBp(p => ({ ...p, pricingModel: v }))}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="one_time">One-Time</SelectItem><SelectItem value="subscription">Subscription</SelectItem><SelectItem value="revenue_share">Revenue Share</SelectItem><SelectItem value="free">Free</SelectItem></SelectContent>
-                </Select>
-              </div>
-            </div>
-            <Button onClick={() => createBpMut.mutate({ name: newBp.name, description: newBp.description, industry: newBp.industry || undefined, agentCount: Number(newBp.agentCount) || 1, pricingModel: newBp.pricingModel as any, price: Number(newBp.price) || undefined })} disabled={!newBp.name || !newBp.description || createBpMut.isPending} className="w-full gap-2"><Rocket size={12} /> {createBpMut.isPending ? "Publishing..." : "Publish"}</Button>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -121,6 +121,49 @@ async function startServer() {
     }
   });
 
+  // ─── Audio Upload for Voice Transcription ─────────────────────────────────
+  app.post("/api/upload-audio", async (req, res) => {
+    try {
+      // Parse multipart form data manually using raw body
+      const contentType = req.headers["content-type"] || "";
+      if (!contentType.includes("multipart/form-data")) {
+        return res.status(400).json({ error: "Expected multipart/form-data" });
+      }
+
+      // Use busboy to parse the multipart stream
+      const { default: Busboy } = await import("busboy");
+      const busboy = Busboy({ headers: req.headers, limits: { fileSize: 16 * 1024 * 1024 } });
+      const chunks: Buffer[] = [];
+      let mimeType = "audio/webm";
+      let done = false;
+
+      busboy.on("file", (_field, file, info) => {
+        mimeType = info.mimeType || "audio/webm";
+        file.on("data", (chunk: Buffer) => chunks.push(chunk));
+        file.on("end", () => { done = true; });
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        busboy.on("finish", resolve);
+        busboy.on("error", reject);
+        req.pipe(busboy);
+      });
+
+      if (!done || chunks.length === 0) {
+        return res.status(400).json({ error: "No audio file received" });
+      }
+
+      const buffer = Buffer.concat(chunks);
+      const { storagePut } = await import("../storage");
+      const key = `voice-uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
+      const { url } = await storagePut(key, buffer, mimeType);
+      return res.json({ url });
+    } catch (err: any) {
+      console.error("[AudioUpload] Error:", err.message);
+      return res.status(500).json({ error: "Upload failed" });
+    }
+  });
+
   // ─── Email Unsubscribe (one-click, no auth required) ────────────────────────
   app.get("/api/unsubscribe", async (req, res) => {
     const token = req.query.token as string | undefined;

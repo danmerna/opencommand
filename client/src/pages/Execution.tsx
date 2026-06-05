@@ -337,15 +337,15 @@ function BlueprintRunCard({
         </Button>
       </div>
       <Button
-        size="sm"
-        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+        size="default"
+        className="w-full bg-accent hover:bg-accent/80 text-white font-semibold shadow-sm shadow-accent/20 py-2.5"
         disabled={deploy.isPending}
         onClick={() => deploy.mutate({ blueprintId })}
       >
         {deploy.isPending ? (
-          <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Deploying...</>
+          <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deploying...</>
         ) : (
-          <><Play className="w-3.5 h-3.5 mr-1.5" />Deploy</>
+          <><Play className="w-4 h-4 mr-2 fill-current" />Deploy Blueprint</>
         )}
       </Button>
     </div>
@@ -387,14 +387,14 @@ export default function Execution() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-border/50 shrink-0">
+      <div className="px-4 sm:px-6 py-4 border-b border-border/50 shrink-0">
         <h1 className="text-lg font-semibold text-foreground">Execution</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Deploy blueprints and monitor agent runs in real time.</p>
       </div>
 
-      <div className="flex-1 overflow-hidden flex gap-0">
+      <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-0">
         {/* Left panel — blueprints + HITL */}
-        <div className="w-80 shrink-0 border-r border-border/50 flex flex-col overflow-hidden">
+        <div className="w-full md:w-80 shrink-0 border-b md:border-b-0 md:border-r border-border/50 flex flex-col overflow-hidden max-h-[50vh] md:max-h-none">
           {/* HITL section */}
           {hitlList.length > 0 && (
             <div className="p-4 border-b border-border/50 space-y-3">

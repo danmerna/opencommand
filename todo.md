@@ -822,3 +822,16 @@
 - [x] Wire real invokeLLM calls into Verification nodes (actual pass/fail judgment)
 - [x] Add HITL notification badge (accent pill) on Home nav item when pending HITL count > 0
 - [x] Show toast notification when a new HITL card arrives during an active session (with View action)
+
+## Fix Blueprints + Status + Intent Engine Redesign + Mobile + Landing + Voice
+- [ ] Seed blueprints for existing user (Dan) who already completed onboarding
+- [ ] Blueprints list page: add status badges (Draft / Active / last run time)
+- [x] Intent Engine chat redesign: model dropdown in upper-left header (replace "Σ Intent Engine" text)
+- [x] Intent Engine chat: mockup-inspired UI (Σ avatar, "Message Σ" placeholder, Blueprint/Chat quick actions in input bar)
+- [x] Voice input: integrate Whisper-based transcription with mic button in chat input
+- [x] Mobile polish: full-width swipe cards with larger touch targets
+- [x] Mobile polish: execution page responsive layout
+- [x] Mobile polish: prominent Deploy button in builder on mobile
+- [x] Landing page: add demo GIF/animation showing Deploy → HITL loop
+- [x] Landing page: stronger value prop above the fold
+- [x] Landing page: clearer beta messaging and social proof

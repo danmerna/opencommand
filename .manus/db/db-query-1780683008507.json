@@ -1,0 +1,234 @@
+{
+  "query": "DESCRIBE blueprint_templates;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2T5wTGB1fGM2E7r.194f5c7fec04 --database WP82CNZ6C5SdwCUYfYptJQ --execute DESCRIBE blueprint_templates;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "userId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "companyId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "ticker",
+      "Type": "varchar(32)",
+      "Null": "NO",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "title",
+      "Type": "varchar(256)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "description",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "category",
+      "Type": "enum('growth','brand','retention','launch','performance','operations','engineering','sales','support','custom')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "custom",
+      "Extra": ""
+    },
+    {
+      "Field": "version",
+      "Type": "varchar(32)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "1.0.0",
+      "Extra": ""
+    },
+    {
+      "Field": "objective",
+      "Type": "text",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "desiredFinalState",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "constraints",
+      "Type": "json",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "nonGoals",
+      "Type": "json",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "successMetrics",
+      "Type": "json",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "estimatedRuntime",
+      "Type": "varchar(64)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "nodes",
+      "Type": "json",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "edges",
+      "Type": "json",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "visibility",
+      "Type": "enum('private','shared','marketplace')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "private",
+      "Extra": ""
+    },
+    {
+      "Field": "price",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "stripeProductId",
+      "Type": "varchar(128)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "stripePriceId",
+      "Type": "varchar(128)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "isApproved",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "publishedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "usageCount",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "rating",
+      "Type": "decimal(3,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "ratingCount",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('draft','active','archived')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "draft",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nuserId\tint\tNO\t\tNULL\t\ncompanyId\tint\tYES\t\tNULL\t\nticker\tvarchar(32)\tNO\tUNI\tNULL\t\ntitle\tvarchar(256)\tNO\t\tNULL\t\ndescription\ttext\tYES\t\tNULL\t\ncategory\tenum('growth','brand','retention','launch','performance','operations','engineering','sales','support','custom')\tNO\t\tcustom\t\nversion\tvarchar(32)\tNO\t\t1.0.0\t\nobjective\ttext\tNO\t\tNULL\t\ndesiredFinalState\ttext\tYES\t\tNULL\t\nconstraints\tjson\tYES\t\tNULL\t\nnonGoals\tjson\tYES\t\tNULL\t\nsuccessMetrics\tjson\tYES\t\tNULL\t\nestimatedRuntime\tvarchar(64)\tYES\t\tNULL\t\nnodes\tjson\tYES\t\tNULL\t\nedges\tjson\tYES\t\tNULL\t\nvisibility\tenum('private','shared','marketplace')\tNO\t\tprivate\t\nprice\tint\tNO\t\t0\t\nstripeProductId\tvarchar(128)\tYES\t\tNULL\t\nstripePriceId\tvarchar(128)\tYES\t\tNULL\t\nisApproved\ttinyint(1)\tNO\t\t0\t\npublishedAt\ttimestamp\tYES\t\tNULL\t\nusageCount\tint\tNO\t\t0\t\nrating\tdecimal(3,2)\tYES\t\t0\t\nratingCount\tint\tNO\t\t0\t\nstatus\tenum('draft','active','archived')\tNO\t\tdraft\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\n",
+  "stderr": "",
+  "execution_time_ms": 389
+}
