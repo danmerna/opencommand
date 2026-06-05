@@ -5,10 +5,11 @@ import { ReactNode, useState, useEffect, useRef, useCallback, createContext, use
 import {
   Cpu, Menu, X, LogOut,
   FileStack, BarChart3, Wifi, WifiOff, CheckSquare,
-  Activity, Settings, MessageSquare, PenLine,
+  Activity, Settings, MessageSquare, PenLine, Bell,
 } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 import FeedbackWidget from "./FeedbackWidget";
 
 // ─── Company Context (kept for compatibility with pages that use it) ──────────
@@ -64,6 +65,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { connected, notifications } = useSocket();
   const prevNotifCount = useRef(0);
 
+  // Poll pending HITL count for badge
+  const hitlQuery = trpc.execution.getPendingHitl.useQuery(undefined, {
+    refetchInterval: 5000,
+    enabled: isAuthenticated,
+  });
+  const pendingHitlCount = hitlQuery.data?.length ?? 0;
+  const prevHitlCount = useRef(0);
+
   const closeMobile = useCallback(() => setMobileOpen(false), []);
   const swipe = useSwipeToClose(closeMobile, mobileOpen);
 
@@ -75,6 +84,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     }
     prevNotifCount.current = notifications.length;
   }, [notifications]);
+
+  // Toast when new HITL notifications arrive
+  useEffect(() => {
+    if (pendingHitlCount > prevHitlCount.current && prevHitlCount.current >= 0 && pendingHitlCount > 0) {
+      toast("Agent needs approval", {
+        description: `${pendingHitlCount} pending checkpoint${pendingHitlCount > 1 ? "s" : ""} awaiting your review.`,
+        duration: 5000,
+        action: {
+          label: "View",
+          onClick: () => navigate("/dashboard"),
+        },
+      });
+    }
+    prevHitlCount.current = pendingHitlCount;
+  }, [pendingHitlCount, navigate]);
 
   if (!isAuthenticated) {
     return (
@@ -149,6 +173,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             {/* Core nav — 5 primary items */}
             {coreNavItems.map(item => {
               const isActive = location === item.href || location.startsWith(item.href + "/");
+              const showBadge = item.href === "/dashboard" && pendingHitlCount > 0;
               return (
                 <Link key={item.href} href={item.href} onClick={closeMobile}>
                   <div
@@ -158,6 +183,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   }`}>
                     <item.icon size={13} strokeWidth={isActive ? 2 : 1.5} />
                     <span className="font-medium">{item.label}</span>
+                    {showBadge && (
+                      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-accent text-[10px] font-bold text-white">
+                        {pendingHitlCount}
+                      </span>
+                    )}
                   </div>
                 </Link>
               );

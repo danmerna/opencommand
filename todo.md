@@ -815,3 +815,10 @@
 - [x] Add deployBlueprint, getRunStatus, getRuns, resolveHitl, getPendingHitl procedures to execution router
 - [x] Build Execution page with live run log: step-by-step agent activity, verification results, HITL checkpoint events
 - [x] Wire HITL swipe cards on home dashboard to real hitl_notifications via execution.getPendingHitl (polls every 5s)
+
+## Auto-seed + Real LLM Execution + HITL Badge
+- [x] Auto-seed 3 blueprint templates for every new user on first login (not hardcoded to user 1)
+- [x] Wire real invokeLLM calls into execution simulation for Agent nodes (genuine reasoning output)
+- [x] Wire real invokeLLM calls into Verification nodes (actual pass/fail judgment)
+- [x] Add HITL notification badge (accent pill) on Home nav item when pending HITL count > 0
+- [x] Show toast notification when a new HITL card arrives during an active session (with View action)

@@ -3630,6 +3630,9 @@ export const appRouter = router({
     completeOnboarding: protectedProcedure.mutation(async ({ ctx }) => {
       const { completeUserOnboarding } = await import('./db');
       await completeUserOnboarding(ctx.user.id);
+      // Auto-seed starter blueprint templates for the new user
+      const { seedBlueprintsForNewUser } = await import('./routers/seedBlueprints');
+      await seedBlueprintsForNewUser(ctx.user.id);
       await notifyOwner({ title: 'New user completed onboarding', content: `${ctx.user.name || ctx.user.email || 'A user'} just completed quick onboarding.` });
       return { success: true };
     }),

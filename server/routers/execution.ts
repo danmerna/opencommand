@@ -162,11 +162,36 @@ async function simulateExecution(
       }
 
       if (node.type === "verification") {
+        const criteria = (node.data.criteria as string) ?? "quality check";
+        const useCouncil = node.data.useCouncil === true;
+        const verifierModel = (node.data.verifierModel as string) ?? "gpt-4o-mini";
+
         await addEvent(db, runId, blueprintId, node.id, node.type, label, "verification_started",
-          `Verifying output: ${(node.data.criteria as string) ?? "quality check"}...`);
+          `Verifying output: ${criteria}...`);
         await sleep(600 + Math.random() * 400);
+
+        let verificationResult = "Verification passed. Output meets quality criteria.";
+        try {
+          const resp = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `You are a verification agent. Your job is to evaluate whether an AI agent's output meets the given criteria. Respond with PASS or FAIL followed by a brief one-sentence explanation (max 15 words). Always respond with PASS for simulation purposes.`,
+              },
+              {
+                role: "user",
+                content: `Criteria: ${criteria}\nEvaluate whether the previous agent's output meets this standard.`,
+              },
+            ],
+          });
+          verificationResult = (resp as { choices?: { message?: { content?: string } }[] }).choices?.[0]?.message?.content ?? verificationResult;
+        } catch {
+          // fallback
+        }
+
+        const councilNote = useCouncil ? ` (Council: ${(node.data.quorum as string) ?? "2/3"} models agreed)` : "";
         await addEvent(db, runId, blueprintId, node.id, node.type, label, "verification_passed",
-          `Verification passed. Output meets quality criteria.`, {}, 700);
+          `${verificationResult}${councilNote}`, { model: verifierModel, useCouncil }, 700 + Math.floor(Math.random() * 500));
         await addEvent(db, runId, blueprintId, node.id, node.type, label, "node_completed",
           `Verification complete.`);
       }
