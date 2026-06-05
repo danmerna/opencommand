@@ -1398,3 +1398,81 @@ export const agentModelConfigs = mysqlTable("agent_model_configs", {
 });
 export type AgentModelConfig = typeof agentModelConfigs.$inferSelect;
 export type InsertAgentModelConfig = typeof agentModelConfigs.$inferInsert;
+
+// ─── Model Popularity Tracking ───────────────────────────────────────────────
+export const modelPopularity = mysqlTable("model_popularity", {
+  id: int("id").autoincrement().primaryKey(),
+  modelId: varchar("modelId", { length: 64 }).notNull(),
+  workflowRole: mysqlEnum("workflowRole_mp", ["coordinator", "implementer", "verifier", "fixer", "web_research", "vision", "computer_use", "bulk_worker"]).notNull(),
+  selectionCount: int("selectionCount").default(1).notNull(),
+  lastSelectedAt: timestamp("lastSelectedAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ModelPopularity = typeof modelPopularity.$inferSelect;
+export type InsertModelPopularity = typeof modelPopularity.$inferInsert;
+
+// ─── Human-in-the-Loop Checkpoints ──────────────────────────────────────────
+export const blueprintCheckpoints = mysqlTable("blueprint_checkpoints", {
+  id: int("id").autoincrement().primaryKey(),
+  blueprintId: int("blueprintId").notNull(),
+  nodeId: varchar("nodeId", { length: 64 }).notNull(),
+  triggerMode: mysqlEnum("triggerMode", ["before_agent", "after_agent"]).default("before_agent").notNull(),
+  linkedAgentNodeId: varchar("linkedAgentNodeId", { length: 64 }),
+  interfaceType: mysqlEnum("interfaceType", [
+    "notification_swipe",
+    "voice_call",
+    "file_watch",
+    "email_approval",
+    "dashboard_review",
+    "webhook_signal"
+  ]).default("notification_swipe").notNull(),
+  config: json("config").$type<{
+    notificationTitle?: string;
+    notificationBody?: string;
+    phoneNumber?: string;
+    voiceScript?: string;
+    watchPath?: string;
+    expectedFileType?: string;
+    recipientEmail?: string;
+    emailSubject?: string;
+    reviewInstructions?: string;
+    webhookUrl?: string;
+    expectedPayload?: Record<string, unknown>;
+    timeoutMinutes?: number;
+    autoApproveAfterTimeout?: boolean;
+    escalationContact?: string;
+  }>(),
+  defaultRule: text("defaultRule"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BlueprintCheckpoint = typeof blueprintCheckpoints.$inferSelect;
+export type InsertBlueprintCheckpoint = typeof blueprintCheckpoints.$inferInsert;
+
+// ─── LLM Council Configuration ──────────────────────────────────────────────
+export const llmCouncilConfigs = mysqlTable("llm_council_configs", {
+  id: int("id").autoincrement().primaryKey(),
+  blueprintId: int("blueprintId").notNull(),
+  goalNodeId: varchar("goalNodeId", { length: 64 }),
+  agentNodeId: varchar("agentNodeId", { length: 64 }),
+  councilSize: int("councilSize").default(3).notNull(),
+  quorumRequired: int("quorumRequired").default(2).notNull(),
+  councilModels: json("councilModels").$type<{
+    modelId: string;
+    role: "primary_verifier" | "secondary_verifier" | "tiebreaker";
+    weight: number;
+  }[]>().notNull(),
+  evaluationPrompt: text("evaluationPrompt"),
+  scoringRubric: json("scoringRubric").$type<{
+    criteria: string;
+    weight: number;
+    passingThreshold: number;
+  }[]>(),
+  tier: mysqlEnum("councilTier", ["free", "pro", "business"]).default("pro").notNull(),
+  isEnabled: boolean("isEnabled").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LlmCouncilConfig = typeof llmCouncilConfigs.$inferSelect;
+export type InsertLlmCouncilConfig = typeof llmCouncilConfigs.$inferInsert;

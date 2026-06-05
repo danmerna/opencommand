@@ -743,3 +743,16 @@
 - [x] Add model selector dropdown to BlueprintBuilder agent side panel
 - [x] Display model cost/performance metrics in the visual builder
 - [x] Build model performance analytics view (cost per agent, latency trends, success rates)
+- [x] Add model popularity tracking: aggregate model selections across all users per role
+- [x] Add "Community Popular" toggle alongside "OpenCommand Recommended" defaults
+- [x] Show percentage breakdown of users using each model per role
+- [x] Add real-time blueprint cost estimator in visual builder (updates on model change)
+- [x] Show per-agent cost + total estimated blueprint run cost in builder header
+- [x] Implement LLM Council verification option (3 independent models vote on completion)
+- [x] Make LLM Council a premium feature with configurable quorum (2/3, 3/3, 3/5)
+- [x] Redesign autonomy dial as Human-in-the-Loop (HITL) checkpoints
+- [x] HITL checkpoints represented as orange flag nodes insertable anywhere in workflow
+- [x] Two HITL modes: "Approve before execution" and "Review after completion"
+- [x] Design checkpoint interface options (push notification swipe, voice call, file upload watch, email approval)
+- [x] Default HITL rule example: swipe-approve before any message sent from user's account
+- [x] Create blueprint framework infographic explaining all adjustable components

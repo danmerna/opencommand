@@ -6,6 +6,9 @@ import { getDb } from "../db";
 import {
   modelExecutionLogs,
   agentModelConfigs,
+  modelPopularity,
+  llmCouncilConfigs,
+  blueprintCheckpoints,
 } from "../../drizzle/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import {
@@ -383,6 +386,236 @@ export const modelRouter = router({
         })),
         recentLogs,
         timeRange: input.timeRange,
+      };
+    }),
+
+  // ─── Model Popularity ──────────────────────────────────────────────────────
+  // Get most popular model per role (community defaults)
+  getPopularDefaults: protectedProcedure.query(async () => {
+    const db = await getDbOrThrow();
+    const rows = await db
+      .select({
+        modelId: modelPopularity.modelId,
+        workflowRole: modelPopularity.workflowRole,
+        selectionCount: modelPopularity.selectionCount,
+      })
+      .from(modelPopularity)
+      .orderBy(desc(modelPopularity.selectionCount));
+    // Group by role, pick top model per role
+    const byRole: Record<string, { modelId: string; count: number; percentage: number }> = {};
+    const roleTotals: Record<string, number> = {};
+    for (const row of rows) {
+      const role = row.workflowRole;
+      if (!roleTotals[role]) roleTotals[role] = 0;
+      roleTotals[role] += row.selectionCount;
+    }
+    for (const row of rows) {
+      const role = row.workflowRole;
+      if (!byRole[role]) {
+        byRole[role] = {
+          modelId: row.modelId,
+          count: row.selectionCount,
+          percentage: roleTotals[role] > 0 ? (row.selectionCount / roleTotals[role]) * 100 : 100,
+        };
+      }
+    }
+    return byRole;
+  }),
+
+  // Get full popularity breakdown for a specific role
+  getPopularityByRole: protectedProcedure
+    .input(z.object({ workflowRole: z.enum(["coordinator", "implementer", "verifier", "fixer", "web_research", "vision", "computer_use", "bulk_worker"]) }))
+    .query(async ({ input }) => {
+      const db = await getDbOrThrow();
+      const rows = await db
+        .select()
+        .from(modelPopularity)
+        .where(eq(modelPopularity.workflowRole, input.workflowRole))
+        .orderBy(desc(modelPopularity.selectionCount));
+      const total = rows.reduce((sum, r) => sum + r.selectionCount, 0);
+      return rows.map((r) => ({
+        modelId: r.modelId,
+        selectionCount: r.selectionCount,
+        percentage: total > 0 ? (r.selectionCount / total) * 100 : 0,
+        modelInfo: getModelById(r.modelId),
+      }));
+    }),
+
+  // Record a model selection (called when user changes model in builder)
+  recordModelSelection: protectedProcedure
+    .input(z.object({
+      modelId: z.string(),
+      workflowRole: z.enum(["coordinator", "implementer", "verifier", "fixer", "web_research", "vision", "computer_use", "bulk_worker"]),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDbOrThrow();
+      // Upsert: increment count if exists, insert if not
+      const existing = await db
+        .select()
+        .from(modelPopularity)
+        .where(and(
+          eq(modelPopularity.modelId, input.modelId),
+          eq(modelPopularity.workflowRole, input.workflowRole),
+        ))
+        .limit(1);
+      if (existing.length > 0) {
+        await db
+          .update(modelPopularity)
+          .set({
+            selectionCount: sql`${modelPopularity.selectionCount} + 1`,
+            lastSelectedAt: new Date(),
+          })
+          .where(eq(modelPopularity.id, existing[0].id));
+      } else {
+        await db.insert(modelPopularity).values({
+          modelId: input.modelId,
+          workflowRole: input.workflowRole,
+          selectionCount: 1,
+          lastSelectedAt: new Date(),
+        });
+      }
+      return { success: true };
+    }),
+
+  // ─── LLM Council ───────────────────────────────────────────────────────────
+  // Save council configuration for a blueprint goal/agent
+  saveCouncilConfig: protectedProcedure
+    .input(z.object({
+      blueprintId: z.number(),
+      goalNodeId: z.string().optional(),
+      agentNodeId: z.string().optional(),
+      councilSize: z.number().min(3).max(5).default(3),
+      quorumRequired: z.number().min(2).max(5).default(2),
+      councilModels: z.array(z.object({
+        modelId: z.string(),
+        role: z.enum(["primary_verifier", "secondary_verifier", "tiebreaker"]),
+        weight: z.number().min(0.1).max(3.0).default(1.0),
+      })),
+      evaluationPrompt: z.string().optional(),
+      scoringRubric: z.array(z.object({
+        criteria: z.string(),
+        weight: z.number(),
+        passingThreshold: z.number(),
+      })).optional(),
+      tier: z.enum(["free", "pro", "business"]).default("pro"),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDbOrThrow();
+      const [inserted] = await db.insert(llmCouncilConfigs).values({
+        blueprintId: input.blueprintId,
+        goalNodeId: input.goalNodeId || null,
+        agentNodeId: input.agentNodeId || null,
+        councilSize: input.councilSize,
+        quorumRequired: input.quorumRequired,
+        councilModels: input.councilModels,
+        evaluationPrompt: input.evaluationPrompt || null,
+        scoringRubric: input.scoringRubric || null,
+        tier: input.tier,
+      }).$returningId();
+      return { id: inserted.id };
+    }),
+
+  // Get council config for a blueprint
+  getCouncilConfigs: protectedProcedure
+    .input(z.object({ blueprintId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDbOrThrow();
+      return db
+        .select()
+        .from(llmCouncilConfigs)
+        .where(eq(llmCouncilConfigs.blueprintId, input.blueprintId));
+    }),
+
+  // ─── HITL Checkpoints ──────────────────────────────────────────────────────
+  // Save a checkpoint configuration
+  saveCheckpoint: protectedProcedure
+    .input(z.object({
+      blueprintId: z.number(),
+      nodeId: z.string(),
+      triggerMode: z.enum(["before_agent", "after_agent"]).default("before_agent"),
+      linkedAgentNodeId: z.string().optional(),
+      interfaceType: z.enum([
+        "notification_swipe", "voice_call", "file_watch",
+        "email_approval", "dashboard_review", "webhook_signal"
+      ]).default("notification_swipe"),
+      config: z.record(z.string(), z.unknown()).optional(),
+      defaultRule: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDbOrThrow();
+      const [inserted] = await db.insert(blueprintCheckpoints).values({
+        blueprintId: input.blueprintId,
+        nodeId: input.nodeId,
+        triggerMode: input.triggerMode,
+        linkedAgentNodeId: input.linkedAgentNodeId || null,
+        interfaceType: input.interfaceType,
+        config: input.config || null,
+        defaultRule: input.defaultRule || null,
+      }).$returningId();
+      return { id: inserted.id };
+    }),
+
+  // Get checkpoints for a blueprint
+  getCheckpoints: protectedProcedure
+    .input(z.object({ blueprintId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDbOrThrow();
+      return db
+        .select()
+        .from(blueprintCheckpoints)
+        .where(eq(blueprintCheckpoints.blueprintId, input.blueprintId));
+    }),
+
+  // Delete a checkpoint
+  deleteCheckpoint: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDbOrThrow();
+      await db.delete(blueprintCheckpoints).where(eq(blueprintCheckpoints.id, input.id));
+      return { deleted: true };
+    }),
+
+  // ─── Blueprint Cost Estimator ──────────────────────────────────────────────
+  // Estimate total blueprint run cost based on current model assignments
+  estimateBlueprintCost: protectedProcedure
+    .input(z.object({
+      agents: z.array(z.object({
+        nodeId: z.string(),
+        name: z.string(),
+        modelId: z.string(),
+        workflowRole: z.enum(["coordinator", "implementer", "verifier", "fixer", "web_research", "vision", "computer_use", "bulk_worker"]).optional(),
+        estimatedInputTokens: z.number().default(2000),
+        estimatedOutputTokens: z.number().default(1000),
+      })),
+      councilEnabled: z.boolean().default(false),
+      councilSize: z.number().default(3),
+    }))
+    .query(({ input }) => {
+      let totalCost = 0;
+      const breakdown = input.agents.map((agent) => {
+        const cost = estimateCost(agent.modelId, agent.estimatedInputTokens, agent.estimatedOutputTokens);
+        totalCost += cost;
+        return {
+          nodeId: agent.nodeId,
+          name: agent.name,
+          modelId: agent.modelId,
+          estimatedCost: cost,
+          modelInfo: getModelById(agent.modelId),
+        };
+      });
+      // Add council verification cost if enabled
+      let councilCost = 0;
+      if (input.councilEnabled) {
+        // Council uses ~500 input + 200 output tokens per verifier per agent
+        const verifierModel = ROLE_DEFAULTS.verifier;
+        councilCost = input.agents.length * input.councilSize * estimateCost(verifierModel, 500, 200);
+        totalCost += councilCost;
+      }
+      return {
+        totalEstimatedCost: totalCost,
+        councilCost,
+        perAgentBreakdown: breakdown,
+        note: "Estimates based on typical token usage. Actual costs may vary.",
       };
     }),
 
