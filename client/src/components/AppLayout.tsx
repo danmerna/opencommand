@@ -1,19 +1,17 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { ReactNode, useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
 import {
-  LayoutDashboard, Cpu, Users, Bot, Menu, X, LogOut,
+  Cpu, Menu, X, LogOut,
   FileStack, BarChart3, Wifi, WifiOff, CheckSquare,
-  FolderOpen, Plus, Building2, ChevronRight, Activity, Settings,
-  MessageSquare,
+  Activity, Settings, MessageSquare,
 } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { toast } from "sonner";
 import FeedbackWidget from "./FeedbackWidget";
 
-// ─── Company Context ──────────────────────────────────────────────────────────
+// ─── Company Context (kept for compatibility with pages that use it) ──────────
 interface CompanyContextValue {
   activeCompanyId: number | null;
   setActiveCompanyId: (id: number | null) => void;
@@ -21,31 +19,16 @@ interface CompanyContextValue {
 const CompanyContext = createContext<CompanyContextValue>({ activeCompanyId: null, setActiveCompanyId: () => {} });
 export function useActiveCompany() { return useContext(CompanyContext); }
 
-// ─── Nav items (streamlined — 6 primary + Settings) ─────────────────────────
+// ─── Nav items (simplified — 5 primary + Settings) ───────────────────────────
 const coreNavItems = [
-  { href: "/mission-control", label: "Mission Control", icon: LayoutDashboard },
-  { href: "/intent-engine",   label: "Intent Engine",   icon: Cpu },
-  { href: "/blueprints",      label: "Blueprints",       icon: FileStack },
-  { href: "/execution",       label: "Execution",        icon: CheckSquare },
-  { href: "/goals",           label: "Goals",            icon: Users },
-  { href: "/analytics",       label: "Analytics",        icon: Activity },
+  { href: "/intent-engine",     label: "Σ",                icon: Cpu },
+  { href: "/blueprints",        label: "Blueprints",        icon: FileStack },
+  { href: "/execution",         label: "Execution",         icon: CheckSquare },
+  { href: "/analytics",         label: "Analytics",         icon: Activity },
   { href: "/model-performance", label: "Model Performance", icon: BarChart3 },
 ];
 
 const settingsNavItem = { href: "/settings", label: "Settings", icon: Settings };
-
-// ─── Colour palette for company avatars ──────────────────────────────────────
-const COMPANY_COLORS = [
-  "bg-indigo-600", "bg-violet-600", "bg-emerald-600", "bg-amber-600",
-  "bg-rose-600",   "bg-cyan-600",   "bg-fuchsia-600", "bg-teal-600",
-];
-
-function companyColor(index: number) { return COMPANY_COLORS[index % COMPANY_COLORS.length]; }
-function companyInitials(name: string) {
-  const words = name.trim().split(/\s+/);
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  return (words[0][0] + words[1][0]).toUpperCase();
-}
 
 // ─── Swipe-to-close hook ─────────────────────────────────────────────────────
 function useSwipeToClose(onClose: () => void, isOpen: boolean) {
@@ -76,37 +59,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeCompanyId, setActiveCompanyId] = useState<number | null>(null);
 
-  const companiesQuery = trpc.companies.list.useQuery(undefined, { enabled: isAuthenticated });
-  const companies = companiesQuery.data ?? [];
-
-  const inboxQuery = trpc.inbox.list.useQuery(undefined, { enabled: isAuthenticated });
-  const unreadCount = inboxQuery.data?.filter(i => i.status === "unread").length ?? 0;
-
-  // Projects for the active company (or all user projects if no company selected)
-  const projectsQuery = trpc.projects.list.useQuery(undefined, { enabled: isAuthenticated });
-  const allProjects = projectsQuery.data ?? [];
-  const visibleProjects = activeCompanyId
-    ? allProjects.filter(p => p.companyId === activeCompanyId)
-    : allProjects;
-
-  // Agents for the active company
-  const agentsQuery = activeCompanyId
-    ? trpc.agents.listByCompany.useQuery({ companyId: activeCompanyId }, { enabled: isAuthenticated && activeCompanyId !== null })
-    : trpc.agents.list.useQuery(undefined, { enabled: isAuthenticated });
-  const visibleAgents = agentsQuery.data ?? [];
-
   const { connected, notifications } = useSocket();
   const prevNotifCount = useRef(0);
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
   const swipe = useSwipeToClose(closeMobile, mobileOpen);
-
-  // Auto-select first company on load
-  useEffect(() => {
-    if (companies.length > 0 && activeCompanyId === null) {
-      setActiveCompanyId(companies[0].id);
-    }
-  }, [companies, activeCompanyId]);
 
   // Toast on new socket notification
   useEffect(() => {
@@ -138,8 +95,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return null;
   }
 
-  const activeCompany = companies.find(c => c.id === activeCompanyId);
-
   // Check if current location matches settings or any settings sub-paths
   const isSettingsActive = location === "/settings" || location.startsWith("/settings?") ||
     location === "/governance" || location === "/integration-hub" ||
@@ -151,7 +106,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <CompanyContext.Provider value={{ activeCompanyId, setActiveCompanyId }}>
       <div className="min-h-screen bg-background flex">
 
-        {/* ── Far-left company-switcher rail ─────────────────────────────── */}
+        {/* ── Far-left logo rail ─────────────────────────────────────────── */}
         <aside
           className={`fixed inset-y-0 left-0 z-50 w-14 bg-[oklch(0.02_0_0)] border-r border-border flex-col items-center py-3 gap-1 transition-transform duration-200 hidden lg:flex lg:translate-x-0 ${mobileOpen ? "!flex translate-x-0" : ""}`}
           onTouchStart={swipe.handleTouchStart}
@@ -163,35 +118,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <span className="font-bold text-black text-[11px]">OC</span>
             </div>
           </Link>
-
-          {/* Company avatars */}
-          <div className="flex-1 flex flex-col items-center gap-1.5 overflow-y-auto w-full px-2 scrollbar-none">
-            {companies.map((company, idx) => {
-              const isActive = company.id === activeCompanyId;
-              return (
-                <button
-                  key={company.id}
-                  onClick={() => setActiveCompanyId(company.id)}
-                  title={company.name}
-                  className={`relative w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-bold text-white transition-all shrink-0 ${companyColor(idx)} ${isActive ? "ring-2 ring-white/50 scale-105" : "opacity-60 hover:opacity-90"}`}
-                >
-                  {companyInitials(company.name)}
-                  {isActive && (
-                    <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-full" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Add company button */}
-          <button
-            onClick={() => { navigate("/mission-control"); closeMobile(); }}
-            title="Add Company"
-            className="w-9 h-9 rounded-lg border border-dashed border-white/20 flex items-center justify-center text-white/40 hover:text-white/70 hover:border-white/40 transition-all shrink-0 mt-1"
-          >
-            <Plus size={14} />
-          </button>
         </aside>
 
         {/* ── Main sidebar ───────────────────────────────────────────────── */}
@@ -200,14 +126,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           onTouchStart={swipe.handleTouchStart}
           onTouchEnd={swipe.handleTouchEnd}
         >
-
-          {/* Company header + mobile close button */}
+          {/* App name header + mobile close button */}
           <div className="px-4 py-4 border-b border-border">
             <div className="flex items-center gap-2">
-              <Building2 size={13} className="text-muted-foreground shrink-0" />
-              <span className="text-[12px] font-semibold text-foreground truncate flex-1">
-                {activeCompany?.name ?? "OpenCommand"}
-              </span>
+              <span className="text-[12px] font-semibold text-foreground truncate flex-1">OpenCommand</span>
               {/* Close button — mobile only */}
               <button
                 onClick={closeMobile}
@@ -217,15 +139,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <X size={14} />
               </button>
             </div>
-            {activeCompany?.mission && (
-              <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{activeCompany.mission}</p>
-            )}
           </div>
 
           {/* Nav */}
           <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto scrollbar-none">
 
-            {/* Core nav — 6 primary items */}
+            {/* Core nav — 5 primary items */}
             {coreNavItems.map(item => {
               const isActive = location === item.href || location.startsWith(item.href + "/");
               return (
@@ -237,129 +156,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   }`}>
                     <item.icon size={13} strokeWidth={isActive ? 2 : 1.5} />
                     <span className="font-medium">{item.label}</span>
-                    {item.label === "Mission Control" && unreadCount > 0 && (
-                      <span className="ml-auto badge-accent text-[10px] px-1.5 py-0">{unreadCount}</span>
-                    )}
                   </div>
                 </Link>
               );
             })}
 
             {/* Settings nav item */}
-            {(() => {
-              return (
-                <Link href={settingsNavItem.href} onClick={closeMobile}>
-                  <div className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] transition-all ${
-                    isSettingsActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                  }`}>
-                    <settingsNavItem.icon size={13} strokeWidth={isSettingsActive ? 2 : 1.5} />
-                    <span className="font-medium">{settingsNavItem.label}</span>
-                  </div>
-                </Link>
-              );
-            })()}
-
-            {/* Projects section */}
-            <div className="pt-3 pb-1">
-              <div className="flex items-center justify-between px-3 mb-1">
-                <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Projects</span>
-                <Link href="/projects" onClick={closeMobile}>
-                  <button
-                    title="New project"
-                    className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Plus size={11} />
-                  </button>
-                </Link>
+            <Link href={settingsNavItem.href} onClick={closeMobile}>
+              <div className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] transition-all ${
+                isSettingsActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+              }`}>
+                <settingsNavItem.icon size={13} strokeWidth={isSettingsActive ? 2 : 1.5} />
+                <span className="font-medium">{settingsNavItem.label}</span>
               </div>
+            </Link>
 
-              {visibleProjects.length === 0 ? (
-                <Link href="/projects" onClick={closeMobile}>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer">
-                    <FolderOpen size={11} />
-                    <span>No projects yet</span>
-                  </div>
-                </Link>
-              ) : (
-                visibleProjects.slice(0, 8).map(project => {
-                  const isActive = location === `/projects/${project.id}` || location.startsWith(`/projects/${project.id}/`);
-                  return (
-                    <Link key={project.id} href={`/projects/${project.id}`} onClick={closeMobile}>
-                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all ${
-                        isActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                      }`}>
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: project.color ?? "#6366f1" }}
-                        />
-                        <span className="truncate font-medium">{project.name}</span>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-
-              {visibleProjects.length > 8 && (
-                <Link href="/projects" onClick={closeMobile}>
-                  <div className="flex items-center gap-1.5 px-3 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-                    <ChevronRight size={10} />
-                    <span>{visibleProjects.length - 8} more</span>
-                  </div>
-                </Link>
-              )}
-            </div>
-
-            {/* Agents section */}
-            <div className="pt-3 pb-1">
-              <div className="flex items-center justify-between px-3 mb-1">
-                <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Agents</span>
-                <Link href="/mission-control" onClick={closeMobile}>
-                  <button
-                    title="Manage agents"
-                    className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Plus size={11} />
-                  </button>
-                </Link>
-              </div>
-
-              {visibleAgents.length === 0 ? (
-                <Link href="/mission-control" onClick={closeMobile}>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer">
-                    <Bot size={11} />
-                    <span>No agents yet</span>
-                  </div>
-                </Link>
-              ) : (
-                visibleAgents.slice(0, 8).map(agent => {
-                  const statusColor = agent.status === "active" ? "#22c55e" : agent.status === "error" ? "#ef4444" : "#6b7280";
-                  const isAgentActive = location === `/agents/${agent.id}`;
-                  return (
-                    <Link key={agent.id} href={`/agents/${agent.id}`} onClick={closeMobile}>
-                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] transition-all ${
-                        isAgentActive ? "bg-white/[0.07] text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                      }`}>
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: statusColor }}
-                        />
-                        <span className="truncate font-medium">{agent.name}</span>
-                        <span className="ml-auto text-[10px] text-muted-foreground/50 uppercase tracking-wide shrink-0">{agent.type}</span>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-
-              {visibleAgents.length > 8 && (
-                <Link href="/mission-control" onClick={closeMobile}>
-                  <div className="flex items-center gap-1.5 px-3 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-                    <ChevronRight size={10} />
-                    <span>{visibleAgents.length - 8} more</span>
-                  </div>
-                </Link>
-              )}
-            </div>
           </nav>
 
           {/* User footer */}

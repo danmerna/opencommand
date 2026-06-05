@@ -760,3 +760,9 @@
 - [x] Regenerate blueprint framework infographic: swap Layer 2/3 (Workflow before Agent) and Layer 4/5 (Verification before HITL)
 - [x] Redesign infographic with McKinsey/Blue Ace management consulting theme (navy/white/gold, serif typography, clean geometric)
 - [x] Make LLM Council available as an add-on toggle on any task/agent that has a verifier (not just goal-level)
+
+## Nav Simplification
+- [x] Remove Mission Control from nav and routes — redirect root authenticated users to /blueprints/chat
+- [x] Remove agent personas and projects from main sidebar nav
+- [x] Remove Goals from nav
+- [x] New nav order: Σ (Intent Engine) → Blueprints → Execution → Analytics → Model Performance → Settings
