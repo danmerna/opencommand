@@ -736,3 +736,10 @@
 - [x] Fix BlueprintBuilder.tsx TypeScript errors (React Flow typing, toast import, data access patterns)
 - [x] Fix BlueprintChat.tsx TypeScript errors (auth import, procedure name, message type)
 - [x] Add login button to homepage dropdown menu (working with Manus OAuth)
+- [x] Create model registry with all available LLMs (11 models) and role-based categorization
+- [x] Add agent_model_config table to track per-agent model assignments
+- [x] Add model_execution_logs table to track cost, latency, tokens, and success per invocation
+- [x] Build dynamic workflow role-based defaults (coordinator, implementer, verifier, fixer/synthesizer)
+- [x] Add model selector dropdown to BlueprintBuilder agent side panel
+- [x] Display model cost/performance metrics in the visual builder
+- [x] Build model performance analytics view (cost per agent, latency trends, success rates)

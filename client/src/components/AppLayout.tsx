@@ -29,6 +29,7 @@ const coreNavItems = [
   { href: "/execution",       label: "Execution",        icon: CheckSquare },
   { href: "/goals",           label: "Goals",            icon: Users },
   { href: "/analytics",       label: "Analytics",        icon: Activity },
+  { href: "/model-performance", label: "Model Performance", icon: BarChart3 },
 ];
 
 const settingsNavItem = { href: "/settings", label: "Settings", icon: Settings };

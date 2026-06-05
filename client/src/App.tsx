@@ -32,6 +32,9 @@ import { LeadResponsePage } from "./pages/LeadResponsePage";
 import { LeadScoringDashboard } from "./pages/LeadScoringDashboard";
 import { ROIAttribution } from "./pages/ROIAttribution";
 import GoalsDashboard from "./pages/GoalsDashboard";
+import BlueprintChat from "./pages/BlueprintChat";
+import BlueprintBuilder from "./pages/BlueprintBuilder";
+import ModelPerformance from "./pages/ModelPerformance";
 
 function Router() {
   usePageTracking();
@@ -48,6 +51,11 @@ function Router() {
       </Route>
       <Route path="/blueprints">
         <AppLayout><Blueprints /></AppLayout>
+      </Route>
+      <Route path="/blueprints/chat" component={BlueprintChat} />
+      <Route path="/blueprints/:id/builder" component={BlueprintBuilder} />
+      <Route path="/model-performance">
+        <AppLayout><ModelPerformance /></AppLayout>
       </Route>
 
       {/* Settings page — consolidates Governance, Integrations, Context History, Payments, Pricing, What's New */}

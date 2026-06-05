@@ -1351,3 +1351,50 @@ export const blueprintInstances = mysqlTable("blueprint_instances", {
 
 export type BlueprintInstance = typeof blueprintInstances.$inferSelect;
 export type InsertBlueprintInstance = typeof blueprintInstances.$inferInsert;
+
+// ─── Model Execution Tracking ────────────────────────────────────────────────
+
+export const modelExecutionLogs = mysqlTable("model_execution_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  agentId: int("agentId"),
+  blueprintId: int("blueprintId"),
+  modelId: varchar("modelId", { length: 64 }).notNull(),
+  workflowRole: mysqlEnum("workflowRole", ["coordinator", "implementer", "verifier", "fixer", "web_research", "vision", "computer_use", "bulk_worker"]),
+  taskCategory: varchar("taskCategory", { length: 64 }),
+  inputTokens: int("inputTokens").default(0).notNull(),
+  outputTokens: int("outputTokens").default(0).notNull(),
+  latencyMs: int("latencyMs").default(0).notNull(),
+  costUsd: decimal("costUsd", { precision: 10, scale: 6 }).default("0").notNull(),
+  success: boolean("success").default(true).notNull(),
+  errorMessage: text("errorMessage"),
+  qualityScore: decimal("qualityScore", { precision: 3, scale: 2 }),
+  taskDescription: varchar("taskDescription", { length: 512 }),
+  executionContext: json("executionContext").$type<Record<string, unknown>>(),
+  startedAt: timestamp("startedAt").notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ModelExecutionLog = typeof modelExecutionLogs.$inferSelect;
+export type InsertModelExecutionLog = typeof modelExecutionLogs.$inferInsert;
+
+// ─── Agent Model Configuration ───────────────────────────────────────────────
+
+export const agentModelConfigs = mysqlTable("agent_model_configs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  companyId: int("companyId"),
+  agentId: int("agentId"),
+  blueprintId: int("blueprintId"),
+  nodeId: varchar("nodeId", { length: 128 }),
+  modelId: varchar("modelId", { length: 64 }).notNull(),
+  workflowRole: mysqlEnum("workflowRole_amc", ["coordinator", "implementer", "verifier", "fixer", "web_research", "vision", "computer_use", "bulk_worker"]),
+  maxTokens: int("maxTokens").default(4096),
+  temperature: decimal("temperature", { precision: 3, scale: 2 }).default("0.7"),
+  fallbackModelId: varchar("fallbackModelId", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AgentModelConfig = typeof agentModelConfigs.$inferSelect;
+export type InsertAgentModelConfig = typeof agentModelConfigs.$inferInsert;

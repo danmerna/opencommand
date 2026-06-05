@@ -31,6 +31,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Save,
   ArrowLeft,
   Bot,
@@ -42,15 +51,46 @@ import {
   Loader2,
   Copy,
   Pencil,
+  Cpu,
+  Zap,
+  DollarSign,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  MODEL_REGISTRY,
+  ROLE_DEFAULTS,
+  getModelById,
+  getTierColor,
+  getProviderColor,
+  type WorkflowRole,
+  type ModelDefinition,
+} from "@shared/modelRegistry";
+
+// ─── Model Badge (shown on agent nodes) ─────────────────────────────────────
+
+function ModelBadge({ modelId }: { modelId?: string }) {
+  if (!modelId) return null;
+  const model = getModelById(modelId);
+  if (!model) return null;
+
+  return (
+    <Badge
+      variant="outline"
+      className={`text-[9px] px-1.5 py-0 h-4 gap-0.5 ${getTierColor(model.tier)}`}
+    >
+      <Cpu className="w-2 h-2" />
+      {model.name.split(" ").slice(-2).join(" ")}
+    </Badge>
+  );
+}
 
 // ─── Custom Node Types ──────────────────────────────────────────────────────
 
 function AgentNode({ data, selected }: NodeProps<Node<Record<string, unknown>>>) {
   return (
     <div
-      className={`px-4 py-3 rounded-xl border-2 bg-card shadow-lg min-w-[200px] max-w-[260px] transition-all ${
+      className={`px-4 py-3 rounded-xl border-2 bg-card shadow-lg min-w-[200px] max-w-[280px] transition-all ${
         selected ? "border-blue-500 shadow-blue-500/20" : "border-border/60"
       }`}
     >
@@ -88,6 +128,12 @@ function AgentNode({ data, selected }: NodeProps<Node<Record<string, unknown>>>)
             Verified
           </Badge>
         ) : null}
+        <ModelBadge modelId={data.modelId as string} />
+        {data.workflowRole ? (
+          <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-purple-500/30 text-purple-400">
+            {String(data.workflowRole).replace("_", " ")}
+          </Badge>
+        ) : null}
       </div>
       <Handle type="source" position={Position.Bottom} className="!bg-cyan-500 !w-3 !h-3 !border-2 !border-background" />
     </div>
@@ -103,14 +149,14 @@ function WorkflowNode({ data, selected }: NodeProps<Node<Record<string, unknown>
     >
       <Handle type="target" position={Position.Top} className="!bg-cyan-500 !w-2.5 !h-2.5 !border-2 !border-background" />
       <div className="flex items-center gap-2">
-        <GitBranch className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+        <GitBranch className="w-4 h-4 text-cyan-400 shrink-0" />
         <p className="text-xs font-medium text-foreground truncate">
           {data.label as string}
         </p>
       </div>
       {data.trigger ? (
         <p className="text-[10px] text-muted-foreground mt-1 truncate">
-          Trigger: {String(data.trigger)}
+          {String(data.trigger)}
         </p>
       ) : null}
       <Handle type="source" position={Position.Bottom} className="!bg-cyan-500 !w-2.5 !h-2.5 !border-2 !border-background" />
@@ -121,27 +167,21 @@ function WorkflowNode({ data, selected }: NodeProps<Node<Record<string, unknown>
 function GoalNode({ data, selected }: NodeProps<Node<Record<string, unknown>>>) {
   return (
     <div
-      className={`px-3 py-2 rounded-lg border-2 bg-card/80 shadow-md min-w-[180px] max-w-[240px] transition-all ${
+      className={`px-3 py-2 rounded-lg border-2 bg-card/80 shadow-md min-w-[160px] max-w-[240px] transition-all ${
         selected ? "border-amber-500 shadow-amber-500/20" : "border-border/40"
       }`}
     >
       <Handle type="target" position={Position.Top} className="!bg-amber-500 !w-2.5 !h-2.5 !border-2 !border-background" />
-      <div className="flex items-center gap-2 mb-1">
-        <Target className="w-4 h-4 text-amber-400 flex-shrink-0" />
+      <div className="flex items-center gap-2">
+        <Target className="w-4 h-4 text-amber-400 shrink-0" />
         <p className="text-xs font-medium text-foreground truncate">
           {data.label as string}
         </p>
       </div>
-      <p className="text-[10px] text-muted-foreground line-clamp-2">
-        {data.objective as string}
-      </p>
       {data.verified ? (
-        <div className="flex items-center gap-1 mt-1.5">
-          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-          <span className="text-[10px] text-emerald-400 font-medium">
-            Dual-verified
-          </span>
-        </div>
+        <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 mt-1 border-emerald-500/30 text-emerald-400">
+          <CheckCircle2 className="w-2 h-2 mr-0.5" /> Verified
+        </Badge>
       ) : null}
       <Handle type="source" position={Position.Bottom} className="!bg-amber-500 !w-2.5 !h-2.5 !border-2 !border-background" />
     </div>
@@ -153,6 +193,142 @@ const nodeTypes = {
   workflow: WorkflowNode,
   goal: GoalNode,
 };
+
+// ─── Model Selector Component ────────────────────────────────────────────────
+
+function ModelSelector({
+  value,
+  onChange,
+  workflowRole,
+}: {
+  value: string | undefined;
+  onChange: (modelId: string) => void;
+  workflowRole?: WorkflowRole;
+}) {
+  const grouped = useMemo(() => {
+    const groups: Record<string, ModelDefinition[]> = {
+      anthropic: [],
+      openai: [],
+      google: [],
+    };
+    MODEL_REGISTRY.forEach((m) => groups[m.provider].push(m));
+    return groups;
+  }, []);
+
+  // Determine the recommended default for this role
+  const recommendedId = workflowRole ? ROLE_DEFAULTS[workflowRole] : undefined;
+
+  return (
+    <div className="space-y-2">
+      <Select value={value || ""} onValueChange={onChange}>
+        <SelectTrigger className="h-9 text-xs">
+          <SelectValue placeholder="Select model..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">
+              Anthropic
+            </SelectLabel>
+            {grouped.anthropic.map((m) => (
+              <SelectItem key={m.id} value={m.id} className="text-xs">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: getProviderColor("anthropic") }}
+                  />
+                  <span>{m.name}</span>
+                  {m.id === recommendedId && (
+                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 border-emerald-500/30 text-emerald-400 ml-auto">
+                      REC
+                    </Badge>
+                  )}
+                  <span className={`text-[9px] ml-auto ${getTierColor(m.tier)}`}>
+                    ${m.costPerMillionInput}/M
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+          <SelectGroup>
+            <SelectLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">
+              OpenAI
+            </SelectLabel>
+            {grouped.openai.map((m) => (
+              <SelectItem key={m.id} value={m.id} className="text-xs">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: getProviderColor("openai") }}
+                  />
+                  <span>{m.name}</span>
+                  {m.id === recommendedId && (
+                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 border-emerald-500/30 text-emerald-400 ml-auto">
+                      REC
+                    </Badge>
+                  )}
+                  <span className={`text-[9px] ml-auto ${getTierColor(m.tier)}`}>
+                    ${m.costPerMillionInput}/M
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+          <SelectGroup>
+            <SelectLabel className="text-[10px] text-muted-foreground uppercase tracking-wider">
+              Google
+            </SelectLabel>
+            {grouped.google.map((m) => (
+              <SelectItem key={m.id} value={m.id} className="text-xs">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: getProviderColor("google") }}
+                  />
+                  <span>{m.name}</span>
+                  {m.id === recommendedId && (
+                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 border-emerald-500/30 text-emerald-400 ml-auto">
+                      REC
+                    </Badge>
+                  )}
+                  <span className={`text-[9px] ml-auto ${getTierColor(m.tier)}`}>
+                    ${m.costPerMillionInput}/M
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+
+      {/* Model info card */}
+      {value && (() => {
+        const model = getModelById(value);
+        if (!model) return null;
+        return (
+          <div className="p-2 rounded-md bg-muted/30 border border-border/30 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-medium text-foreground">{model.name}</span>
+              <Badge variant="outline" className={`text-[8px] px-1 py-0 h-3.5 ${getTierColor(model.tier)}`}>
+                {model.tier}
+              </Badge>
+            </div>
+            <p className="text-[9px] text-muted-foreground leading-tight">
+              {model.strengths}
+            </p>
+            <div className="flex items-center gap-3 text-[9px] text-muted-foreground">
+              <span className="flex items-center gap-0.5">
+                <DollarSign className="w-2.5 h-2.5" />
+                ${model.costPerMillionInput}/${model.costPerMillionOutput} per M
+              </span>
+              <span>{(model.contextWindow / 1000).toFixed(0)}K ctx</span>
+              {model.supportsVision && <span>👁 Vision</span>}
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
@@ -176,6 +352,15 @@ export default function BlueprintBuilder() {
       { enabled: !!blueprintId }
     );
 
+  // Fetch existing model configs for this blueprint
+  const { data: modelConfigs } = trpc.models.getAgentModelConfig.useQuery(
+    { blueprintId },
+    { enabled: !!blueprintId }
+  );
+
+  // Save model configs mutation
+  const saveModelConfigs = trpc.models.saveBlueprintModelConfigs.useMutation();
+
   // Convert blueprint data to React Flow nodes/edges
   useEffect(() => {
     if (!blueprint) return;
@@ -183,22 +368,34 @@ export default function BlueprintBuilder() {
     setBlueprintTitle(blueprint.template.title);
     setBlueprintTicker(blueprint.template.ticker);
 
-    const agentNodes: Node[] = blueprint.agents.map((agent: any, i: number) => ({
-      id: `agent-${agent.id}`,
-      type: "agent",
-      position: { x: 150 + i * 300, y: 100 },
-      data: {
-        label: agent.name,
-        role: agent.role,
-        mission: agent.mission,
-        color: agent.color || "#3b82f6",
-        autonomyLevel: agent.autonomyLevel,
-        verified: false,
-        tools: agent.tools,
-        guardrails: agent.guardrails,
-        ...agent,
-      },
-    }));
+    const agentNodes: Node[] = blueprint.agents.map((agent: any, i: number) => {
+      // Find existing model config for this agent node
+      const config = modelConfigs?.find(
+        (c: any) => c.nodeId === `agent-${agent.id}`
+      );
+      // Determine default model based on workflow role
+      const defaultRole: WorkflowRole = i === 0 ? "coordinator" : "implementer";
+      const defaultModel = ROLE_DEFAULTS[defaultRole];
+
+      return {
+        id: `agent-${agent.id}`,
+        type: "agent",
+        position: { x: 150 + i * 300, y: 100 },
+        data: {
+          label: agent.name,
+          role: agent.role,
+          mission: agent.mission,
+          color: agent.color || "#3b82f6",
+          autonomyLevel: agent.autonomyLevel,
+          verified: false,
+          tools: agent.tools,
+          guardrails: agent.guardrails,
+          modelId: config?.modelId || defaultModel,
+          workflowRole: config?.workflowRole || defaultRole,
+          ...agent,
+        },
+      };
+    });
 
     const workflowNodes: Node[] = blueprint.workflows.map(
       (wf: any, i: number) => ({
@@ -266,7 +463,7 @@ export default function BlueprintBuilder() {
     });
 
     setEdges(newEdges);
-  }, [blueprint]);
+  }, [blueprint, modelConfigs]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -288,14 +485,59 @@ export default function BlueprintBuilder() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // TODO: Persist node positions and edits
-      toast.success("Blueprint saved");
+      // Save model configurations for all agent nodes
+      const agentNodes = nodes.filter((n) => n.type === "agent");
+      const configs = agentNodes.map((n) => ({
+        nodeId: n.id,
+        modelId: (n.data.modelId as string) || ROLE_DEFAULTS.implementer,
+        workflowRole: (n.data.workflowRole as WorkflowRole) || undefined,
+      }));
+
+      await saveModelConfigs.mutateAsync({
+        blueprintId,
+        configs,
+      });
+
+      toast.success("Blueprint & model configs saved");
     } catch {
       toast.error("Could not save blueprint.");
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Helper to update node data
+  const updateNodeData = useCallback(
+    (nodeId: string, updates: Record<string, unknown>) => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === nodeId ? { ...n, data: { ...n.data, ...updates } } : n
+        )
+      );
+      setSelectedNode((prev) =>
+        prev && prev.id === nodeId
+          ? { ...prev, data: { ...prev.data, ...updates } }
+          : prev
+      );
+    },
+    [setNodes]
+  );
+
+  // Calculate estimated cost per run
+  const estimatedCostPerRun = useMemo(() => {
+    const agentNodes = nodes.filter((n) => n.type === "agent");
+    let totalCost = 0;
+    agentNodes.forEach((n) => {
+      const model = getModelById(n.data.modelId as string);
+      if (model) {
+        // Estimate ~2000 input tokens and ~1000 output tokens per agent per run
+        totalCost +=
+          (2000 / 1_000_000) * model.costPerMillionInput +
+          (1000 / 1_000_000) * model.costPerMillionOutput;
+      }
+    });
+    return totalCost;
+  }, [nodes]);
 
   if (isLoading) {
     return (
@@ -335,6 +577,11 @@ export default function BlueprintBuilder() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Cost estimate badge */}
+          <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-emerald-500/30 text-emerald-400 gap-1">
+            <DollarSign className="w-2.5 h-2.5" />
+            ~${estimatedCostPerRun.toFixed(4)}/run
+          </Badge>
           <Button
             variant="outline"
             size="sm"
@@ -406,7 +653,7 @@ export default function BlueprintBuilder() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded bg-amber-500" />
-                  <span>/Goal</span>
+                  <span>Goal</span>
                 </div>
               </div>
             </Card>
@@ -447,25 +694,9 @@ export default function BlueprintBuilder() {
                     </label>
                     <Input
                       value={(selectedNode.data.label as string) || ""}
-                      onChange={(e) => {
-                        setNodes((nds) =>
-                          nds.map((n) =>
-                            n.id === selectedNode.id
-                              ? {
-                                  ...n,
-                                  data: { ...n.data, label: e.target.value },
-                                }
-                              : n
-                          )
-                        );
-                        setSelectedNode({
-                          ...selectedNode,
-                          data: {
-                            ...selectedNode.data,
-                            label: e.target.value,
-                          },
-                        });
-                      }}
+                      onChange={(e) =>
+                        updateNodeData(selectedNode.id, { label: e.target.value })
+                      }
                     />
                   </div>
                   <div>
@@ -474,25 +705,9 @@ export default function BlueprintBuilder() {
                     </label>
                     <Input
                       value={(selectedNode.data.role as string) || ""}
-                      onChange={(e) => {
-                        setNodes((nds) =>
-                          nds.map((n) =>
-                            n.id === selectedNode.id
-                              ? {
-                                  ...n,
-                                  data: { ...n.data, role: e.target.value },
-                                }
-                              : n
-                          )
-                        );
-                        setSelectedNode({
-                          ...selectedNode,
-                          data: {
-                            ...selectedNode.data,
-                            role: e.target.value,
-                          },
-                        });
-                      }}
+                      onChange={(e) =>
+                        updateNodeData(selectedNode.id, { role: e.target.value })
+                      }
                     />
                   </div>
                   <div>
@@ -501,28 +716,120 @@ export default function BlueprintBuilder() {
                     </label>
                     <Textarea
                       value={(selectedNode.data.mission as string) || ""}
-                      onChange={(e) => {
-                        setNodes((nds) =>
-                          nds.map((n) =>
-                            n.id === selectedNode.id
-                              ? {
-                                  ...n,
-                                  data: { ...n.data, mission: e.target.value },
-                                }
-                              : n
-                          )
-                        );
-                        setSelectedNode({
-                          ...selectedNode,
-                          data: {
-                            ...selectedNode.data,
-                            mission: e.target.value,
-                          },
-                        });
-                      }}
+                      onChange={(e) =>
+                        updateNodeData(selectedNode.id, { mission: e.target.value })
+                      }
                       rows={3}
                     />
                   </div>
+
+                  {/* ─── MODEL SELECTION SECTION ─── */}
+                  <div className="border-t border-border/30 pt-4 mt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Cpu className="w-4 h-4 text-purple-400" />
+                      <span className="text-xs font-semibold text-foreground">
+                        LLM Model
+                      </span>
+                    </div>
+
+                    {/* Workflow Role selector */}
+                    <div className="mb-3">
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                        Workflow Role
+                      </label>
+                      <Select
+                        value={(selectedNode.data.workflowRole as string) || ""}
+                        onValueChange={(val) => {
+                          const newModel = ROLE_DEFAULTS[val as WorkflowRole];
+                          updateNodeData(selectedNode.id, {
+                            workflowRole: val,
+                            modelId: newModel,
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Assign role..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="coordinator" className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-amber-500" />
+                              Coordinator — strategic decisions (5% tokens)
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="implementer" className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-blue-500" />
+                              Implementer — does the actual work
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="verifier" className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                              Verifier — cross-checks output
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="fixer" className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                              Fixer/Synthesizer — reconciles feedback
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="web_research" className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                              Web Research — browse and synthesize
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="vision" className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-pink-500" />
+                              Vision — interpret images/layouts
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="computer_use" className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-orange-500" />
+                              Computer Use — GUI automation
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="bulk_worker" className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-slate-500" />
+                              Bulk Worker — high-volume parallel (95% tokens)
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Model selector */}
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                        Model
+                      </label>
+                      <ModelSelector
+                        value={selectedNode.data.modelId as string}
+                        onChange={(modelId) =>
+                          updateNodeData(selectedNode.id, { modelId })
+                        }
+                        workflowRole={selectedNode.data.workflowRole as WorkflowRole}
+                      />
+                    </div>
+
+                    {/* Cost hint */}
+                    <div className="mt-2 p-2 rounded bg-muted/20 border border-border/20">
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <Info className="w-3 h-3" />
+                        <span>
+                          Changing the workflow role auto-selects the optimal model.
+                          Override manually if needed.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* ─── END MODEL SELECTION ─── */}
+
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">
                       Autonomy Level (0-3)
@@ -532,26 +839,11 @@ export default function BlueprintBuilder() {
                       min={0}
                       max={3}
                       value={(selectedNode.data.autonomyLevel as number) || 0}
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
-                        setNodes((nds) =>
-                          nds.map((n) =>
-                            n.id === selectedNode.id
-                              ? {
-                                  ...n,
-                                  data: { ...n.data, autonomyLevel: val },
-                                }
-                              : n
-                          )
-                        );
-                        setSelectedNode({
-                          ...selectedNode,
-                          data: {
-                            ...selectedNode.data,
-                            autonomyLevel: val,
-                          },
-                        });
-                      }}
+                      onChange={(e) =>
+                        updateNodeData(selectedNode.id, {
+                          autonomyLevel: Number(e.target.value),
+                        })
+                      }
                     />
                   </div>
                   <div>

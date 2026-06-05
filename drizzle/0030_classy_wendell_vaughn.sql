@@ -1,0 +1,40 @@
+CREATE TABLE `agent_model_configs` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`companyId` int,
+	`agentId` int,
+	`blueprintId` int,
+	`nodeId` varchar(128),
+	`modelId` varchar(64) NOT NULL,
+	`workflowRole_amc` enum('coordinator','implementer','verifier','fixer','web_research','vision','computer_use','bulk_worker'),
+	`maxTokens` int DEFAULT 4096,
+	`temperature` decimal(3,2) DEFAULT '0.7',
+	`fallbackModelId` varchar(64),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `agent_model_configs_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `model_execution_logs` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`companyId` int,
+	`agentId` int,
+	`blueprintId` int,
+	`modelId` varchar(64) NOT NULL,
+	`workflowRole` enum('coordinator','implementer','verifier','fixer','web_research','vision','computer_use','bulk_worker'),
+	`taskCategory` varchar(64),
+	`inputTokens` int NOT NULL DEFAULT 0,
+	`outputTokens` int NOT NULL DEFAULT 0,
+	`latencyMs` int NOT NULL DEFAULT 0,
+	`costUsd` decimal(10,6) NOT NULL DEFAULT '0',
+	`success` boolean NOT NULL DEFAULT true,
+	`errorMessage` text,
+	`qualityScore` decimal(3,2),
+	`taskDescription` varchar(512),
+	`executionContext` json,
+	`startedAt` timestamp NOT NULL,
+	`completedAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `model_execution_logs_id` PRIMARY KEY(`id`)
+);
