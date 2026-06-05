@@ -114,6 +114,10 @@ export async function unsubscribeUserByToken(token: string) {
   await db.update(users).set({ emailUnsubscribed: true }).where(eq(users.id, user.id));
   return true;
 }
+export async function completeUserOnboarding(userId: number) {
+  const db = await getDb(); if (!db) return;
+  await db.update(users).set({ onboardingCompleted: true }).where(eq(users.id, userId));
+}
 
 // ─── Companies ───────────────────────────────────────────────────────────────
 export async function getCompaniesByUserId(userId: number) {

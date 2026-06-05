@@ -192,27 +192,26 @@ export default function Home() {
           <Link href="/" className="font-semibold text-foreground text-lg tracking-tight hover:opacity-80 transition-opacity">
             OpenCommand
           </Link>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <Link href="/blueprints" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
               Blueprints
             </Link>
-            <Link href="/creators" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
-              Creators
-            </Link>
             {isAuthenticated ? (
-              hasCompany ? (
-                <Link href="/blueprints/chat" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-                  Dashboard →
-                </Link>
-              ) : (
-                <Link href="/waitlist" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-                  Waitlist →
-                </Link>
-              )
+              <Link href="/dashboard" className="btn-primary text-sm px-4 py-2">
+                Dashboard →
+              </Link>
             ) : (
-              <a href={getLoginUrl("/blueprints/chat")} className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-                Log in →
-              </a>
+              <>
+                <a href={getLoginUrl("/dashboard")} className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
+                  Log in
+                </a>
+                <a
+                  href={getLoginUrl("/dashboard")}
+                  className="btn-primary text-sm px-4 py-2"
+                >
+                  Sign up free
+                </a>
+              </>
             )}
           </div>
         </div>
@@ -229,8 +228,22 @@ export default function Home() {
         <p className="hero-sub text-muted-foreground text-lg text-body max-w-xl mb-12">
           OpenCommand orchestrates your AI agents across every function — routing tasks to the right model, enforcing human checkpoints, and proving what was done.
         </p>
-        <div className="hero-cta w-full max-w-xl">
-          <HeroEmailInput />
+        <div className="hero-cta w-full max-w-xl space-y-4">
+          {!isAuthenticated && (
+            <a
+              href={getLoginUrl("/dashboard")}
+              className="btn-primary inline-flex items-center gap-2 px-8 py-4 text-base"
+            >
+              Start for free <ArrowRight size={16} />
+            </a>
+          )}
+          <p className="text-xs text-muted-foreground/50">
+            Free during beta. No credit card required.
+          </p>
+          <div className="pt-2">
+            <p className="text-xs text-muted-foreground mb-3">Or join the waitlist for early access</p>
+            <EmailCapture source="hero" />
+          </div>
         </div>
       </section>
 

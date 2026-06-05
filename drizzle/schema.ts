@@ -23,6 +23,7 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   emailUnsubscribeToken: varchar("emailUnsubscribeToken", { length: 64 }),
   emailUnsubscribed: boolean("emailUnsubscribed").default(false).notNull(),
+  onboardingCompleted: boolean("onboardingCompleted").default(false).notNull(),
   waitlistStatus: mysqlEnum("waitlistStatus", ["pending", "approved", "rejected"]).default("pending").notNull(),
   waitlistPosition: int("waitlistPosition"),
   referralCode: varchar("referralCode", { length: 32 }).unique(),

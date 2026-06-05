@@ -3,6 +3,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import QuickOnboarding from "@/components/QuickOnboarding";
 import {
   CheckCircle2, X, ChevronRight, Bell, Zap, FileStack,
   Activity, ArrowRight, Clock, AlertTriangle, Loader2,
@@ -202,6 +203,7 @@ function StatPill({ label, value, accent }: { label: string; value: string | num
 export default function Dashboard() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -209,6 +211,17 @@ export default function Dashboard() {
       window.location.href = getLoginUrl("/dashboard");
     }
   }, [isAuthenticated]);
+
+  // Show onboarding for new users who haven't completed it
+  useEffect(() => {
+    if (!user) return;
+    const u = user as any;
+    if (u.onboardingCompleted === false || u.onboardingCompleted === 0) {
+      // Small delay so dashboard renders first
+      const t = setTimeout(() => setShowOnboarding(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, [user]);
 
   // ── Data queries ──
   const blueprintsQ = trpc.blueprints.myBlueprints.useQuery(undefined, { enabled: isAuthenticated });
@@ -312,6 +325,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background text-foreground">
+      <QuickOnboarding open={showOnboarding} onClose={() => setShowOnboarding(false)} />
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
 
         {/* ── Greeting ── */}

@@ -225,6 +225,13 @@
       "when": 1780662170859,
       "tag": "0031_clammy_inhumans",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1780679012393,
+      "tag": "0032_tranquil_sphinx",
+      "breakpoints": true
     }
   ]
 }

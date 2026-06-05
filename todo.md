@@ -798,3 +798,11 @@
 - [x] Node palette sidebar with all 6 framework layers: Trigger, Workflow, Agent, Verification (LLM Council), HITL Checkpoint, Goal Tracking
 - [x] Each node type has distinct icon, color, and editable fields matching the blueprint framework
 - [x] Save blank canvas as new blueprint_template with auto-generated ticker via createBlank mutation
+
+## Verification per Agent + Signup/Onboarding
+- [x] Agent nodes: add "Verification" sub-panel showing assigned verifier model (default: 1 LLM) and Council toggle
+- [x] When an Agent node is added to canvas, auto-suggest adding a Verification node connected to it
+- [x] Verification node edit panel: choose verifier model, enable Council (3-model vote), set criteria
+- [x] Landing page: add prominent signup/login CTA button (top nav + hero section)
+- [x] Quick onboarding flow: 3-step modal after first login (Welcome → Choose start → Launch)
+- [x] Notify owner when a new user completes onboarding

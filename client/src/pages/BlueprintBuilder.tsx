@@ -138,6 +138,8 @@ function ModelBadge({ modelId }: { modelId?: string }) {
 // ─── Custom Node Types ──────────────────────────────────────────────────────
 
 function AgentNode({ data, selected }: NodeProps<Node<Record<string, unknown>>>) {
+  const verifierModel = getModelById((data.verifierModelId as string) || "");
+  const councilOn = Boolean(data.verifierCouncil);
   return (
     <div
       className={`px-4 py-3 rounded-xl border-2 bg-card shadow-lg min-w-[200px] max-w-[280px] transition-all ${
@@ -173,12 +175,22 @@ function AgentNode({ data, selected }: NodeProps<Node<Record<string, unknown>>>)
             {String(data.workflowRole).replace("_", " ")}
           </Badge>
         ) : null}
-        {data.councilEnabled ? (
-          <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-yellow-500/30 text-yellow-400">
-            <Users className="w-2 h-2 mr-0.5" />
-            Council
-          </Badge>
-        ) : null}
+        {/* Verification badge — always shown, required per agent */}
+        <Badge
+          variant="outline"
+          className={`text-[9px] px-1.5 py-0 h-4 gap-0.5 ${
+            councilOn
+              ? "border-yellow-500/50 text-yellow-400 bg-yellow-950/20"
+              : "border-green-500/40 text-green-400"
+          }`}
+        >
+          <ShieldCheck className="w-2 h-2" />
+          {councilOn
+            ? `Council ×${data.verifierQuorum || 3}`
+            : verifierModel
+              ? verifierModel.name.split(" ").slice(-1)[0]
+              : "Verified"}
+        </Badge>
       </div>
       <Handle type="source" position={Position.Bottom} className="!bg-cyan-500 !w-3 !h-3 !border-2 !border-background" />
     </div>
@@ -760,7 +772,7 @@ export default function BlueprintBuilder() {
     const defaults: Record<string, Record<string, unknown>> = {
       trigger:      { label: "Trigger", triggerType: "scheduled", schedule: "daily at 9am" },
       workflow:     { label: "Workflow Step", trigger: "" },
-      agent:        { label: "New Agent", role: "", mission: "", color: "#3b82f6", modelId: ROLE_DEFAULTS.implementer, workflowRole: "implementer" },
+      agent:        { label: "New Agent", role: "", mission: "", color: "#3b82f6", modelId: ROLE_DEFAULTS.implementer, workflowRole: "implementer", verifierModelId: ROLE_DEFAULTS.verifier, verifierCouncil: false, verifierQuorum: 3 },
       verification: { label: "Verification", quorum: 3, criteria: "" },
       checkpoint:   { label: "HITL Checkpoint", triggerMode: "before_agent", interfaceType: "notification_swipe", defaultRule: "", linkedAgentNodeId: "" },
       goal:         { label: "Goal...", objective: "", desiredFinalState: "", verified: false },
@@ -771,9 +783,33 @@ export default function BlueprintBuilder() {
       position: { x: 200 + Math.random() * 300, y: 150 + Math.random() * 200 },
       data: defaults[type] || { label: type },
     };
-    setNodes((nds) => [...nds, newNode]);
-    toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} node added`);
-  }, [setNodes]);
+
+    if (type === "agent") {
+      // Auto-add a Verification node below the agent and connect them
+      const verifyId = `verification-${Date.now() + 1}`;
+      const verifyNode: Node = {
+        id: verifyId,
+        type: "verification",
+        position: { x: newNode.position.x, y: newNode.position.y + 160 },
+        data: { label: "Verify Output", quorum: 1, criteria: "", linkedAgentId: id },
+      };
+      const autoEdge: Edge = {
+        id: `e-${id}-${verifyId}`,
+        source: id,
+        target: verifyId,
+        type: "smoothstep",
+        animated: true,
+        style: { stroke: "#eab308", strokeDasharray: "4 2" },
+        label: "verify",
+      };
+      setNodes((nds) => [...nds, newNode, verifyNode]);
+      setEdges((eds) => [...eds, autoEdge]);
+      toast.success("Agent + Verification node added");
+    } else {
+      setNodes((nds) => [...nds, newNode]);
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} node added`);
+    }
+  }, [setNodes, setEdges]);
 
   // Add HITL Checkpoint node (kept for toolbar button)
   const addCheckpointNode = useCallback(() => addNode("checkpoint"), [addNode]);
@@ -1283,44 +1319,81 @@ export default function BlueprintBuilder() {
                     </div>
                     {/* ─── END MODEL SELECTION ─── */}
 
-                    {/* LLM Council toggle for this agent */}
+                    {/* ─── VERIFICATION SUB-PANEL (required per agent) ─── */}
                     <div className="border-t border-border/30 pt-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 mb-3">
+                        <ShieldCheck className="w-4 h-4 text-green-400" />
+                        <span className="text-xs font-semibold text-foreground">Task Verification</span>
+                        <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 border-green-500/30 text-green-400">
+                          REQUIRED
+                        </Badge>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mb-3">
+                        Every agent task is verified by at least 1 independent LLM before the output is accepted.
+                        Upgrade to Council for multi-model voting.
+                      </p>
+
+                      {/* Verifier model picker */}
+                      <div className="mb-3">
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                          Verifier Model
+                        </label>
+                        <Select
+                          value={(selectedNode.data.verifierModelId as string) || ROLE_DEFAULTS.verifier}
+                          onValueChange={(val) => updateNodeData(selectedNode.id, { verifierModelId: val })}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Select verifier..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MODEL_REGISTRY.slice(0, 12).map((m) => (
+                              <SelectItem key={m.id} value={m.id} className="text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-2 h-2 rounded-full ${getTierColor(m.tier).replace("text-", "bg-").split(" ")[0]}`} />
+                                  {m.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Council toggle */}
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-yellow-400" />
-                          <span className="text-xs font-semibold text-foreground">LLM Council</span>
-                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 border-yellow-500/30 text-yellow-400">
-                            PRO
-                          </Badge>
+                          <Users className="w-3.5 h-3.5 text-yellow-400" />
+                          <span className="text-xs font-medium text-foreground">LLM Council</span>
+                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 border-yellow-500/30 text-yellow-400">PRO</Badge>
                         </div>
                         <Button
-                          variant={selectedNode.data.councilEnabled ? "default" : "outline"}
+                          variant={selectedNode.data.verifierCouncil ? "default" : "outline"}
                           size="sm"
                           className={`h-6 px-2 text-[10px] ${
-                            selectedNode.data.councilEnabled
+                            selectedNode.data.verifierCouncil
                               ? "bg-yellow-600 hover:bg-yellow-700 text-white"
                               : "border-yellow-500/30 text-yellow-400"
                           }`}
-                          onClick={() =>
-                            updateNodeData(selectedNode.id, {
-                              councilEnabled: !selectedNode.data.councilEnabled,
-                            })
-                          }
+                          onClick={() => updateNodeData(selectedNode.id, { verifierCouncil: !selectedNode.data.verifierCouncil })}
                         >
-                          {selectedNode.data.councilEnabled ? "Enabled" : "Enable"}
+                          {selectedNode.data.verifierCouncil ? "On" : "Off"}
                         </Button>
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        Add-on: When this agent's output is verified by another LLM, upgrade to a
-                        council of 3 independent models voting on quality. Majority rules.
-                        Eliminates single-model hallucination bias.
-                      </p>
-                      {Boolean(selectedNode.data.councilEnabled) && (
-                        <div className="mt-2 p-2 rounded bg-yellow-500/5 border border-yellow-500/20">
-                          <p className="text-[10px] text-yellow-300/80">
-                            Council active: Any verification step targeting this agent's output
-                            will use 3 models instead of 1. Cost: ~3x verification layer only.
-                          </p>
+                      {Boolean(selectedNode.data.verifierCouncil) && (
+                        <div className="mt-1 p-2 rounded bg-yellow-500/5 border border-yellow-500/20">
+                          <label className="text-[10px] text-muted-foreground mb-1 block">Quorum size</label>
+                          <Select
+                            value={String(selectedNode.data.verifierQuorum || 3)}
+                            onValueChange={(val) => updateNodeData(selectedNode.id, { verifierQuorum: Number(val) })}
+                          >
+                            <SelectTrigger className="h-7 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="2" className="text-xs">2 of 3 models agree</SelectItem>
+                              <SelectItem value="3" className="text-xs">3 of 3 models agree (strict)</SelectItem>
+                              <SelectItem value="4" className="text-xs">3 of 5 models agree</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       )}
                     </div>

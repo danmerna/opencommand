@@ -3626,6 +3626,12 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    completeOnboarding: protectedProcedure.mutation(async ({ ctx }) => {
+      const { completeUserOnboarding } = await import('./db');
+      await completeUserOnboarding(ctx.user.id);
+      await notifyOwner({ title: 'New user completed onboarding', content: `${ctx.user.name || ctx.user.email || 'A user'} just completed quick onboarding.` });
+      return { success: true };
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
