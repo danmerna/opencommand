@@ -835,3 +835,90 @@
 - [x] Landing page: add demo GIF/animation showing Deploy → HITL loop
 - [x] Landing page: stronger value prop above the fold
 - [x] Landing page: clearer beta messaging and social proof
+
+
+## Intent Engine: Advisor/Builder Toggle + Session History + Socratic Refinement
+
+### Core Intent Engine Architecture
+- [ ] Rename Intent Engine to "Σ" in UI and navigation (already partially done)
+- [ ] Implement Advisor/Builder toggle in header ("Think" / "Do" modes)
+- [ ] Add session history to intent engine: persist conversation history per user, allow resuming previous sessions
+- [ ] Session history UI: sidebar showing recent conversations with timestamps, ability to load and continue
+- [ ] Implement Socratic questioning framework in both Advisor and Builder modes
+- [ ] Integrate unified context graph into intent reasoning: pull live business data during Socratic questioning
+- [ ] Intent should ask clarifying questions about: business context, goals, constraints, success metrics, approval patterns
+
+### Advisor Mode (Think)
+- [ ] Advisor generates complete, executable workflow blueprints from natural language descriptions
+- [ ] Advisor composes agent teams from the registry based on business context and problem description
+- [ ] Advisor recommends governance controls (agent verification / LLM council / human approval) based on stakes and business risk profile
+- [ ] Advisor outputs fully executable blueprint ready to deploy (user can edit in Builder, not required)
+- [ ] Advisor contextualizes recommendations from unified context graph (customer data, revenue patterns, approval history, etc.)
+
+### Builder Mode (Do)
+- [ ] Builder uses intent to ask questions as user edits workflow (e.g., "Are you confident removing this verification gate?")
+- [ ] Builder contextualizes from unified context graph (e.g., "Your approval rate for this agent is 87%")
+- [ ] Builder suggests agent swaps, governance adjustments, data template changes based on business context
+- [ ] Builder recommends event triggers based on existing workflows and business rhythms
+- [ ] Builder surfaces optimization opportunities (e.g., "This task is low-risk; consider removing human approval")
+
+### Agent Composition & Registry
+- [ ] Create agent registry data model: capabilities, cost profile, optimal use cases, prompts, model selection
+- [ ] Seed initial agent registry with 10-15 pre-built agents (marketing analyst, financial analyst, content creator, data scientist, etc.)
+- [ ] Implement agent selection logic: rule-based + LLM-based reasoning for which agent fits which task
+- [ ] Allow users to create custom agents and save to registry
+- [ ] Track agent performance metrics: usage count, approval rate, cost, latency, quality scores
+
+### Governance & Approval System
+- [ ] Implement three governance options: agent verification (one agent reviews another), LLM council (multiple LLMs vote), human approval
+- [ ] Make governance options composable (user can stack multiple governance layers)
+- [ ] Implement approval recommendations based on task type and business context
+- [ ] Track approval patterns per agent type and per user to inform future recommendations
+- [ ] Build approval rate analytics: show which agents have high/low approval rates
+
+### Event Triggers & Scheduling
+- [ ] Implement scheduled runs (daily, weekly, monthly, custom cron)
+- [ ] Implement webhook triggers (from connected systems: deal closed in Salesforce, customer created in Stripe, etc.)
+- [ ] Implement chat triggers (Slack commands, email commands, direct message to OpenCommand)
+- [ ] Implement manual triggers (user clicks "run now")
+- [ ] Surface trigger recommendations based on existing workflows and business rhythms
+
+### Session History & Persistence
+- [ ] Persist all intent conversations to database (user_id, conversation_id, messages, context_snapshot, timestamp)
+- [ ] Implement session resume: user can click on a past conversation and continue from where they left off
+- [ ] Implement context refresh: when resuming a session, re-pull live data from unified context graph
+- [ ] Show session metadata: creation date, last message, related blueprints/workflows
+- [ ] Allow users to name and organize sessions (e.g., "Content Marketing Campaign", "Q4 Financial Planning")
+
+## Unified Context Graph & Integrations
+
+- [ ] Ensure context graph is continuously updated from all connected systems
+- [ ] Implement context refresh on demand (user can trigger a manual refresh in the intent engine)
+- [ ] Build context visualization: show what data is currently available in the unified context graph
+- [ ] Implement context filtering: user can specify which data sources to include in a specific workflow
+- [ ] Track context utilization: measure how often intent references context graph in recommendations
+
+## Marketplace & Agent Monetization
+
+- [ ] Implement workflow packaging: users can version and publish workflows to marketplace
+- [ ] Implement custom agent packaging: users can publish custom agents they have created
+- [ ] Implement marketplace discovery: browse, search, filter workflows and agents
+- [ ] Implement revenue sharing: calculate payouts for workflow/agent sales
+- [ ] Implement quality gates: review process for marketplace submissions
+
+## Metrics & Learning Loop
+
+- [ ] Track intent effectiveness: how often do users act on intent's questions and recommendations?
+- [ ] Track agent composition quality: how often does Advisor recommend an agent that user approves?
+- [ ] Track context utilization: how often does intent reference unified context graph?
+- [ ] Track governance effectiveness: approval vs. rejection rates per agent type
+- [ ] Track agent reuse: which agents are most valuable across all workflows?
+- [ ] Implement optimization recommendations based on execution data (cheaper models, governance adjustments, etc.)
+
+## Phase 1: Automated Agent Generation
+
+- [ ] Implement agent generation: Advisor can create custom agents on the fly for novel tasks
+- [ ] Agent generation includes: prompt engineering, model selection, capability definition, cost estimation
+- [ ] Implement agent quality validation: test generated agents before surfacing to user
+- [ ] Allow users to save generated agents to registry for reuse
+- [ ] Build feedback loop: track which generated agents work well vs. poorly
