@@ -52,7 +52,11 @@ const SIGMA_SYSTEM_PROMPT = `You are Σ (Sigma), the Intent Engine for OpenComma
 - Aim to complete the interview in 4-8 exchanges
 
 ## When Ready
-When you have sufficient information, respond with a message that includes the marker [READY_TO_GENERATE] at the end. This signals the system to generate the full blueprint from the conversation context.`;
+When you have sufficient information, respond with a message that includes the marker [READY_TO_GENERATE] at the end. This signals the system to generate the full blueprint from the conversation context.
+
+## Special User Signals
+- If the user sends [SKIP_QUESTION]: acknowledge briefly (one sentence) and immediately ask a completely different clarifying question — do not repeat or follow up on the previous topic.
+- If the user sends [FINISH_INTERVIEW]: respond with one sentence confirming you have enough context to build the blueprint, then end your message with [READY_TO_GENERATE].`;
 
 // ─── Blueprint Generation Prompt ─────────────────────────────────────────────
 function buildGenerationPrompt(messages: { role: string; content: string }[]) {
@@ -255,6 +259,84 @@ export const blueprintEngineRouter = router({
         isReadyToGenerate: isReady,
         completionPercent,
       };
+    }),
+
+
+  /**
+   * Skip the current question and ask a different one
+   */
+  skipQuestion: protectedProcedure
+    .input(z.object({ sessionId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [session] = await (await getDbOrThrow())
+        .select()
+        .from(blueprintChatSessions)
+        .where(and(
+          eq(blueprintChatSessions.id, input.sessionId),
+          eq(blueprintChatSessions.userId, ctx.user.id),
+        ));
+
+      if (!session) throw new Error("Session not found");
+      if (session.status !== "interviewing") throw new Error("Session is no longer active");
+
+      const messages = (session.messages || []) as { role: string; content: string; timestamp: string }[];
+
+      const skipMsg = { role: "user" as const, content: "[SKIP_QUESTION]", timestamp: new Date().toISOString() };
+      messages.push(skipMsg);
+
+      const llmMessages = messages.map(m => ({ role: m.role as "system" | "user" | "assistant", content: m.content }));
+      const response = await invokeLLM({ messages: llmMessages, maxTokens: 512 });
+      const assistantContent = typeof response.choices[0].message.content === "string" ? response.choices[0].message.content : "";
+
+      const assistantMsg = { role: "assistant" as const, content: assistantContent, timestamp: new Date().toISOString() };
+      messages.push(assistantMsg);
+
+      const userMsgCount = messages.filter(m => m.role === "user" && m.content !== "[SKIP_QUESTION]").length;
+      const completionPercent = Math.min(userMsgCount * 15, 90);
+
+      await (await getDbOrThrow())
+        .update(blueprintChatSessions)
+        .set({ messages: messages as any, completionPercent })
+        .where(eq(blueprintChatSessions.id, input.sessionId));
+
+      return { message: assistantMsg, completionPercent, isReadyToGenerate: false };
+    }),
+
+  /**
+   * Finish the interview early and trigger blueprint generation immediately
+   */
+  finishInterview: protectedProcedure
+    .input(z.object({ sessionId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [session] = await (await getDbOrThrow())
+        .select()
+        .from(blueprintChatSessions)
+        .where(and(
+          eq(blueprintChatSessions.id, input.sessionId),
+          eq(blueprintChatSessions.userId, ctx.user.id),
+        ));
+
+      if (!session) throw new Error("Session not found");
+      if (session.status !== "interviewing") throw new Error("Session is no longer active");
+
+      const messages = (session.messages || []) as { role: string; content: string; timestamp: string }[];
+
+      const finishMsg = { role: "user" as const, content: "[FINISH_INTERVIEW]", timestamp: new Date().toISOString() };
+      messages.push(finishMsg);
+
+      const llmMessages = messages.map(m => ({ role: m.role as "system" | "user" | "assistant", content: m.content }));
+      const response = await invokeLLM({ messages: llmMessages, maxTokens: 512 });
+      const assistantContent = typeof response.choices[0].message.content === "string" ? response.choices[0].message.content : "";
+
+      const assistantMsg = { role: "assistant" as const, content: assistantContent, timestamp: new Date().toISOString() };
+      messages.push(assistantMsg);
+
+      await (await getDbOrThrow())
+        .update(blueprintChatSessions)
+        .set({ messages: messages as any, completionPercent: 95, status: "generating" })
+        .where(eq(blueprintChatSessions.id, input.sessionId));
+
+      return { message: assistantMsg, completionPercent: 95, isReadyToGenerate: true };
     }),
 
   /**

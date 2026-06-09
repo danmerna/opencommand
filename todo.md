@@ -922,3 +922,10 @@
 - [ ] Implement agent quality validation: test generated agents before surfacing to user
 - [ ] Allow users to save generated agents to registry for reuse
 - [ ] Build feedback loop: track which generated agents work well vs. poorly
+
+## Intent Engine: Socratic UX Controls
+- [x] Add "New Question" button above chat input during Socratic questioning phase: skips the current question and asks a different one (user doesn't find it relevant or doesn't know the answer)
+- [x] Add "Finish" button above chat input during Socratic questioning phase: stops questioning immediately and generates the blueprint/response with context gathered so far
+- [x] Both buttons should only appear when the intent engine is in active Socratic questioning mode (not during blueprint generation or idle state)
+- [x] "New Question" sends a system signal to the backend to generate a different clarifying question rather than repeating or following up on the skipped one
+- [x] "Finish" sends a signal to skip remaining questions and proceed directly to blueprint generation with whatever context has been collected

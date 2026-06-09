@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import {
   Send, Loader2, ArrowRight, Bot, User, Zap,
   Menu, RotateCcw, History, FileText, Mic, MicOff, ChevronDown,
-  Layers, Monitor, Play,
+  Layers, Monitor, Play, SkipForward, CheckCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -162,6 +162,8 @@ export default function IntentEngine() {
   const sendMessage = trpc.blueprintEngine.sendMessage.useMutation();
   const generateBlueprint = trpc.blueprintEngine.generateBlueprint.useMutation();
   const transcribeAudio = trpc.blueprintEngine.transcribeVoice.useMutation();
+  const skipQuestion = trpc.blueprintEngine.skipQuestion.useMutation();
+  const finishInterview = trpc.blueprintEngine.finishInterview.useMutation();
 
   // Auto-scroll
   useEffect(() => {
@@ -193,6 +195,35 @@ export default function IntentEngine() {
       setIsReadyToGenerate(res.isReadyToGenerate);
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again.", timestamp: new Date().toISOString() }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    if (!sessionId || isLoading) return;
+    setIsLoading(true);
+    try {
+      const res = await skipQuestion.mutateAsync({ sessionId });
+      setMessages(prev => [...prev, res.message as ChatMessage]);
+      setCompletionPercent(res.completionPercent);
+    } catch {
+      toast.error("Couldn't skip — please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFinish = async () => {
+    if (!sessionId || isLoading) return;
+    setIsLoading(true);
+    try {
+      const res = await finishInterview.mutateAsync({ sessionId });
+      setMessages(prev => [...prev, res.message as ChatMessage]);
+      setCompletionPercent(res.completionPercent);
+      setIsReadyToGenerate(res.isReadyToGenerate);
+    } catch {
+      toast.error("Couldn't finish — please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -510,6 +541,27 @@ export default function IntentEngine() {
 
         {/* Input — mockup-style bottom bar */}
         <div className="border-t border-border px-4 py-3 shrink-0">
+          {/* Socratic UX controls — only visible during active interview, not when ready to generate */}
+          {messages.length > 1 && !isReadyToGenerate && !isGenerating && (
+            <div className="flex items-center gap-2 mb-2">
+              <button
+                onClick={handleSkip}
+                disabled={isLoading}
+                className="flex items-center gap-1.5 h-7 px-3 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <SkipForward size={11} />
+                New question
+              </button>
+              <button
+                onClick={handleFinish}
+                disabled={isLoading}
+                className="flex items-center gap-1.5 h-7 px-3 rounded-full border border-accent/50 text-xs text-accent hover:bg-accent/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <CheckCheck size={11} />
+                Finish
+              </button>
+            </div>
+          )}
           <div className="bg-muted/30 border border-border rounded-2xl px-4 pt-3 pb-2">
             {/* Text input */}
             <Textarea
