@@ -1,0 +1,71 @@
+import type { Update } from "../domain/types";
+import { SCENARIO, demoTime, fmtUSD, fmtPct } from "./scenario";
+
+const { market, finance, combines, serviceTicketsClosed, unitsFrontLineReady } = SCENARIO;
+
+/** Taylor's four overnight changes — the proactive radar. */
+export const UPDATES: Update[] = [
+  {
+    id: "upd-combine-pricing",
+    title: `${market.competitor} cut comparable S780 combine listings ${fmtPct(market.competitorCutPct)}`,
+    source: "tractorhouse",
+    timestamp: demoTime(-4),
+    category: "market",
+    urgency: "high",
+    confidence: 0.92,
+    implication: `${combines.total} combines (${fmtUSD(combines.totalInventoryValue)}) now sit above market ahead of a ${market.harvestWindowWeeks}-week harvest window.`,
+    status: "new",
+    accountablePersonaId: "per-signal",
+    evidenceIds: [
+      "evd-th-birkeys",
+      "evd-inv-combines",
+      "evd-ic-auction",
+      "evd-qb-floorplan",
+      "evd-th-leads",
+      "evd-qb-margin",
+    ],
+    relatedRefs: [],
+  },
+  {
+    id: "upd-lead-gmail",
+    title: "High-intent lead: John Smith asking about a John Deere 7530",
+    source: "gmail",
+    timestamp: demoTime(-3),
+    category: "lead",
+    urgency: "medium",
+    confidence: 0.84,
+    implication: "Pre-harvest financing question — response speed will decide whether it converts.",
+    status: "new",
+    accountablePersonaId: "per-signal",
+    evidenceIds: ["evd-gm-lead"],
+    relatedRefs: [{ kind: "agent", id: "agt-lead" }],
+  },
+  {
+    id: "upd-service-anvil",
+    title: `Anvil Pro: ${serviceTicketsClosed} combine service tickets closed overnight`,
+    source: "anvil-pro",
+    timestamp: demoTime(-5),
+    category: "operations",
+    urgency: "low",
+    confidence: 0.97,
+    implication: `${unitsFrontLineReady} more units are front-line ready — sellable inventory just widened.`,
+    status: "new",
+    accountablePersonaId: "per-forge",
+    evidenceIds: ["evd-ap-service"],
+    relatedRefs: [],
+  },
+  {
+    id: "upd-qb-floorplan",
+    title: `QuickBooks: combine floor-plan interest hit ${fmtUSD(finance.floorPlanInterestPerMonth)} this month`,
+    source: "quickbooks",
+    timestamp: demoTime(-7),
+    category: "finance",
+    urgency: "medium",
+    confidence: 0.95,
+    implication: "Carrying cost is compounding the pricing decision — holding is not free.",
+    status: "new",
+    accountablePersonaId: "per-ledger",
+    evidenceIds: ["evd-qb-floorplan", "evd-qb-margin"],
+    relatedRefs: [],
+  },
+];

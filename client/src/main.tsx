@@ -10,7 +10,7 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
-const PUBLIC_UNAUTHENTICATED_PATHS = ["/onboarding/pro", "/waitlist", "/creators"];
+const PUBLIC_UNAUTHENTICATED_PATHS = ["/onboarding/pro", "/waitlist", "/creators", "/demo"];
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;

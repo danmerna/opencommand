@@ -37,6 +37,7 @@ import BlueprintChat from "./pages/BlueprintChat";
 import BlueprintBuilder from "./pages/BlueprintBuilder";
 import ModelPerformance from "./pages/ModelPerformance";
 import Dashboard from "./pages/Dashboard";
+import DemoApp from "./demo/DemoApp";
 
 function Router() {
   usePageTracking();
@@ -51,6 +52,8 @@ function Router() {
       </Route>
       <Route path="/auth/relay" component={AuthRelay} />
       <Route path="/waitlist" component={Waitlist} />
+      {/* Public, client-only IntelligenceOS demo (Johnson Tractor scenario) */}
+      <Route path="/demo/*?" component={DemoApp} />
       <Route path="/mission-control">
         <AppLayout><MissionControl /></AppLayout>
       </Route>
